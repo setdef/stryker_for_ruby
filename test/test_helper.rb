@@ -14,6 +14,10 @@ SimpleCov.start do
   coverage(:line) { minimum(100, per: :file) }
   coverage(:branch) { minimum(100, per: :file) }
   refuse_coverage_drop
+  # A run's figure comes from that run only. SimpleCov otherwise merges the
+  # results of earlier runs still inside its merge timeout, so a partial run
+  # right after a full one passes the minimum.
+  merging(false)
 end
 
 require "minitest/autorun"
