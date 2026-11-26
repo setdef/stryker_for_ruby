@@ -8,4 +8,5 @@ Start with the architecture page, which lists every part and links to the page f
 
 - [Architecture](architecture.md): the pipeline of a run, the ports and their adapters, the values and events that pass between the parts, and where each responsibility lives.
 - [Loading and isolation](loading-and-isolation.md): the orchestrator and the project processes, the cache of instrumented source, the `load_iseq` hook that serves it and stays ahead of Bootsnap, the check that every instrumented file came through the hook, and the clean process each mutant run gets on Linux, macOS, and Windows.
+- [Mutant placement](mutant-placement.md): the text edit each mutator returns, how the instrumenter splices each mutant's switch into the original source and keeps every line where it was, and the kinds of site that hold a switch.
 - [Coverage](coverage.md): how the dry run records which tests reach each mutant, how it finds static mutants, and why Ruby's `Coverage` library doesn't do this.
