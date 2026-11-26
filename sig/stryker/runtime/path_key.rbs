@@ -1,0 +1,32 @@
+module Stryker
+  module Runtime
+    # The form of a path that the loader and the stack check compare, as
+    # [Paths on Windows](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#paths-on-windows)
+    # specifies. Two spellings of one file on Windows have the same key, so
+    # the loader's hook, the loading check, and the stack check agree on
+    # which file a path names.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Runtime::PathKey.of("C:\\App\\Lib\\Invoice.rb", "\\")
+    # # => "c:/app/lib/invoice.rb"
+    # Stryker::Runtime::PathKey.of("/app/lib/Invoice.rb", nil)
+    # # => "/app/lib/Invoice.rb"
+    # ```
+    module PathKey
+      # The key of `path`. With a `separator`, each `separator` in it becomes
+      # `/`, and every letter is lowercased, as on Windows, where Ruby can
+      # give one file with another drive letter, letter case, or separator.
+      # With none, it is `path` itself, because a case-sensitive file system
+      # has files that differ only in case. It resolves no symbolic link and
+      # no `..`, and reads nothing from disk.
+      #
+      # - `path`: String, a file's path.
+      # - `separator`: String or nil, the system's alternative path
+      #   separator, `File::ALT_SEPARATOR` by default: a backslash on
+      #   Windows, and nil elsewhere.
+      def self.of: (String path, ?String? separator) -> String
+    end
+  end
+end

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "path_key"
+
 module Stryker
   module Runtime
     module Stack
@@ -15,7 +17,7 @@ module Stryker
         # that one of them calls, report the file's path too.
         Thread.each_caller_location do |location|
           path = location.absolute_path
-          path = normalize(path, separator) if separator && path
+          path = PathKey.of(path, separator) if separator && path
           return true if paths.include?(path) && TOP_LEVEL_LABELS.include?(location.label)
         end
         false
@@ -25,20 +27,10 @@ module Stryker
         # Ruby gives the hook the path it resolved, which can hold a symbolic
         # link or "..", and gives the frames of a file it compiles itself the
         # real path. A file the hook compiles gets the path the hook gave.
-        [path, File.realpath(path)].map { |form| normalize(form, separator) }
+        [path, File.realpath(path)].map { |form| PathKey.of(form, separator) }
       rescue SystemCallError
-        [normalize(path, separator)]
+        [PathKey.of(path, separator)]
       end
-
-      def self.normalize(path, separator)
-        # The loader's comparison on Windows, so that the stack check and the
-        # loading check agree: Ruby can give the same file with a different
-        # drive letter, letter case, or separator. Elsewhere a path is
-        # compared as it is, because a case-sensitive file system has files
-        # that differ only in case.
-        separator ? path.tr(separator, "/").downcase : path
-      end
-      private_class_method(:normalize)
     end
   end
 end

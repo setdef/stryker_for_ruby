@@ -48,10 +48,11 @@ module Stryker
       # that Ruby or Bootsnap compiles shows. Ruby gives the hook a path
       # that can hold either. When no file is at `path`, it is `path` alone.
       #
-      # With a `separator`, each path is normalized as the loader normalizes
-      # paths on Windows: each `separator` becomes `/`, and every letter is
-      # lowercased. With none, a path stays as it is, because a
-      # case-sensitive file system has files that differ only in case.
+      # Each path is normalized with Stryker::Runtime::PathKey, as the
+      # loader normalizes paths: with a `separator`, each `separator`
+      # becomes `/`, and every letter is lowercased. With none, a path stays
+      # as it is, because a case-sensitive file system has files that
+      # differ only in case.
       #
       # - `path`: String, the path that Ruby gave the loader's hook.
       # - `separator`: String or nil, the system's alternative path
@@ -67,8 +68,6 @@ module Stryker
       def self.frame_paths: (String path, ?String? separator) -> Array[String]
 
       TOP_LEVEL_LABELS: Set[String]
-
-      private def self.normalize: (String path, String? separator) -> String
     end
   end
 end
