@@ -65,6 +65,12 @@ module Stryker
       # The operator's method name, such as `:-@`.
       def operator: () -> Symbol
 
+      # Whether the operator is `-` or `+` and its operand is a string
+      # literal, as `Stryker::Mutators::Strings.literal?` defines it. Such a
+      # sign doesn't negate: `-"draft"` returns the string frozen, and
+      # `+"draft"` returns it unfrozen.
+      def string_sign?: () -> bool
+
       private def self.written: (Prism::CallNode call) -> Prefix?
 
       private def dropped: () -> Edit

@@ -1,0 +1,40 @@
+module Stryker
+  module Mutators
+    # A number written with a minus sign, such as `-1`, `-2.5`, `-3r`, or
+    # `-2i`. Prism makes it an `IntegerNode`, `FloatNode`, `RationalNode`, or
+    # `ImaginaryNode`, and not a call to the unary minus.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("-2.5").value.statements.body.first
+    # Stryker::Mutators::NegativeLiteral.of(node, nil).edit.replacement
+    # # => "2.5"
+    # ```
+    class NegativeLiteral < Data
+      # The literal.
+      attr_reader node: Prism::IntegerNode | Prism::FloatNode | Prism::RationalNode | Prism::ImaginaryNode
+
+      # Builds the negative literal.
+      #
+      # - `node`: Prism::IntegerNode, Prism::FloatNode, Prism::RationalNode, or
+      #   Prism::ImaginaryNode, the literal.
+      def self.new: (node: Prism::IntegerNode | Prism::FloatNode | Prism::RationalNode | Prism::ImaginaryNode) -> instance
+                  | (Prism::IntegerNode | Prism::FloatNode | Prism::RationalNode | Prism::ImaginaryNode node) -> instance
+
+      # The negative literal that `node` is, or nil when it isn't a number
+      # written with a minus sign, or when its value is zero, because a zero
+      # equals its negative. A number with a plus sign is none either, and so
+      # is the number inside an imaginary literal such as `-2i`, which has the
+      # sign too: the imaginary literal is the negative literal.
+      #
+      # - `node`: Prism::node, the node.
+      # - `parent`: Prism::node, the node's parent, or nil at the root.
+      def self.of: (Prism::node node, Prism::node? parent) -> NegativeLiteral?
+
+      # The edit that covers the whole literal and gives it without the sign,
+      # such as `1_000` for `-1_000`.
+      def edit: () -> Edit
+    end
+  end
+end

@@ -1,0 +1,49 @@
+module Stryker
+  module Mutators
+    # Takes the sign off a number or changes a unary operator to the one a
+    # programmer could have written by mistake. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `-a` | `a` |
+    # | `+a` | `-a` |
+    # | `~a` | `a` |
+    # | `-1`, `-2.5`, `-1r` | `1`, `2.5`, `1r` |
+    #
+    # The edit covers the whole call or literal. A negative number is a literal
+    # in Prism and not a call, and it gets the same mutant as `-a`. A `-0`
+    # gets none, because it equals `0`.
+    #
+    # `-a` becomes `a` and not `+a`, because `+a` calls `+@`, which `Numeric`
+    # defines and most other classes don't, so it would raise `NoMethodError`
+    # for a `Vector` or a `Money`. A `-` or a `+` on a string literal, such as
+    # `-"draft"`, gets no mutant, because it sets whether the string is frozen.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#unaryoperator)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("ok = +a").value.statements.body.first.value
+    # Stryker::Mutators::UnaryOperator.new.edits(node, []).map(&:replacement)
+    # # => ["-a"]
+    # ```
+    class UnaryOperator
+      # The mutator's name in the report: `"UnaryOperator"`.
+      def name: () -> String
+
+      # The edits at `node`: one for a `-`, `+`, or `~` call, or for a negative
+      # number literal, and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   to its parent. The mutator reads the parent, to leave out the number
+      #   inside an imaginary literal.
+      def edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+
+      PREFIXES: Hash[Symbol, Array[String?]]
+
+      private def prefixes: () -> Hash[Symbol, Array[String?]]
+    end
+  end
+end

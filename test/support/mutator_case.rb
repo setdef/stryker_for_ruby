@@ -9,7 +9,7 @@ require "stryker/mutant"
 # order of the tree.
 module MutatorCase
   def edits(source)
-    nodes_of(Prism.parse(source).value).flat_map { |node| mutator.edits(node, []) }
+    nodes_of(Prism.parse(source).value).flat_map { |node, ancestors| mutator.edits(node, ancestors) }
   end
 
   def replacements(source)
@@ -23,8 +23,10 @@ module MutatorCase
     end
   end
 
-  # Every node in +tree+, each before the nodes inside it.
-  def nodes_of(tree)
-    [tree, *tree.compact_child_nodes.flat_map { |child| nodes_of(child) }]
+  # Every node in +tree+, each before the nodes inside it, with the nodes
+  # above it from the root to its parent.
+  def nodes_of(tree, ancestors = [])
+    below = [*ancestors, tree]
+    [[tree, ancestors], *tree.compact_child_nodes.flat_map { |child| nodes_of(child, below) }]
   end
 end

@@ -4,6 +4,7 @@ require "prism"
 require_relative "../edit"
 require_relative "node_text"
 require_relative "operator_call"
+require_relative "strings"
 
 module Stryker
   module Mutators
@@ -25,6 +26,10 @@ module Stryker
 
       def operator
         call.name
+      end
+
+      def string_sign?
+        %i[-@ +@].include?(operator) && Strings.literal?(receiver)
       end
 
       def self.written(call)

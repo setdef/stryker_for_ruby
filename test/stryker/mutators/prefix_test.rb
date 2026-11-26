@@ -52,6 +52,18 @@ class PrefixTest < Minitest::Test
     assert_nil(Stryker::Mutators::Prefix.of(call("-a").copy(message_loc: nil), [:-@]))
   end
 
+  def test_a_minus_or_a_plus_before_a_string_literal_is_a_string_sign
+    signs = ["-'a'", "+'a'", "-\"a\#{b}\"", "-`ls`"].map { |source| prefix(source, %i[-@ +@]).string_sign? }
+
+    assert_equal([true] * 4, signs)
+  end
+
+  def test_a_minus_before_something_else_or_another_prefix_before_a_string_is_no_string_sign
+    signs = ["-a", "-('a')", "!'a'", "~'a'"].map { |source| prefix(source, %i[-@ ! ~]).string_sign? }
+
+    assert_equal([false] * 4, signs)
+  end
+
   def test_drops_the_operator_for_a_nil_replacement
     assert_equal(["a"], replacements("!a") { false })
   end
