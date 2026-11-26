@@ -91,12 +91,32 @@ class UnaryOperatorTest < Minitest::Test
     assert_equal(["1"], replacements("-1.abs"))
   end
 
-  def test_makes_no_mutant_of_a_negative_zero
-    assert_empty(edits("-0\n-0.0\n-0r\n-0i\n-0x0\n"))
+  def test_a_literal_with_a_plus_becomes_the_literal_with_a_minus
+    signed = ["+1", "+1_000", "+2.5", "+1r", "+2i"].flat_map { |source| replacements(source) }
+
+    assert_equal(%w[-1 -1_000 -2.5 -1r -2i], signed)
   end
 
-  def test_makes_no_mutant_of_a_positive_literal
-    assert_empty(edits("1\n+1\n2.5\n+2.5\n1r\n"))
+  def test_the_number_inside_an_imaginary_literal_with_a_plus_gets_no_mutant_of_its_own
+    assert_equal(["-2i"], replacements("+2i"))
+  end
+
+  def test_the_edit_of_a_literal_with_a_plus_covers_the_whole_literal
+    edit = edits("ok = +1.5\n").first
+
+    assert_equal([5, 9, "-1.5"], [edit.start_offset, edit.end_offset, edit.replacement])
+  end
+
+  def test_a_literal_with_a_plus_that_is_a_receiver_becomes_the_literal_with_a_minus
+    assert_equal(["-1"], replacements("+1.abs"))
+  end
+
+  def test_makes_no_mutant_of_a_zero_of_any_kind_with_either_sign
+    assert_empty(edits("-0\n-0.0\n-0r\n-0i\n-0x0\n+0\n+0.0\n+0r\n+0i\n+0x0\n"))
+  end
+
+  def test_makes_no_mutant_of_a_literal_with_no_sign
+    assert_empty(edits("1\n2.5\n1r\n1i\n"))
   end
 
   def test_makes_no_mutant_of_a_node_that_is_not_a_unary_operator

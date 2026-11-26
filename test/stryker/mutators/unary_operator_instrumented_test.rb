@@ -54,6 +54,26 @@ class UnaryOperatorInstrumentedTest < Minitest::Test
     assert_equal(1, assert_mutator_site("p(-1.succ)\n", mutator, holder: Prism::IntegerNode).size)
   end
 
+  def test_a_positive_integer
+    assert_equal(1, assert_mutator_site("p(+1)\n", mutator, holder: Prism::IntegerNode).size)
+  end
+
+  def test_a_positive_float
+    assert_equal(1, assert_mutator_site("p(+2.5)\n", mutator, holder: Prism::FloatNode).size)
+  end
+
+  def test_a_positive_rational
+    assert_equal(1, assert_mutator_site("p(+3r)\n", mutator, holder: Prism::RationalNode).size)
+  end
+
+  def test_a_positive_imaginary_number
+    assert_equal(1, assert_mutator_site("p(+2i)\n", mutator, holder: Prism::ImaginaryNode).size)
+  end
+
+  def test_a_positive_integer_that_is_a_receiver
+    assert_equal(1, assert_mutator_site("p(+1.succ)\n", mutator, holder: Prism::IntegerNode).size)
+  end
+
   def test_a_unary_operator_across_lines
     source = "a = 5\np(-\n  a)\n"
 

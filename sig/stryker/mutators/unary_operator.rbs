@@ -9,10 +9,12 @@ module Stryker
     # | `+a` | `-a` |
     # | `~a` | `a` |
     # | `-1`, `-2.5`, `-1r` | `1`, `2.5`, `1r` |
+    # | `+1`, `+2.5`, `+1r` | `-1`, `-2.5`, `-1r` |
     #
-    # The edit covers the whole call or literal. A negative number is a literal
-    # in Prism and not a call, and it gets the same mutant as `-a`. A zero of
-    # any kind, such as `-0`, `-0.0`, `-0r`, or `-0i`, gets none. An integer,
+    # The edit covers the whole call or literal. A signed number is a literal
+    # in Prism and not a call, and it gets the same mutant as `-a` or `+a`. A
+    # zero of any kind, such as `-0`, `-0.0`, `-0r`, `-0i`, or `+0`, gets
+    # none. An integer,
     # rational, or imaginary zero equals its negative. A float's zero differs
     # from its negative only where a test divides by it, as in `1 / -0.0`, so
     # its survivor isn't worth acting on.
@@ -35,7 +37,7 @@ module Stryker
       # The mutator's name in the report: `"UnaryOperator"`.
       def self.name: () -> String
 
-      # The edits at `node`: one for a `-`, `+`, or `~` call, or for a negative
+      # The edits at `node`: one for a `-`, `+`, or `~` call, or for a signed
       # number literal, and none for any other node.
       #
       # - `node`: Prism::node, a node of the file.

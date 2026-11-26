@@ -48,7 +48,7 @@ Sixteen mutators make up the catalog. Fifteen have the names of Stryker mutators
 | `RangeOperator` | `..` and `...` | `RangeNode` | none |
 | `Regex` | Regexp literals, and the pattern given to `Regexp.new` | `RegularExpressionNode`, `StringNode` | StrykerJS `Regex` |
 | `StringLiteral` | String literals, interpolated strings, and heredocs | `StringNode`, `InterpolatedStringNode` | StrykerJS `StringLiteral` |
-| `UnaryOperator` | Unary `-`, `+`, `~`, and negative numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
+| `UnaryOperator` | Unary `-`, `+`, `~`, and signed numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
 
 ### How to read the tables
 
@@ -331,10 +331,11 @@ A string that Ruby freezes under `frozen_string_literal: true` is replaced by on
 | `+a` | `-a` | A test with *operand* not zero. |
 | `~a` | `a` | A test that checks the result. |
 | `-1`, `-2.5`, `-1r` | `1`, `2.5`, `1r` | A test that checks the value. |
+| `+1`, `+2.5`, `+1r` | `-1`, `-2.5`, `-1r` | A test that checks the value. |
 
-StrykerJS turns `-a` into `+a`. In Ruby, `+a` calls `+@`, which `Numeric` defines but most other classes don't, so `+a` would raise `NoMethodError` for a `Vector` or a `Money` and be killed at once. `a` gives the same value as `+a` on a number and works on any receiver. A negative number literal is an `IntegerNode`, `FloatNode`, `RationalNode`, or `ImaginaryNode` in Prism, not a call, and it gets the same mutant as `-a`, as StrykerJS mutates `-1`.
+StrykerJS turns `-a` into `+a`. In Ruby, `+a` calls `+@`, which `Numeric` defines but most other classes don't, so `+a` would raise `NoMethodError` for a `Vector` or a `Money` and be killed at once. `a` gives the same value as `+a` on a number and works on any receiver. A signed number literal, such as `-1` or `+1`, is an `IntegerNode`, `FloatNode`, `RationalNode`, or `ImaginaryNode` in Prism, not a call, and it gets the same mutant as `-a` or `+a`, as StrykerJS mutates `-1` and `+1`.
 
-A zero of any kind (`-0`, `-0.0`, `-0r`, `-0i`) gets no mutant. An integer, rational, or imaginary zero equals the zero without its sign, so that mutant would be equivalent. A float zero doesn't: `1 / -0.0` is `-Infinity` and `1 / 0.0` is `Infinity`. Only a test that divides by the value tells the two apart, so the survivor of that mutant wouldn't be worth acting on, and the rule applies to `-0.0` all the same.
+A zero of any kind (`-0`, `-0.0`, `-0r`, `-0i`, and the same with `+`) gets no mutant. An integer, rational, or imaginary zero equals the zero without its sign, so that mutant would be equivalent. A float zero doesn't: `1 / -0.0` is `-Infinity` and `1 / 0.0` is `Infinity`. Only a test that divides by the value tells the two apart, so the survivor of that mutant wouldn't be worth acting on, and the rule applies to `-0.0` all the same.
 
 It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those control whether the string is frozen (see [Sites that get no mutant](#sites-that-get-no-mutant)).
 
