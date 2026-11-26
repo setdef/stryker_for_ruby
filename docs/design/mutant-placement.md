@@ -155,7 +155,9 @@ When no enclosing node can hold a switch, the site gets no mutant. That is the c
 
 ## Sites that get no mutant
 
-The mutators make no mutant in the arguments of a call to `require`, `require_relative`, or `load` with no receiver. Ruby evaluates those arguments while the file loads, so every such mutant would be static, and a changed path makes Ruby load another file or raise `LoadError`, which shows nothing about the project's tests. StrykerJS's string-literal mutator skips the argument of `require()` in the same way.
+The mutators make no mutant in the arguments of a call to `require`, `require_relative`, `load`, or `autoload` with no receiver, or of `autoload` on a module, and none that removes such a call. Ruby evaluates those arguments while the file loads, so every such mutant would be static, and a changed path makes Ruby load another file or raise `LoadError`, which shows nothing about the project's tests. StrykerJS's string-literal mutator skips the argument of `require()` in the same way.
+
+[Mutators](mutators.md#sites-that-get-no-mutant) lists every site that no mutator makes a mutant of, with the reason for each.
 
 A site whose mutant's text has no one-line form gets no mutant either, as [The mutant adds no line break](#the-mutant-adds-no-line-break) says.
 
