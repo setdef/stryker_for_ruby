@@ -1,6 +1,6 @@
 # Design
 
-These pages specify how Stryker (for Ruby) works inside: what each part does, how the parts fit together, and the traps each part has to avoid. They are for people and agents who change the code. Each page has one subject, and the code is built to match it. When the code and a page disagree, one of them is wrong, and the change that fixes it updates both.
+These pages specify how **Stryker (for Ruby)** works inside: what each part does, how the parts fit together, and the traps each part has to avoid. They are for people and agents who change the code. Each page has one subject, and the code is built to match it. When the code and a page disagree, one of them is wrong, and the change that fixes it updates both.
 
 Why the design is the way it is, where that rests on an architecture decision, is in [the decision log](../decisions/README.md). A page here cites a decision by its number.
 

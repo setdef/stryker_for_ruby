@@ -14,9 +14,11 @@ These are the working rules for everyone who changes this repository: people, an
 
 ## What the project is
 
-Stryker (for Ruby) inserts bugs, called mutants, into your source code one at a time, runs your tests against each, and reports every mutant that no test caught.
+**Stryker (for Ruby)** inserts bugs, called mutants, into your source code one at a time, runs your tests against each, and reports every mutant that no test caught.
 
 It is a community port of [Stryker Mutator](https://stryker-mutator.io), with no affiliation to that project. The maintainers hope to make it an official project of the [Stryker Mutator organization](https://github.com/stryker-mutator), next to [StrykerJS](https://github.com/stryker-mutator/stryker-js), [Stryker.NET](https://github.com/stryker-mutator/stryker-net), and [Stryker4s](https://github.com/stryker-mutator/stryker4s). Those projects show how Stryker behaves in other languages.
+
+In Markdown prose, write the name as `**Stryker (for Ruby)**`. In plain text, write `Stryker (for Ruby)`. The repository and the gem are `stryker_for_ruby`, the constant is `Stryker`, and the require is `require "stryker"`.
 
 The project supports Ruby 3.3 and later only, the versions [Prism](https://github.com/ruby/prism) can parse. Write code that runs on Ruby 3.3.
 
@@ -69,7 +71,7 @@ For example: `feat(mutators): add a string literal mutator`, or `docs: describe 
 
 ## Security
 
-Stryker (for Ruby) runs other people's test suites and reads and writes their files, so treat every path, setting, and line of output that comes from them as untrusted input.
+**Stryker (for Ruby)** runs other people's test suites and reads and writes their files, so treat every path, setting, and line of output that comes from them as untrusted input.
 
 - Start a subprocess with an array of arguments, never a single string a shell would parse.
 - Build file paths from parts with `File.join` or `Pathname`, and check that a path built from outside input stays inside the directory you meant it for.

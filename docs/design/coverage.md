@@ -1,6 +1,6 @@
 # Coverage
 
-This page specifies how Stryker (for Ruby) learns which tests reach each mutant, and which mutants are static. The plan uses that map to run each mutant against only the tests that reach it, and to give a mutant that no test reaches the status `NoCoverage` without running it. The terms used here are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies how **Stryker (for Ruby)** learns which tests reach each mutant, and which mutants are static. The plan uses that map to run each mutant against only the tests that reach it, and to give a mutant that no test reaches the status `NoCoverage` without running it. The terms used here are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 ## Hits
 
@@ -54,4 +54,4 @@ Hits avoid both causes, because each switch records the IDs of the mutants it ho
 ## What this design doesn't do
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.
-- It doesn't keep the map between runs. Each run of Stryker (for Ruby) starts with a new dry run.
+- It doesn't keep the map between runs. Each run of **Stryker (for Ruby)** starts with a new dry run.

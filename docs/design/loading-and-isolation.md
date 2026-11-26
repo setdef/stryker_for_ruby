@@ -7,7 +7,7 @@ This page specifies how instrumented code gets into a Ruby process, and how each
 - **Instrumented file:** a project file matched by the `mutate` option. The instrumenter produces instrumented source for it, which holds every mutant in the file behind a switch.
 - **Active mutant:** the one mutant whose switch takes the mutated branch. At most one mutant is active in a process. With none active, the instrumented code behaves as the original.
 - **Runtime mutant:** a mutant whose switch runs while a test runs. Setting it active at any time before the test starts is enough.
-- **Static mutant:** a mutant whose switch runs only while its file loads, such as one in a constant's value or a class body. It takes effect only when it is active before the file loads. [Coverage](coverage.md) says how Stryker (for Ruby) tells the two apart.
+- **Static mutant:** a mutant whose switch runs only while its file loads, such as one in a constant's value or a class body. It takes effect only when it is active before the file loads. [Coverage](coverage.md) says how **Stryker (for Ruby)** tells the two apart.
 - **Mutant run:** one run of a chosen set of tests with one mutant active.
 
 ## Loading instrumented code
@@ -25,7 +25,7 @@ Because Ruby still resolves the file and still compiles the code under its origi
 
 The loader installs the hook before any instrumented file loads, in every process that runs tests: the parent that forks, each fresh process, and each process in the Windows pool.
 
-`load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so Stryker (for Ruby) runs on CRuby only.
+`load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so **Stryker (for Ruby)** runs on CRuby only.
 
 ### The hook and Bootsnap
 

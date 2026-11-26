@@ -8,7 +8,7 @@ deciders: "The project's architect, an AI agent, chose the mechanism. It works w
 
 ## Context and Problem Statement
 
-Stryker (for Ruby) runs the project's tests once for each mutant. Each run loads the same instrumented code, which holds every mutant behind a switch, and sets which mutant is active. A test can leave state behind, such as a changed global, constant, class variable, or environment variable, so a run that starts from another run's leftovers can report a result that depends on what ran before it.
+**Stryker (for Ruby)** runs the project's tests once for each mutant. Each run loads the same instrumented code, which holds every mutant behind a switch, and sets which mutant is active. A test can leave state behind, such as a changed global, constant, class variable, or environment variable, so a run that starts from another run's leftovers can report a result that depends on what ran before it.
 
 The measurements in [#4](https://github.com/setdef/stryker_for_ruby/issues/4) found that a reused worker carries that state into every later run, on Linux, macOS, and Windows, while forked and freshly started processes always start clean. Forking from a parent that has loaded the code and tests costs about 0.6 ms on Linux and about 2 ms on macOS. A fresh process costs 81 to 1,035 ms, depending on the system and the suite. Windows has no `fork`: `Process.fork` raises `NotImplementedError`. Static mutants, whose code runs only while a file loads, take effect only when the mutant is active before the code loads.
 

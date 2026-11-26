@@ -1,6 +1,6 @@
 # Architecture decisions
 
-Each file in this folder records one architecture decision: a choice that the structure of Stryker (for Ruby) rests on, and that would take a rewrite of a large part of the code to undo. A record gives the problem, the options weighed, the reasons for the choice, and what it costs. How the chosen design works is in [the design documents](../design/README.md).
+Each file in this folder records one architecture decision: a choice that the structure of **Stryker (for Ruby)** rests on, and that would take a rewrite of a large part of the code to undo. A record gives the problem, the options weighed, the reasons for the choice, and what it costs. How the chosen design works is in [the design documents](../design/README.md).
 
 The records follow [MADR](https://adr.github.io/madr/) 4.0.0. A record's status is `proposed` until the code does what it says, and `accepted` from then on. A record that stops being true is replaced by a new record with the next number and deleted, so every record here is current. Numbers are never reused.
 
