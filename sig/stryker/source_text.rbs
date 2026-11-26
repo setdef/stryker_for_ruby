@@ -14,7 +14,7 @@ module Stryker
   # character. An offset that falls inside a multibyte character, is beyond
   # the end of the text, or is negative raises ArgumentError, as does a start
   # offset after its end offset. The message names the offset and the size of
-  # the text in bytes. ByteOffsets makes the check.
+  # the text in bytes.
   #
   # Building a source text parses all of the text with Prism, which takes time
   # in proportion to its length. Building one source text for a file and
@@ -61,6 +61,22 @@ module Stryker
     def location: (Integer start_offset, Integer end_offset) -> Location
 
     private
+
+    # Raises ArgumentError unless the stretch of the text from byte offset
+    # `start_offset` up to byte offset `end_offset` is a stretch of whole
+    # characters. The message names the offset at fault, or both offsets when
+    # the start is after the end, and the size of the text in bytes.
+    def check: (Integer start_offset, Integer end_offset) -> void
+
+    # A truthy value when `offset` is a byte offset on a character boundary
+    # of the text, from 0 up to its size in bytes, and `false` or `nil` when
+    # it is not. Ruby's String#byteindex does the check for a character
+    # boundary.
+    def boundary?: (Integer offset) -> (Integer | false | nil)
+
+    # Raises ArgumentError with `message`, followed by the size of the text
+    # in bytes.
+    def refuse: (String message) -> bot
 
     # The position at byte `offset`.
     def position: (Integer offset) -> Position
