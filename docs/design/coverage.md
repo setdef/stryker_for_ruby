@@ -23,16 +23,16 @@ Each figure is the cost of one call in nanoseconds, from `Stryker::Active.hit` a
 
 | One call | 3.3.14 | 3.3.14 YJIT | 3.4.13 | 3.4.13 YJIT | 4.0.10 | 4.0.10 YJIT |
 | - | - | - | - | - | - | - |
-| `id`, in the main Ractor | 14 | 13 | 19 | 13 | 12 | 11 |
-| `id`, in another Ractor | 7 | 7 | 10 | 4 | 10 | 9 |
-| `hit`, no test running (the static bucket) | 365 | 173 | 515 | 263 | 148 | 69 |
-| `hit` with two mutants at the site, no test running | 425 | 211 | 643 | 304 | 154 | 74 |
-| `hit`, a test running | 434 | 191 | 598 | 287 | 183 | 75 |
-| `hit`, a test running, after a file began to load, for a mutant already checked | 492 | 226 | 709 | 297 | 256 | 104 |
-| `hit`, a mutant active | 44 | under 10 | 52 | under 10 | 45 | under 10 |
-| `hit`, in another Ractor | not recorded | not recorded | not recorded | not recorded | 934 | 682 |
+| `id`, in the main Ractor | 14 | 14 | 14 | 12 | 12 | 11 |
+| `id`, in another Ractor | 12 | 12 | 12 | 12 | 10 | 12 |
+| `hit`, no test running (the static bucket) | 190 | 80 | 191 | 91 | 185 | 82 |
+| `hit` with two mutants at the site, no test running | 227 | 101 | 231 | 114 | 220 | 104 |
+| `hit`, a test running | 231 | 88 | 252 | 86 | 232 | 87 |
+| `hit`, a test running, after a file began to load, for a mutant already checked | 349 | 141 | 348 | 145 | 348 | 138 |
+| `hit`, a mutant active | 42 | 40 | 41 | under 10 | 41 | under 10 |
+| `hit`, in another Ractor | not recorded | not recorded | not recorded | not recorded | 748 | 543 |
 
-A mutant run pays only the `id` read and the `hit` that returns at once, because it records nothing. The first `hit` of a mutant after a file begins to load also pays for one stack check, which [When the check runs](#when-the-check-runs) prices.
+Each `hit` row in the main Ractor is a hit of a mutant already in the current bucket, the usual case: the recorder returns after a membership check, without a merge and without taking its lock. The first hit of a mutant in a bucket takes the lock and merges. A mutant run pays only the `id` read and the `hit` that returns at once, because it records nothing. The first `hit` of a mutant after a file begins to load also pays for one stack check, which [When the check runs](#when-the-check-runs) prices.
 
 ## The dry run
 
@@ -97,9 +97,9 @@ One check costs this much, with `absolute_path` tested first, on Linux and on Ru
 
 | Frames on the stack | One check |
 | - | - |
-| 23 | 1.4 to 3.0 µs |
-| 103 | 5.9 to 10.8 µs |
-| 303 | 17.5 to 30.6 µs |
+| 23 | 1.5 to 2.3 µs |
+| 103 | 6.0 to 9.8 µs |
+| 303 | 17.5 to 28.8 µs |
 
 A test body has 18 to 25 frames under Minitest, RSpec, and Rails.
 
@@ -147,7 +147,7 @@ A collector that was drained only when each test ends put a hit sent between tes
 
 A file whose load begins in another Ractor reaches the recorder the same way.
 
-On Ruby 4.0.10, a hit in another Ractor costs 682 to 934 ns, because it sends the hit to the collector, against 69 to 148 ns for a hit in the main Ractor outside a test. [What a hit costs](#what-a-hit-costs) has the figures.
+On Ruby 4.0.10, a hit in another Ractor costs 543 to 748 ns, because it sends the hit to the collector, against 82 to 185 ns for a hit in the main Ractor outside a test. [What a hit costs](#what-a-hit-costs) has the figures.
 
 #### Ruby's warning that Ractors are experimental
 
