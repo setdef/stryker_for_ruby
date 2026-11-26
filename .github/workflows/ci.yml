@@ -11,10 +11,6 @@ on:
     branches: [trunk]
   workflow_dispatch:
 
-# SPDX-SnippetBegin
-# SPDX-License-Identifier: MIT
-# SPDX-SnippetCopyrightText: 2026 setdef <kerrick@setdef.com>
-# SPDX-SnippetComment: From setdef/Proof, .github/workflows/ci.yml, from the permissions block through the env block. This copy adds the commit-named group for reruns and manual runs, drops MISE_RUBY_COMPILE, and adds MISE_DISABLE_TOOLS.
 permissions:
   contents: read
 
@@ -47,7 +43,6 @@ env:
   # ruby/setup-ruby installs the Ruby for each job, so mise leaves out the Ruby
   # that mise.toml pins.
   MISE_DISABLE_TOOLS: ruby
-# SPDX-SnippetEnd
 
 jobs:
   gate:
