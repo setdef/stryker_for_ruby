@@ -6,12 +6,13 @@ module Stryker
     #
     # Each plain mutant is the whole file with one edit, so a file with many
     # mutants costs one whole-file parse per mutant, which workers share
-    # among the processors. A worker takes a `ruby` process to start, so the
-    # pool parses in this process unless the work of a file, its size in
-    # bytes times its number of plain mutants, is at least the threshold,
-    # and the pool has more than one worker. Both ways give the same
-    # verdicts, because both parse the same text with the syntax of the
-    # running Ruby.
+    # among the processors. A worker takes a `ruby` process to start, so each
+    # worker needs enough to parse to pay for it. The work of a file is its
+    # size in bytes times its number of plain mutants. The pool starts one
+    # worker for each `work_per_worker` bytes of work, up to the
+    # concurrency, and parses in this process when that is fewer than two.
+    # Both ways give the same verdicts, because both parse the same text with
+    # the syntax of the running Ruby.
     #
     # A fresh process runs the same on Linux, macOS, and Windows, where a
     # forked worker would need a second way for Windows, which has no
@@ -41,35 +42,36 @@ module Stryker
     # end
     # ```
     class ParsePool
-      # The work of a file, in bytes, from which the pool parses its plain
-      # mutants in workers. A worker takes about 0.1 seconds to start on
-      # Linux and 0.5 seconds on Windows, and Prism parses about 50 million
-      # bytes per second in one process.
-      THRESHOLD: Integer
+      # The bytes of work that a worker needs to pay for its start. A worker
+      # takes about 0.1 seconds to start on Linux, and about 0.3 seconds on
+      # Windows, where starting several workers takes the sum of their
+      # starts.
+      WORK_PER_WORKER: Integer
 
       # Makes a pool, gives it to the block, and stops it when the block ends,
       # however it ends. Gives the block's value.
       #
       # - `concurrency`: Integer, how many workers to run at most. With 1, no
       #   worker starts.
-      # - `threshold`: Integer, the work of a file, in bytes, from which the
-      #   pool uses workers.
+      # - `work_per_worker`: Integer, the bytes of work that a worker needs
+      #   to pay for its start.
       # - `command`: Array of String, the program that starts a worker, with
       #   its arguments. The running Ruby with `ParseWorker` by default.
-      def self.open: [T] (Integer concurrency, ?Integer threshold, ?Array[String] command) { (ParsePool pool) -> T } -> T
+      def self.open: [T] (Integer concurrency, ?Integer work_per_worker, ?Array[String] command) { (ParsePool pool) -> T } -> T
 
       # Makes a pool that has started no worker.
       #
       # - `concurrency`: Integer, how many workers to run at most. With 1, no
       #   worker starts.
-      # - `threshold`: Integer, the work of a file, in bytes, from which the
-      #   pool uses workers.
+      # - `work_per_worker`: Integer, the bytes of work that a worker needs
+      #   to pay for its start.
       # - `command`: Array of String, the program that starts a worker, with
       #   its arguments. The running Ruby with `ParseWorker` by default.
-      def initialize: (Integer concurrency, ?Integer threshold, ?Array[String] command) -> void
+      def initialize: (Integer concurrency, ?Integer work_per_worker, ?Array[String] command) -> void
 
       # Whether each of `plains` parses, in the order given. Starts the
-      # workers if the file needs them and they aren't running. Raises
+      # workers that the file needs and the pool doesn't have yet, and keeps
+      # the ones that a smaller file doesn't use. Raises
       # `Stryker::Instrumenter::Error` when a worker fails, and
       # `SystemCallError` when the command can't start, after it has ended
       # every worker.
@@ -89,15 +91,13 @@ module Stryker
       WORKER: String
 
       @concurrency: Integer
-      @threshold: Integer
+      @work_per_worker: Integer
       @command: Array[String]
       @workers: Array[ParseWorkerProcess]
 
-      def parallel?: (Integer work) -> bool
+      def checked: (String source, Array[PlainMutant] plains, Integer count) -> Array[bool]
 
-      def checked: (String source, Array[PlainMutant] plains) -> Array[bool]
-
-      def start: () -> void
+      def start: (Integer count) -> void
     end
   end
 end

@@ -8,8 +8,8 @@ require "stryker/instrumenter"
 # proves the two ways of parsing the plain mutants alike.
 module PooledInstrumenting
   # One pool for every test, so that its workers start once, and with a
-  # threshold of 0, so that it parses even the smallest file.
-  POOL = Stryker::Instrumenter::ParsePool.new(2, 0)
+  # work per worker of 1 byte, so that it parses even the smallest file.
+  POOL = Stryker::Instrumenter::ParsePool.new(2, 1)
   # The pool serves one file at a time, and the site tests run in threads.
   LOCK = Mutex.new
   private_constant(:LOCK, :POOL)

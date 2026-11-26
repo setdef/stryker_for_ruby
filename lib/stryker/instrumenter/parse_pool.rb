@@ -7,14 +7,14 @@ require_relative "parse_worker_process"
 module Stryker
   class Instrumenter
     class ParsePool
-      THRESHOLD = 20_000_000
+      WORK_PER_WORKER = 40_000_000
       WORKER = File.expand_path("parse_worker", File.dirname(__FILE__))
       COMMAND = [RbConfig.ruby, "-r", WORKER, "-e", "Stryker::Instrumenter::ParseWorker.serve"].freeze
-      public_constant(:THRESHOLD)
+      public_constant(:WORK_PER_WORKER)
       private_constant(:COMMAND, :WORKER)
 
-      def self.open(concurrency, threshold = THRESHOLD, command = COMMAND)
-        pool = new(concurrency, threshold, command)
+      def self.open(concurrency, work_per_worker = WORK_PER_WORKER, command = COMMAND)
+        pool = new(concurrency, work_per_worker, command)
         begin
           yield(pool)
         ensure
@@ -22,17 +22,18 @@ module Stryker
         end
       end
 
-      def initialize(concurrency, threshold = THRESHOLD, command = COMMAND)
+      def initialize(concurrency, work_per_worker = WORK_PER_WORKER, command = COMMAND)
         @concurrency = concurrency
-        @threshold = threshold
+        @work_per_worker = work_per_worker
         @command = command
         @workers = []
       end
 
       def valid(source, plains)
-        return plains.map { |plain| plain.valid?(source) } unless parallel?(source.bytesize * plains.size)
+        count = [@concurrency, source.bytesize * plains.size / @work_per_worker].min
+        return plains.map { |plain| plain.valid?(source) } if count < 2
 
-        checked(source, plains)
+        checked(source, plains, count)
       end
 
       def stop
@@ -40,20 +41,16 @@ module Stryker
         @workers = []
       end
 
-      private def parallel?(work)
-        @concurrency > 1 && work >= @threshold
-      end
-
-      private def checked(source, plains)
-        start if @workers.empty?
-        ParseBatch.new(source, plains, @workers).run
+      private def checked(source, plains, count)
+        start(count)
+        ParseBatch.new(source, plains, @workers.first(count)).run
       rescue
         stop
         raise
       end
 
-      private def start
-        @concurrency.times { @workers << ParseWorkerProcess.start(@command) }
+      private def start(count)
+        (count - @workers.size).times { @workers << ParseWorkerProcess.start(@command) }
       end
     end
   end

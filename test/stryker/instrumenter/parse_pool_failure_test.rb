@@ -15,7 +15,7 @@ class ParsePoolFailureTest < Minitest::Test
   # plain mutant.
   def failure(behavior, folder)
     assert_raises(Stryker::Instrumenter::Error) do
-      Pool.open(2, 0, worker_command(behavior, folder, 2)) { |pool| pool.valid(SOURCE, plains(1)) }
+      Pool.open(2, 1, worker_command(behavior, folder, 2)) { |pool| pool.valid(SOURCE, plains(1)) }
     end
   end
 
@@ -53,7 +53,7 @@ class ParsePoolFailureTest < Minitest::Test
 
   def test_it_raises_when_the_command_does_not_exist
     assert_raises(SystemCallError) do
-      Pool.open(2, 0, ["stryker-no-such-command"]) { |pool| pool.valid(SOURCE, plains(1)) }
+      Pool.open(2, 1, ["stryker-no-such-command"]) { |pool| pool.valid(SOURCE, plains(1)) }
     end
   end
 end

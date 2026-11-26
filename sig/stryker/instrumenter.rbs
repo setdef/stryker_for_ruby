@@ -90,9 +90,9 @@ module Stryker
     # such node gets no plain mutant, and no parse.
     #
     # The parses of the plain mutants are the cost of a large file. A file
-    # whose parses add up to `Stryker::Instrumenter::ParsePool::THRESHOLD`
-    # bytes or more has them done in a pool of fresh `ruby` processes,
-    # `concurrency` at most
+    # whose parses add up to twice
+    # `Stryker::Instrumenter::ParsePool::WORK_PER_WORKER` bytes or more has
+    # them done in a pool of fresh `ruby` processes, `concurrency` at most
     # (`Stryker::Instrumenter::ParsePool`), and a smaller file has them done
     # in this process. The result is the same either way. Every process of the
     # pool ends before `instrument` returns, or raises. It raises
