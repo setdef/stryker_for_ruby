@@ -16,9 +16,20 @@ permissions:
 # A push never cancels a run in progress. GitHub keeps one run going and one
 # waiting in the group, and a newer push replaces only the waiting one, so
 # every run that starts finishes, and it covers every commit pushed since the
-# run before it started.
+# run before it started. A red run blames that whole batch, and fast.yml gives
+# each push a verdict of its own.
+#
+# A rerun and a run started by hand are the exception: on trunk each gets a
+# group named for its commit. Both join a group anew, and in the shared group
+# the next push replaced them while they waited. Agents push all day, so a red
+# run could never be put right. A group named for the commit keeps a push's
+# waiting run and these runs from replacing each other.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: >-
+    ${{ github.workflow }}-${{ github.ref }}${{
+    (github.ref == 'refs/heads/trunk'
+    && (github.event_name == 'workflow_dispatch' || github.run_attempt != '1'))
+    && format('-{0}', github.sha) || '' }}
   cancel-in-progress: false
 
 defaults:

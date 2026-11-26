@@ -1,0 +1,90 @@
+# The fast tier: on every push and pull request, the gate on Ubuntu with the
+# oldest and newest released Ruby the gem supports, and the tests on Windows.
+# Each push to trunk gets a verdict of its own, while ci.yml's run, which
+# covers every Ruby and system, may cover several pushes.
+#
+# It is a workflow of its own because GitHub ends a run only when its slowest
+# job ends, and ci.yml's slowest jobs end long after this tier's.
+name: Fast
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+permissions:
+  contents: read
+
+# On trunk every run has a group named for its commit, so a push never cancels
+# or replaces another push's run, and every commit at the tip of a push gets a
+# verdict of its own. When a run is red, the commit it judged is the one to
+# look at. On any other branch there is one group for the branch, and a newer
+# push cancels the older run, since only the newest commit of a branch needs a
+# verdict.
+concurrency:
+  group: >-
+    ${{ github.workflow }}-${{ github.ref }}${{
+    github.ref == 'refs/heads/trunk' && format('-{0}', github.sha) || '' }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/trunk' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Install exactly what Gemfile.lock locks, or fail.
+  BUNDLE_FROZEN: "true"
+  # ruby/setup-ruby installs the Ruby for each job, so mise leaves out the Ruby
+  # that mise.toml pins.
+  MISE_DISABLE_TOOLS: ruby
+
+jobs:
+  gate:
+    name: Gate on Ruby ${{ matrix.ruby }}, ubuntu-latest
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.3", "4.0"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@145243922b4465b78e04dd66294782c7de45901f # v1.345.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
+
+      # mise.toml pins the other tools contributors use: the REUSE tool and
+      # pre-commit. CI installs the same pins.
+      - uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
+        with:
+          version: 2026.10.11
+
+      - name: Install the bundle
+        run: bundle install
+
+      - name: Run the gate
+        run: bundle exec rake
+
+  # The gate's other checks read the same files on every system, so Windows
+  # runs only the tests.
+  tests-windows:
+    name: Tests on Ruby 4.0, windows-latest
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@145243922b4465b78e04dd66294782c7de45901f # v1.345.0
+        with:
+          ruby-version: "4.0"
+
+      - name: Install the bundle
+        run: bundle install
+
+      - name: Run the tests
+        run: bundle exec rake test:ruby
