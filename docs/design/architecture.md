@@ -1,6 +1,6 @@
 # Architecture
 
-This page explains how **Stryker (for Ruby)** is put together: the pipeline a run goes through, the ports where it meets test frameworks, processes, configuration files, and reports, and the values and events that pass between the parts. Read it to see where a piece of code belongs and which way dependencies point. The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page explains how **Stryker (for Ruby)** is put together: the pipeline a run goes through, the two kinds of process that run its stages, the ports where it meets test frameworks, processes, configuration files, and reports, and the values and events that pass between the parts. Read it to see where a piece of code belongs and which way dependencies point. The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 **Stryker (for Ruby)** is a sibling of StrykerJS, Stryker.NET, and Stryker4s, not a plugin of any of them. It shares their concepts, their mutator names, the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema), the `mutation-testing-elements` HTML component, and the Stryker dashboard. Readers who know StrykerJS will find its stages here under the same names: a dry run, a plan, mutant runs, and reporters.
 
@@ -31,13 +31,41 @@ Solid arrows hand values to the next stage. Dotted arrows show the domain events
 1. **Configure.** A config source reads `stryker.config.json` or `stryker.config.yml`, whose options have StrykerJS's camelCase names ([#3](https://github.com/setdef/stryker_for_ruby/issues/3)). Options from the command line override the file's. The result is one `Config` value.
 2. **Find files.** The `mutate` patterns select the files to mutate, relative to the project's root. A path that resolves outside the root is an error.
 3. **Parse and find sites.** Prism parses each file. Each mutator walks the tree and returns a `Mutant` for each change it makes, with the mutator's name in the shared naming scheme and the mutant's location in the original source. Every mutant gets an integer ID that is unique in the run.
-4. **Instrument.** The instrumenter produces instrumented source for each file, holding every mutant in the file behind a switch.
-5. **Load.** The loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
+4. **Instrument.** The instrumenter produces instrumented source for each file, holding every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from.
+5. **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
 6. **Dry run.** Every test runs once with no mutant active, and the switches record which tests reach which mutants. The dry run fails when a test fails, or when an instrumented file loaded without going through the hook. [Coverage](coverage.md) specifies the hits and buckets.
 7. **Plan mutant runs.** From the dry run's map, each mutant gets the status `NoCoverage`, a static run, or a runtime run of the tests that reach it, with a time limit taken from the dry-run times of those tests.
 8. **Run each mutant in isolation.** An isolation adapter runs each planned run in a clean process: a forked child, a process from the Windows pool, or a fresh process for a static mutant. [Loading and isolation](loading-and-isolation.md#isolation) specifies each.
 9. **Collect results.** Each run's outcome becomes a status from the shared schema: `Killed` when a test failed, `Survived` when every test passed, `Timeout` when the run passed its time limit, and `RuntimeError` when the run ended in an error that isn't a test failure.
 10. **Report.** When the last result is in, reporters write the results. The JSON reporter writes a report that validates against the shared schema, and the HTML reporter writes a page that shows that report with `mutation-testing-elements`.
+
+## Two kinds of process
+
+A run has two kinds of process. The orchestrator is the process that `stryker run` starts. It runs stages 1 to 4, 7, 9, and 10, and its isolation adapter starts the project processes and waits for their results. A project process loads the project's code: it runs stages 5 and 6, and the mutant runs of stage 8. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
+
+```mermaid
+flowchart LR
+  subgraph O["Orchestrator: loads Prism and refract"]
+    direction TB
+    S1["1 to 4. Configure, find files, parse, instrument"]
+    S7["7. Plan"]
+    S9["9. Collect results"]
+    S10["10. Report"]
+  end
+  CA[("Cache of instrumented source, in a temporary directory")]
+  subgraph PP["Project processes: load only the runtime"]
+    direction TB
+    S5["5. Load, through the hook"]
+    S6["6. Dry run"]
+    S8["8. Mutant runs"]
+  end
+  S1 -- writes --> CA
+  CA -- read by the hook --> S5
+  S6 -- results over pipes --> S7
+  S8 -- results over pipes --> S9
+```
+
+Prism and refract load only in the orchestrator, where stages 3 and 4 use them. A project process loads only the runtime of **Stryker (for Ruby)**, which includes the hook, the switch, and the hit recorder, and which uses nothing outside the standard library.
 
 ## Ports and adapters
 
@@ -125,11 +153,14 @@ module Stryker
     def call: (event event) -> void
   end
 
+  # A value that a JSON document can hold.
+  type json_value = String | Integer | Float | bool | nil | Array[json_value] | Hash[String, json_value]
+
   # Reads options from one kind of configuration file.
   interface _ConfigSource
     # Returns the file's options, keyed by their camelCase names, or nil when
     # the file doesn't exist.
-    def read: () -> Hash[String, untyped]?
+    def read: () -> Hash[String, json_value]?
   end
 end
 ```
@@ -196,6 +227,7 @@ Domain-driven design's tactical patterns, such as repositories, aggregates, and 
 
 ## Related
 
-- [Loading and isolation](loading-and-isolation.md), for the hook and the processes each run gets.
+- [Loading and isolation](loading-and-isolation.md), for the two kinds of process, the cache, the hook, and the processes each run gets.
+- [Mutant placement](mutant-placement.md), for how the instrumenter places each switch.
 - [Coverage](coverage.md), for how the dry run maps tests to mutants.
 - [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md), for why every mutant runs in a clean process.
