@@ -1,0 +1,7 @@
+.idea/
+tmp/
+coverage/
+vendor/bundle/
+.bundle/
+*.gem
+*.rbc

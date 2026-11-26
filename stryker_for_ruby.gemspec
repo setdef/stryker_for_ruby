@@ -1,0 +1,24 @@
+# frozen_string_literal: true
+
+Gem::Specification.new do |spec|
+  spec.name = "stryker_for_ruby"
+  # Bundler evaluates this file before the tests start SimpleCov, so it reads
+  # the version as text. Requiring lib/stryker/version would run its lines
+  # before coverage measures them.
+  spec.version = File.read(File.expand_path("lib/stryker/version.rb", __dir__))[/VERSION = "([^"]+)"/, 1]
+  spec.authors = ["setdef"]
+  spec.summary = "Mutation testing for Ruby and ERB."
+  spec.description = spec.summary
+  spec.homepage = "https://github.com/setdef/stryker_for_ruby"
+  spec.license = "Apache-2.0"
+
+  spec.required_ruby_version = ">= 3.3"
+
+  spec.metadata["rubygems_mfa_required"] = "true"
+  spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
+  spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/trunk/CHANGELOG.md"
+
+  spec.files = Dir["lib/**/*.rb", "sig/**/*.rbs", "README.md", "CHANGELOG.md", "LICENSE"]
+  spec.require_paths = ["lib"]
+end

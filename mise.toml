@@ -1,0 +1,14 @@
+# mise 2026.8.9 and later trust the configuration that `mise install` and
+# `mise exec` load, so a computer that has never trusted this folder runs
+# them with no prompt. An older mise stops at the trust prompt or at a key it
+# doesn't know, so this is the oldest mise that reads this file.
+min_version = "2026.10.11"
+
+[tools]
+# The development version of Ruby. mise builds it with ruby-build.
+ruby = "4.1-dev"
+python = "3.14"
+pre-commit = "latest"
+# reuse lint checks licensing (rake reuse:lint). charset-normalizer, pure
+# Python, detects file encodings without libmagic, which python-magic needs.
+"pipx:reuse" = { version = "6.3.0", extras = "charset-normalizer" }
