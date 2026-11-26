@@ -104,7 +104,7 @@ Ruby has no `++` or `--`, so `count += 1` is the idiom that StrykerJS's `UpdateO
 
 `||=` becomes `&&=`, as in StrykerJS, and not `=`. The common mistake with `@total ||= compute` is a memoized value that is `nil` or `false`, and `&&=` leaves the target as it started, so a test that reads the value once kills it. The mutant `@total = compute` gives the same value on every call and differs only in how often `compute` runs, so it would survive wherever the value is right, and its reader learns nothing about the value.
 
-Like `ArithmeticOperator`, it makes no mutant of `+=`, `-=`, `*=`, `/=`, or `%=` when the right side is a string literal.
+It makes no mutant when the right side is a string literal (`StringNode`, `InterpolatedStringNode`, or `XStringNode`), for every operator except `||=` and `&&=`, as StrykerJS skips it. `||=` and `&&=` keep their pairs, which swap one for the other whatever the right side holds.
 
 ### `BlockStatement`
 
@@ -590,7 +590,7 @@ Mutants in an ERB template come only from sites inside one tag ([#9](https://git
 - **`CallExpression` and `StringLiteral` in an output tag change what the page renders.** `<%= order.total %>` becomes `<%= nil %>`, which renders nothing. A test that checks the rendered page kills the mutant.
 - **Every ERB mutant is a runtime mutant,** because a template runs only while it renders ([#9](https://github.com/setdef/stryker_for_ruby/issues/9)), so `static` is `false`.
 - **`location` is in the template file,** at the template's lines and columns.
-- **The disable comment** is a Ruby comment: it goes inside a Ruby tag, or in an ERB comment tag, as `<%# Stryker disable next-line all %>`. Its next line is the next line of the template that holds a Ruby tag. StrykerJS reads a disable comment in the comment syntax of the embedded language, inside the `<script>` block of a `.vue` or `.html` file, and reads no HTML comment, because it parses no markup for mutants. **Stryker (for Ruby)** mutates no template markup either, so there is no markup-comment form to follow. The extractor blanks an ERB comment tag and a tag whose code is a one-line `#` comment ([The extraction rules](erb.md#the-extraction-rules)), so Prism doesn't list a disable comment written in either, and the instrumenter reads such a comment from the template's text.
+- **The disable comment** is a Ruby comment: it goes inside a Ruby tag, or in an ERB comment tag, as `<%# Stryker disable next-line all %>`. Its next line is the next line of the template that holds a Ruby tag. StrykerJS reads a disable comment in the comment syntax of the embedded language, inside the `<script>` block of a `.vue` or `.html` file, and reads no HTML comment, because it parses no markup for mutants. **Stryker (for Ruby)** mutates no template markup either, so there is no markup-comment form to follow. The extractor blanks an ERB comment tag and a tag whose code is a one-line `#` comment ([The extraction rules](erb.md#the-extraction-rules)), so Prism lists no comment for either. The extractor records the text and line of each, and the disable-comment reader reads those along with Prism's comments, so a disable comment in either form takes effect.
 
 The sites that get no mutant are the same in a template as in a `.rb` file.
 

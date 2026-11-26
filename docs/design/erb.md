@@ -37,6 +37,7 @@ The extractor applies the regexp to the template with `String#scan`. Each match 
 3. Put `;` on the byte that follows the code. That byte is always the first byte of the tag's end (`-`, `=`, or the `%` of `%>`), so the `;` never overwrites a CR or an LF. The `;` ends each tag's code as a statement, the way Erubi's compiled output does, so the code of two tags can't run together.
 4. Leave a tag with the indicator `#` (a comment tag) or `%` (`<%%`, which Erubi renders as the text `<%`) blank. It holds no code.
 5. Leave a tag blank when its code is a one-line `#` comment: spaces and tabs, then `#`, then no CR or LF. Such a tag holds no code either.
+6. Record the text and the line of each tag it blanks as a comment: a comment tag, and a tag whose code is a one-line `#` comment. Prism sees only blanks there, so it lists no comment for them. The [disable-comment](mutators.md#the-disable-comment) reader reads these records along with Prism's comments, so a disable comment takes effect in either form.
 
 The extracted text is what Prism parses. Its byte offsets are the template's byte offsets, so a Prism location in the extracted text is a location in the template. This template, with a space shown as `.`:
 
