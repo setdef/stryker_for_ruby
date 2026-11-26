@@ -20,7 +20,7 @@ It is a community port of [Stryker Mutator](https://stryker-mutator.io), with no
 
 In Markdown prose, write the name as `**Stryker (for Ruby)**`. In plain text, write `Stryker (for Ruby)`. The repository and the gem are `stryker_for_ruby`, the constant is `Stryker`, and the require is `require "stryker"`.
 
-The project supports Ruby 4.0 and later. Ruby 3.3 and 3.4 may work but are unsupported, and their known issues are listed in [`docs/older-ruby.md`](docs/older-ruby.md). The project's owner ruled in [#6](https://github.com/setdef/stryker_for_ruby/issues/6) that version 1.0.0 runs on CRuby (MRI) only. Write code that runs on Ruby 4.0.
+The project supports Ruby 4.0 and later. Ruby 3.3 and 3.4 may work but are unsupported, and their known issues are listed in [`docs/older-ruby.md`](docs/older-ruby.md). Don't hunt for new problems on them, but add any you find to that page. The project's owner ruled in [#6](https://github.com/setdef/stryker_for_ruby/issues/6) that version 1.0.0 runs on CRuby (MRI) only. Write code that runs on Ruby 4.0.
 
 ## Committing to the trunk
 
@@ -29,11 +29,18 @@ The project practices trunk-based development. `trunk` is the only long-lived br
 1. Run `git fetch`, then `git rebase origin/trunk`.
 2. Make one change that keeps every check passing and could ship on its own.
 3. Run the pre-push gate.
-4. Push straight to `trunk`, and start the next change. A change is done when it is on `trunk`.
+4. Read the gate's exit status, then push straight to `trunk`, and start the next change. A change is done when it is on `trunk`.
 
 Keep the pre-push gate to about a minute. It runs the linters, the type checker, and the tests your change can affect, chosen by tooling that follows the code's dependencies, never by reading the diff. Where no tool can select tests that way, run the full suite. A slow or unreliable gate is a defect to fix, never a reason to skip a check, move it to after the push, or batch commits so that it runs once for several.
 
+Before a push that changes code or tests, also check what the gate on your computer can't:
+
+- **Run the tests on Ruby 4.0,** the oldest supported version, as well as on the Ruby version `mise.toml` lists, which is a development version. Default gems and error messages differ between them. Delete `coverage/` first, then run `rake test:ruby` with `mise exec ruby@4.0.10`, using a separate `BUNDLE_PATH`.
+- **Check code or tests that behave differently on Windows on Windows.** This covers anything that reads `File::ALT_SEPARATOR` or `Gem.win_platform?`, and anything that depends on paths, line endings, `fork`, or signals. Run the whole test suite there, never one file: a single file always fails the coverage floor, and that failure hides the real one.
+- **Check a change to `.github/workflows/*.yml`** by loading the file with `YAML.safe_load_file` and running each changed `run:` string exactly as YAML parsed it.
+
 - **When the push is refused because `trunk` moved,** rebase, run the gate again, and push again. Rerun it every time, even when the incoming commits look unrelated: two changes can rebase cleanly and still break each other.
+- **Push only after you have read the gate's exit status.** Never chain `git push` onto a gate run, because the push then happens whatever the gate says.
 - **After you push, wait for nothing.** Don't watch a CI run or poll for its result. Check work before the push, not after it.
 - **Keep every push releasable.** When a goal takes several commits, hide the unfinished code behind a feature flag or build it by branch by abstraction, and land it in slices.
 - **Every agent pushes the commits it wrote.** Nobody collects other agents' commits to land them, and nobody sets a landing order or asks others to stop pushing.
@@ -90,6 +97,10 @@ For example: `feat(mutators): add a string literal mutator`, or `docs: describe 
 ## Quality gates
 
 `bundle exec rake` runs the quality gates: RubyCritic, RuboCop, Steep, test coverage, documentation coverage, `docs:placement` (which fails on a doc comment in a `.rb` file), and `reuse lint`. Every change has to pass all of them, with zero errors and zero warnings. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
+
+Coverage is 100% for each file, on every system in CI. A test skipped on one system can drop that system's branch coverage below 100% and turn its job red, even though every test passes. Never skip a test on one system to make it pass. Pass the system-dependent value in, such as a path separator or a platform flag, so the test runs everywhere.
+
+When a gate (a RubyCritic score, a Reek smell, a RuboCop length limit) pushes the design, the change it pushes you to must be good design on its own terms: a module with one clear responsibility and a name for it, which a reader would agree belongs apart. Never make a split, extraction, or rename whose only merit is that the gate passes. If the only compliant change makes the code worse, stop and report it, with the options you found.
 
 ## Architecture decisions
 
