@@ -1,0 +1,40 @@
+module Stryker
+  class Instrumenter
+    # Finds the nodes in a condition that can't hold a switch because Ruby
+    # gives a construct under them its meaning only where it stands in the
+    # condition: a regexp literal, which Ruby matches against `$_`, a
+    # flip-flop, and an integer literal as a flip-flop's endpoint, which Ruby
+    # compares with `$.`. A switch would move the construct into one of its
+    # branches, out of the condition. Prism makes such a regexp literal a
+    # `MatchLastLineNode` or an `InterpolatedMatchLastLineNode`, and makes a
+    # regexp literal elsewhere a `RegularExpressionNode`, so a node outside a
+    # condition never holds one.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # condition = Prism.parse("p :y if !/foo/\n").value.statements.body.first.predicate
+    # Stryker::Instrumenter::Conditional.at?(condition, nil)
+    # # => true
+    # Stryker::Instrumenter::Conditional.at?(condition.receiver, condition)
+    # # => true
+    # ```
+    module Conditional
+      # Whether `node` is such a construct, or holds one through `!`, `not`,
+      # `&&`, `||`, `and`, `or`, or parentheses. A conditional that holds one
+      # as its condition, such as an `if`, holds it in the condition of each
+      # branch of a switch, so this is false for it.
+      #
+      # - `node`: Prism::node, the node.
+      # - `parent`: Prism::node, its parent, or nil at the root.
+      def self.at?: (Prism::node node, Prism::node? parent) -> bool
+
+      CONSTRUCTS: Array[singleton(Prism::Node)]
+      CONNECTIVES: Array[singleton(Prism::Node)]
+
+      private def self.holds?: (Prism::node node) -> bool
+
+      private def self.connective?: (Prism::node node) -> bool
+    end
+  end
+end

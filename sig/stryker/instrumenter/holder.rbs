@@ -27,7 +27,13 @@ module Stryker
     # - a regexp with named captures on the left of `=~`, and that `=~`
     #   call, so the switch goes on the whole match;
     # - the bare right side of an assignment, such as `1, 2` in
-    #   `a, b = 1, 2`.
+    #   `a, b = 1, 2`;
+    # - an integer literal as a flip-flop's endpoint, such as `2` in
+    #   `if 2..4`, and a node in a condition that holds a regexp literal or
+    #   a flip-flop through `!`, `not`, `&&`, `||`, `and`, `or`, or
+    #   parentheses, such as `!/foo/` in `if !/foo/`, so the switch goes on
+    #   the whole conditional, where the construct stays in the condition.
+    #   `Stryker::Instrumenter::Conditional` finds these.
     module Holder
       # Whether `node` can hold a switch, given where it stands.
       #

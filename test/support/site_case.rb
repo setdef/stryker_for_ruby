@@ -62,15 +62,17 @@ module SiteCase
   # the needle to replace, counted from 0. The switch of every mutant must wrap
   # a node of the class +holder+, the node that the site's row in the
   # placement table names, so that a switch on another node fails even when
-  # the program prints the same.
-  def assert_site(source, *edits, holder:)
+  # the program prints the same. With +warnings+ false, what the programs write
+  # to standard error doesn't count, for a site where Ruby warns once for each
+  # branch of the switch, as the placement design's traps say.
+  def assert_site(source, *edits, holder:, warnings: true)
     mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
     result = Stryker::Instrumenter.instrument(source, mutants)
 
     assert_empty(result.skipped)
     assert_equal(source.count("\n"), result.source.count("\n"), "The instrumented source has other lines.")
     mutants.each { |mutant| assert_switch_wraps(holder, result.source, mutant) }
-    assert_runs_like_its_mutants(source, result.source, mutants)
+    assert_runs_like_its_mutants(source, result.source, mutants, warnings:)
   end
 
   def assert_switch_wraps(holder, instrumented, mutant)
@@ -95,20 +97,22 @@ module SiteCase
     tail.is_a?(Prism::IfNode) ? last_branch(tail) : tail
   end
 
-  def assert_runs_like_its_mutants(source, instrumented, mutants)
+  def assert_runs_like_its_mutants(source, instrumented, mutants, warnings: true)
     Dir.mktmpdir do |folder|
-      original = run_ruby(folder, source)
+      original = run_ruby(folder, source, warnings:)
 
-      assert_equal(original, run_ruby(folder, instrumented), "With no mutant active:\n#{instrumented}")
-      mutants.each { |mutant| assert_runs_like_its_mutant(folder, source, original, instrumented, mutant) }
+      assert_equal(original, run_ruby(folder, instrumented, warnings:), "With no mutant active:\n#{instrumented}")
+      mutants.each { |mutant| assert_runs_like_its_mutant(folder, [source, instrumented], original, mutant, warnings) }
     end
   end
 
-  def assert_runs_like_its_mutant(folder, source, original, instrumented, mutant)
-    plain = run_ruby(folder, plain_mutant(source, mutant))
+  def assert_runs_like_its_mutant(folder, programs, original, mutant, warnings)
+    source, instrumented = programs
+    plain = run_ruby(folder, plain_mutant(source, mutant), warnings:)
+    switched = run_ruby(folder, instrumented, mutant.id, warnings:)
 
     refute_equal(original, plain, "Mutant #{mutant.id} changes nothing that the program shows.")
-    assert_equal(plain, run_ruby(folder, instrumented, mutant.id), "With mutant #{mutant.id} active:\n#{instrumented}")
+    assert_equal(plain, switched, "With mutant #{mutant.id} active:\n#{instrumented}")
   end
 
   def instrument(source, *edits)
@@ -145,13 +149,14 @@ module SiteCase
 
   # The output of +source+ run as a program, with the mutant +active+ if one
   # is given: what it printed, what it wrote to standard error, and its exit
+  # status, or, with +warnings+ false, only what it printed and its exit
   # status. With +hits+, the program writes the hits it recorded to that file.
-  def run_ruby(folder, source, active = nil, hits: nil)
+  def run_ruby(folder, source, active = nil, hits: nil, warnings: true)
     File.write(File.join(folder, "active.rb"), ACTIVE)
     File.binwrite(File.join(folder, "case.rb"), source)
     command = [RbConfig.ruby, "--disable-gems", "-r./active", "case.rb"]
     output, errors, status = Open3.capture3(environment(active, hits), *command, chdir: folder)
-    [output, errors, status.exitstatus]
+    warnings ? [output, errors, status.exitstatus] : [output, status.exitstatus]
   end
 
   def environment(active, hits)

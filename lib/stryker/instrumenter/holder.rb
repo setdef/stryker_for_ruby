@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "prism"
+require_relative "conditional"
 
 module Stryker
   class Instrumenter
@@ -70,7 +71,7 @@ module Stryker
 
       def self.holds?(node, parent, grandparent)
         KINDS.include?(node.class) && !part?(node, parent) && !label?(node) && !bare_array?(node) &&
-          !matched_with_captures?(node, parent, grandparent)
+          !matched_with_captures?(node, parent, grandparent) && !Conditional.at?(node, parent)
       end
 
       def self.part?(node, parent)
