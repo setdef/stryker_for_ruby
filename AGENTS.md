@@ -1,10 +1,20 @@
 # Working on Stryker (for Ruby)
 
+## The Tao of Stryker (for Ruby)
+
+Tests should catch bugs. Mutation testing checks whether they do. It makes a small change to the code, the kind of mistake a programmer makes, and runs the tests. If no test fails, the tests would have missed that bug.
+
+**Stryker (for Ruby)** does this for Ruby and ERB projects, whoever wrote the code. Each mutant that survives shows you something: a test to write, a test to strengthen, or code to remove.
+
+It must tell the truth. A mutant survives only if the tests really ran against it and really passed. **Stryker (for Ruby)** changes nothing in your project, and it fails loudly rather than guess.
+
+It is a Stryker. It uses the same names, scores, reports, and dashboard as the other Stryker tools, so the Stryker Mutator organization can adopt it.
+
 These are the working rules for everyone who changes this repository: people, and the AI agents they run. They are the project's shared rules, so they apply to every contributor's agents alike.
 
 ## What the project is
 
-Stryker (for Ruby) is a mutation testing framework for Ruby and ERB. It tests your tests: it inserts bugs, called mutants, into your source code one at a time, runs your tests against each, and reports every mutant that no test caught. Each of those points to a missing or weak test.
+Stryker (for Ruby) inserts bugs, called mutants, into your source code one at a time, runs your tests against each, and reports every mutant that no test caught.
 
 It is a community port of [Stryker Mutator](https://stryker-mutator.io), with no affiliation to that project. The maintainers hope to make it an official project of the [Stryker Mutator organization](https://github.com/stryker-mutator), next to [StrykerJS](https://github.com/stryker-mutator/stryker-js), [Stryker.NET](https://github.com/stryker-mutator/stryker-net), and [Stryker4s](https://github.com/stryker-mutator/stryker4s). Those projects show how Stryker behaves in other languages.
 
