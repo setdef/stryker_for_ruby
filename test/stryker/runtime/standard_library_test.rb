@@ -14,9 +14,8 @@ class StandardLibraryTest < Minitest::Test
 
   parallelize_me!
 
-  # What a project process loads: the runtime, every value that it writes,
-  # reads, or holds one of, and the entry point of the isolation adapters,
-  # with the code that runs a mutant run there. A value that crosses a pipe converts to
+  # What a project process loads: the runtime, and every value that it
+  # writes, reads, or holds one of. A value that crosses a pipe converts to
   # JSON with the json that Ruby ships, which a project's bundle can replace
   # with any version, so none of them loads another library.
   REQUIRES = <<~RUBY
@@ -32,7 +31,6 @@ class StandardLibraryTest < Minitest::Test
     require "stryker/mutant_result"
     require "stryker/config"
     require "stryker/events"
-    require "stryker/isolation/project_process"
   RUBY
   private_constant(:REQUIRES)
 

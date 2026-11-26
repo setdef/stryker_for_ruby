@@ -1,8 +1,6 @@
 module Stryker
   # What a value needs to cross a pipe between two processes of a run: it
   # converts to a JSON object and back, and a round trip gives an equal value.
-  # [Loading and isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-protocol)
-  # says how results travel, one JSON object per line.
   #
   # A class that includes it is a `Data` class. Including it also extends the
   # class with `Stryker::JsonValue::Reading`. The JSON object of a value has
