@@ -130,9 +130,9 @@ A switch that moves out to a `def`, to a statement in a class body, or to a cons
 
 Adjacent string literals joined by a backslash at the end of a line, such as `"a" \` with `"b"` on the next line, can't hold a switch around one part: a switch there gives text that doesn't parse. Prism parses them as one `InterpolatedStringNode` whose parts are `StringNode`s, and a mutant of either part takes its switch on that enclosing `InterpolatedStringNode`. The standard library's `unicode_normalize/tables.rb` has strings written this way.
 
-Three constructs mean what they mean only where they stand in a condition: a regexp literal, which Ruby matches against `$_`, a flip-flop, and an integer literal as a flip-flop's endpoint, which Ruby compares with `$.`. Prism makes the first a `MatchLastLineNode` or an `InterpolatedMatchLastLineNode`, and the second a `FlipFlopNode`. A switch would move such a construct into one of its branches, out of the condition, so no node that holds one can hold a switch: neither the construct itself nor a `!`, `not`, `&&`, `||`, `and`, `or`, or pair of parentheses around it. The switch goes on the whole conditional, such as the `if`, the `while`, or the ternary, where the construct stays in the condition of each branch. In `p :y if !/foo/`, a mutant of `/foo/` takes its switch on the `if`.
+Three constructs mean what they mean only where they stand in a condition: a regexp literal, which Ruby matches against `$_`, a flip-flop, and an integer literal as a flip-flop's endpoint, which Ruby compares with `$.`. Prism makes the first a `MatchLastLineNode` or an `InterpolatedMatchLastLineNode`, and the second a `FlipFlopNode`. A switch would move such a construct into one of its branches, out of the condition, so no node that holds one can hold a switch: neither the construct itself nor a `!`, `not`, `&&`, `||`, `and`, `or`, pair of parentheses, or `begin ... end` around it. The switch goes on the whole conditional, such as the `if`, the `unless`, the `while`, or the ternary, where the construct stays in the condition of each branch. In `p :y if !/foo/`, a mutant of `/foo/` takes its switch on the `if`.
 
-When no enclosing node can hold a switch, the site gets no mutant. That is the case for code inside `BEGIN { }`, which Ruby allows only at the top level of a file. It is also the case for a class or module name, and for a statement of a kind the tables don't name, such as `@count = 0` or an `unless`, at the top level of a file or directly in a class or module body, since neither a `ClassNode` nor a `ModuleNode` holds a switch.
+When no enclosing node can hold a switch, the site gets no mutant. That is the case for code inside `BEGIN { }`, which Ruby allows only at the top level of a file. It is also the case for a class or module name, and for a statement of a kind the tables don't name, such as `@count = 0` or a `for` loop, at the top level of a file or directly in a class or module body, since neither a `ClassNode` nor a `ModuleNode` holds a switch.
 
 ## Sites that get no mutant
 
@@ -194,23 +194,42 @@ Only the node kinds that the rows with "yes" name, and the kinds that the rows w
 | Regexp with a capture read through `$1` | `/(b)/` to `/(c)/` | `RegularExpressionNode` | yes |
 | Regexp with named captures, on the left of `=~` | `/(?<x>\d+)/` to `/(?<y>\d+)/` | `RegularExpressionNode` | no: the switch goes on the whole `=~`, a `MatchWriteNode` |
 
+### Reads and keywords
+
+| Site | Example mutant | Prism node | Holds a switch |
+| - | - | - | - |
+| Constant | `p X`, `X` to `Y` | `ConstantReadNode` | yes |
+| Constant path | `A::X` to `A::Y` | `ConstantPathNode` | yes |
+| The parent of a constant path, or a superclass | `A::X`, `A` to `B` | `ConstantReadNode` | yes |
+| The constant path an assignment writes to | `A::B = 1`, `A::B` to `A::C` | `ConstantPathNode` | no: it can't stand in parentheses there, so the switch goes on the nearest enclosing node that holds one |
+| Instance, class, or global variable | `@x` to `@y` | `InstanceVariableReadNode`, `ClassVariableReadNode`, `GlobalVariableReadNode` | yes |
+| A global's name in `alias` | `alias $y $x`, `$x` to `$z` | `GlobalVariableReadNode` | no: the switch goes on the `alias`, an `AliasGlobalVariableNode` |
+| `self` | `p self`, `self` to `1` | `SelfNode` | yes |
+| `self` as the receiver of a call, an index, or an assignment to either | `self.x = 1`, `self` to `C.new` | `SelfNode` | no: Ruby calls a private method through a receiver only when the receiver is the keyword `self`, so the switch goes on the nearest enclosing node that holds one, such as the call |
+| `nil`, `true`, `false` | `true` to `false` | `NilNode`, `TrueNode`, `FalseNode` | yes |
+| Parentheses | `(1 + 2)` to `(1 - 2)` | `ParenthesesNode` | yes |
+
 ### Conditions and loops
 
 | Site | Example mutant | Prism node | Holds a switch |
 | - | - | - | - |
 | Condition of `if`, `unless`, `elsif`, `while`, `until`, a ternary, or a modifier | `a > 1` to `a <= 1` | the condition's node | yes |
-| Regexp literal as a condition, bare or under `!`, `not`, `&&`, `\|\|`, `and`, `or`, or parentheses, as in `if /foo/` or `if !/foo/` | `/foo/` to `/bar/` | `MatchLastLineNode`, `InterpolatedMatchLastLineNode` | no: inside a switch, Ruby reads it as a `Regexp`, which is always true, and not as a match against `$_`, so the switch goes on the whole conditional, such as the `if` |
-| `!`, `not`, `&&`, `\|\|`, `and`, `or`, or parentheses in a condition, around a regexp literal or a flip-flop | `!/foo/` to `/foo/` | `CallNode`, `AndNode`, `OrNode`, `ParenthesesNode` | no: in a switch, the regexp literal or the flip-flop no longer stands in the condition, so the switch goes on the whole conditional |
+| Regexp literal as a condition, bare or under `!`, `not`, `&&`, `\|\|`, `and`, `or`, parentheses, or `begin ... end`, as in `if /foo/` or `if !/foo/` | `/foo/` to `/bar/` | `MatchLastLineNode`, `InterpolatedMatchLastLineNode` | no: inside a switch, Ruby reads it as a `Regexp`, which is always true, and not as a match against `$_`, so the switch goes on the whole conditional, such as the `if` |
+| `!`, `not`, `&&`, `\|\|`, `and`, `or`, parentheses, or `begin ... end` in a condition, around a regexp literal or a flip-flop | `!/foo/` to `/foo/` | `CallNode`, `AndNode`, `OrNode`, `ParenthesesNode`, `BeginNode` | no: in a switch, the regexp literal or the flip-flop no longer stands in the condition, so the switch goes on the whole conditional |
 | Whole ternary | `a > 1 ? :y : :n` to `:z` | `IfNode` | yes |
+| Whole `unless`, also as a modifier | `unless` to `if` | `UnlessNode` | yes |
+| Whole `case`/`when` | `else p :other` to `else p :another` | `CaseNode` | yes |
 | Whole `elsif` | `elsif a > 1 ... end` to `elsif a > 0 ... end` | `IfNode` | no: an `elsif` in parentheses doesn't parse, so the switch goes on the whole `if` |
 | Body of a `begin ... end while` or `begin ... end until` loop | `begin ... end` to `nil` | `BeginNode` | no: Ruby runs the body of `begin ... end while` once before it tests the condition, but a wrapped `begin ... end` makes an ordinary modifier loop, which tests first, so the switch goes on the whole loop, a `WhileNode` or `UntilNode` |
 | A statement inside a `begin ... end while` loop | `i += 1` to `nil` | the statement's node | yes |
+| `begin ... end`, also with `rescue` or `ensure` | `begin ... end` to `2` | `BeginNode` | yes |
+| A body with `rescue` or `ensure` and no `begin` keyword, as in a `def` or a `do ... end` block | `rescue ... :rescued` to `rescue ... :saved` | `BeginNode` | no: it can't stand in parentheses, so the switch goes on the nearest enclosing node that holds one, such as the `def` or the call that takes the block |
 | `case`/`when`: value, subject, splat's expression, condition without a subject, body statement | `when 1` to `when 2` | the node | yes |
 | `case`/`in` pattern | `in Integer` to `in String` | the pattern's node | no: the switch goes on the whole `case`/`in` |
 | Whole `case`/`in` | the `case` with another pattern | `CaseMatchNode` | yes |
 | `case`/`in`: pinned expression, guard, body statement | `^(2 + 3)` to `^(9)` | the node | yes |
 | `x in pattern`, `x => pattern` | `x in Integer` to `x in String` | `MatchPredicateNode`, `MatchRequiredNode` | yes |
-| Flip-flop, whole, also under `!`, `not`, `&&`, `\|\|`, `and`, `or`, or parentheses | `(i == 2)..(i == 4)` to `false` | `FlipFlopNode` | no: inside a switch, Ruby reads it as a `Range` and raises `ArgumentError`, so the switch goes on the whole conditional, such as the `if` |
+| Flip-flop, whole, also under `!`, `not`, `&&`, `\|\|`, `and`, `or`, parentheses, or `begin ... end` | `(i == 2)..(i == 4)` to `false` | `FlipFlopNode` | no: inside a switch, Ruby reads it as a `Range` and raises `ArgumentError`, so the switch goes on the whole conditional, such as the `if` |
 | Flip-flop endpoint | `i == 2` to `i == 3` | the endpoint's node | yes |
 | Integer literal as a flip-flop endpoint, as in `if 2..4` | `2` to `3` | `IntegerNode` | no: Ruby compares an integer endpoint with `$.` only while it is a literal there, so the switch goes on the whole conditional |
 

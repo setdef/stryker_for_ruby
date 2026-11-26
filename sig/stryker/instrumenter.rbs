@@ -23,7 +23,7 @@ module Stryker
   # - `:no_switch_site`: no node around the mutant's site can hold a switch:
   #   inside `BEGIN { }`, or at a class or module name, or at a statement of
   #   a kind that the placement table doesn't name, such as `@count = 0` or
-  #   an `unless`, at the top level of a file or directly in a class or
+  #   a `for` loop, at the top level of a file or directly in a class or
   #   module body.
   # - `:no_one_line_form`: the mutant's text spans several lines, and has no
   #   form on one line, as a regexp with a line break inside it, or its plain

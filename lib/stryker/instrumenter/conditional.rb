@@ -6,14 +6,14 @@ module Stryker
   class Instrumenter
     module Conditional
       CONSTRUCTS = [Prism::FlipFlopNode, Prism::InterpolatedMatchLastLineNode, Prism::MatchLastLineNode].freeze
-      CONNECTIVES = [Prism::AndNode, Prism::OrNode, Prism::ParenthesesNode, Prism::StatementsNode].freeze
+      CONNECTIVES = [Prism::AndNode, Prism::BeginNode, Prism::OrNode, Prism::ParenthesesNode, Prism::StatementsNode].freeze
       private_constant(:CONNECTIVES, :CONSTRUCTS)
 
       def self.at?(node, parent)
         # Ruby matches a regexp literal against $_, reads a range as a
         # flip-flop, and compares an integer endpoint of a flip-flop with $.,
         # only where it stands in a condition, or under !, not, &&, ||, and,
-        # or, or parentheses there.
+        # or, parentheses, or begin ... end there.
         (node.is_a?(Prism::IntegerNode) && parent.is_a?(Prism::FlipFlopNode)) || holds?(node)
       end
 

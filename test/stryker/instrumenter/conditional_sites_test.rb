@@ -40,6 +40,20 @@ class ConditionalSitesTest < Minitest::Test
     assert_regexp_condition("p :y if !(/foo/)\n")
   end
 
+  def test_a_regexp_literal_in_parentheses_in_a_condition
+    assert_regexp_condition("p :y if (/foo/)\n")
+  end
+
+  def test_a_regexp_literal_in_a_begin_in_a_condition
+    assert_regexp_condition("p :y if begin; /foo/; end\n")
+  end
+
+  def test_a_regexp_literal_as_the_condition_of_an_unless
+    source = "$_ = 'foo'\nunless /foo/\n  p :n\nend\np :done\n"
+
+    assert_site(source, ["/foo/", "/bar/"], holder: Prism::UnlessNode, warnings: false)
+  end
+
   def test_an_interpolated_regexp_under_a_not_in_a_condition
     source = "$_ = 'foo'\ns = 'fo'\np :y if !/\#{s}o/\np :done\n"
 

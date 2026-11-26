@@ -8,7 +8,7 @@ module Stryker
     # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site)
     # names as holding a switch can hold one, such as a `CallNode`, a
     # `StringNode`, or a `DefNode`. A node of any other kind, such as a
-    # `ClassNode`, an `UnlessNode`, a `MatchLastLineNode`, or a kind that a
+    # `ClassNode`, a `ForNode`, a `MatchLastLineNode`, or a kind that a
     # later Prism adds, can't, so the switch moves out to the nearest
     # enclosing node that can. A kind left off the list costs a coarser
     # switch, where a kind wrongly on it would make code that means

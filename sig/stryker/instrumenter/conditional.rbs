@@ -21,7 +21,8 @@ module Stryker
     # ```
     module Conditional
       # Whether `node` is such a construct, or holds one through `!`, `not`,
-      # `&&`, `||`, `and`, `or`, or parentheses. A conditional that holds one
+      # `&&`, `||`, `and`, `or`, parentheses, or `begin ... end`. A
+      # conditional that holds one
       # as its condition, such as an `if`, holds it in the condition of each
       # branch of a switch, so this is false for it.
       #
