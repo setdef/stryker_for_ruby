@@ -111,6 +111,14 @@ class WalkTest < Minitest::Test
     assert_equal([[1, "First", 4, "9"]], summary(walk("x = 1\n", integers("First", "9"), integers("Second", "9"))))
   end
 
+  def test_numbers_the_mutants_of_the_default_mutators_in_the_order_of_the_catalogs_table
+    result = Prism.parse("!c\nx = a + b\n")
+    mutants = Stryker::Mutators::Walk.new(file: "lib/a.rb", result:).mutants
+
+    assert_equal(%w[ArithmeticOperator BooleanLiteral], mutants.map(&:mutator_name))
+    assert_equal([1, 2], mutants.map(&:id))
+  end
+
   def test_refuses_a_file_that_does_not_parse
     error = assert_raises(ArgumentError) { walk("x = (\n") }
 
