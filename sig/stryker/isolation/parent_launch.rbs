@@ -1,0 +1,56 @@
+module Stryker
+  module Isolation
+    # Starts the parent that forks, as a project process in the project's
+    # folder, with its standard input on a pipe that carries its runs, its
+    # standard output and standard error on files in a temporary folder of
+    # its own, and a pipe of its own for its results, whose descriptor and
+    # folder it learns from its arguments. On Linux and
+    # macOS it leads a new process group. Windows passes a new process no
+    # pipe beyond its standard ones, but Windows has no fork either.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # parent = Stryker::Isolation::ParentLaunch.new(cache_directory, project_root).call("minitest")
+    # parent.receive
+    # # => {"ready" => true}
+    # ```
+    class ParentLaunch
+      # The cache's directory.
+      @directory: String
+
+      # The project's root, where the parent runs.
+      @root: String
+
+      # `Process`, or a stand-in in a test.
+      @process: singleton(::Process)
+
+      # Builds the launch.
+      #
+      # - `directory`: String, the cache's directory.
+      # - `root`: String, the project's root.
+      # - `process`: `Process`, or a stand-in in a test.
+      def initialize: (String directory, String root, ?singleton(::Process) process) -> void
+
+      # Makes the parent's folder, starts the parent, and returns it.
+      #
+      # - `runner`: String, the test runner's name, from the `testRunner`
+      #   option.
+      def call: (String runner) -> ParentProcess
+
+      private
+
+      # Spawns the parent with the test runner `runner`, its output in
+      # `folder`, `input` as its standard input, and a new pipe for its
+      # results, and returns that pipe's read end and the parent's process
+      # ID.
+      def spawn: (String runner, String folder, IO input) -> [IO, Integer]
+
+      # The options of `Process.spawn`: `input` as standard input, standard
+      # output and standard error on files in `folder`, `output` passed on
+      # at its own descriptor, the project's root as the folder, and a group
+      # of its own where the system has groups.
+      def options: (IO input, IO output, String folder) -> Hash[Symbol | IO, IO | String | bool]
+    end
+  end
+end

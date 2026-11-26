@@ -1,0 +1,92 @@
+module Stryker
+  module Isolation
+    # The parent that forks, as the orchestrator holds it: its process, the
+    # pipe that carries its runs, the pipe that carries its lines, and the
+    # temporary folder that holds the files of its and its children's
+    # standard output and standard error.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # parent.await_ready
+    # parent.give(run)
+    # parent.receive
+    # # => {"mutant" => 7, "forked" => 4242}
+    # parent.stop
+    # ```
+    class ParentProcess
+      # How long the parent has to end its children and itself, once its
+      # runs' pipe closes, before it is killed: 10 seconds.
+      GRACE_SECONDS: Integer
+
+      # How long the parent has to load the project's tests and say it is
+      # ready: 300 seconds. It is a fixed limit, and no option sets it.
+      LOAD_SECONDS: Integer
+
+      # The line that says the parent loaded the tests.
+      READY: Hash[String, bool]
+
+      # The text of the error for a parent that ended before it was ready.
+      ENDED: String
+
+      # The text of the error for a parent that wasn't ready in time.
+      SLOW: String
+
+      # The parent's process.
+      @child: Child
+
+      # The pipe that carries the parent's runs.
+      @commands: IO
+
+      # The pipe that carries the parent's lines.
+      @results: IO
+
+      # The folder of the files of the parent's and its children's output.
+      @folder: String
+
+      # Builds the handle.
+      #
+      # - `child`: Stryker::Isolation::Child, the parent's process.
+      # - `pipes`: the write end of the parent's standard input, and the
+      #   read end of its pipe for results.
+      # - `folder`: String, the folder of the output files, which `stop`
+      #   deletes.
+      def initialize: (Child child, [IO, IO] pipes, String folder) -> void
+
+      # Waits at most `seconds` for the parent to say it loaded the tests.
+      # When it says anything else, ends first, or doesn't say it in time,
+      # it stops the parent and raises `Stryker::Isolation::Error`: with
+      # what the parent said and the last lines of its standard error, or
+      # with the limit and the test helper.
+      #
+      # - `seconds`: Integer or Float, `LOAD_SECONDS` unless a test passes
+      #   another.
+      def await_ready: (?(Integer | Float) seconds) -> void
+
+      # Gives the parent `run`, as one line of JSON.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      def give: (MutantRun run) -> nil
+
+      # The parent's next line, parsed with `JSON.parse`, or nil when the
+      # parent's pipe ended.
+      def receive: () -> Hash[String, JsonValue::json_value]?
+
+      # Closes both pipes, at which the parent ends every child it still
+      # runs and then itself. It gives the parent `GRACE_SECONDS` to end,
+      # kills it and its group if it still runs then, kills what is left in
+      # its group, and deletes the folder. Killing the group ends what the
+      # project's code started in the parent while it loaded.
+      def stop: () -> void
+
+      private
+
+      # Waits at most `seconds` for the parent's first line, and returns nil
+      # when the line says the parent is ready. Otherwise it returns the
+      # error: the one that names the limit when no line came in time, or
+      # one with what the parent said, or that it said nothing before it
+      # ended, and the last lines of its standard error.
+      def load_error: (Integer | Float seconds) -> Error?
+    end
+  end
+end

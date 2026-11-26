@@ -1,0 +1,48 @@
+module Stryker
+  module Isolation
+    # The children of the parent that forks: it forks a child for each run,
+    # watches every child at once, relays each line a child writes as soon
+    # as it is whole, and relays how each child ended, with the last lines
+    # of its standard error.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # children = Stryker::Isolation::Children.new(forking, relay)
+    # children.start(run)
+    # children.wait(commands)
+    # # => [commands], when a run is waiting on commands
+    # ```
+    class Children
+      # What forks each child.
+      @forking: Forking
+
+      # The writer of the lines that the orchestrator reads.
+      @relay: Relay
+
+      # The children still running.
+      @watches: Watches[MutantRun]
+
+      # Builds the children's set, with none in it.
+      #
+      # - `forking`: Stryker::Isolation::Forking, what forks each child.
+      # - `relay`: Stryker::Isolation::Relay, the writer of the lines the
+      #   orchestrator reads.
+      def initialize: (Forking forking, Relay relay) -> void
+
+      # Forks a child for `run`, says which, and watches it.
+      def start: (MutantRun run) -> nil
+
+      # Waits until `commands` or a child's pipe can be read, or until the
+      # first child's time is up, relays what the children wrote and how
+      # those that ended ended, and returns `[commands]` when it can be
+      # read, or no IO.
+      #
+      # - `commands`: IO, the pipe that carries the parent's runs.
+      def wait: (IO commands) -> Array[IO]
+
+      # Kills every child still running, and waits until each ended.
+      def stop: () -> nil
+    end
+  end
+end

@@ -3,6 +3,7 @@
 require_relative("../../support/isolation_stand_ins")
 require "stringio"
 require "stryker/isolation/ending"
+require "stryker/isolation/relay"
 require "stryker/isolation/run_report"
 
 # What the writers of lines write: a run's report in its own process, and the
@@ -65,5 +66,26 @@ class LineWriterTest < Minitest::Test
     assert_nil(Stryker::Isolation::RunReport.new(writer).test_started(sample_test))
   ensure
     writer&.close
+  end
+
+  def test_the_relay_writes_each_line_with_the_mutant_of_its_run
+    ending = Stryker::Isolation::Ending.new(exit_status: 0, signal: nil, timed_out: false, duration_ms: 2.5, errors: "")
+    lines = written(Stryker::Isolation::Relay) do |relay|
+      relay.ready
+      relay.forked(sample_run(7), 4242)
+      relay.exited(sample_run(7), ending)
+    end
+    exited = { exit_status: 0, signal: nil, timed_out: false, duration_ms: 2.5, errors: "" }
+
+    assert_equal([{ ready: true }, { mutant: 7, forked: 4242 }, { mutant: 7, exited: }], lines)
+  end
+
+  def test_the_relay_passes_each_child_line_on_as_json_or_as_null
+    lines = written(Stryker::Isolation::Relay) do |relay|
+      relay.message(sample_run(7), "{\"ended\":true}\n")
+      relay.message(sample_run(7), "Run options: --seed 1\n")
+    end
+
+    assert_equal([{ mutant: 7, message: { ended: true } }, { mutant: 7, message: nil }], lines)
   end
 end

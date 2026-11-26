@@ -1,0 +1,50 @@
+module Stryker
+  module Isolation
+    # What a forked child changes about its streams right after the fork,
+    # before its run: it closes the parent's pipe to the orchestrator, and
+    # sends its standard output and standard error to files of its own, so
+    # that its standard error's last lines can end a `RuntimeError`'s
+    # reason.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # streams = Stryker::Isolation::ForkedStreams.new(results, Stryker::Isolation::OutputFiles.new(folder))
+    # streams.call(7)
+    # # $stdout and $stderr now write to <folder>/7.out and <folder>/7.err
+    # ```
+    class ForkedStreams
+      # The parent's write end of its pipe to the orchestrator.
+      @results: IO
+
+      # The files of each child's standard output and standard error.
+      @outputs: OutputFiles
+
+      # Builds the streams' change.
+      #
+      # - `results`: IO, the parent's pipe to the orchestrator.
+      # - `outputs`: Stryker::Isolation::OutputFiles, the files of each
+      #   child's output.
+      def initialize: (IO results, OutputFiles outputs) -> void
+
+      # Closes `results`, and reopens `stdout` and `stderr` onto the files
+      # of the child that runs mutant `id`.
+      #
+      # - `id`: Integer, the run's mutant's ID.
+      # - `stdout`: IO, `$stdout` unless a test passes another.
+      # - `stderr`: IO, `$stderr` unless a test passes another.
+      def call: (Integer id, ?IO stdout, ?IO stderr) -> nil
+
+      # Reopens `io` onto the file at `path`, in sync mode, so that what the
+      # child writes there survives its `exit!`.
+      #
+      # - `io`: IO, the stream.
+      # - `path`: String, the file's path.
+      def self.reopen: (IO io, String path) -> nil
+
+      # The last lines of the standard error of the child that ran mutant
+      # `id`.
+      def tail: (Integer id) -> String
+    end
+  end
+end
