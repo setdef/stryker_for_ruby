@@ -1,6 +1,7 @@
-# The gate (`bundle exec rake`) on every Ruby the gem supports, on the
-# development version of Ruby, and on Linux, macOS, and Windows, for every
-# push to trunk, and the tests on the oldest Prism the gemspec allows.
+# The gate (`bundle exec rake`) on Ruby 4.0, the oldest Ruby the project
+# supports, and on the development version of Ruby, on Linux, macOS, and
+# Windows, for every push to trunk, and the tests on the oldest Prism the
+# gemspec allows.
 # The jobs reach the network only to install pinned tools and gems, and to
 # read the shared RuboCop baseline that .rubocop.yml inherits.
 name: CI
@@ -60,7 +61,7 @@ jobs:
         # head is the development version of Ruby, the version that mise.toml
         # lists as 4.1-dev. ruby/setup-ruby offers every one of these versions
         # on Windows, head included.
-        ruby: ["3.3", "3.4", "4.0", head]
+        ruby: ["4.0", head]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -85,8 +86,8 @@ jobs:
   # The gemspec allows prism >= 1.7, and the gate runs on the Prism that
   # Gemfile.lock locks. This job runs the tests on Prism 1.7.0, which
   # gemfiles/prism_1_7.gemfile pins with a lockfile of its own. Ruby 4.0 is the
-  # oldest Ruby whose syntax needs Prism 1.7. Nothing in the tests depends on
-  # the operating system, so one system is enough.
+  # oldest supported Ruby, and its syntax needs Prism 1.7. Nothing in the
+  # tests depends on the operating system, so one system is enough.
   prism-floor:
     name: Tests on Prism 1.7.0, Ruby 4.0
     runs-on: ubuntu-latest

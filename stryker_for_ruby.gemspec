@@ -12,6 +12,9 @@ Gem::Specification.new do |spec|
   spec.homepage = "https://github.com/setdef/stryker_for_ruby"
   spec.license = "Apache-2.0"
 
+  # Ruby 3.3 and 3.4 are unsupported, and nothing blocks them: loading the
+  # runtime on one prints a notice that links to docs/older-ruby.md. A floor
+  # of 4.0 here would make Bundler and RubyGems refuse the gem there.
   spec.required_ruby_version = ">= 3.3"
 
   spec.metadata["rubygems_mfa_required"] = "true"

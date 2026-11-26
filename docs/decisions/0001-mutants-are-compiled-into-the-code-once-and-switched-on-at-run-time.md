@@ -60,7 +60,7 @@ Confidence: probes show that option 1 works. On Ruby 3.3.11, 3.4.13, 4.0.10, and
 
 ### Confirmation
 
-The instrumenter's tests run each kind of site from the placement design with no mutant active and with each mutant active, on every Ruby version in CI, and compare the output with the original code and with the plain mutant. The loading check and the loader's tests come when the loader is built. The dry run's loading check will fail a run when an instrumented file loaded without the hook, and the loader's tests will check the `prepend` override on every Ruby version in CI, Ruby 3.3 included.
+The instrumenter's tests run each kind of site from the placement design with no mutant active and with each mutant active, on every Ruby version in CI, and compare the output with the original code and with the plain mutant. The loading check and the loader's tests come when the loader is built. The dry run's loading check will fail a run when an instrumented file loaded without the hook, and the loader's tests will check the `prepend` override on every Ruby version in CI.
 
 ## More Information
 

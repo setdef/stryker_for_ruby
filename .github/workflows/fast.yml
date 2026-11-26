@@ -1,5 +1,5 @@
-# The fast tier: on every push and pull request, the gate on Ubuntu with the
-# oldest and newest released Ruby the gem supports, and the tests on Windows.
+# The fast tier: on every push and pull request, the gate on Ubuntu with
+# Ruby 4.0, the oldest Ruby the project supports, and the tests on Windows.
 # Each push to trunk gets a verdict of its own, while ci.yml's run, which
 # covers every Ruby and system, may cover several pushes.
 #
@@ -46,7 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        ruby: ["3.3", "4.0"]
+        ruby: ["4.0"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
