@@ -47,6 +47,36 @@ class HeredocAndRegexpSitesTest < Minitest::Test
     assert_site(source, ["f(<<~A, 2)", "f(<<~A, 3)"])
   end
 
+  def test_a_heredoc_opener_replaced_by_text_on_several_lines
+    assert_site("s = <<EOS\n)\nEOS\np s\n", ["<<EOS", "[1,\n  2]"])
+  end
+
+  def test_a_node_with_a_heredoc_opener_replaced_by_text_on_several_lines
+    source = "def f(s, n)\n  [s, n]\nend\np f(<<~A, 2)\n  )\nA\n"
+
+    assert_site(source, ["f(<<~A, 2)", "[1,\n  2]"])
+  end
+
+  def test_an_interpolated_heredoc_opener_replaced_by_text_on_several_lines
+    assert_site("x = 1\ns = <<~EOS\n  hi \#{x} )\nEOS\np s\n", ["<<~EOS", "[1,\n  2]"])
+  end
+
+  def test_a_command_heredoc_opener_replaced_by_text_on_several_lines
+    assert_site("s = <<~`EOS`\n  echo end\nEOS\np s\n", ["<<~`EOS`", "[1,\n  2]"])
+  end
+
+  def test_a_node_that_holds_the_body_of_a_heredoc_whose_opener_is_replaced
+    source = "def f(*) = 1\np defined?(f(<<~A,\n  body\nA\n  2))\n"
+
+    assert_site(source, ["<<~A", "g(1,\n  2)"])
+  end
+
+  def test_the_second_of_two_heredoc_openers_on_a_line
+    source = "def f(a, b)\n  [a, b]\nend\np f(<<A, <<B)\none\nA\ntwo\nB\n"
+
+    assert_site(source, ["<<B", "'z'"])
+  end
+
   def test_an_expression_inside_a_heredocs_interpolation
     assert_site("x = 2\ns = <<~EOS\n  v=\#{x + 1}\nEOS\np s\n", ["x + 1", "x - 1"])
   end

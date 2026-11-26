@@ -1,7 +1,12 @@
 module Stryker
   class Instrumenter
-    # Tells the heredocs that a mutant's text keeps.
+    # Finds the heredocs in a file, and tells which of them a mutant's text
+    # keeps.
     module Heredoc
+      # A node that Prism makes of a heredoc: a string, an interpolated
+      # string, or either kind of command string.
+      type node = Prism::StringNode | Prism::InterpolatedStringNode | Prism::XStringNode | Prism::InterpolatedXStringNode
+
       # Whether `node` is a heredoc whose opener `mutant`'s edit leaves in
       # place. Such a heredoc in a mutant's text would read its body from the
       # lines below the switch, which the original branch's opener reads.
@@ -9,6 +14,17 @@ module Stryker
       # - `node`: Prism::node, any node.
       # - `mutant`: Stryker::Mutant, the edit.
       def self.kept?: (Prism::node node, Mutant mutant) -> bool
+
+      # The heredoc that `node` is: a list of `node`, or an empty list when it
+      # is any other node.
+      #
+      # - `node`: Prism::node, any node.
+      def self.heredocs_at: (Prism::node node) -> Array[node]
+
+      # Every heredoc in `node` and below it, in the order of their openers.
+      #
+      # - `node`: Prism::node, the node to search, usually the parsed file.
+      def self.in: (Prism::node node) -> Array[node]
     end
   end
 end

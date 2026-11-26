@@ -8,6 +8,32 @@ A mutator returns each mutant as a text edit on the original source: a byte rang
 
 A switch wraps one node's source range. That node is usually the mutant's site, the node the mutant changes, and it is an enclosing node when the site can't hold a switch (see [Sites that can't hold a switch](#sites-that-cant-hold-a-switch)). Either way, the mutant's text is the wrapped node's original source with the edit applied.
 
+### A heredoc opener's edit
+
+A heredoc's body lies on the lines below its opener, outside the range of the opener and of every node around it. A mutant that replaces a heredoc opener, or removes a statement that holds one, is the opener's edit plus the removal of the heredoc's body. The body would stay in the file as code, where the plain mutant has no opener to read it. The report shows only the opener's edit, as the mutant's `location` and `replacement`.
+
+With the edit `<<EOS` to `'z'` on this file, the plain mutant is the second one, and the first is not:
+
+```text
+# Original:
+s = <<EOS
+hi
+EOS
+p s
+# Not the plain mutant: the body, `hi` and `EOS`, is code.
+s = 'z'
+hi
+EOS
+p s
+# The plain mutant:
+s = 'z'
+p s
+```
+
+Two cases leave the body in place. A body that the edit's range already holds goes with the edit. A replacement that holds `<<` writes an opener of its own, and that opener reads the body, as when `f(<<~A, 2)` becomes `f(<<~A, 3)`. When several heredocs open on one line, their bodies follow one after the other, and the edit removes only the bodies of the openers it replaces.
+
+The plain mutant that this page names is always the original file with the mutant's edit made and these bodies removed. The instrumented file keeps every body, under the original branch of the switch.
+
 ## Splicing into the original bytes
 
 Prism parses the file, and the instrumenter splices each switch into the original bytes around the node it wraps, on the lines that node already occupies. Everything outside the switches stays as it was, byte for byte: comments, heredocs, magic comments such as `# frozen_string_literal: true`, and the data after `__END__`.
@@ -74,7 +100,7 @@ A mutant's text goes into its branch on one line. A node that spans several line
 The instrumenter puts each mutant's text on one line:
 
 - When the mutant's text fits on one line, it goes into the switch as it is, unless it holds a heredoc opener. A heredoc opener in a mutant branch would read the body on the lines below the switch, which the original branch's opener reads. So when the edit leaves a heredoc opener of the wrapped node in place, or its replacement holds `<<`, the mutant's text takes the next path, where refract writes each heredoc as a string literal.
-- Otherwise, the instrumenter applies the edit to the whole file, parses the result with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses it as one statement that refract formats exactly as it formatted the node.
+- Otherwise, the instrumenter makes the plain mutant, which is the whole file with the edit applied and the bodies of any replaced heredoc openers removed (see [A heredoc opener's edit](#a-heredoc-openers-edit)), parses it with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses it as one statement that refract formats exactly as it formatted the node.
 - When the mutant's text has no one-line form, the site gets no mutant. The run reports how many sites it skipped this way, and why.
 
 Prism and refract load only in the process that instruments, never in a process that loads the project's code ([Loading and isolation](loading-and-isolation.md#two-kinds-of-process)).
@@ -97,7 +123,7 @@ A site whose mutant's text has no one-line form gets no mutant either, as [The m
 
 ## Kinds of site
 
-The probe wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the plain mutant's: the original file with only that change made. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped.
+The probe wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the plain mutant's: the original file with only that change made, and the bodies of replaced heredoc openers removed. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped.
 
 ### Operators
 

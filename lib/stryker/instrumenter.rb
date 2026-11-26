@@ -2,9 +2,11 @@
 
 require "prism"
 require_relative "instrumenter/error"
+require_relative "instrumenter/heredoc"
 require_relative "instrumenter/mutant_text"
 require_relative "instrumenter/outcome"
 require_relative "instrumenter/placement"
+require_relative "instrumenter/plain_mutant"
 require_relative "instrumenter/result"
 require_relative "instrumenter/splice"
 require_relative "mutant"
@@ -21,6 +23,7 @@ module Stryker
 
       @source = source
       @tree = result.value
+      @heredocs = Heredoc.in(@tree)
     end
 
     def instrument(mutants)
@@ -31,7 +34,8 @@ module Stryker
 
     private def outcome(mutant)
       node = Placement.node_for(@tree, mutant)
-      Outcome.new(mutant:, node:, text: node && MutantText.of(@source, mutant, node))
+      plain = PlainMutant.of(@source, @heredocs, mutant)
+      Outcome.new(mutant:, node:, text: node && MutantText.of(@source, plain, node))
     end
 
     private def parsed(output)

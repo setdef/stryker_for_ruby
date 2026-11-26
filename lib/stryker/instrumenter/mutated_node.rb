@@ -10,13 +10,13 @@ module Stryker
       CONTAINERS = [Prism::ProgramNode, Prism::StatementsNode].freeze
       private_constant(:CONTAINERS)
 
-      def self.of(source, mutant, node)
-        span = Span.grown(node.location, mutant.growth)
-        result = Prism.parse(mutant.edit(source).force_encoding(source.encoding))
+      def self.of(plain, node)
+        span = Span.grown(node.location, plain.growth_within(node))
+        result = plain.result
         found = at(result.value, span)
         return found if found && result.success?
 
-        raise(Error, "Mutant #{mutant.id} doesn't parse as one node where its switch goes.")
+        raise(Error, "Mutant #{plain.mutant.id} doesn't parse as one node where its switch goes.")
       end
 
       def self.at(tree, span)

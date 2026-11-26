@@ -1,0 +1,21 @@
+module Stryker
+  class Instrumenter
+    # Tells which heredoc bodies a mutant's edit removes from the plain
+    # mutant.
+    module RemovedBodies
+      # The bodies of the heredocs whose openers `mutant`'s edit replaces,
+      # in the order of the file. The edit removes a body that lies inside
+      # its range. This is the bodies that lie after it, which the edit
+      # would otherwise leave in the file as code. It is empty when the
+      # replacement holds `<<`, which writes an opener of its own to read
+      # them.
+      #
+      # - `heredocs`: Array of Stryker::Instrumenter::Heredoc::node, every
+      #   heredoc in the file.
+      # - `mutant`: Stryker::Mutant, the edit.
+      def self.of: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
+
+      def self.bodies_of_covered: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
+    end
+  end
+end

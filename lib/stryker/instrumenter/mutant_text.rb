@@ -8,29 +8,30 @@ require_relative "one_line"
 module Stryker
   class Instrumenter
     class MutantText
-      def self.of(source, mutant, node)
-        new(source, mutant, node).text
+      def self.of(source, plain, node)
+        new(source, plain, node).text
       end
 
-      def initialize(source, mutant, node)
+      def initialize(source, plain, node)
         @source = source
-        @mutant = mutant
+        @plain = plain
+        @mutant = plain.mutant
         @node = node
       end
 
       def text
         location = @node.location
         start_offset = location.start_offset
-        plain = @mutant.edit(@source.byteslice(start_offset...(location.end_offset)).to_s, start_offset)
-        on_one_line?(plain) ? plain : OneLine.of(MutatedNode.of(@source, @mutant, @node))
+        edited = @mutant.edit(@source.byteslice(start_offset...(location.end_offset)).to_s, start_offset)
+        on_one_line?(edited) ? edited : OneLine.of(MutatedNode.of(@plain, @node))
       end
 
-      private def on_one_line?(plain)
+      private def on_one_line?(edited)
         # A heredoc opener in the replacement would read its body from the
         # lines below, like one the edit leaves in place. "<<" also finds
         # every shift and append operator, whose text the second path
         # gives as well.
-        !plain.include?("\n") && !@mutant.replacement.include?("<<") && !heredoc_kept?
+        !edited.include?("\n") && !@mutant.replacement.include?("<<") && !heredoc_kept?
       end
 
       private def heredoc_kept?

@@ -5,8 +5,9 @@ module Stryker
     #
     # When that text is on one line and leaves no heredoc in it, it goes
     # into the branch as it is. Otherwise, the instrumenter applies the edit
-    # to the whole file, parses the result with Prism, and puts the node at
-    # the edited range, which `Stryker::Instrumenter::MutatedNode` finds, on
+    # to the whole file, as `Stryker::Instrumenter::PlainMutant` does, and
+    # puts the node at the edited range of the plain mutant, which
+    # `Stryker::Instrumenter::MutatedNode` finds, on
     # one line with `Stryker::Instrumenter::OneLine`. A
     # heredoc left in the text would read its body from the lines below the
     # switch, which the original branch's heredoc reads, so such a text takes
@@ -15,20 +16,21 @@ module Stryker
       # The text of `mutant`'s branch in the switch that wraps `node`, as
       # binary, or nil when the text has no form on one line. Raises
       # `Stryker::Instrumenter::Error` when the text spans several lines and
-      # the file with the edit applied doesn't parse, or has no node at the
-      # edited range.
+      # the plain mutant has no node at the edited range.
       #
       # - `source`: String, the file's source.
-      # - `mutant`: Stryker::Mutant, an edit inside `node`.
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant, which
+      #   holds the mutant that is an edit inside `node`.
       # - `node`: Prism::node, the node the switch wraps.
-      def self.of: (String source, Mutant mutant, Prism::node node) -> String?
+      def self.of: (String source, PlainMutant plain, Prism::node node) -> String?
 
       # Prepares to make the text of `mutant`'s branch.
       #
       # - `source`: String, the file's source.
-      # - `mutant`: Stryker::Mutant, an edit inside `node`.
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant, which
+      #   holds the mutant that is an edit inside `node`.
       # - `node`: Prism::node, the node the switch wraps.
-      def initialize: (String source, Mutant mutant, Prism::node node) -> void
+      def initialize: (String source, PlainMutant plain, Prism::node node) -> void
 
       # The text, as `Stryker::Instrumenter::MutantText.of` gives it.
       def text: () -> String?
@@ -36,10 +38,11 @@ module Stryker
       private
 
       @source: String
+      @plain: PlainMutant
       @mutant: Mutant
       @node: Prism::node
 
-      def on_one_line?: (String plain) -> bool
+      def on_one_line?: (String edited) -> bool
 
       def heredoc_kept?: () -> bool
     end

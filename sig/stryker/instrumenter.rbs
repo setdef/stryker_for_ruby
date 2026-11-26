@@ -72,8 +72,8 @@ module Stryker
     # Every mutant must be an edit on `source`. Mutants at the same site
     # share one switch, which tries them in the order of their IDs. With no
     # mutants, the result's source equals `source`. The instrumenter parses
-    # the whole file with Prism once, and once more for each mutant whose
-    # text spans several lines.
+    # the whole file with Prism once, and once more for each mutant, as the
+    # plain mutant.
     #
     # - `source`: String, the file's source.
     # - `mutants`: Array of Stryker::Mutant, the edits on `source`.
@@ -95,6 +95,7 @@ module Stryker
 
     @source: String
     @tree: Prism::ProgramNode
+    @heredocs: Array[Heredoc::node]
 
     def outcome: (Mutant mutant) -> Outcome
 

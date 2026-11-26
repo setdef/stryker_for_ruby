@@ -1,0 +1,62 @@
+module Stryker
+  class Instrumenter
+    # The plain mutant: the original file with only one mutant's change made.
+    # With the mutant active, the instrumented file has to run as this file
+    # runs.
+    #
+    # The change is the mutant's edit, and the removal of the body of every
+    # heredoc whose opener the edit replaces, unless the replacement holds
+    # `<<`. An opener that the edit replaced would leave its body in the file
+    # as code. The switch's original branch keeps the heredoc, and its body,
+    # in the instrumented file.
+    #
+    # ## Examples
+    #
+    # Removing the statement `puts <<EOS` leaves a file that parses, because
+    # the plain mutant removes the body as well:
+    #
+    # ```ruby
+    # source = "puts <<EOS\nhi there )\nEOS\np 1\n"
+    # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "Statement",
+    #                              start_offset: 0, end_offset: 10, replacement: "")
+    # heredocs = Stryker::Instrumenter::Heredoc.in(Prism.parse(source).value)
+    # Stryker::Instrumenter::PlainMutant.of(source, heredocs, mutant).result.success?
+    # # => true
+    # ```
+    class PlainMutant < Data
+      # The mutant.
+      %a{pure} attr_reader mutant: Mutant
+
+      # The stretches of the original file that the plain mutant removes
+      # besides the mutant's edit: the heredoc bodies, in the order of the
+      # file.
+      %a{pure} attr_reader bodies: Array[Span]
+
+      # What Prism makes of the plain mutant.
+      %a{pure} attr_reader result: Prism::ParseResult
+
+      # Builds the plain mutant from its parts.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant.
+      # - `bodies`: Array of Stryker::Instrumenter::Span, the bodies removed.
+      # - `result`: Prism::ParseResult, what Prism makes of the file.
+      def self.new: (mutant: Mutant, bodies: Array[Span], result: Prism::ParseResult) -> instance
+                  | (Mutant mutant, Array[Span] bodies, Prism::ParseResult result) -> instance
+
+      # The plain mutant of `mutant`, parsed.
+      #
+      # - `source`: String, the file's source.
+      # - `heredocs`: Array of Stryker::Instrumenter::Heredoc::node, every
+      #   heredoc in the file.
+      # - `mutant`: Stryker::Mutant, the mutant.
+      def self.of: (String source, Array[Heredoc::node] heredocs, Mutant mutant) -> PlainMutant
+
+      # How many bytes longer the plain mutant makes the range of `node`, a
+      # node of the original file that holds the mutant's edit: the bytes
+      # that the edit adds, less the bodies that lie inside the node.
+      #
+      # - `node`: Prism::node, the node in the original file.
+      def growth_within: (Prism::node node) -> Integer
+    end
+  end
+end

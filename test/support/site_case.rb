@@ -6,6 +6,7 @@ require "prism"
 require "rbconfig"
 require "stryker/instrumenter"
 require "tmpdir"
+require_relative("heredoc_bodies")
 
 # Runs a kind of site from the placement table in
 # docs/design/mutant-placement.md, as ADR 0001's Confirmation asks: the
@@ -17,6 +18,8 @@ require "tmpdir"
 # starts in milliseconds, and with a stand-in for the runtime's
 # Stryker::Active, which isn't built yet.
 module SiteCase
+  include HeredocBodies
+
   # The stand-in for the runtime's Stryker::Active. It reads the active
   # mutant's ID from the environment, and writes the IDs it was given as hits
   # to the file at the path in STRYKER_HITS, if any, when the program ends.
@@ -48,8 +51,7 @@ module SiteCase
     hits = ENV.fetch("STRYKER_HITS", nil)
     at_exit { File.write(hits, Stryker::Active.hits.join(" ")) } if hits
   RUBY
-  HEREDOC_NODES = [Prism::StringNode, Prism::InterpolatedStringNode].freeze
-  private_constant(:ACTIVE, :HEREDOC_NODES)
+  private_constant(:ACTIVE)
 
   def self.included(test_class)
     test_class.parallelize_me!
@@ -104,27 +106,6 @@ module SiteCase
     bodies = mutant.replacement.include?("<<") ? [] : heredoc_bodies(source, mutant)
     edited = bodies.reverse.reduce(source.b) { |acc, elem| acc.byteslice(0, elem.begin) + acc.byteslice((elem.end)..) }
     mutant.edit(edited).force_encoding(source.encoding)
-  end
-
-  def heredoc_bodies(source, mutant)
-    heredocs = nodes_in(Prism.parse(source).value).select { |node| opener_replaced?(node, mutant) }
-    bodies = heredocs.map { |heredoc| heredoc_body(source, heredoc) }
-    bodies.select { |body| body.begin >= mutant.end_offset }
-      .sort_by(&:begin)
-  end
-
-  def opener_replaced?(node, mutant)
-    HEREDOC_NODES.include?(node.class) && node.heredoc? && mutant.covers?(node.location)
-  end
-
-  # Every node in +tree+. Prism 1 has no breadth_first_search_all.
-  def nodes_in(tree)
-    [tree, *tree.compact_child_nodes.flat_map { |child| nodes_in(child) }]
-  end
-
-  def heredoc_body(source, heredoc)
-    line_end = source.b.index("\n", heredoc.location.end_offset) + 1
-    line_end...(heredoc.closing_loc.end_offset)
   end
 
   # The output of +source+ run as a program, with the mutant +active+ if one

@@ -21,6 +21,10 @@ module Stryker
         )
       end
 
+      def length
+        end_offset - start_offset
+      end
+
       def same?(other)
         other.start_offset == start_offset && other.end_offset == end_offset
       end

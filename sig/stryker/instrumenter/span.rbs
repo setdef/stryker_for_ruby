@@ -29,6 +29,9 @@ module Stryker
       # - `node`: Prism::node, the node.
       def self.extent: (Prism::node node) -> Span
 
+      # How many bytes the stretch has.
+      def length: () -> Integer
+
       # Whether `other` starts and ends where this span does.
       #
       # - `other`: Stryker::_Span, another stretch.
