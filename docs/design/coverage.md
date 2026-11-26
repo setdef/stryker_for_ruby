@@ -4,7 +4,7 @@ This page specifies how **Stryker (for Ruby)** learns which tests reach each mut
 
 ## Hits
 
-Every switch in the instrumented code records a hit when it runs: the IDs of the mutants it holds go into the current bucket of a hit recorder in the Stryker runtime. A hit means that the code at the mutant's site ran, so a test that recorded one would see the mutant's effect if the mutant were active.
+Every switch in the instrumented code records a hit when it runs in the dry run: the IDs of the mutants it holds go into the current bucket of a hit recorder in the Stryker runtime. A mutant run records no hits: `hit` returns at once, because a mutant run doesn't use the map. A hit means that the code at the mutant's site ran, so a test that recorded one would see the mutant's effect if the mutant were active.
 
 The recorder has two kinds of bucket:
 
@@ -12,6 +12,8 @@ The recorder has two kinds of bucket:
 - **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's.
 
 A hit costs about 17 to 66 ns, depending on the Ruby version, on whether YJIT is on, and on the machine. The probes timed Ruby 3.3, 3.4, and 4.0 on Linux and macOS.
+
+A switch can also run in a Ractor other than the main one. [Ractors](#ractors) says how a hit from there is recorded.
 
 ## The dry run
 
@@ -107,6 +109,33 @@ Counting every hit on another thread or fiber as static was rejected. In a test 
 
 The dry run doesn't guess about this. It reports every file first loaded during a test, and lists each file, so the project can see which results rest on this rule.
 
+## Ractors
+
+A hit made in the main Ractor goes straight to the recorder. A hit made in another Ractor can't: the standard library has no mutable structure that Ractors can share, Ractor-local storage can't be read by another Ractor, and a frozen IO can't be written. How the hit reaches the recorder depends on the Ruby version. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux. [Loading and isolation](loading-and-isolation.md#ractors) says how the switch reads the active mutant's ID in a Ractor, and how the hook, forking, and the lookup tables behave there.
+
+### Ruby 4.0 and later
+
+On Ruby 4.0 and later, the runtime starts a collector Ractor for the dry run, and a switch in another Ractor sends each hit to it. The recorder drains the collector when each test starts and when it ends:
+
+- A hit sent between tests is drained when the next test starts, before that test's bucket becomes current, so it lands in the static bucket.
+- A hit from a Ractor that finished during a test is drained when the test ends, so it lands in that test's bucket.
+
+A collector that was drained only when each test ends put a hit sent between tests in the next test's bucket, which is why the recorder drains at the start as well. In the probe, every hit arrived, including the hits from Ractors that finished during the test.
+
+Sending a hit to the collector costs about 115 to 200 ns. A hit in the main Ractor costs about 30 ns, or 11 ns with YJIT.
+
+### Ruby 3.3 and 3.4
+
+On Ruby 3.3 and 3.4, no mechanism that the probes tried records a hit from a non-main Ractor reliably. A send from a thread inside a non-main Ractor hangs. A thread in the main Ractor that reads a port or `Ractor.main` never ran while the test's main thread waited on a Ractor, so no hit arrived. So in the dry run, a switch that runs in a non-main Ractor raises `Stryker::UnsupportedError`, and its message mentions Ruby 4.0. The test fails, the dry run fails, and no mutant runs. The run fails loudly instead of losing hits.
+
+### A Ractor still running when its test ends
+
+A hit from a Ractor that is still running when its test ends can't be put in that test's bucket by any mechanism that the probes tried. It joins the known gap for threads and fibers that [Static hits inside a test](#the-known-gap) describes: the test isn't recorded as reaching the mutant, so the mutant's run can leave it out.
+
+### Switches inside shareable procs
+
+A switch never changed whether a block can be isolated or shared. Every form behaved the same with the switch as without it, once the active mutant's holder was shareable.
+
 ## Why not Ruby's `Coverage` library
 
 Ruby's standard `Coverage` library can measure which lines each test runs: start it in lines mode, and after each test call `Coverage.result(stop: false, clear: true)`. Mapping those lines to the mutants on them gives a second way to build the map. It gives the wrong map.
@@ -130,4 +159,7 @@ Hits avoid both causes, because each switch records the IDs of the mutants it ho
 ## What this design doesn't do
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.
+- It doesn't record hits in a mutant run.
+- It doesn't record a hit from a non-main Ractor on Ruby 3.3 or 3.4. The dry run fails instead.
+- It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
 - It doesn't keep the map between runs. Each run of **Stryker (for Ruby)** starts with a new dry run.

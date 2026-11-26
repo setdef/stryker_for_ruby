@@ -255,7 +255,7 @@ So every ERB mutant is a runtime mutant: a template's switches run only while it
 
 ## Lookup tables are shareable
 
-Every lookup table that the prepends and the wrapper hold is shareable (`Ractor.make_shareable`), so the prepends work inside Ractors.
+Every lookup table that the prepends and the wrapper hold is shareable (`Ractor.make_shareable`), so the prepends work inside Ractors. [Lookup tables](loading-and-isolation.md#lookup-tables) says why every table the runtime keeps is shareable.
 
 ## What this design doesn't do
 

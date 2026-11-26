@@ -29,7 +29,7 @@ The orchestrator runs inside the project's bundle, with the gem in the project's
 
 ### What runs in a project process
 
-The runtime holds the hook, the switch, and the hit recorder. It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
+The runtime holds the hook, the switch, and the hit recorder, and on Ruby 4.0 and later the collector Ractor that the dry run uses ([Ractors](coverage.md#ractors)). It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
 
 ### The cache
 
@@ -112,14 +112,14 @@ The fork parent kills a child that runs past its time limit, and relays the time
 
 ### Forking on Linux and macOS
 
-The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them.
+The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them. On Ruby 3.3, the parent first checks for live Ractors ([Forking with live Ractors on Ruby 3.3](#forking-with-live-ractors-on-ruby-33)).
 
 The dry run is itself a forked child, with no mutant active.
 
 For each runtime mutant run, the parent:
 
 1. opens a pipe of its own for the child and forks;
-2. in the child, closes the read end, sets the active mutant, runs the run's tests through the test runner adapter, stopping at the first failure, writes the result to the pipe, and ends with `exit!`;
+2. in the child, closes the read end, sets the active mutant ([The active mutant's holder](#the-active-mutants-holder)), runs the run's tests through the test runner adapter, stopping at the first failure, writes the result to the pipe, and ends with `exit!`;
 3. in the parent, reads the result, relays it to the orchestrator over the parent's own pipe, and waits for the child.
 
 The parent keeps up to `concurrency` children running at once. When a child runs past the run's time limit, the parent kills it, and the run's result is a timeout, which the parent relays like any other result.
@@ -145,7 +145,7 @@ A fresh process is expensive on Windows. On one probe machine, `ruby -e 1` took 
 
 A static mutant's switch runs once, while its file loads. Setting the mutant active afterwards changes nothing, because the switch never runs again. A probe set a static mutant in a constant's value active after load, and the constant kept its original value.
 
-So every static mutant run gets a fresh process, on every system, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The fresh process writes its result directly to the orchestrator, which enforces the run's time limit. The runtime reads that variable when it loads, before any of the project's code, so the switch takes the mutated branch while the file loads. The run includes every test, because a value set at load time can reach any test.
+So every static mutant run gets a fresh process, on every system, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The fresh process writes its result directly to the orchestrator, which enforces the run's time limit. The runtime reads that variable when it loads, before any of the project's code, and makes the active mutant's holder from it ([The active mutant's holder](#the-active-mutants-holder)), so the switch takes the mutated branch while the file loads. The run includes every test, because a value set at load time can reach any test.
 
 ### A file first loaded inside a test
 
@@ -155,6 +155,35 @@ The hook records the path of each file whose load begins during a test. A hit th
 
 One case isn't handled: a hit made on another thread or a fiber while such a file loads. Its stack has no top-level frame, so the hit stays in the test's bucket, and the mutant is planned as a runtime mutant that runs only the tests that recorded it. A test that depends on the file's load-time values but didn't record the hit isn't in the run, so a mutant that this test would have killed can be reported as surviving. The dry run reports every file first loaded during a test, so you can see where this applies.
 
+## Ractors
+
+The switch and the hook can run in a Ractor other than the main one. This section specifies how the active mutant's ID is read there, how the hook behaves there, how forking treats live Ractors on Ruby 3.3, and why every lookup table is shareable. [Coverage](coverage.md#ractors) specifies how a hit made there is recorded. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux.
+
+### The active mutant's holder
+
+`::Stryker::Active` is a constant that holds a frozen object made shareable with `Ractor.make_shareable`. A non-main Ractor can read a constant that holds a shareable object, a frozen `Data` value, or an Integer. A constant that holds an unshareable object raises `Ractor::IsolationError` there, and so does a global variable. So neither holds the active ID.
+
+A forked child, or a fresh process that reads `STRYKER_ACTIVE_MUTANT`, replaces the constant before its run starts: it calls `remove_const`, and then `const_set` with a new shareable holder for the mutant's ID. In the probes, the replacement took effect in the main Ractor and in every other Ractor, including in code compiled before the fork, with no warning. The switch's text stays as [Mutant placement](mutant-placement.md#the-switch) specifies it. A check through a shareable holder's `attr_reader` costs about 8 to 11 ns, in the main Ractor and in others alike.
+
+### The hook in a non-main Ractor
+
+The hook reads the cache through a shareable table, so it works in a non-main Ractor. On Ruby 4.0 and later, it records what it served through the collector Ractor ([Coverage](coverage.md#ractors)). On Ruby 3.3 and 3.4, it raises `Stryker::UnsupportedError` where it would record, as Coverage specifies for a hit.
+
+Which Ractor the hook runs in depends on the call and on the version:
+
+- On Ruby 3.4 and later, `require` in a non-main Ractor runs in the main Ractor, so the hook serves the instrumented source there.
+- On Ruby 3.3, `require` in a non-main Ractor raises inside RubyGems, with no involvement from **Stryker (for Ruby)**.
+- `load` in a non-main Ractor calls the hook in that Ractor, on every version.
+- On Ruby 4.1, a non-main Ractor can't prepend to `RubyVM::InstructionSequence`.
+
+### Forking with live Ractors on Ruby 3.3
+
+On Ruby 3.4 and later, a process with live Ractors forks, and the child works. On Ruby 3.3, the child crashed with a segmentation fault whenever the parent had a live Ractor, on macOS and on Linux. So before each fork on Ruby 3.3, the parent checks `Ractor.count > 1`. When any Ractor is live, the run stops with an error, instead of letting every child crash and reporting `RuntimeError` for each mutant.
+
+### Lookup tables
+
+Every lookup table that the runtime keeps is shareable, because a non-main Ractor that reads a constant holding an unshareable object raises `Ractor::IsolationError`. The ERB tables are shareable too ([Lookup tables are shareable](erb.md#lookup-tables-are-shareable)).
+
 ## What this design doesn't do
 
 - It doesn't reuse a process for a second run, on any system.
@@ -162,4 +191,5 @@ One case isn't handled: a hit made on another thread or a fiber while such a fil
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
+- It doesn't fork on Ruby 3.3 while a Ractor is live. The run stops with an error.
 - It doesn't write instrumented source into the project.
