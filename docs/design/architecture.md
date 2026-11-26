@@ -178,25 +178,25 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 ## Values and events
 
-Every value that passes between stages is a `Data.define` class: immutable, compared by value, and convertible to and from JSON, so that it can cross a pipe between processes.
+Every value that passes between stages is a `Data.define` class: immutable and compared by value. The ones that cross a pipe between processes also convert to and from JSON: `Position`, `Location`, `Mutant`, `Test`, `TestResult`, `DryRunResult`, `MutantRun`, and `MutantResult`. A project process loads them, so they use only the standard library, and they call only `JSON.generate` and `JSON.parse`, with no options, whatever version of `json` the project's bundle locks ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
 
 | Value | What it holds |
 | - | - |
-| `Config` | Every option of the run, after the file and the command line are merged. |
+| `Config` | Every option of the run, after the file and the command line are merged. Every option has StrykerJS's default, except `mutate` and `test_runner`, which have none. |
 | `Location` | A start and an end `Position`, each a line and a column, as the report schema defines them. |
 | `Mutant` | Its ID, its file, its mutator's name, and its text edit: the byte offsets of the stretch it replaces, and its replacement text. |
 | `Test` | Its ID in the framework, its name, and its file and location when the framework gives them. |
 | `TestResult` | A test, whether it passed, failed, or was skipped, its failure message, and its time. |
-| `DryRunResult` | Each test's result and the mutant IDs in its bucket, and the static bucket. |
+| `DryRunResult` | Each test's result and the mutant IDs in its bucket, the static bucket, and every file first loaded during a test. |
 | `MutantRun` | A mutant, whether it runs as a runtime or a static mutant, the IDs of the tests to run, and the time limit. |
-| `MutantResult` | A mutant, its status, the tests that killed it, the tests that covered it, and the run's time. |
+| `MutantResult` | A mutant, its status and the reason for it, the tests that killed it, the tests that covered it, how many tests finished, the run's time, and whether the mutant was static. A mutant that didn't run has no count and no time. |
 
 A run publishes domain events, each also a `Data.define` value, and the core hands each event to every reporter:
 
 | Event | Published when | It holds |
 | - | - | - |
 | `Events::DryRunCompleted` | the dry run passes | the `DryRunResult` |
-| `Events::PlanReady` | every mutant has a status or a run | the `MutantRun` values, and the mutants that won't run, with their statuses |
+| `Events::PlanReady` | every mutant has a status or a run | the `MutantRun` values, and a `MutantResult` for each mutant that won't run, with its status |
 | `Events::MutantTested` | a result is collected | the `MutantResult` |
 | `Events::RunCompleted` | the last result is collected | every `MutantResult` |
 
