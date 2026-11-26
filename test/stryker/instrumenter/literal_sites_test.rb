@@ -10,109 +10,122 @@ class LiteralSitesTest < Minitest::Test
   include SiteCase
 
   STRINGS = "x = 'a'\ny = 'a'\np [x, x.frozen?, x.equal?(y)]\n"
-  private_constant(:STRINGS)
+  NUMBERS = "p [1, 1.5, 3r, 2i]\n"
+  private_constant(:NUMBERS, :STRINGS)
 
   def test_a_string_with_frozen_string_literals
-    assert_site("# frozen_string_literal: true\n#{STRINGS}", ["'a'", "'b'"])
+    assert_site("# frozen_string_literal: true\n#{STRINGS}", ["'a'", "'b'"], holder: Prism::StringNode)
   end
 
   def test_a_string_with_unfrozen_string_literals
-    assert_site("# frozen_string_literal: false\n#{STRINGS}", ["'a'", "'b'"])
+    assert_site("# frozen_string_literal: false\n#{STRINGS}", ["'a'", "'b'"], holder: Prism::StringNode)
   end
 
   def test_a_string_with_no_magic_comment
-    assert_site(STRINGS, ["'a'", "'b'"])
+    assert_site(STRINGS, ["'a'", "'b'"], holder: Prism::StringNode)
   end
 
   def test_a_string_as_a_hash_key
-    assert_site("h = { 'a' => 1 }\np h\n", ["'a'", "'b'"])
+    assert_site("h = { 'a' => 1 }\np h\n", ["'a'", "'b'"], holder: Prism::StringNode)
   end
 
   def test_an_interpolated_string
-    assert_site("x = 1\np \"a\#{x}b\"\n", ["\"a\#{x}b\"", "'c'"])
+    assert_site("x = 1\np \"a\#{x}b\"\n", ["\"a\#{x}b\"", "'c'"], holder: Prism::InterpolatedStringNode)
   end
 
   def test_adjacent_string_literals_on_one_line
-    assert_site("p(\"a\" \"b\")\n", ["\"a\" \"b\"", "'c'"])
+    assert_site("p(\"a\" \"b\")\n", ["\"a\" \"b\"", "'c'"], holder: Prism::InterpolatedStringNode)
   end
 
   def test_a_character_literal
-    assert_site("p(?a)\n", ["?a", "?b"])
+    assert_site("p(?a)\n", ["?a", "?b"], holder: Prism::StringNode)
   end
 
   def test_a_part_of_adjacent_string_literals_joined_by_a_backslash
-    assert_site("x = \"a\" \\\n  \"b\"\np x\n", ['"a"', '"c"'], ['"b"', '"d"'])
+    assert_site("x = \"a\" \\\n  \"b\"\np x\n", ['"a"', '"c"'], ['"b"', '"d"'], holder: Prism::InterpolatedStringNode)
   end
 
   def test_an_expression_inside_an_interpolation
-    assert_site("x = 1\np \"a\#{x + 1}b\"\n", ["x + 1", "x - 1"])
+    assert_site("x = 1\np \"a\#{x + 1}b\"\n", ["x + 1", "x - 1"], holder: Prism::CallNode)
   end
 
   def test_a_word_array
-    assert_site("p %w[a b]\n", ["%w[a b]", "%w[c]"])
+    assert_site("p %w[a b]\n", ["%w[a b]", "%w[c]"], holder: Prism::ArrayNode)
   end
 
   def test_a_symbol
-    assert_site("p :a\n", [":a", ":b"])
+    assert_site("p :a\n", [":a", ":b"], holder: Prism::SymbolNode)
   end
 
   def test_an_interpolated_symbol
-    assert_site("x = 1\np :\"a\#{x}\"\n", [":\"a\#{x}\"", ":b"])
+    assert_site("x = 1\np :\"a\#{x}\"\n", [":\"a\#{x}\"", ":b"], holder: Prism::InterpolatedSymbolNode)
   end
 
   def test_a_symbol_as_a_block_argument
-    assert_site("p [1, 2].map(&:to_s)\n", [":to_s", ":succ"])
+    assert_site("p [1, 2].map(&:to_s)\n", [":to_s", ":succ"], holder: Prism::SymbolNode)
   end
 
   def test_a_label_key_in_a_hash
-    assert_site("p({ a: 1 })\n", ["a:", "b:"])
+    assert_site("p({ a: 1 })\n", ["a:", "b:"], holder: Prism::HashNode)
   end
 
-  def test_number_literals
-    assert_site("p [1, 1.5, 3r, 2i]\n", %w[1 2], ["1.5", "2.5"], %w[3r 4r], %w[2i 3i])
+  def test_an_integer
+    assert_site(NUMBERS, %w[1 2], holder: Prism::IntegerNode)
+  end
+
+  def test_a_float
+    assert_site(NUMBERS, ["1.5", "2.5"], holder: Prism::FloatNode)
+  end
+
+  def test_a_rational
+    assert_site(NUMBERS, %w[3r 4r], holder: Prism::RationalNode)
+  end
+
+  def test_an_imaginary
+    assert_site(NUMBERS, %w[2i 3i], holder: Prism::ImaginaryNode)
   end
 
   def test_an_integer_as_a_receiver
-    assert_site("x = []\n3.times { |i| x << i }\np x\n", %w[3 2])
+    assert_site("x = []\n3.times { |i| x << i }\np x\n", %w[3 2], holder: Prism::IntegerNode)
   end
 
   def test_an_array
-    assert_site("p [1, 2]\n", ["[1, 2]", "[]"])
+    assert_site("p [1, 2]\n", ["[1, 2]", "[]"], holder: Prism::ArrayNode)
   end
 
   def test_a_hash
-    assert_site("p({ a: 1 })\n", ["{ a: 1 }", "{}"])
+    assert_site("p({ a: 1 })\n", ["{ a: 1 }", "{}"], holder: Prism::HashNode)
   end
 
   def test_an_expression_under_a_splat
-    assert_site("a = [1]\np [*a, 3]\n", ["a", "[]", 1])
+    assert_site("a = [1]\np [*a, 3]\n", ["a", "[]", 1], holder: Prism::LocalVariableReadNode)
   end
 
   def test_a_splat
-    assert_site("a = [1]\np [*a, 3]\n", ["*a", "0"])
+    assert_site("a = [1]\np [*a, 3]\n", ["*a", "0"], holder: Prism::ArrayNode)
   end
 
   def test_a_hash_value
-    assert_site("p({ a: 1 })\n", %w[1 2])
+    assert_site("p({ a: 1 })\n", %w[1 2], holder: Prism::IntegerNode)
   end
 
   def test_a_keyword_argument_value
-    assert_site("def f(a:)\n  a\nend\np f(a: 1)\n", %w[1 2])
+    assert_site("def f(a:)\n  a\nend\np f(a: 1)\n", %w[1 2], holder: Prism::IntegerNode)
   end
 
   def test_a_hash_pair
-    assert_site("p({ a: 1 })\n", ["a: 1", "b: 2"])
+    assert_site("p({ a: 1 })\n", ["a: 1", "b: 2"], holder: Prism::HashNode)
   end
 
   def test_a_calls_keyword_arguments
-    assert_site("def f(**k)\n  k\nend\np f(a: 1)\n", ["a: 1", "b: 2"])
+    assert_site("def f(**k)\n  k\nend\np f(a: 1)\n", ["a: 1", "b: 2"], holder: Prism::CallNode)
   end
 
   def test_a_range
-    assert_site("p (1..3).to_a\n", ["1..3", "1...3"])
+    assert_site("p (1..3).to_a\n", ["1..3", "1...3"], holder: Prism::RangeNode)
   end
 
   def test_an_endless_range
-    assert_site("p (1..).first(2)\n", ["1..", "2.."])
+    assert_site("p (1..).first(2)\n", ["1..", "2.."], holder: Prism::RangeNode)
   end
 end

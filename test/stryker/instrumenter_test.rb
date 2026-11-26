@@ -76,7 +76,7 @@ class InstrumenterTest < Minitest::Test
   end
 
   def test_an_edit_after_a_multibyte_character
-    assert_site("s = 'é'\np s + 'b'\n", ["'b'", "'c'"])
+    assert_site("s = 'é'\np s + 'b'\n", ["'b'", "'c'"], holder: Prism::StringNode)
   end
 
   def test_a_switch_records_a_hit_each_time_its_original_branch_runs

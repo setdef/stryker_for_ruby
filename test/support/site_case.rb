@@ -59,14 +59,40 @@ module SiteCase
 
   # Checks the kind of site in +source+ with one mutant for each of +edits+.
   # Each edit is a needle, the text that replaces it, and which occurrence of
-  # the needle to replace, counted from 0.
-  def assert_site(source, *edits)
+  # the needle to replace, counted from 0. The switch of every mutant must wrap
+  # a node of the class +holder+, the node that the site's row in the
+  # placement table names, so that a switch on another node fails even when
+  # the program prints the same.
+  def assert_site(source, *edits, holder:)
     mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
     result = Stryker::Instrumenter.instrument(source, mutants)
 
     assert_empty(result.skipped)
     assert_equal(source.count("\n"), result.source.count("\n"), "The instrumented source has other lines.")
+    mutants.each { |mutant| assert_switch_wraps(holder, result.source, mutant) }
     assert_runs_like_its_mutants(source, result.source, mutants)
+  end
+
+  def assert_switch_wraps(holder, instrumented, mutant)
+    assert_instance_of(holder, switched_node(instrumented, mutant.id), "The node mutant #{mutant.id}'s switch wraps.")
+  end
+
+  # The node that the switch of mutant +id+ wraps, read from +instrumented+:
+  # the original code, which the switch's last branch runs after the hit.
+  def switched_node(instrumented, id)
+    switch = nodes_in(Prism.parse(instrumented).value).find { |node| switch_of?(node, id) }
+    hit_and_original = last_branch(switch).statements.body.first
+    hit_and_original.body.body.last.body.body.first
+  end
+
+  def switch_of?(node, id)
+    node.is_a?(Prism::IfNode) && node.predicate.slice == "::Stryker::Active.id == #{id}"
+  end
+
+  # The else branch at the end of a ternary or an if/elsif chain.
+  def last_branch(switch)
+    tail = switch.compact_child_nodes.last
+    tail.is_a?(Prism::IfNode) ? last_branch(tail) : tail
   end
 
   def assert_runs_like_its_mutants(source, instrumented, mutants)
