@@ -1,0 +1,26 @@
+module Stryker
+  module Mutators
+    # What a mutator that moves an operand to another place needs to know about
+    # it: whether it holds a heredoc opener, which a move would part from its
+    # body.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # call = Prism.parse("a <=> <<~TEXT\n  b\nTEXT\n").value.statements.body.first
+    # Stryker::Mutators::Operand.holds_heredoc?(call.arguments.arguments.first)
+    # # => true
+    # ```
+    module Operand
+      # Whether `node`, or a node inside it, is a heredoc opener such as
+      # `<<~TEXT`. The heredoc's body lies on the lines after the opener, outside
+      # the operand, and the bodies follow their openers in order. A move that
+      # takes one opener past another gives each the other's body.
+      #
+      # - `node`: Prism::node, the operand.
+      def self.holds_heredoc?: (Prism::node node) -> bool
+
+      private def self.heredoc_opener?: (Prism::node node) -> bool
+    end
+  end
+end

@@ -41,10 +41,6 @@ class EqualityOperatorTest < Minitest::Test
     assert_equal(["a == b"], replacements("a != b"))
   end
 
-  def test_the_spaceship_swaps_its_operands
-    assert_equal(["b <=> a"], replacements("a <=> b"))
-  end
-
   def test_the_edit_covers_the_whole_call
     edit = edits("ok = a < b\n").first
 
@@ -59,28 +55,6 @@ class EqualityOperatorTest < Minitest::Test
     spaced = ["a<b", "a  <  b", "a <\n  b"].map { |source| replacements(source).first }
 
     assert_equal(["a<=b", "a  <=  b", "a <=\n  b"], spaced)
-  end
-
-  def test_the_spaceship_keeps_the_text_between_the_operands
-    spaced = ["a<=>b", "a  <=>  b", "a <=>\n  b"].map { |source| replacements(source).first }
-
-    assert_equal(["b<=>a", "b  <=>  a", "b <=>\n  a"], spaced)
-  end
-
-  def test_the_spaceship_swaps_operands_that_are_calls_and_multibyte
-    assert_equal(["items[2].size <=> réponse"], replacements("réponse <=> items[2].size"))
-  end
-
-  def test_the_spaceship_swaps_each_spaceship_in_an_expression_in_the_order_of_the_tree
-    assert_equal(["(b <=> c) <=> a", "a <=> (c <=> b)"], mutated("a <=> (b <=> c)"))
-  end
-
-  def test_the_spaceship_makes_no_mutant_when_the_operands_have_the_same_text
-    assert_empty(edits("x <=> x\nf(1, 2) <=> f(1, 2)\n@a <=> @a"))
-  end
-
-  def test_the_spaceship_makes_a_mutant_when_the_operands_differ_in_any_character
-    assert_equal(["x1 <=> x", "x <=> x.y"], replacements("x <=> x1") + replacements("x.y <=> x"))
   end
 
   def test_makes_a_mutant_for_each_comparison_in_an_expression_in_the_order_of_the_tree

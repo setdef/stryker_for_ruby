@@ -30,8 +30,10 @@ module Stryker
       def self.edits: (Prism::node node, Hash[Symbol, Array[String]] pairs) { (Comparison) -> boolish } -> Array[Edit]
 
       # The edit that covers the whole call and swaps its operands, keeping
-      # the text between them, or nil when the operands have the same text,
-      # because the swap would give back the original.
+      # the text between them, or nil when the swap would give back the
+      # original, because the operands have the same text, or when an operand
+      # holds a heredoc opener, because a heredoc's body follows its opener and
+      # the swap would give each opener the other's body.
       def swapped: () -> Edit?
 
       # Whether the comparison is `==` between `__FILE__` and `$0` or
@@ -40,6 +42,8 @@ module Stryker
       def script_check?: () -> bool
 
       PROGRAM_NAMES: Array[String]
+
+      private def holds_heredoc?: () -> bool
 
       private def operand_swap: () -> Array[[Prism::Location, String]]
     end

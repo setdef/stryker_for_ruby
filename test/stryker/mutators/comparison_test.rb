@@ -26,6 +26,12 @@ class ComparisonTest < Minitest::Test
     assert_nil(comparison("a.b <=> a.b", %i[<=>]).swapped)
   end
 
+  def test_swaps_nothing_when_an_operand_holds_a_heredoc_opener
+    sources = ["a <=> <<~TEXT\n  b\nTEXT\n", "<<~TEXT <=> a\n  b\nTEXT\n", "f(<<~TEXT) <=> a\n  b\nTEXT\n"]
+
+    assert_equal([nil] * 3, sources.map { |source| comparison(source, %i[<=>]).swapped })
+  end
+
   def test_a_comparison_of_the_file_with_the_script_name_says_so
     checks = ["__FILE__ == $0", "$0 == __FILE__", "__FILE__ == $PROGRAM_NAME", "$PROGRAM_NAME == __FILE__"]
 
