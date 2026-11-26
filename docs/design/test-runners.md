@@ -10,11 +10,11 @@ An adapter loads in a project process, so it uses only the standard library and 
 - **`run`** runs the tests it is given, in that order, one at a time. It tells the observer when each test starts and when it finishes, so the hit recorder makes each test's bucket current while that test runs ([Coverage](coverage.md#hits)). With `bail` true, it stops after the first test that fails, because one failure kills the mutant.
 - **A test's time** is measured with `Process.clock_gettime(Process::CLOCK_MONOTONIC)`, in milliseconds, so a change to the system clock during a run doesn't change it.
 
-A test that doesn't run but counts as passed makes a mutant survive that a test would have killed, and nothing in the report shows it. So the [contract tests](architecture.md#contract-tests) count which tests really ran, as well as checking the results: every chosen test runs exactly once, a test that wasn't chosen never runs, and a failed assertion, an error raised outside an assertion, and a skip each give the right status.
+The [contract tests](architecture.md#contract-tests) hold every adapter to this, and [`Stryker::Testing::TestRunnerContract`](../../sig/stryker/testing/test_runner_contract.rbs) says what they check.
 
 ## Minitest
 
-`Stryker::TestRunners::MinitestRunner` is the adapter for Minitest 6. Minitest has no public way to run one chosen test, so the adapter depends on some of Minitest's internals. [Ways to run a chosen test](#ways-to-run-a-chosen-test) compares the ways that were tried.
+`Stryker::TestRunners::MinitestRunner` is the adapter for Minitest 6. Minitest has no public way to run one chosen test, so the adapter depends on some of Minitest's internals. Minitest 6 has no built-in way to stop at the first failure either, so the adapter supplies one for `bail`. [Ways to run a chosen test](#ways-to-run-a-chosen-test) compares the ways that were tried.
 
 ### Loading the tests
 
