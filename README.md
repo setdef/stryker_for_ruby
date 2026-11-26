@@ -17,16 +17,6 @@ For an introduction to mutation testing and [Stryker Mutator](https://stryker-mu
 
 **Stryker (for Ruby)** supports Ruby 4.0 and later. Ruby 3.3 and 3.4 may work, but they are unsupported, and [the problems found on them](./docs/older-ruby.md) are listed. Because [Prism](https://github.com/ruby/prism) only supports parsing Ruby 3.3 and later, **Stryker (for Ruby)** will not add support for older versions of Ruby.
 
-## Getting Started
-
-For the quickstart, see [the quickstart](./docs/quickstart.md).
-
-
-## Documentation
-
-For the full documentation on how to use **Stryker (for Ruby)**, see our [docs](./docs/index.md).
-
-
 ## Configuration
 
 For the full list of configuration options available in **Stryker (for Ruby)**, see the [configuration docs](./docs/configuration.md).
@@ -34,12 +24,8 @@ For the full list of configuration options available in **Stryker (for Ruby)**, 
 
 ## Supported Mutations
 
-For the full list of all available mutations, see the [mutations docs](./docs/mutations.md).
+For the full list of all available mutations, see [the catalog of mutators](./docs/design/mutators.md#the-catalog).
 
-
-## Supported Reporters
-
-For the full list of all available reporters, see the [reporter docs](./docs/reporters.md).
 
 ## Copyright & License
 
