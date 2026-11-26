@@ -80,6 +80,6 @@ When your change departs from an ADR, push it anyway, and report the departure t
 
 ## Copyright and licenses
 
-The project follows the [REUSE Specification](https://reuse.software/spec-3.3/): every file has copyright and license information. `REUSE.toml` has an annotation for every path (`**`) with the copyright `2026 setdef` and the license `Apache-2.0`, and the license text is in `LICENSES/Apache-2.0.txt`.
+The project follows the [REUSE Specification](https://reuse.software/spec-3.3/). SPDX headers in files are only for content under a copyleft or share-alike license. `REUSE.toml` holds the license information for content under a permissive or public-domain license. The project's own files are Apache-2.0, which is permissive, so they have no SPDX headers. `REUSE.toml` covers them with one annotation for every path (`**`), with the copyright `2026 setdef` and the license `Apache-2.0`. The license text is in `LICENSES/Apache-2.0.txt`.
 
-For a file copied or ported from another source, record that source's copyright and license, add the license text to `LICENSES/` if it isn't there, and run `reuse lint` before you push.
+A file copied from elsewhere under a copyleft or share-alike license has that license in its own SPDX header, and its license text goes in `LICENSES/`. A file copied under a permissive or public-domain license gets an annotation in `REUSE.toml` that lists its copyright and license. Run `reuse lint` before you push.
