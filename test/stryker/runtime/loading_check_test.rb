@@ -66,6 +66,25 @@ class LoadingCheckTest < Minitest::Test
     assert_equal([other], refusal([other]).files)
   end
 
+  # Ruby records a file in $LOADED_FEATURES under the path it gave the hook,
+  # so a file that came through the hook under one spelling doesn't vouch for
+  # a load of the same file under another.
+  def test_the_check_lists_a_spelling_the_hook_missed_when_it_served_another_spelling_of_the_file
+    real, other = two_spellings
+    install([real])
+    iseq_class.load_iseq(real)
+
+    assert_equal([other], refusal([real, other]).files)
+  end
+
+  def test_a_second_install_starts_the_record_of_served_files_again
+    install
+    iseq_class.load_iseq(INSTRUMENTED)
+    install
+
+    assert_equal([INSTRUMENTED], refusal([INSTRUMENTED]).files)
+  end
+
   def test_the_check_on_windows_matches_a_file_by_another_spelling
     install(["C:/App/lib/Invoice.rb"], WINDOWS)
     iseq_class.load_iseq("c:\\app\\LIB\\invoice.rb")

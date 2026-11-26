@@ -32,8 +32,8 @@ module Stryker
       # reads one. Shareable, so the hook reads it in any Ractor.
       CACHE: Cache
 
-      # The files in the cache that the hook served in this process, from
-      # the main Ractor. The loading check reads it. It isn't shareable, so
+      # The paths of the files in the cache that the hook served in this
+      # process, from the main Ractor. The loading check reads it. It isn't shareable, so
       # only the main Ractor touches it.
       SERVED: Served
 
@@ -48,7 +48,7 @@ module Stryker
       # Call it before any of the project's code loads, in every project
       # process: a file that loaded before the call never comes through the
       # hook, and the loading check reports it. A second call replaces
-      # `CACHE` and prepends another copy of the hook.
+      # `CACHE`, starts `SERVED` again, and prepends another copy of the hook.
       #
       # - `directory`: String, the cache's directory, as the orchestrator
       #   wrote it with `Stryker::Runtime::Cache.write`.
@@ -65,8 +65,9 @@ module Stryker
       # `RubyVM::InstructionSequence.compile` under `path` as both its file
       # name and its path, or nil when that file isn't instrumented. It
       # compares `path`'s key (`Stryker::Runtime::PathKey.of`) with the
-      # cache's. In the main Ractor, it also records in `SERVED` that it
-      # served the file. Raises SyntaxError when the instrumented source
+      # cache's. In the main Ractor, it also records in `SERVED` the key of
+      # `path`, as Ruby gave it, because that is the path that Ruby records
+      # the file under in `$LOADED_FEATURES`. Raises SyntaxError when the instrumented source
       # doesn't parse, so the load fails as it would for the file itself.
       #
       # The hook calls it for every file Ruby loads, in whichever Ractor
@@ -93,7 +94,9 @@ module Stryker
       # its real path, has one of that file's keys
       # (`Stryker::Runtime::PathKey.of_file`), so a file that the hook
       # missed because Ruby gave it through another symbolic link is listed
-      # too. An instrumented file that no test loaded isn't in `features`,
+      # too. It counts as served only when the hook served that very path,
+      # so a file that loaded under two spellings, with the hook serving
+      # one, is listed. An instrumented file that no test loaded isn't in `features`,
       # and isn't an error. It resolves the real path of each file in
       # `features` once.
       #

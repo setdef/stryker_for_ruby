@@ -29,8 +29,10 @@ module Stryker
         iseq = RubyVM::InstructionSequence.compile(Cache.text(file), path, path)
         # A Ractor other than the main one can't reach SERVED. Its load
         # adds nothing to $LOADED_FEATURES, which is all the loading check
-        # reads, and a require there runs in the main Ractor.
-        SERVED.add(file) if ractor.equal?(Ractor.main)
+        # reads, and a require there runs in the main Ractor. What it records
+        # is the path as Ruby gave it, because Ruby records a loaded file in
+        # $LOADED_FEATURES under that path, and one file can come under two.
+        SERVED.add(PathKey.of(path, CACHE.separator)) if ractor.equal?(Ractor.main)
         iseq
       end
 
@@ -42,18 +44,25 @@ module Stryker
       end
 
       def self.use(cache)
-        # Removing the constant before setting it again keeps Ruby from
-        # warning that it is already initialized.
+        # A file served from an earlier cache says nothing about this one,
+        # so the record starts again. Removing a constant before setting it
+        # again keeps Ruby from warning that it is already initialized.
         remove_const(:CACHE)
+        remove_const(:SERVED)
+        const_set(:SERVED, Served.new)
         const_set(:CACHE, cache)
       end
 
       def self.missed?(feature)
-        # The real path as well, because a path through a symbolic link that
-        # the cache doesn't know names the file too, and the hook missed it.
+        # The real path finds the file in the cache as well, because a path
+        # through a symbolic link that the cache doesn't know names the file
+        # too, and the hook missed it. Only the path itself can show that the
+        # hook served it, because the hook may have served the file under
+        # another path.
         cache = CACHE
-        files = PathKey.of_file(feature, cache.separator).filter_map { |key| cache.files[key] }
-        files.any? && files.none? { |file| SERVED.include?(file) }
+        separator = cache.separator
+        instrumented = PathKey.of_file(feature, separator).any? { |key| cache.files.key?(key) }
+        instrumented && !SERVED.include?(PathKey.of(feature, separator))
       end
       private_class_method(:missed?, :use)
     end

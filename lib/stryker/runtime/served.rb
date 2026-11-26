@@ -10,13 +10,13 @@ module Stryker
         @files = Set.new
       end
 
-      def add(file)
-        @lock.synchronize { @files << file }
+      def add(path)
+        @lock.synchronize { @files << path }
         nil
       end
 
-      def include?(file)
-        @lock.synchronize { @files.include?(file) }
+      def include?(path)
+        @lock.synchronize { @files.include?(path) }
       end
     end
   end
