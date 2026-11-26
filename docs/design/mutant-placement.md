@@ -252,6 +252,7 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 ## Traps at sites that hold a switch
 
 - **Named captures stay declared.** A match such as `/(?<x>\d+)/ =~ s` declares the local `x` when Ruby parses it. With the switch on the whole match and its mutant active, the match doesn't run, but `x` is still declared, as `nil`. The plain mutant has no `x` at all, so `defined?(x)` gives `"local-variable"` under the switch and `nil` in the plain mutant, and a later read of `x` gives `nil` where the plain mutant raises `NameError`.
+- **A local declared under a switch stays declared.** Removing a statement such as `x = 1` leaves `x` declared under the switch, as a named capture does: Ruby declares a local when it parses the assignment, and the mutant's branch has no assignment, so `x` is `nil`. With `x = 1` followed by `p x`, and the statement removed, the switched form prints `nil`, where the plain mutant raises `NameError`. A later read of `x` gives `nil` and not an error.
 - **A mutant that is invalid without a switch stays invalid.** Removing a default from `def f(a = 1)` makes every call `f()` raise `ArgumentError`, and so does the switched form. The switch reproduces the plain mutant; it doesn't make a broken mutant work.
 
 ## What this design doesn't do
