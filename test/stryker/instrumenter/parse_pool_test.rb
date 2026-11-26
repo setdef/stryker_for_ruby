@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../support/parse_workers")
+require "minitest/mock"
 
 # Checks the pool of parse workers: when it parses in workers, how many it
 # starts, the verdicts it gives, and that it leaves no process running.
@@ -8,10 +9,11 @@ class ParsePoolTest < Minitest::Test
   include ParseWorkers
 
   Pool = Stryker::Instrumenter::ParsePool
+  Batch = Stryker::Instrumenter::ParseBatch
   SOURCE = "x = 1\n"
   # The work of SOURCE with three plain mutants.
   WORK = SOURCE.bytesize * 3
-  private_constant(:Pool, :SOURCE, :WORK)
+  private_constant(:Batch, :Pool, :SOURCE, :WORK)
 
   # How many workers a pool of +concurrency+ starts for three plain mutants
   # of SOURCE when a worker needs +work_per_worker+ bytes of work.
@@ -108,6 +110,24 @@ class ParsePoolTest < Minitest::Test
           pool.valid(SOURCE, plains(2))
           raise(ArgumentError, "Stopped.")
         end
+      end
+    end
+  end
+
+  # How many workers each batch that the block makes gets.
+  def batch_sizes(&)
+    sizes = []
+    original = Batch.method(:new)
+    Batch.stub(:new, -> (*args) { original.call(*args).tap { sizes << args.last.size } }, &)
+    sizes
+  end
+
+  def test_it_gives_a_file_only_the_workers_that_its_work_needs
+    with_workers do |folder|
+      Pool.open(4, WORK / 2, worker_command(:real, folder, 1)) do |pool|
+        pool.valid(SOURCE, plains(6))
+
+        assert_equal([2], batch_sizes { pool.valid(SOURCE, plains(3)) })
       end
     end
   end

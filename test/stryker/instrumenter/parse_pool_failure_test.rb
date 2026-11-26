@@ -56,4 +56,12 @@ class ParsePoolFailureTest < Minitest::Test
       Pool.open(2, 1, ["stryker-no-such-command"]) { |pool| pool.valid(SOURCE, plains(1)) }
     end
   end
+
+  def test_it_ends_every_worker_when_it_raises_and_is_not_stopped_after
+    with_workers do |folder|
+      pool = Pool.new(2, 1, worker_command(:answers_with_text, folder, 2))
+
+      assert_raises(Stryker::Instrumenter::Error) { pool.valid(SOURCE, plains(1)) }
+    end
+  end
 end
