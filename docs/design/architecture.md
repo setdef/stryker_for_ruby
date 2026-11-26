@@ -41,7 +41,7 @@ Solid arrows hand values to the next stage. Dotted arrows show the domain events
 
 ## Two kinds of process
 
-A run has two kinds of process. The orchestrator is the process that `stryker run` starts. It runs stages 1 to 4, 7, 9, and 10, and its isolation adapter starts the project processes and waits for their results. A project process loads the project's code: it runs stages 5 and 6, and the mutant runs of stage 8. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
+A run has two kinds of process. The orchestrator is the process that `stryker run` starts. It runs stages 1 to 4, 7, 9, and 10, and the part of the isolation adapter that runs in it starts the project processes, reads their results, and enforces the time limits of the runs that don't have a fork parent. A project process loads the project's code: it runs stages 5 and 6, and the mutant runs of stage 8, and it runs the rest of the isolation adapter. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
 
 ```mermaid
 flowchart LR
@@ -65,7 +65,7 @@ flowchart LR
   S8 -- results over pipes --> S9
 ```
 
-Prism and refract load only in the orchestrator, where stages 3 and 4 use them. A project process loads only the runtime of **Stryker (for Ruby)**, which includes the hook, the switch, and the hit recorder, and which uses nothing outside the standard library.
+Prism and refract load only in the orchestrator, where stages 3 and 4 use them. The orchestrator runs inside the project's bundle, with the gem in the project's Gemfile, so Prism and refract resolve against the project's locked gems, and it starts every project process with the same bundle environment. A project process loads only the runtime of **Stryker (for Ruby)**: the hook, the switch, the hit recorder, the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs there. The runtime uses nothing outside the standard library.
 
 ## Ports and adapters
 
@@ -215,7 +215,7 @@ Stages never call a reporter directly, so adding a reporter changes no stage.
 | Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework |
 | Recording which tests reach which mutants | the hit recorder in the Stryker runtime |
 | Choosing each mutant's tests, kind of run, and time limit | Plan |
-| A clean process for each run, time limits, and killing a run that passes its limit | the isolation adapter |
+| A clean process for each run, time limits, and killing a run that passes its limit | the isolation adapter, whose parts run in the orchestrator and in the project processes ([who enforces each limit](loading-and-isolation.md#how-results-reach-the-orchestrator)) |
 | Turning a run's outcome into a schema status | Collect results |
 | Writing reports, uploading to the dashboard, and showing progress | the reporter adapters |
 

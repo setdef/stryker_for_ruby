@@ -1,6 +1,6 @@
 # Loading and isolation
 
-This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), and the reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
+This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the bundle they run in, what runs in a project process, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, how results reach the orchestrator, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), and the reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
 
 ## Terms
 
@@ -19,9 +19,17 @@ The orchestrator never loads the project's code, and a project process never ins
 | Process | What it does | The code of **Stryker (for Ruby)** that it loads |
 | - | - | - |
 | The orchestrator | Reads the configuration, finds and parses the files, instruments them, writes the cache, starts the project processes, plans the mutant runs, collects the results, and writes the reports. | The code that instruments, plans, and reports, with Prism and refract. |
-| A project process: the parent that forks, each child forked from it, each process in the Windows pool, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which includes the hook, the switch, and the hit recorder, and which uses nothing outside the standard library. |
+| A project process: the parent that forks, each child forked from it, each process in the Windows pool, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
 
 Prism and refract load only in the orchestrator. The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
+
+### The bundle
+
+The orchestrator runs inside the project's bundle, with the gem in the project's Gemfile, so Prism and refract resolve against the project's locked gems. The orchestrator starts every project process with the same bundle environment.
+
+### What runs in a project process
+
+The runtime holds the hook, the switch, and the hit recorder. It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
 
 ### The cache
 
@@ -84,7 +92,17 @@ Every mutant run happens in a process that has run no test before it, and that p
 | Runtime | A child forked from a loaded parent | A process from the pool |
 | Static | A fresh process with the mutant ID in its environment | The same |
 
-Every result reaches the orchestrator over pipes, one JSON object per line. Each process that reads one parses it with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests.
+### How results reach the orchestrator
+
+Every result travels over pipes, one JSON object per line. Each process that reads one parses it with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests.
+
+| Run | Who writes the result | Who reads it | Who enforces the time limit |
+| - | - | - | - |
+| Forked child | The child, to its fork parent, over a pipe of its own | The fork parent, which relays it to the orchestrator over the parent's own pipe | The fork parent |
+| Windows pool process | The pool process, directly to the orchestrator | The orchestrator | The orchestrator |
+| Fresh process for a static mutant | The fresh process, directly to the orchestrator | The orchestrator | The orchestrator |
+
+The fork parent kills a child that runs past its time limit, and relays the timeout to the orchestrator as it relays any other result. The orchestrator kills a pool process or a fresh process that runs past its time limit.
 
 ### Forking on Linux and macOS
 
@@ -94,11 +112,11 @@ The dry run is itself a forked child, with no mutant active.
 
 For each runtime mutant run, the parent:
 
-1. opens a pipe and forks;
+1. opens a pipe of its own for the child and forks;
 2. in the child, closes the read end, sets the active mutant, runs the run's tests through the test runner adapter, stopping at the first failure, writes the result to the pipe, and ends with `exit!`;
-3. in the parent, reads the result, and waits for the child.
+3. in the parent, reads the result, relays it to the orchestrator over the parent's own pipe, and waits for the child.
 
-The parent keeps up to `concurrency` children running at once. When a child runs past the run's time limit, the parent kills it, and the run's result is a timeout.
+The parent keeps up to `concurrency` children running at once. When a child runs past the run's time limit, the parent kills it, and the run's result is a timeout, which the parent relays like any other result.
 
 > [!WARNING]
 > The child must end with `exit!`, never `exit`. A forked child inherits the parent's `at_exit` handlers, and `exit` runs them. `minitest/autorun` registers one that runs the test suite, so a child that calls `exit` runs every test again with the mutant still active.
@@ -111,7 +129,7 @@ A fork costs about 0.6 ms on Linux from a parent of about 15 MB, and about 2 ms 
 
 Windows has no `fork`: `Process.respond_to?(:fork)` is `false`, and `Process.fork` raises `NotImplementedError`. So each runtime mutant run gets a fresh `ruby` process instead, from a pool the orchestrator starts ahead of time.
 
-Each process in the pool installs the hook, loads the test helper and test files through the test runner adapter, and then waits for one run on a pipe. When it receives a mutant ID and the run's test IDs, it sets the active mutant, runs the tests, stopping at the first failure, sends the result back over a pipe, and exits. The orchestrator keeps `concurrency` processes in the pool, starting a new one as each exits, so a process loads the project while others run their tests.
+Each process in the pool installs the hook, loads the test helper and test files through the test runner adapter, and then waits for one run on a pipe. When it receives a mutant ID and the run's test IDs, it sets the active mutant, runs the tests, stopping at the first failure, writes the result to a pipe that the orchestrator reads, and exits. The orchestrator enforces the run's time limit, killing a process that runs past it. It keeps `concurrency` processes in the pool, starting a new one as each exits, so a process loads the project while others run their tests.
 
 A pool process loads the code before it learns its mutant, so the pool runs runtime mutants only.
 
@@ -121,7 +139,7 @@ A fresh process is expensive on Windows. On one probe machine, `ruby -e 1` took 
 
 A static mutant's switch runs once, while its file loads. Setting the mutant active afterwards changes nothing, because the switch never runs again. A probe set a static mutant in a constant's value active after load, and the constant kept its original value.
 
-So every static mutant run gets a fresh process, on every system, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The runtime reads that variable when it loads, before any of the project's code, so the switch takes the mutated branch while the file loads. The run includes every test, because a value set at load time can reach any test.
+So every static mutant run gets a fresh process, on every system, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The fresh process writes its result directly to the orchestrator, which enforces the run's time limit. The runtime reads that variable when it loads, before any of the project's code, so the switch takes the mutated branch while the file loads. The run includes every test, because a value set at load time can reach any test.
 
 ### A file first loaded inside a test
 
