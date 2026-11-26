@@ -25,7 +25,10 @@ module Stryker
       end
 
       def self.real(path)
-        File.realpath(path)
+        # A relative path, such as the thread.rb that Ruby lists for a
+        # built-in feature, names no file of the project, and realpath would
+        # resolve it against the current directory.
+        File.realpath(path) if File.absolute_path?(path)
       rescue SystemCallError
         nil
       end

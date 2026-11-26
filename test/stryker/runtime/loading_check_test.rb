@@ -4,6 +4,7 @@ require_relative("../../test_helper")
 
 # SimpleCov starts in test_helper, so it must load before the code it measures.
 require_relative("../../support/loader_stand_in")
+require "minitest/mock"
 
 # Checks the loading check, which the dry run runs once its tests have run,
 # on a stand-in for RubyVM::InstructionSequence.
@@ -75,6 +76,16 @@ class LoadingCheckTest < Minitest::Test
     iseq_class.load_iseq(real)
 
     assert_equal([other], refusal([real, other]).files)
+  end
+
+  # Ruby lists a built-in feature such as thread.rb by its bare name, which
+  # names no file in the project, whatever the current directory holds.
+  def test_the_check_passes_a_relative_feature_that_the_current_directory_has_a_file_for
+    real, = two_spellings
+    install([real])
+    found = -> (_name) { real }
+
+    File.stub(:realpath, found) { assert_nil(Stryker::Runtime::Loader.check(["thread.rb"], iseq_class)) }
   end
 
   def test_a_second_install_starts_the_record_of_served_files_again

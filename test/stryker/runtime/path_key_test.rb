@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../test_helper")
+require "minitest/mock"
 require "stryker/runtime/path_key"
 require "tmpdir"
 
@@ -52,5 +53,26 @@ class PathKeyTest < Minitest::Test
     path = file
 
     assert_equal([path, File.realpath(path)].map(&:downcase), Stryker::Runtime::PathKey.of_file(path, WINDOWS))
+  end
+
+  # Ruby gives a built-in feature such as thread.rb as the bare name it was
+  # required by, which File.realpath would resolve against the current
+  # directory, to whatever file of that name is there. The block stands in for
+  # a current directory that has such a file.
+  def test_a_relative_path_is_not_resolved_against_the_current_directory
+    path = file
+    found = -> (_name) { path }
+
+    File.stub(:realpath, found) { assert_equal(["thread.rb"], Stryker::Runtime::PathKey.of_file("thread.rb", nil)) }
+  end
+
+  def test_a_relative_path_has_no_real_path
+    assert_nil(Stryker::Runtime::PathKey.real("thread.rb"))
+  end
+
+  def test_an_absolute_path_has_its_real_path
+    path = file
+
+    assert_equal(File.realpath(path), Stryker::Runtime::PathKey.real(path))
   end
 end

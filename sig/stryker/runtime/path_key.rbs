@@ -37,8 +37,8 @@ module Stryker
       # and gives a file that Ruby or Bootsnap compiles its real path, in the
       # file's frames and in `$LOADED_FEATURES`. A file that the hook
       # compiles shows the path the hook received. When no file is at
-      # `path`, it is the key of `path` alone. It reads the disk once, to
-      # resolve the real path.
+      # `path`, or `path` is relative, it is the key of `path` alone. It reads
+      # the disk once, to resolve the real path.
       #
       # - `path`: String, a file's path.
       # - `separator`: String or nil, as `of` takes it.
@@ -52,7 +52,11 @@ module Stryker
       def self.of_file: (String path, ?String? separator) -> Array[String]
 
       # The real path of the file at `path`, with every symbolic link and `..`
-      # resolved, or nil when no file is at `path`. It reads the disk once.
+      # resolved, or nil when `path` is relative or no file is at `path`. A
+      # relative path is never resolved against the current directory,
+      # because Ruby lists a built-in feature such as `thread.rb` by its bare
+      # name, and a project can have a file of that name. It reads the disk
+      # once, for an absolute path.
       # Ruby shows a file's real path as its absolute path, so the loader
       # compiles a file it serves under this path.
       #
