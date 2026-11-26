@@ -547,7 +547,7 @@ Both tests that reached the comparison passed. The **Kills it** column of `Equal
 | `killedBy` | The ID of the test that killed it. A run stops at its first failing test, so it lists one. |
 | `testsCompleted` | The number of tests that finished in the mutant's run. |
 | `duration` | The run's time in milliseconds. |
-| `static` | `true` when the plan ran the mutant as a static mutant ([Coverage](coverage.md#how-the-plan-uses-the-map)). |
+| `static` | `true` when the plan ran the mutant as a static mutant ([Coverage](coverage.md#static-hits-inside-a-test)). |
 
 The report's `testFiles` lists each test with its name and its file and location, when the test runner adapter gives them, so each ID in `coveredBy` and `killedBy` leads to a test that the reader can open and extend.
 

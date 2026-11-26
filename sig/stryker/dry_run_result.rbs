@@ -3,7 +3,7 @@ module Stryker
   # reached, the mutants reached outside any test, and the files first loaded
   # during a test. The dry run runs every test once with no mutant active,
   # and the plan turns this value into each mutant's status or run
-  # ([Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#how-the-plan-uses-the-map)).
+  # ([#26](https://github.com/setdef/stryker_for_ruby/issues/26)).
   #
   # A dry run result is a value: two results with equal members are equal. It
   # checks none of its members. It converts to and from JSON, as

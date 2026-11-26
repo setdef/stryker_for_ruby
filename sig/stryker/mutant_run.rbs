@@ -3,7 +3,7 @@ module Stryker
   # one for each mutant that a test reaches, and an isolation adapter runs it
   # in a clean process. A runtime mutant runs only the tests that reached it,
   # and a static mutant runs every test in a fresh process
-  # ([Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#how-the-plan-uses-the-map)).
+  # ([#26](https://github.com/setdef/stryker_for_ruby/issues/26)).
   #
   # A mutant run is a value: two runs with equal members are equal. It checks
   # none of its members. It converts to and from JSON, as

@@ -1,6 +1,6 @@
 # Coverage
 
-This page specifies how **Stryker (for Ruby)** learns which tests reach each mutant, and which mutants are static. The plan uses that map to run each mutant against only the tests that reach it, and to give a mutant that no test reaches the status `NoCoverage` without running it. The terms used here are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies how **Stryker (for Ruby)** learns which tests reach each mutant, and which mutants are static. The terms used here are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 ## Hits
 
@@ -33,24 +33,6 @@ Each figure is the cost of one call in nanoseconds, from `Stryker::Active.hit` a
 | `hit`, in another Ractor | not recorded | not recorded | not recorded | not recorded | 748 | 543 |
 
 Each `hit` row in the main Ractor is a hit of a mutant already in the current bucket, the usual case: the recorder returns after a membership check, without a merge and without taking its lock. The first hit of a mutant in a bucket takes the lock and merges. A mutant run pays only the `id` read and the `hit` that returns at once, because it records nothing. The first `hit` of a mutant after a file begins to load also pays for one stack check, which [When the check runs](#when-the-check-runs) prices.
-
-## The dry run
-
-The dry run runs every test once, with no mutant active, in a separate process. It reports, for each test, its result, its time, and the mutant IDs in its bucket. It also reports the static bucket, and every file first loaded during a test. When any test fails, the dry run fails and no mutant runs, because a mutant can't be judged by a test that fails without it.
-
-## How the plan uses the map
-
-| What the dry run recorded for a mutant | Its status or run |
-| - | - |
-| No hit at all | `NoCoverage`, and it doesn't run. |
-| A static hit, with or without hits in tests' buckets | A static run: a fresh process with the mutant active before load, running every test. |
-| Hits in one or more tests' buckets only | A runtime run of exactly those tests, which the report lists as the mutant's `coveredBy`. |
-
-A static run includes every test because a value set while a file loads can reach any test, whichever tests recorded hits. The same rule covers hits recorded between tests, such as in an RSpec `before(:context)` hook, which runs outside any single test.
-
-When every file loads before the first test, the static bucket identifies static mutants exactly. A probe ran each of 29 Minitest tests once against each of 64 mutants, each pair in a separate process, and stopped the process the first time that mutant's switch ran, noting whether a test had started. That gave the true set of 8 static mutants, and the hits recorded before the first test were the same 8.
-
-A file that the project first requires inside a test loads while that test runs, so its load-time hits would land in the test's bucket. The next section says how the recorder tells them from runtime hits.
 
 ## Static hits inside a test
 
@@ -105,7 +87,9 @@ A test body has 18 to 25 frames under Minitest, RSpec, and Rails.
 
 ### What the probes found
 
-A probe ran the 29 Minitest tests and 64 mutants described above, with the 8 static mutants and 76 true (test, mutant) pairs as the ground truth, in two layouts. It ran on Ruby 3.3, 3.4, 4.0, and 4.1-dev, on macOS and Linux.
+When every file loads before the first test, the static bucket identifies static mutants exactly. A probe ran each of 29 Minitest tests once against each of 64 mutants, each pair in a separate process, and stopped the process the first time that mutant's switch ran, noting whether a test had started. That gave the true set of 8 static mutants, and the hits recorded before the first test were the same 8.
+
+The same probe, with the 8 static mutants and 76 true (test, mutant) pairs as the ground truth, ran in two layouts. It ran on Ruby 3.3, 3.4, 4.0, and 4.1-dev, on macOS and Linux.
 
 | Rule | Every file required before the tests | Each file first required inside a test |
 | - | - | - |
@@ -127,8 +111,6 @@ Fixtures that the two rules together handled correctly:
 A hit made on another thread or a fiber while a file loads inside a test isn't attributed to the load. A thread's stack and a fiber's stack, including the stack of an external enumerator run with `Enumerator#next`, have no top-level frame. The hit stays in the test's bucket, and the mutant is planned as a runtime mutant with only the tests that recorded it, so a test that also depends on the file's load-time values isn't in its run.
 
 Counting every hit on another thread or fiber as static was rejected. In a test that loads a file and runs the app in a server thread, as Rails system tests do, every mutant that the server thread reaches would become static, and every one of them would run against the whole suite in a fresh process.
-
-The dry run doesn't guess about this. It reports every file first loaded during a test, and lists each file, so the project can see which results rest on this rule.
 
 ## Ractors
 
@@ -167,7 +149,7 @@ A switch never changed whether a block can be isolated or shared. Every form beh
 
 Ruby's standard `Coverage` library can measure which lines each test runs: start it in lines mode, and after each test call `Coverage.result(stop: false, clear: true)`. Mapping those lines to the mutants on them gives a second way to build the map. It gives the wrong map.
 
-The same probe as above compared the two ways against the true set of (test, mutant) pairs, leaving out the static mutants:
+The probe of [What the probes found](#what-the-probes-found) compared the two ways against the true set of (test, mutant) pairs, leaving out the static mutants:
 
 | Way | Pairs found that are true | Pairs found that are false | True pairs missed |
 | - | - | - | - |
@@ -189,4 +171,3 @@ Hits avoid both causes, because each switch records the IDs of the mutants it ho
 - It doesn't record hits in a mutant run.
 - It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
 - It doesn't record a hit from a Ractor that started before the runtime loaded. Such a hit raises `Stryker::UnsupportedError`.
-- It doesn't keep the map between runs. Each run of **Stryker (for Ruby)** starts with a new dry run.
