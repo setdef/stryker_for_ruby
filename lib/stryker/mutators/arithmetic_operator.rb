@@ -4,20 +4,16 @@ require_relative "operation"
 
 module Stryker
   module Mutators
-    class ArithmeticOperator
+    module ArithmeticOperator
       PAIRS = { "+": %w[-], "-": %w[+], "*": %w[/], "/": %w[*], "%": %w[*] }.freeze
       private_constant(:PAIRS)
 
-      def name
+      def self.name
         "ArithmeticOperator"
       end
 
-      def edits(node, _ancestors)
-        Operation.edits(node, pairs, &:string_operand?)
-      end
-
-      private def pairs
-        PAIRS
+      def self.edits(node, _ancestors)
+        Operation.edits(node, PAIRS, &:string_operand?)
       end
     end
   end

@@ -4,20 +4,16 @@ require_relative "junction"
 
 module Stryker
   module Mutators
-    class LogicalOperator
+    module LogicalOperator
       SWAPS = { "&&": "||", "||": "&&", and: "or", or: "and" }.freeze
       private_constant(:SWAPS)
 
-      def name
+      def self.name
         "LogicalOperator"
       end
 
-      def edits(node, _ancestors)
-        [Junction.of(node)&.edit(swaps)].compact
-      end
-
-      private def swaps
-        SWAPS
+      def self.edits(node, _ancestors)
+        [Junction.of(node)&.edit(SWAPS)].compact
       end
     end
   end

@@ -1,0 +1,100 @@
+module Stryker
+  module Mutators
+    # What an includer of `Stryker::Mutators::OperatorSite` has: the call it
+    # wraps, the call's receiver, and where the operator is written.
+    interface _OperatorSite
+      # The call.
+      def call: () -> Prism::CallNode
+
+      # The call's receiver: the left operand of `a + b`, and the operand of
+      # `-a`.
+      def receiver: () -> Prism::node
+
+      # Where the operator is written.
+      def operator_loc: () -> Prism::Location
+    end
+
+    # A call written as an operator, which `Stryker::Mutators::OperatorCall`
+    # tells from a call written as a method call, with what a mutator needs to
+    # make its edits. A class that wraps such a call, as
+    # `Stryker::Mutators::Operation` and `Stryker::Mutators::Prefix` do,
+    # includes this module. It gets the class methods `of` and `edits`, which
+    # find the calls and make their edits, and the instance method that makes
+    # the edits of a table of replacements.
+    #
+    # The class defines `written`, which builds an instance from a call, or
+    # returns nil when the call lacks a part that the class needs.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("a.+(b)").value.statements.body.first
+    # Stryker::Mutators::Operation.of(node, [:+])
+    # # => nil
+    # ```
+    module OperatorSite : _OperatorSite
+      # Gives the class that includes this module the class methods of
+      # `Stryker::Mutators::OperatorSite::Reading`.
+      #
+      # - `base`: Module, the class that includes this module.
+      def self.included: (Module base) -> void
+
+      # The operator's method name, such as `:+` or `:-@`.
+      def operator: () -> Symbol
+
+      # The edits of the mutants that `table` lists for this call, each
+      # covering the whole call, in the order of the table. None when the block
+      # is true of the site.
+      #
+      # - `table`: Hash of Symbol to Array of String or nil, the operator names
+      #   and, for each, what each mutant does, in the order of the mutator's
+      #   table. A string replaces the operator and keeps the text around it,
+      #   and nil drops the operator, which makes the whole call the
+      #   receiver's source.
+      # - `block`: called with this site, and true when it makes no mutant.
+      def edits: [T < String?] (Hash[Symbol, Array[T]] table) { (self) -> boolish } -> Array[Edit]
+
+      private def dropped: () -> Edit
+
+      private def with_operator: (String replacement) -> Edit
+
+      # What `Stryker::Mutators::OperatorSite` gives the class methods of the
+      # class that includes it. `S` is the class.
+      module Reading[S < _Edits] : _Written[S]
+        # The site that `node` is, or nil when it isn't a call named one of
+        # `names` and written with no dot, such as `a + b` or `!a`, or when
+        # the class finds that the call lacks a part it needs.
+        #
+        # - `node`: Prism::node, the node.
+        # - `names`: Array of Symbol, the method names to accept.
+        def of: (Prism::node node, Array[Symbol] names) -> S?
+
+        # The edits of the mutants that `table` lists for `node`: none when
+        # `node` isn't a site named by one of its keys, or when the block is
+        # true of the site.
+        #
+        # - `node`: Prism::node, the node.
+        # - `table`: Hash of Symbol to Array of String or nil, as for the
+        #   instance method `edits`.
+        # - `block`: called with the site, and true when it makes no mutant.
+        def edits: [T < String?] (Prism::node node, Hash[Symbol, Array[T]] table) { (S) -> boolish } -> Array[Edit]
+      end
+
+      # What a class that includes `Stryker::Mutators::OperatorSite` defines:
+      # how to build a site from a call.
+      interface _Written[S]
+        # The site for `call`, or nil when `call` lacks a part the class needs.
+        #
+        # - `call`: Prism::CallNode, a call written as an operator.
+        def written: (Prism::CallNode call) -> S?
+      end
+
+      # What the edits of a site need from it: the method that makes them.
+      interface _Edits
+        # The edits for `table`, as `Stryker::Mutators::OperatorSite#edits`
+        # defines them.
+        def edits: [T < String?] (Hash[Symbol, Array[T]] table) { (self) -> boolish } -> Array[Edit]
+      end
+    end
+  end
+end

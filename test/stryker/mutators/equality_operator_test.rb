@@ -10,7 +10,7 @@ class EqualityOperatorTest < Minitest::Test
   include MutatorCase
 
   def mutator
-    Stryker::Mutators::EqualityOperator.new
+    Stryker::Mutators::EqualityOperator
   end
 
   def test_is_named_for_the_report

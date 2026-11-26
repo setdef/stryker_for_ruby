@@ -20,12 +20,12 @@ module Stryker
     #
     # ```ruby
     # node = Prism.parse("ok = a && b").value.statements.body.first.value
-    # Stryker::Mutators::LogicalOperator.new.edits(node, []).map(&:replacement)
+    # Stryker::Mutators::LogicalOperator.edits(node, []).map(&:replacement)
     # # => ["a || b"]
     # ```
-    class LogicalOperator
+    module LogicalOperator
       # The mutator's name in the report: `"LogicalOperator"`.
-      def name: () -> String
+      def self.name: () -> String
 
       # The edit at `node`: one for an `AndNode` or an `OrNode`, none for any
       # other node.
@@ -33,11 +33,9 @@ module Stryker
       # - `node`: Prism::node, a node of the file.
       # - `_ancestors`: Array of Prism::node, the nodes above it, which this
       #   mutator doesn't read.
-      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
 
       SWAPS: Hash[Symbol, String]
-
-      private def swaps: () -> Hash[Symbol, String]
     end
   end
 end

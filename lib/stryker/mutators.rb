@@ -8,13 +8,7 @@ require_relative "mutators/unary_operator"
 
 module Stryker
   module Mutators
-    ALL = [
-      ArithmeticOperator.new,
-      BooleanLiteral.new,
-      EqualityOperator.new,
-      LogicalOperator.new,
-      UnaryOperator.new,
-].freeze
+    ALL = [ArithmeticOperator, BooleanLiteral, EqualityOperator, LogicalOperator, UnaryOperator].freeze
     public_constant(:ALL)
   end
 end

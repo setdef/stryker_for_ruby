@@ -30,40 +30,17 @@ module Stryker
       def self.new: (call: Prism::CallNode, receiver: Prism::node, operator_loc: Prism::Location) -> instance
                   | (Prism::CallNode call, Prism::node receiver, Prism::Location operator_loc) -> instance
 
-      # The prefix that `node` is, or nil when it isn't a call named one of
-      # `names` and written as a prefix operator. A call with a dot, such as
-      # `a.!` or `a&.!`, is one written as a method call. A call built by hand
-      # without its receiver or operator isn't one either. The names are those
-      # of the methods: `:-@` for `-a`, `:+@` for `+a`, `:!` for `!a` and
-      # `not a`.
-      #
-      # - `node`: Prism::node, the node.
-      # - `names`: Array of Symbol, the method names to accept.
-      def self.of: (Prism::node node, Array[Symbol] names) -> Prefix?
+      include OperatorSite
 
-      # The edits of the mutants that `replacements` lists for `node`: none
-      # when `node` isn't a prefix named by one of its keys, or when the block
-      # is true of the prefix.
-      #
-      # - `node`: Prism::node, the node.
-      # - `replacements`: Hash of Symbol to Array of String or nil, the
-      #   method names and, for each, what each mutant does, in the order of
-      #   the mutator's table: nil drops the operator, which makes the whole
-      #   call the receiver's source, and a string replaces the operator.
-      # - `block`: called with the prefix, and true when it makes no mutant.
-      def self.edits: (Prism::node node, Hash[Symbol, Array[String?]] replacements) { (Prefix) -> boolish } -> Array[Edit]
-
-      # The edits of the mutants that `replacements` lists for this prefix,
-      # each covering the whole call, in the order of the table. None when
-      # the block is true of the prefix.
-      #
-      # - `replacements`: Hash of Symbol to Array of String or nil, as for
-      #   `edits`.
-      # - `block`: called with this prefix, and true when it makes no mutant.
-      def edits: (Hash[Symbol, Array[String?]] replacements) { (Prefix) -> boolish } -> Array[Edit]
-
-      # The operator's method name, such as `:-@`.
-      def operator: () -> Symbol
+      # The class methods `of` and `edits`. `of` gives the prefix that a node
+      # is, or nil when it isn't a call named one of the names and written as a
+      # prefix operator. A call with a dot, such as `a.!` or `a&.!`, is one
+      # written as a method call. A call built by hand without its receiver or
+      # operator isn't one either. The names are those of the methods: `:-@`
+      # for `-a`, `:+@` for `+a`, `:!` for `!a` and `not a`. In a table of
+      # replacements, nil drops the operator, which makes the whole call the
+      # receiver's source, and a string replaces the operator.
+      extend OperatorSite::Reading[Prefix]
 
       # Whether the operator is `-` or `+` and its operand is a string
       # literal, as `Stryker::Mutators::Strings.literal?` defines it. Such a
@@ -71,11 +48,11 @@ module Stryker
       # `+"draft"` returns it unfrozen.
       def string_sign?: () -> bool
 
-      private def self.written: (Prism::CallNode call) -> Prefix?
-
-      private def dropped: () -> Edit
-
-      private def with_operator: (String replacement) -> Edit
+      # The prefix for `call`, or nil when `call` lacks its receiver or its
+      # operator, as a call built by hand can.
+      #
+      # - `call`: Prism::CallNode, a call written as an operator.
+      def self.written: (Prism::CallNode call) -> Prefix?
     end
   end
 end

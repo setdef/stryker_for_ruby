@@ -11,7 +11,7 @@ class BooleanLiteralTest < Minitest::Test
   include MutatorCase
 
   def mutator
-    Stryker::Mutators::BooleanLiteral.new
+    Stryker::Mutators::BooleanLiteral
   end
 
   def test_is_named_for_the_report

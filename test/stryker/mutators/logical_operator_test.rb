@@ -10,7 +10,7 @@ class LogicalOperatorTest < Minitest::Test
   include MutatorCase
 
   def mutator
-    Stryker::Mutators::LogicalOperator.new
+    Stryker::Mutators::LogicalOperator
   end
 
   def test_is_named_for_the_report

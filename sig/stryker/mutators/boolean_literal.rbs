@@ -23,12 +23,12 @@ module Stryker
     #
     # ```ruby
     # node = Prism.parse("!ready").value.statements.body.first
-    # Stryker::Mutators::BooleanLiteral.new.edits(node, []).map(&:replacement)
+    # Stryker::Mutators::BooleanLiteral.edits(node, []).map(&:replacement)
     # # => ["ready"]
     # ```
-    class BooleanLiteral
+    module BooleanLiteral
       # The mutator's name in the report: `"BooleanLiteral"`.
-      def name: () -> String
+      def self.name: () -> String
 
       # The edits at `node`: one for a `true`, a `false`, a negation, an
       # `unless`, or an `until`, and none for any other node.
@@ -36,15 +36,11 @@ module Stryker
       # - `node`: Prism::node, a node of the file.
       # - `_ancestors`: Array of Prism::node, the nodes above it, which this
       #   mutator doesn't read.
-      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
 
       RESPELLINGS: Hash[Class, String]
 
       NEGATIONS: Hash[Symbol, Array[String?]]
-
-      private def respellings: () -> Hash[Class, String]
-
-      private def negations: () -> Hash[Symbol, Array[String?]]
     end
   end
 end

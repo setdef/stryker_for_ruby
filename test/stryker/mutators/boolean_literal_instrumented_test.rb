@@ -12,7 +12,7 @@ class BooleanLiteralInstrumentedTest < Minitest::Test
   include MutatorSites
 
   def mutator
-    Stryker::Mutators::BooleanLiteral.new
+    Stryker::Mutators::BooleanLiteral
   end
 
   def test_true_and_false

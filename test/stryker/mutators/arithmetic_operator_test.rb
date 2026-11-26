@@ -10,7 +10,7 @@ class ArithmeticOperatorTest < Minitest::Test
   include MutatorCase
 
   def mutator
-    Stryker::Mutators::ArithmeticOperator.new
+    Stryker::Mutators::ArithmeticOperator
   end
 
   def test_is_named_for_the_report

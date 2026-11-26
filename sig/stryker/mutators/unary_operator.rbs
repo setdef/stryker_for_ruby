@@ -25,12 +25,12 @@ module Stryker
     #
     # ```ruby
     # node = Prism.parse("ok = +a").value.statements.body.first.value
-    # Stryker::Mutators::UnaryOperator.new.edits(node, []).map(&:replacement)
+    # Stryker::Mutators::UnaryOperator.edits(node, []).map(&:replacement)
     # # => ["-a"]
     # ```
-    class UnaryOperator
+    module UnaryOperator
       # The mutator's name in the report: `"UnaryOperator"`.
-      def name: () -> String
+      def self.name: () -> String
 
       # The edits at `node`: one for a `-`, `+`, or `~` call, or for a negative
       # number literal, and none for any other node.
@@ -39,11 +39,9 @@ module Stryker
       # - `ancestors`: Array of Prism::node, the nodes above it, from the root
       #   to its parent. The mutator reads the parent, to leave out the number
       #   inside an imaginary literal.
-      def edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
 
       PREFIXES: Hash[Symbol, Array[String?]]
-
-      private def prefixes: () -> Hash[Symbol, Array[String?]]
     end
   end
 end

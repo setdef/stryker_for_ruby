@@ -6,7 +6,7 @@ require_relative "respelling"
 
 module Stryker
   module Mutators
-    class BooleanLiteral
+    module BooleanLiteral
       RESPELLINGS = {
         Prism::TrueNode => "false",
         Prism::FalseNode => "true",
@@ -18,20 +18,12 @@ module Stryker
       NEGATIONS = { "!": [nil] }.freeze
       private_constant(:NEGATIONS)
 
-      def name
+      def self.name
         "BooleanLiteral"
       end
 
-      def edits(node, _ancestors)
-        Respelling.edits(node, respellings) + Prefix.edits(node, negations) { false }
-      end
-
-      private def respellings
-        RESPELLINGS
-      end
-
-      private def negations
-        NEGATIONS
+      def self.edits(node, _ancestors)
+        Respelling.edits(node, RESPELLINGS) + Prefix.edits(node, NEGATIONS) { false }
       end
     end
   end

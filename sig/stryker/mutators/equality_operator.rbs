@@ -34,12 +34,12 @@ module Stryker
     #
     # ```ruby
     # call = Prism.parse("ok = a < b").value.statements.body.first.value
-    # Stryker::Mutators::EqualityOperator.new.edits(call, []).map(&:replacement)
+    # Stryker::Mutators::EqualityOperator.edits(call, []).map(&:replacement)
     # # => ["a <= b", "a >= b"]
     # ```
-    class EqualityOperator
+    module EqualityOperator
       # The mutator's name in the report: `"EqualityOperator"`.
-      def name: () -> String
+      def self.name: () -> String
 
       # The edits at `node`: the boundary mutant and the negation, in that
       # order, for a comparison, the swap for `<=>`, and none for any other
@@ -48,11 +48,9 @@ module Stryker
       # - `node`: Prism::node, a node of the file.
       # - `_ancestors`: Array of Prism::node, the nodes above it, which this
       #   mutator doesn't read.
-      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
 
       PAIRS: Hash[Symbol, Array[String]]
-
-      private def pairs: () -> Hash[Symbol, Array[String]]
     end
   end
 end

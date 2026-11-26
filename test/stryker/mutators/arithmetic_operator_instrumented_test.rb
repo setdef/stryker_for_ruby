@@ -12,7 +12,7 @@ class ArithmeticOperatorInstrumentedTest < Minitest::Test
   include MutatorSites
 
   def mutator
-    Stryker::Mutators::ArithmeticOperator.new
+    Stryker::Mutators::ArithmeticOperator
   end
 
   def test_every_pair_of_the_table

@@ -29,7 +29,7 @@ class EqualityOperatorInstrumentedTest < Minitest::Test
   private_constant(:MONEY)
 
   def mutator
-    Stryker::Mutators::EqualityOperator.new
+    Stryker::Mutators::EqualityOperator
   end
 
   def test_every_pair_of_the_table

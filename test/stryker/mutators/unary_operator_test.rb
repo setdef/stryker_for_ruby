@@ -10,7 +10,7 @@ class UnaryOperatorTest < Minitest::Test
   include MutatorCase
 
   def mutator
-    Stryker::Mutators::UnaryOperator.new
+    Stryker::Mutators::UnaryOperator
   end
 
   def test_is_named_for_the_report

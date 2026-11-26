@@ -6,7 +6,10 @@ module Stryker
   # specifies each mutator's pairs.
   #
   # Ruby checks nothing about the interface: any object with these two
-  # methods is a mutator, and Steep checks each class's signatures against it.
+  # methods is a mutator, and Steep checks each mutator's signatures against
+  # it. Each mutator of the catalog is a module whose `name` and `edits` are
+  # module methods, because a mutator keeps no state, and a module is Ruby's
+  # form for behavior with none.
   #
   # A mutator keeps no state between calls. The walk leaves out the sites
   # that no mutator makes a mutant of ([Sites that get no

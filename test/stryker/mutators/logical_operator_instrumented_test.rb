@@ -12,7 +12,7 @@ class LogicalOperatorInstrumentedTest < Minitest::Test
   include MutatorSites
 
   def mutator
-    Stryker::Mutators::LogicalOperator.new
+    Stryker::Mutators::LogicalOperator
   end
 
   def test_and_and_the_keyword_and

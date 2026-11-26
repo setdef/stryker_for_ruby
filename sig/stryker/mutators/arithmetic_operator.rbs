@@ -28,12 +28,12 @@ module Stryker
     #
     # ```ruby
     # call = Prism.parse("total = a + b").value.statements.body.first.value
-    # Stryker::Mutators::ArithmeticOperator.new.edits(call, [])
+    # Stryker::Mutators::ArithmeticOperator.edits(call, [])
     # # => [#<data Stryker::Edit start_offset=8, end_offset=13, replacement="a - b">]
     # ```
-    class ArithmeticOperator
+    module ArithmeticOperator
       # The mutator's name in the report: `"ArithmeticOperator"`.
-      def name: () -> String
+      def self.name: () -> String
 
       # The edits at `node`: one for the node that is an arithmetic operator
       # call with no string operand, and none for any other node.
@@ -41,11 +41,9 @@ module Stryker
       # - `node`: Prism::node, a node of the file.
       # - `_ancestors`: Array of Prism::node, the nodes above it, which this
       #   mutator doesn't read.
-      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
 
       PAIRS: Hash[Symbol, Array[String]]
-
-      private def pairs: () -> Hash[Symbol, Array[String]]
     end
   end
 end

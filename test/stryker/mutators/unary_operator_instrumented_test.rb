@@ -12,7 +12,7 @@ class UnaryOperatorInstrumentedTest < Minitest::Test
   include MutatorSites
 
   def mutator
-    Stryker::Mutators::UnaryOperator.new
+    Stryker::Mutators::UnaryOperator
   end
 
   def test_minus_plus_and_complement
