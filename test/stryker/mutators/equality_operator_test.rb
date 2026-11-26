@@ -109,6 +109,12 @@ class EqualityOperatorTest < Minitest::Test
     assert_empty(edits("if __FILE__ == $0\n  run\nend\n"))
   end
 
+  def test_makes_no_mutant_of_the_check_that_a_file_is_the_script_wherever_it_stands
+    sources = ["ok = __FILE__ == $0\n", "run(__FILE__ == $0)\n", "[$0 == __FILE__]\n", "x = (__FILE__ == $0) && y\n"]
+
+    assert_empty(sources.flat_map { |source| edits(source) })
+  end
+
   def test_makes_a_mutant_of_a_comparison_of_the_file_with_something_else
     assert_equal(["__FILE__ != name", "$0 != name"], replacements("__FILE__ == name") + replacements("$0 == name"))
   end

@@ -173,7 +173,7 @@ A condition of `if` or `unless` can be any expression, as in StrykerJS, so `if o
 
 An operand of `||` gets only `false`, and an operand of `&&` only `true`, as StrykerJS does. `true || y` is `true`, the mutant that the whole condition already gets, and `false && y` is `false`, the other one.
 
-A condition that is already `true` or `false` gets no mutant of these, because one of its two mutants is the original. A condition of the form `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME` gets none either (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+A condition that is already `true` or `false` gets no mutant of these, because one of its two mutants is the original. A comparison of the form `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME` gets none either, wherever it stands (see [Sites that get no mutant](#sites-that-get-no-mutant)).
 
 ### `EqualityOperator`
 
@@ -332,7 +332,9 @@ A string that Ruby freezes under `frozen_string_literal: true` is replaced by on
 | `~a` | `a` | A test that checks the result. |
 | `-1`, `-2.5`, `-1r` | `1`, `2.5`, `1r` | A test that checks the value. |
 
-StrykerJS turns `-a` into `+a`. In Ruby, `+a` calls `+@`, which `Numeric` defines but most other classes don't, so `+a` would raise `NoMethodError` for a `Vector` or a `Money` and be killed at once. `a` gives the same value as `+a` on a number and works on any receiver. A negative number literal is an `IntegerNode`, `FloatNode`, `RationalNode`, or `ImaginaryNode` in Prism, not a call, and it gets the same mutant as `-a`, as StrykerJS mutates `-1`. `-0` gets none, because it equals `0`.
+StrykerJS turns `-a` into `+a`. In Ruby, `+a` calls `+@`, which `Numeric` defines but most other classes don't, so `+a` would raise `NoMethodError` for a `Vector` or a `Money` and be killed at once. `a` gives the same value as `+a` on a number and works on any receiver. A negative number literal is an `IntegerNode`, `FloatNode`, `RationalNode`, or `ImaginaryNode` in Prism, not a call, and it gets the same mutant as `-a`, as StrykerJS mutates `-1`.
+
+A zero of any kind (`-0`, `-0.0`, `-0r`, `-0i`) gets no mutant. An integer, rational, or imaginary zero equals the zero without its sign, so that mutant would be equivalent. A float zero doesn't: `1 / -0.0` is `-Infinity` and `1 / 0.0` is `Infinity`. Only a test that divides by the value tells the two apart, so the survivor of that mutant wouldn't be worth acting on, and the rule applies to `-0.0` all the same.
 
 It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those control whether the string is frozen (see [Sites that get no mutant](#sites-that-get-no-mutant)).
 
@@ -403,8 +405,8 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 | A call with no receiver to `require`, `require_relative`, `load`, or `autoload`, and `autoload` called on a module: the call's arguments, and the call's removal | A changed path loads another file or raises `LoadError`, and a removed `require` or `autoload` either raises `NameError` or changes nothing because another file loaded the same code. Each such mutant is static, so it would cost a fresh process and the whole suite. [Mutant placement](mutant-placement.md#sites-that-get-no-mutant) gives the rule for the arguments. |
 | Comments, magic comments such as `# frozen_string_literal: true`, and the data after `__END__` | They aren't code that Prism gives a mutator. The instrumenter keeps them byte for byte ([Splicing into the original bytes](mutant-placement.md#splicing-into-the-original-bytes)). |
 | `freeze` | No mutator removes a call to `freeze`, or the `-` or `+` before a string literal. The receiver behaves the same unfrozen unless some code changes it, and only a test that expects `FrozenError` would kill the mutant, so it would survive on every frozen constant. |
-| The condition `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round | The `true` mutant runs the file's script code inside the test process, where it does whatever the script does. |
-| A call with no receiver to `sig` with a block | It is a [Sorbet](https://sorbet.org) type signature, the counterpart of the type annotations that StrykerJS never mutates. |
+| The comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round, wherever it stands | A mutant that makes the comparison true, such as `true` in its place or `!=` for `==`, runs the file's script code inside the test process, where it does whatever the script does. The comparison gets none whether it is a condition or a value. |
+| A call with no receiver to `sig` with a block, and everything inside the block | It is a [Sorbet](https://sorbet.org) type signature, the counterpart of the type annotations that StrykerJS never mutates. The block is out of every mutator's reach, so no mutator makes a mutant of a call, a literal, or an operator inside it. |
 | A backtick or `%x` command | See [`StringLiteral`](#stringliteral). |
 | Code inside `BEGIN { }`, and a mutant with no one-line form | See [Mutant placement](mutant-placement.md#sites-that-get-no-mutant). |
 | The removal of a call with no receiver to `private`, `protected`, `private_constant`, or `private_class_method` | No Stryker tool has a mutator that changes visibility, so `CallExpression` leaves these calls alone, as it leaves `require` alone. |
@@ -421,7 +423,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two live mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `def save` with the single statement `write` as its body, `BlockStatement` and `CallExpression` both replace `write` with `nil`, and the run keeps `BlockStatement`'s. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one. The run compares only live mutants, so an `Ignored` mutant never removes a live one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: a condition that is already `true` or `false`, a body that is already empty or `nil`, an empty hash, `-0`, an endless range, `&.` on `self` or a literal, and `Array.new` given `[]`.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: a condition that is already `true` or `false`, a body that is already empty or `nil`, an empty hash, `-0`, `-0r`, and `-0i`, an endless range, `&.` on `self` or a literal, and `Array.new` given `[]`.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for. Mark it with a disable comment once you've checked it.
 

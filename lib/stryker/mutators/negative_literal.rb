@@ -12,7 +12,9 @@ module Stryker
 
         case node
         when Prism::IntegerNode, Prism::FloatNode, Prism::RationalNode, Prism::ImaginaryNode
-          # A zero is equal to its negative, so removing the sign changes nothing.
+          # An integer, rational, or imaginary zero equals its negative. A float
+          # zero differs only in 1 / -0.0, which only a test that divides by the
+          # value sees, so its survivor isn't worth acting on.
           new(node:) if node.slice.start_with?("-") && !node.value.zero?
         end
       end

@@ -23,10 +23,12 @@ module Stryker
                   | (Prism::IntegerNode | Prism::FloatNode | Prism::RationalNode | Prism::ImaginaryNode node) -> instance
 
       # The negative literal that `node` is, or nil when it isn't a number
-      # written with a minus sign, or when its value is zero, because a zero
-      # equals its negative. A number with a plus sign is none either, and so
-      # is the number inside an imaginary literal such as `-2i`, which has the
-      # sign too: the imaginary literal is the negative literal.
+      # written with a minus sign, or when its value is zero. An integer,
+      # rational, or imaginary zero equals its negative, and a float zero
+      # differs only in `1 / -0.0`, which only a test that divides by the value
+      # sees. A number with a plus sign is none either, and so is the number
+      # inside an imaginary literal such as `-2i`, which has the sign too: the
+      # imaginary literal is the negative literal.
       #
       # - `node`: Prism::node, the node.
       # - `parent`: Prism::node, the node's parent, or nil at the root.
