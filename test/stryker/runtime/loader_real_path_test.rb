@@ -36,6 +36,14 @@ class LoaderRealPathTest < Minitest::Test
     PATH_KEY.stub(:real, refuse) { assert_nil(iseq_class.load_iseq(absolute("/app/lib/receipt.rb"))) }
   end
 
+  # A file name in another encoding, such as Latin-1 bytes in a gem's folder,
+  # reaches the hook as a path that isn't valid UTF-8.
+  def test_a_path_with_a_byte_that_is_not_utf8_is_left_to_ruby
+    install([absolute("/app/lib/invoice.rb")])
+
+    assert_nil(iseq_class.load_iseq(absolute("/gems/caf\xE9.rb").dup.force_encoding(Encoding::UTF_8)))
+  end
+
   def test_a_file_with_the_base_name_of_an_instrumented_file_in_another_letter_case_is_served_by_its_real_path
     install([absolute("/app/lib/Invoice.rb")])
 

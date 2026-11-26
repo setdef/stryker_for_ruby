@@ -72,6 +72,12 @@ class PathKeyTest < Minitest::Test
 
   # A load that Ruby finds in the working directory gives the hook a relative
   # path, which Ruby resolves against the working directory.
+  def test_the_name_of_a_key_with_a_byte_that_is_not_utf8_has_that_byte_replaced
+    key = "/app/lib/Caf\xE9.rb".dup.force_encoding(Encoding::UTF_8)
+
+    assert_equal("caf\uFFFD.rb", Stryker::Runtime::PathKey.name(key))
+  end
+
   def test_a_relative_path_is_located_in_the_current_directory
     assert_equal(File.absolute_path("line.rb"), Stryker::Runtime::PathKey.located("line.rb"))
   end

@@ -67,7 +67,10 @@ module Stryker
       # on every system, because a file system can fold it whatever the
       # platform's convention: the default macOS file system does. `key` has
       # `/` between its parts, so the base name is what follows the last one.
-      # It reads nothing from disk.
+      # A byte that isn't valid UTF-8 becomes U+FFFD first, because Ruby
+      # raises `ArgumentError` when it folds a string with such a byte, and
+      # the hook calls this for every file that Ruby loads. It reads nothing
+      # from disk.
       #
       # - `key`: String, the key of a file's path.
       def self.name: (String key) -> String

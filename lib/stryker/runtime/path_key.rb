@@ -37,7 +37,12 @@ module Stryker
         # Letter case is folded on every system, because a file system can
         # fold it whatever the platform's convention: the default macOS file
         # system does.
-        key.rpartition("/").last.downcase(:fold)
+        # A byte that isn't valid UTF-8, from a file name in another encoding,
+        # would make the fold raise ArgumentError in the hook, for a file that
+        # no instrumented file shares a name with. Replacing it keeps two
+        # names that differ only in such bytes together, which costs the hook
+        # one resolution at most.
+        key.rpartition("/").last.scrub.downcase(:fold)
       end
 
       def self.names(keys)
