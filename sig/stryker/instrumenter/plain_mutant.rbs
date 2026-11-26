@@ -51,6 +51,13 @@ module Stryker
       # - `mutant`: Stryker::Mutant, the mutant.
       def self.of: (String source, Array[Heredoc::node] heredocs, Mutant mutant) -> PlainMutant
 
+      # `source` without `bodies`, as binary.
+      #
+      # - `source`: String, a file's source.
+      # - `bodies`: Array of Stryker::Instrumenter::Span, stretches of
+      #   `source` that don't overlap, in the order of the file.
+      def self.without: (String source, Array[Span] bodies) -> String
+
       # How many bytes longer the plain mutant makes the range of `node`, a
       # node of the original file that holds the mutant's edit: the bytes
       # that the edit adds, less the bodies that lie inside the node. An edit

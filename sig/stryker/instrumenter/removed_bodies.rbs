@@ -15,7 +15,16 @@ module Stryker
       # - `mutant`: Stryker::Mutant, the edit.
       def self.of: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
 
-      private def self.bodies_of_covered: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
+      # The bodies of the heredocs whose openers lie inside `span` and whose
+      # bodies lie after it, in the order of the file.
+      #
+      # - `heredocs`: Array of Stryker::Instrumenter::Heredoc::node, every
+      #   heredoc in the file.
+      # - `span`: Stryker::_Span, a stretch of the file, such as a mutant's
+      #   edit or a node's location.
+      def self.after: (Array[Heredoc::node] heredocs, _Span span) -> Array[Span]
+
+      private def self.bodies_of_covered: (Array[Heredoc::node] heredocs, _Span span) -> Array[Span]
     end
   end
 end

@@ -10,10 +10,14 @@ module Stryker
       # steep:ignore:end
       def self.of(source, heredocs, mutant)
         bodies = RemovedBodies.of(heredocs, mutant)
-        withheld = bodies.reverse.reduce(source.b) do |text, body|
+        edited = mutant.edit(without(source, bodies)).force_encoding(source.encoding)
+        new(mutant:, bodies:, result: Syntax.parse(edited))
+      end
+
+      def self.without(source, bodies)
+        bodies.reverse.reduce(source.b) do |text, body|
           "#{text.byteslice(0, body.start_offset)}#{text.byteslice((body.end_offset)..)}".b
         end
-        new(mutant:, bodies:, result: Syntax.parse(mutant.edit(withheld).force_encoding(source.encoding)))
       end
 
       def growth_within(node)

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "heredoc_body"
+require_relative "span"
 
 module Stryker
   class Instrumenter
@@ -10,13 +11,17 @@ module Stryker
         # reads the body that the original opener left.
         return [] if mutant.replacement.include?("<<")
 
-        bodies = bodies_of_covered(heredocs, mutant)
-        bodies.select! { |body| body.start_offset >= mutant.end_offset }
+        after(heredocs, mutant)
+      end
+
+      def self.after(heredocs, span)
+        bodies = bodies_of_covered(heredocs, span)
+        bodies.select! { |body| body.start_offset >= span.end_offset }
         bodies.sort_by!(&:start_offset)
       end
 
-      def self.bodies_of_covered(heredocs, mutant)
-        covered = heredocs.select { |heredoc| mutant.covers?(heredoc.location) }
+      def self.bodies_of_covered(heredocs, span)
+        covered = heredocs.select { |heredoc| Span.of(heredoc.location).within?(span) }
         covered.map { |heredoc| HeredocBody.of(heredoc, heredocs) }
       end
       private_class_method(:bodies_of_covered)
