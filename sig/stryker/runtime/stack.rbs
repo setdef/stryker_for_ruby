@@ -31,14 +31,19 @@ module Stryker
 
       # Whether the stack holds the top-level frame of a file at one of
       # `paths`. It reads the whole stack, however deep, and stops at the
-      # first such frame. With no paths, it is false.
+      # first such frame. With no paths, it is false. A frame that has no
+      # path, such as one of an `eval`, never matches.
       #
       # Each check costs about 2 µs at a test body's usual depth of 20
       # frames, and about 20 µs at 300 frames.
       #
-      # - `paths`: Set of String, the files' absolute paths, as Ruby gives
-      #   them to the loader's hook.
-      def self.loading?: (Set[String] paths) -> bool
+      # - `paths`: Set of String, the files' paths as `frame_paths` gives
+      #   them, called with the same `separator`.
+      # - `separator`: String or nil, the system's alternative path
+      #   separator, `File::ALT_SEPARATOR` by default. When it isn't nil,
+      #   each frame's path is normalized as `frame_paths` normalizes its
+      #   paths.
+      def self.loading?: (Set[String] paths, ?String? separator) -> bool
 
       # The paths that the frames of the file at `path` can show: `path`
       # itself, which a file that the loader's hook compiles shows, and its
@@ -46,13 +51,25 @@ module Stryker
       # that Ruby or Bootsnap compiles shows. Ruby gives the hook a path
       # that can hold either. When no file is at `path`, it is `path` alone.
       #
+      # With a `separator`, each path is normalized as the loader normalizes
+      # paths on Windows: each `separator` becomes `/`, and every letter is
+      # lowercased. With none, a path stays as it is, because a
+      # case-sensitive file system has files that differ only in case.
+      #
       # - `path`: String, the path that Ruby gave the loader's hook.
+      # - `separator`: String or nil, the system's alternative path
+      #   separator, `File::ALT_SEPARATOR` by default: a backslash on
+      #   Windows, and nil elsewhere.
       #
       # ```ruby
       # Stryker::Runtime::Stack.frame_paths("/var/app/lib/invoice.rb")
       # # => ["/var/app/lib/invoice.rb", "/private/var/app/lib/invoice.rb"], on macOS
+      # Stryker::Runtime::Stack.frame_paths("C:\\App\\Lib\\Invoice.rb", "\\")
+      # # => ["c:/app/lib/invoice.rb"], when no file is there
       # ```
-      def self.frame_paths: (String path) -> Array[String]
+      def self.frame_paths: (String path, ?String? separator) -> Array[String]
+
+      private def self.normalize: (String path, String? separator) -> String
     end
   end
 end
