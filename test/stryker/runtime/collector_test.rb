@@ -34,7 +34,17 @@ class CollectorTest < Minitest::Test
     replies = []
     Stryker::Runtime::Collector.serve(Inbox.new([[7], "lib/invoice.rb", :drain, :drain, [8], :drain]), replies)
 
-    assert_equal([[[7], "lib/invoice.rb"], [], [[8]]], replies)
+    assert_equal([["lib/invoice.rb", [7]], [], [[8]]], replies)
+  end
+
+  # A Ractor can send millions of hits between two drains, so the collector
+  # keeps each mutant and each file once.
+  def test_it_keeps_each_mutant_and_each_file_once_between_drains
+    replies = []
+    messages = [[7], [7, 8], "lib/invoice.rb", [8], "lib/tax.rb", "lib/invoice.rb", :drain]
+    Stryker::Runtime::Collector.serve(Inbox.new(messages), replies)
+
+    assert_equal([["lib/invoice.rb", "lib/tax.rb", [7, 8]]], replies)
   end
 
   def test_no_collector_is_built_on_a_ruby_without_ractor_ports

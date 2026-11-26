@@ -7,7 +7,7 @@ module Stryker
     class Buckets
       NO_TEST_RUNNING = "The test runner adapter reported that a test finished while no test was running, " \
         "so Stryker (for Ruby) can't tell which test a hit belongs to."
-      public_constant(:NO_TEST_RUNNING)
+      private_constant(:NO_TEST_RUNNING)
 
       def initialize
         @static = Set.new

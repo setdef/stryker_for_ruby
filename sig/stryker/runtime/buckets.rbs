@@ -16,10 +16,6 @@ module Stryker
     # # => {"InvoiceTest#test_total" => #<Set: {7}>}
     # ```
     class Buckets
-      # The message of the RuntimeError that `finish` raises when no test is
-      # running.
-      NO_TEST_RUNNING: String
-
       # Builds the buckets with no hits and no tests.
       def initialize: () -> void
 
@@ -63,6 +59,8 @@ module Stryker
       #
       # - `path`: String, the file's path.
       def load_began: (String path) -> nil
+
+      NO_TEST_RUNNING: String
 
       private
 

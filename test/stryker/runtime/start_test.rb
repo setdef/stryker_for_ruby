@@ -38,6 +38,19 @@ class StartTest < Minitest::Test
     assert_equal([nil, *expected], [namespace::Active.id, collector.class, collector&.started? || false])
   end
 
+  def test_a_second_dry_run_in_one_process_raises
+    Stryker::Runtime.start_dry_run(nil, namespace, recorder)
+    error = assert_raises(RuntimeError) { Stryker::Runtime.start_dry_run(nil, namespace, recorder) }
+
+    assert_includes(error.message, "twice in one process")
+  end
+
+  def test_a_forked_child_readies_a_dry_run_of_its_own
+    recorder.dry_run_started(nil, 1)
+
+    assert_nil(recorder.dry_run_started(nil, 2))
+  end
+
   def test_an_id_that_is_not_a_decimal_integer_raises
     ["", "seven", "0x7"].each do |value|
       assert_raises(ArgumentError) { Stryker::Runtime.start(environment(value), namespace, recorder) }

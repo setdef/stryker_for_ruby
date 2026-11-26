@@ -26,9 +26,6 @@ module Stryker
     # # => false
     # ```
     module Stack
-      # The labels of a file's top-level frame.
-      TOP_LEVEL_LABELS: Set[String]
-
       # Whether the stack holds the top-level frame of a file at one of
       # `paths`. It reads the whole stack, however deep, and stops at the
       # first such frame. With no paths, it is false. A frame that has no
@@ -68,6 +65,8 @@ module Stryker
       # # => ["c:/app/lib/invoice.rb"], when no file is there
       # ```
       def self.frame_paths: (String path, ?String? separator) -> Array[String]
+
+      TOP_LEVEL_LABELS: Set[String]
 
       private def self.normalize: (String path, String? separator) -> String
     end

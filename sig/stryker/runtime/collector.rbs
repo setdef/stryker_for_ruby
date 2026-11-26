@@ -21,7 +21,7 @@ module Stryker
     # Stryker::Runtime::RECORDER.collect_from(collector)
     # collector.started?
     # # => false
-    # Ractor.new(collector) { |inbox| inbox << [7] }.join
+    # Ractor.new(collector) { |inbox| 3.times { inbox << [7] } }.join
     # collector.started?
     # # => true
     # collector.drain
@@ -39,8 +39,11 @@ module Stryker
       def self.build: (?singleton(Ractor) | Module ractor_class) -> Collector?
 
       # What the collector's Ractor runs: it receives each message from
-      # `inbox` and keeps it, and on a drain sends the messages kept since
-      # the last drain to `reply`, in the order they arrived. It returns
+      # `inbox` and keeps it, and on a drain sends what it kept since the
+      # last drain to `reply`: each path once, in the order the paths
+      # arrived, and then one Array of every mutant ID that a hit named,
+      # with no ID twice, or no Array when no hit came. It keeps one entry
+      # per mutant and per file, however many hits arrive. It returns
       # only when `inbox` raises StopIteration, as a stand-in in a test does.
       # It is internal to the runtime, and public so that a test in the main
       # Ractor can run it, because coverage counts no line that another
@@ -50,7 +53,7 @@ module Stryker
       # - `reply`: Ractor::Port, where a drain's messages go.
       def self.serve: (singleton(Ractor) inbox, Ractor::Port[Array[message]] reply) -> void
 
-      private def self.batch: (singleton(Ractor) inbox, Array[message] messages) -> Array[message]
+      private def self.batch: (singleton(Ractor) inbox, Set[Integer] ids, Set[String] paths) -> Array[message]
 
       # Builds a collector with no Ractor. Use `build`, which returns nil
       # where no collector can work.
@@ -79,9 +82,8 @@ module Stryker
       # - `message`: Array of Integer or String, a hit's IDs or a path.
       def <<: (message message) -> self
 
-      # Every message sent to the collector since the last drain, in the
-      # order its Ractor received them, or an empty Array when it has no
-      # Ractor. It waits until the Ractor answers, so every message whose
+      # What was sent to the collector since the last drain, as `serve`
+      # gives it, or an empty Array when it has no Ractor. It waits until the Ractor answers, so every message whose
       # send finished before the call is in it. Call it only from the main
       # Ractor.
       def drain: () -> Array[message]

@@ -9,7 +9,7 @@ module Stryker
       # steep:ignore:end
       OUTSIDE_THE_MAIN_RACTOR = "A switch ran in a Ractor other than the main one. Stryker (for Ruby) records a " \
         "hit there only in the dry run, on Ruby 4.0 and later, and this is Ruby #{RUBY_VERSION}.".freeze
-      public_constant(:OUTSIDE_THE_MAIN_RACTOR)
+      private_constant(:OUTSIDE_THE_MAIN_RACTOR)
 
       def initialize(collector: nil)
         super

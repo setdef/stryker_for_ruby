@@ -18,7 +18,6 @@ class DryRunTest < Minitest::Test
   RACTORS = <<~RUBY
     require "stryker/runtime"
     recorder = Stryker::Runtime::RECORDER
-    Stryker::Runtime.start_dry_run
     outcome = begin
       take_value(Ractor.new { Stryker::Active.hit(1) })
       recorder.test_started(:first)

@@ -4,7 +4,7 @@ module Stryker
   module Runtime
     module Stack
       TOP_LEVEL_LABELS = Ractor.make_shareable(Set["<compiled>", "<top (required)>", "<main>"])
-      public_constant(:TOP_LEVEL_LABELS)
+      private_constant(:TOP_LEVEL_LABELS)
 
       def self.loading?(paths, separator = File::ALT_SEPARATOR)
         # The whole stack, not caller_locations(1, n), which misses a

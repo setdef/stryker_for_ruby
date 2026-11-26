@@ -156,7 +156,9 @@ module Stryker
     # `Stryker::Runtime.start` calls it when no mutant is active. The dry
     # run's forked child calls it again before its first test, after the
     # fork: in a forked child, a send to a Ractor that the parent started
-    # raises Ractor::ClosedError.
+    # raises Ractor::ClosedError. A second call in one process raises
+    # RuntimeError, because the hits sent to the first collector would be
+    # lost: the isolation adapter that calls it twice has a fault.
     #
     # On Ruby 4.0 and later, the default collector is a new one, built by
     # `Stryker::Runtime::Collector.build`, whose Ractor starts at the
@@ -164,6 +166,9 @@ module Stryker
     # first, and Ruby warns that Ractors are experimental for it as it would
     # without the runtime. On Ruby 3.3 and 3.4 there is none, so a hit in
     # another Ractor raises `Stryker::UnsupportedError`.
+    #
+    # Call it with no arguments. The arguments are internal to the runtime,
+    # and exist so that a test can pass stand-ins:
     #
     # - `collector`: Stryker::Runtime::Collector, or nil for none. A new
     #   collector on Ruby 4.0 and later, and nil before, by default.

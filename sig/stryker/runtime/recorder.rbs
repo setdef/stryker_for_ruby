@@ -48,6 +48,8 @@ module Stryker
     # # => {"InvoiceTest#test_total" => #<Set: {7, 8}>}
     # ```
     class Recorder
+      SECOND_DRY_RUN: String
+
       # Builds a recorder with no hits, no tests, and no collector.
       def initialize: () -> void
 
@@ -69,6 +71,18 @@ module Stryker
       #
       # - `collector`: Stryker::Runtime::Collector, or nil.
       def collect_from: (Collector? collector) -> nil
+
+      # Makes the recorder drain `collector`, as `collect_from` does, for a
+      # dry run in the process `pid`. Returns nil. Raises RuntimeError when
+      # the recorder already readied a dry run in that process: the
+      # isolation adapter has a fault, and the hits sent to the first
+      # collector would be lost. A forked child, whose pid differs, may
+      # ready its own.
+      #
+      # - `collector`: Stryker::Runtime::Collector, or nil.
+      # - `pid`: Integer, `Process.pid` by default. Internal to the runtime,
+      #   so that a test can pass a stand-in for a forked child's.
+      def dry_run_started: (Collector? collector, ?Integer pid) -> nil
 
       # The recorder's collector when its Ractor hasn't started, so that
       # Stryker::Runtime::FirstRactor starts it, or nil when the recorder has
@@ -123,6 +137,7 @@ module Stryker
       @lock: Thread::Mutex
       @buckets: Buckets
       @collector: Collector?
+      @dry_run: Integer?
 
       def drain_held: () -> nil
     end

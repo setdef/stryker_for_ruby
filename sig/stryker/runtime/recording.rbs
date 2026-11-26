@@ -27,11 +27,6 @@ module Stryker
     # # => raises Ractor::RemoteError, caused by Stryker::UnsupportedError
     # ```
     class Recording < Data
-      # The message of the `Stryker::UnsupportedError` that a hit in a
-      # Ractor other than the main one raises when the holder has no
-      # collector.
-      OUTSIDE_THE_MAIN_RACTOR: String
-
       # Where a message from a Ractor other than the main one goes, or nil
       # when such a message raises.
       attr_reader collector: Collector?
@@ -66,12 +61,16 @@ module Stryker
       # to the collector, or raises `Stryker::UnsupportedError` when there is
       # none. Returns nil.
       #
-      # `hit` and `load_began` pass the Ractor that runs them. Pass another
-      # only to test the route a message takes.
+      # `hit` and `load_began` pass the Ractor that runs them. It is internal
+      # to the runtime, and public so that a test in the main Ractor can pass
+      # a stand-in for another, because coverage counts no line that another
+      # Ractor runs.
       #
       # - `message`: Array of Integer, a hit's IDs, or String, a path.
       # - `ractor`: Ractor, where the message comes from.
       def deliver: (message message, Ractor ractor) -> nil
+
+      OUTSIDE_THE_MAIN_RACTOR: String
 
       private
 

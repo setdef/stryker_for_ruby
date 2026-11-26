@@ -17,7 +17,7 @@ module Stryker
       end
 
       def self.serve(inbox, reply)
-        loop { reply << batch(inbox, []) }
+        loop { reply << batch(inbox, Set.new, Set.new) }
       end
 
       def initialize
@@ -61,11 +61,15 @@ module Stryker
         reply.receive
       end
 
-      def self.batch(inbox, messages)
+      def self.batch(inbox, ids, paths)
+        # Sets, so that a Ractor's millions of hits between two drains hold
+        # one entry per mutant. The order of a drain's paths and IDs doesn't
+        # change any bucket: the recorder checks them on its own stack, which
+        # holds no file's top-level frame.
         until (message = inbox.receive) == DRAIN
-          messages << message
+          message.is_a?(String) ? paths << message : ids.merge(message)
         end
-        messages
+        ids.empty? ? paths.to_a : [*paths, ids.to_a]
       end
       private_class_method(:batch)
     end
