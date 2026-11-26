@@ -19,10 +19,13 @@ module RuntimeProcess
   # What +program+ printed, and each line it wrote to standard error other
   # than Ruby's warning about Ractors, run
   # with +environment+ added to a copy of this process's, without Bundler.
-  # With +all+ set, every line it wrote to standard error.
-  def run_program(program, environment = {}, all: false)
+  # With +all+ set, every line it wrote to standard error. The program can
+  # require each gem in +gems+, and the gems they depend on, at the versions
+  # that this process's bundle locks.
+  def run_program(program, environment = {}, all: false, gems: [])
     variables = { RUBYOPT: nil, RUBYLIB: nil, STRYKER_ACTIVE_MUTANT: nil, **environment }.transform_keys(&:to_s)
-    Open3.popen3(variables, RbConfig.ruby, "-I", LIB, "-e", program) do |input, output, errors, waiter|
+    includes = [LIB, *gem_paths(gems)].flat_map { |path| ["-I", path] }
+    Open3.popen3(variables, RbConfig.ruby, *includes, "-e", program) do |input, output, errors, waiter|
       input.close
       finished(waiter)
       lines = errors.read.lines
@@ -38,5 +41,15 @@ module RuntimeProcess
     Process.kill(:KILL, waiter.pid)
 
     flunk("The program ran for more than #{SECONDS} seconds.")
+  end
+
+  # The folders that hold the code of each gem in +names+ and of each gem it
+  # depends on directly, compiled extensions included.
+  def gem_paths(names)
+    specs = names.map { |name| Gem.loaded_specs[name] }
+    dependencies = specs.flat_map(&:runtime_dependencies)
+    specs.concat(dependencies.map { |dependency| Gem.loaded_specs[dependency.name] })
+    specs.uniq!
+    specs.flat_map(&:full_require_paths)
   end
 end

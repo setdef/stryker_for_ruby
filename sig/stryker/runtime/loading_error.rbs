@@ -1,0 +1,47 @@
+module Stryker
+  module Runtime
+    # Raised by the loading check (`Stryker::Runtime::Loader.check`) when an
+    # instrumented file loaded without going through the loader's hook. Ruby
+    # then ran the original code, so none of that file's mutants can take
+    # effect, and every one of them would survive whatever the tests do.
+    # The dry run fails on it, and no mutant runs.
+    #
+    # Its message lists each such file, one to a line, and gives the name of
+    # the module ahead of the hook when there is one.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # error = Stryker::Runtime::LoadingError.new(["/app/lib/invoice.rb"], nil)
+    # puts error.message
+    # # These instrumented files loaded without going through the loader's hook, so none of their mutants can take effect:
+    # #   /app/lib/invoice.rb
+    # ```
+    class LoadingError < StandardError
+      # Each instrumented file that loaded without the hook, as
+      # `$LOADED_FEATURES` gives its path. Frozen.
+      attr_reader files: Array[String]
+
+      # The module whose `load_iseq` sits ahead of the hook, or nil. When
+      # Bootsnap is the cause, that is
+      # `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin`.
+      attr_reader ahead: Module?
+
+      # Builds the error, and its message from `files` and `ahead`. A
+      # module with no name is given as `Module#inspect` gives it.
+      #
+      # - `files`: Array of String, the files' paths.
+      # - `ahead`: Module or nil, the module ahead of the hook.
+      def initialize: (Array[String] files, Module? ahead) -> void
+
+      HEADING: String
+
+      private
+
+      @files: Array[String]
+      @ahead: Module?
+
+      def describe: () -> String
+    end
+  end
+end

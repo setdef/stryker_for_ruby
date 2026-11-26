@@ -3,6 +3,7 @@
 require_relative "runtime/active_mutant"
 require_relative "runtime/collector"
 require_relative "runtime/first_ractor"
+require_relative "runtime/loader"
 require_relative "runtime/older_ruby"
 require_relative "runtime/process_collector"
 require_relative "runtime/recorder"

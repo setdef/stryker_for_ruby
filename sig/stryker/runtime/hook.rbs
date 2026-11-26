@@ -1,0 +1,75 @@
+module Stryker
+  module Runtime
+    # The loader's hook, as
+    # [The `load_iseq` hook](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-load_iseq-hook)
+    # specifies. Before CRuby compiles a file it loads from disk, it calls
+    # `RubyVM::InstructionSequence.load_iseq(path)`, and runs what that
+    # returns in place of the file, or compiles the file itself when it
+    # returns nil.
+    #
+    # The loader never prepends this module itself. It prepends a copy from
+    # `copy` to `RubyVM::InstructionSequence`'s singleton class, and another
+    # copy in front of each module that defines `load_iseq` and is prepended
+    # later (Stryker::Runtime::KeepAhead). Every copy behaves the same.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Runtime::Loader.install(cache_directory)
+    # RubyVM::InstructionSequence.singleton_class.ancestors.first
+    # # => #<Module:0x...>, a copy of Stryker::Runtime::Hook
+    # Stryker::Runtime::Hook.copy?(RubyVM::InstructionSequence.singleton_class.ancestors.first)
+    # # => true
+    # ```
+    module Hook : _LoadIseq
+      # The instruction sequence to run for the file at `path`. For an
+      # instrumented file it is the instrumented source, compiled under
+      # `path` (`Stryker::Runtime::Loader.serve`). For any other file it is
+      # what the next `load_iseq` behind this one returns, or nil when none
+      # is behind it, so Ruby compiles the file itself. Either way it first
+      # calls `::Stryker::Active.load_began(path)`, so the recorder learns
+      # of every file whose load begins during a test.
+      #
+      # - `path`: String, the file's path, as Ruby resolved it.
+      def load_iseq: (String path) -> RubyVM::InstructionSequence?
+
+      # A new copy of this module, which isn't among any class's ancestors
+      # yet, so a prepend puts it in front.
+      def self.copy: () -> Module
+
+      # Whether `mod` is this module or a copy of it, judged by where its
+      # `load_iseq` was defined. Raises NameError when `mod` has no
+      # `load_iseq`.
+      #
+      # - `mod`: Module.
+      def self.copy?: (Module mod) -> bool
+
+      # Whether prepending `mod` would put a `load_iseq` that isn't the
+      # hook's in front of the hook: `mod` or a module it includes defines
+      # one, publicly or privately, and `mod` isn't a copy of the hook.
+      #
+      # - `mod`: Module.
+      def self.rival?: (Module mod) -> bool
+
+      # The module whose `load_iseq` Ruby calls first for `iseq_class`, when
+      # that isn't a copy of the hook, or nil. It reads the ancestors of
+      # `iseq_class`'s singleton class from the front, and stops at the
+      # first one that defines `load_iseq` itself, not through a module it
+      # includes. With no hook installed, that is the first module or class
+      # that defines `load_iseq` itself.
+      #
+      # - `iseq_class`: Class, `RubyVM::InstructionSequence`, or a stand-in
+      #   for it in a test.
+      def self.ahead: (Class iseq_class) -> Module?
+
+      private def self.defines?: (Module mod, bool inherit) -> bool
+    end
+
+    # What the hook calls through `super`: a `load_iseq` further down the
+    # singleton class's ancestors, such as Bootsnap's.
+    interface _LoadIseq
+      # The instruction sequence for the file at `path`, or nil.
+      def load_iseq: (String path) -> RubyVM::InstructionSequence?
+    end
+  end
+end

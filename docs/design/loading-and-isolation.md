@@ -35,6 +35,17 @@ The runtime holds the hook, the switch, and the hit recorder, and the collector 
 
 The orchestrator writes the instrumented source of every instrumented file to a cache outside the project: a temporary directory that it makes with `Dir.mktmpdir`, and deletes when the run ends. A project process reads instrumented source only from that cache. Nothing is written into the project.
 
+The directory holds two kinds of file:
+
+| File | What it holds |
+| - | - |
+| `0.rb`, `1.rb`, and so on | One instrumented file's instrumented source each, byte for byte, written in binary mode so that no system changes its line endings. |
+| `index` | The instrumented files' paths, in the same order, with a NUL byte between two paths and none at the end. |
+
+No path holds a NUL byte, so the index needs no escaping, and the runtime reads it with `String#split`, so a project process loads no format library, not even the `json` default gem, whose version the project's bundle would choose. Each file's name comes from its place in the index, so no name that the project chose becomes part of a path in the cache.
+
+When the loader is installed, it reads the index into a lookup table from each instrumented file's keys to that file's place in the cache. It reads instrumented source only when it serves a file. Each instrumented file has two keys: one for its path, and one for its real path, with every symbolic link and `..` resolved. In one process, Ruby gives the hook the real path of a file it finds through `$LOAD_PATH` or `require_relative`, and the path as written for a `require` of an absolute path, so a table with one of the two misses some loads of a project under a symbolic link, such as a temporary folder under `/var` on macOS. The table is shareable ([Lookup tables](#lookup-tables)).
+
 ## Loading instrumented code
 
 ### The `load_iseq` hook
@@ -43,12 +54,14 @@ Ruby compiles every file it loads from disk, whether through `require`, `require
 
 The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
 
-- When `path` is an instrumented file's path, it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served `path`, and returns the result.
+- When `path` has one of an instrumented file's keys ([The cache](#the-cache), [Paths on Windows](#paths-on-windows)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served that file, and returns the result.
 - For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
 
 In both cases, when a test is running, the module records `path` as a file whose load began during that test. [Coverage](coverage.md#static-hits-inside-a-test) says what the recorder does with it.
 
-Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: in a probe project that Zeitwerk loads, every instrumented file came through the hook.
+Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: every instrumented file of a project that Zeitwerk autoloads or eager-loads comes through the hook.
+
+One difference remains. When Ruby gives the hook a path that isn't the file's real path, as it does for a `require` of an absolute path through a symbolic link, `__dir__` and each frame's `absolute_path` show that path, where Ruby itself would show the real path. `__FILE__` and `$LOADED_FEATURES` show the path that Ruby gave in both cases.
 
 The loader installs the hook before any of the project's code loads, in every project process: the parent that forks, each fresh process, and each process in the Windows pool.
 
@@ -60,15 +73,15 @@ The hook serves Ruby files. An ERB template reaches Ruby as text through Rails, 
 
 Bootsnap, for its compile cache, prepends a module with a `load_iseq` method to the same singleton class. Of two prepended modules, Ruby calls the one prepended last first, and Bootsnap's `load_iseq` doesn't call `super`. So a Bootsnap module prepended after the hook would serve the original file, and every mutant in it would have no effect, with no error raised.
 
-A new Rails 8.1 app sets up Bootsnap from its test helper, after the hook: `test/test_helper.rb` requires `config/environment`, which requires `config/application`, which requires `config/boot`, and `config/boot.rb` runs `require "bootsnap/setup"`. Turning Bootsnap's compile cache off doesn't help. Requiring `bootsnap` calls `Bootsnap::CompileCache::ISeq.install!(nil)`, which prepends the module even when `DISABLE_BOOTSNAP` or `DISABLE_BOOTSNAP_COMPILE_CACHE` is set, or when the app calls `Bootsnap.setup(compile_cache_iseq: false)`. With no cache directory, the module's `load_iseq` compiles the original file, and still doesn't call `super`.
+A new Rails 8.1 app sets up Bootsnap from its test helper, after the hook: `test/test_helper.rb` requires `config/environment`, which requires `config/application`, which requires `config/boot`, and `config/boot.rb` runs `require "bootsnap/setup"`. Turning Bootsnap's compile cache off doesn't help. Requiring `bootsnap` calls `Bootsnap::CompileCache::ISeq.install!(nil)`, which prepends the module even when `DISABLE_BOOTSNAP` or `DISABLE_BOOTSNAP_COMPILE_CACHE` is set, or when the app calls `Bootsnap.setup(compile_cache_iseq: false)`. With no cache directory, the module's `load_iseq` leaves the original file to Ruby, or compiles it itself when the app uses Bootsnap's frozen string literal compiler, and still doesn't call `super`.
 
 So the loader keeps the hook in front. When it installs the hook, before any of the project's code loads, it also overrides `prepend` on `RubyVM::InstructionSequence.singleton_class`. Whenever a module that defines `load_iseq` is prepended after the hook, the override prepends a new copy of the hook module in front of it. The copy is new because Ruby doesn't move a module that is already among the ancestors, so prepending the first hook module again would change nothing.
 
-Bootsnap prepends its module twice, so two copies of the hook stack in front of it. Both behave the same: for an instrumented file, the front copy serves the instrumented source; for any other file, each copy calls `super`, and Bootsnap serves the file from its cache as usual. The override covers any library that prepends `load_iseq` after the hook, not only Bootsnap.
+Bootsnap prepends its module twice, so two copies of the hook stack in front of it. Both behave the same: for an instrumented file, the front copy serves the instrumented source; for any other file, each copy calls `super`, and Bootsnap serves the file from its cache as usual. The override covers any library that prepends `load_iseq` after the hook, not only Bootsnap, whether the module it prepends defines `load_iseq` or includes a module that does, and whether the method is public or private. A library that bypasses `prepend`, such as by calling `Module#prepend_features` itself, gets past the override, and the loading check catches each file that this leaves uninstrumented.
 
 ### The loading check
 
-The loading check catches an instrumented file that loaded without going through the hook, whatever the cause. The dry run, the first run of the whole suite with no mutant active, ends with it. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
+The loading check catches an instrumented file that loaded without going through the hook, whatever the cause. The dry run, the first run of the whole suite with no mutant active, ends with it. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. A path in `$LOADED_FEATURES` matches an instrumented file when the path, or its real path, has one of that file's keys, so a file that the hook missed because Ruby gave it through another symbolic link is found too. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
 
 The loading check covers Ruby files. For ERB templates, the dry run reports the ones that no hook served: see [What the dry run reports](erb.md#what-the-dry-run-reports).
 
@@ -167,9 +180,11 @@ A forked child, or a fresh process that reads `STRYKER_ACTIVE_MUTANT`, replaces 
 
 ### The hook in a non-main Ractor
 
-The hook reads the cache through a shareable table, so it works in a non-main Ractor. It records what it served through the collector Ractor ([Coverage](coverage.md#ractors)).
+The hook reads the cache through a shareable table, so it works in a non-main Ractor. It records each file whose load began there through the collector Ractor ([Coverage](coverage.md#ractors)), as a switch records a hit.
 
 `load` in a non-main Ractor calls the hook in that Ractor. `require` there runs in the main Ractor, so the hook serves the instrumented source there. On Ruby 4.1, a non-main Ractor can't prepend to `RubyVM::InstructionSequence`.
+
+The hook records the files it served only in the main Ractor, because the loading check reads only `$LOADED_FEATURES`, and a `load` adds nothing to it. A `require` in a non-main Ractor runs in the main Ractor, where the hook records the file. On Ruby 4.1, a file that sets a constant can't load in a non-main Ractor at all, with or without **Stryker (for Ruby)**.
 
 Ruby 3.3 and 3.4 are unsupported. [Ruby 3.3 and 3.4](../older-ruby.md) lists what goes wrong in a non-main Ractor there, and when a process forks while a Ractor is running.
 

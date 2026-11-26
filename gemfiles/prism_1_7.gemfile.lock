@@ -16,6 +16,8 @@ GEM
       ice_nine (~> 0.11.0)
       thread_safe (~> 0.3, >= 0.3.1)
     bigdecimal (4.1.3)
+    bootsnap (1.26.2)
+      msgpack (~> 1.5)
     childprocess (5.1.0)
       logger (~> 1.5)
     coderay (1.1.3)
@@ -112,6 +114,7 @@ GEM
       prism (>= 1.5, < 3)
     minitest-mock (5.27.0)
     mize (0.8.0)
+    msgpack (1.8.7)
     ostruct (0.6.3)
     parallel (2.3.0)
     parser (3.3.14.0)
@@ -273,6 +276,7 @@ PLATFORMS
   x86_64-linux
 
 DEPENDENCIES
+  bootsnap (~> 1.26)
   flog (= 4.8.0)
   inch (~> 0.4)
   irb (~> 1.18)
@@ -295,12 +299,14 @@ DEPENDENCIES
   simplecov (~> 1.3)
   steep (~> 2.1)
   stryker_for_ruby!
+  zeitwerk (~> 2.8)
 
 CHECKSUMS
   addressable (2.10.0) sha256=5e13b9c001adf01dd65ad6e0d2a91d2bc07885c0ff2b83f48cbcd95e08d9de62
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   axiom-types (0.1.1) sha256=c1ff113f3de516fa195b2db7e0a9a95fd1b08475a502ff660d04507a09980383
   bigdecimal (4.1.3) sha256=61ebe1e5e559bdc3cc6f2c0ee7f427321fc838f59611c294356eb04d6e21cf66
+  bootsnap (1.26.2) sha256=f0d749dcda6bf5e3d324bc7e126009b2127d2b83db74273d8ded3b4c8e322bb7
   bundler (4.0.22) sha256=d8d5ec84c8555e0af71db63ed7aee4d1a8fb839ec46d84212d61979242a5d75a
   childprocess (5.1.0) sha256=9a8d484be2fd4096a0e90a0cd3e449a05bc3aa33f8ac9e4d6dcef6ac1455b6ec
   coderay (1.1.3) sha256=dc530018a4684512f8f38143cd2a096c9f02a1fc2459edcfe534787a7fc77d4b
@@ -344,6 +350,7 @@ CHECKSUMS
   minitest (6.1.0) sha256=ff373595aa8888631e8a5463986a76b3845346ae6d7fa46e139c1633d418076e
   minitest-mock (5.27.0) sha256=7040ed7185417a966920987eaa6eaf1be4ea1fc5b25bb03ff4703f98564a55b0
   mize (0.8.0) sha256=0ecfe6aba0f0a42bfcb771c12e085703e797da6e5446a1f2cd8dc90d6fba87c0
+  msgpack (1.8.7) sha256=dfefec761b5f9047e6e8d95d2c7f8af4b3725d984a01942adc533aa819a2df33
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912
   parallel (2.3.0) sha256=f75a3e904101ce6a1ccb6b8dc800cbafd42166d83330192438dcf29395167a6f
   parser (3.3.14.0) sha256=62f8f76af7b919425ee2d811880e9dcb8011ab40bfd59970dfb583141697e58f

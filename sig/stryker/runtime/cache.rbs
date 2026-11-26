@@ -1,0 +1,108 @@
+module Stryker
+  module Runtime
+    # The cache of instrumented source, as
+    # [The cache](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-cache)
+    # specifies: a temporary directory outside the project, which the
+    # orchestrator makes and writes with `write`, and which each project
+    # process reads with `read`. A Cache is the lookup table that `read`
+    # builds, from each instrumented file's key to the file in the cache
+    # that holds its instrumented source. It is shareable, so the loader's
+    # hook reads it in any Ractor.
+    #
+    # The directory holds one file for each instrumented file, `0.rb`,
+    # `1.rb`, and so on, with that file's instrumented source, byte for
+    # byte. It also holds `index`, the instrumented files' paths in the
+    # same order, with a NUL byte between two paths and none at the end.
+    # No path holds a NUL, so the index needs no escaping.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # directory = Dir.mktmpdir
+    # Stryker::Runtime::Cache.write(directory, { "/app/lib/invoice.rb" => "TOTAL = 2\n" })
+    # cache = Stryker::Runtime::Cache.read(directory)
+    # cache.file("/app/lib/invoice.rb")
+    # # => "/tmp/d20261126-1-abc/0.rb", in the directory
+    # cache.file("/app/lib/receipt.rb")
+    # # => nil
+    # Stryker::Runtime::Cache.text(cache.file("/app/lib/invoice.rb"))
+    # # => "TOTAL = 2\n"
+    # ```
+    class Cache < Data
+      # Each key of each instrumented file, as
+      # `Stryker::Runtime::PathKey.of_file` gives them with `separator`, and
+      # the file in the cache that holds its instrumented source.
+      attr_reader files: Hash[String, String]
+
+      # The alternative path separator that the keys were made with, or nil.
+      attr_reader separator: String?
+
+      # Builds a cache from its table. `read` builds the one a project
+      # process uses.
+      #
+      # - `files`: Hash of String to String, from each key to its file.
+      # - `separator`: String or nil, the separator of the keys.
+      def self.new: (files: Hash[String, String], separator: String?) -> instance
+                  | (Hash[String, String] files, String? separator) -> instance
+
+      # Writes `sources` to `directory`, which exists and is empty: each
+      # instrumented source to a separate file, byte for byte with no
+      # line endings changed on any system, and the index of their paths.
+      # Returns nil. With no sources, the index is empty. Raises
+      # ArgumentError, and writes nothing, when a path holds a NUL byte.
+      #
+      # The orchestrator calls it, from the instrumenter's output. The file
+      # names in the cache come from each path's place in `sources`, never
+      # from the path itself.
+      #
+      # - `directory`: String, the cache's directory.
+      # - `sources`: Hash of String to String, from each instrumented file's
+      #   path, as Ruby will give it to the loader's hook, to its
+      #   instrumented source.
+      def self.write: (String directory, Hash[String, String] sources) -> nil
+
+      # Reads the index in `directory`, and returns the shareable table of
+      # each instrumented file's keys and the file in the cache that holds
+      # its instrumented source. Each instrumented file has the keys of its
+      # path and of its real path (`Stryker::Runtime::PathKey.of_file`),
+      # because Ruby gives the hook the real path of a file it finds through
+      # `$LOAD_PATH` or `require_relative`, and the path as written for an
+      # absolute `require`, in one process. It resolves each real path once,
+      # and reads no instrumented source. Raises SystemCallError when
+      # `directory` holds no index.
+      #
+      # - `directory`: String, the cache's directory.
+      # - `separator`: String or nil, the system's alternative path
+      #   separator, `File::ALT_SEPARATOR` by default, as
+      #   `Stryker::Runtime::PathKey.of` takes it.
+      def self.read: (String directory, ?String? separator) -> Cache
+
+      # The instrumented source in the cache's file at `file`, its bytes as
+      # they are, tagged UTF-8, as Ruby reads a source file. A magic comment
+      # in it still sets its encoding when Ruby compiles it.
+      #
+      # - `file`: String, a file in the cache, as `file` gives it.
+      def self.text: (String file) -> String
+
+      private def self.index: (Array[String] paths) -> String
+
+      private def self.keyed: (String path, String file, String? separator) -> Array[[String, String]]
+
+      private def self.entry: (String directory, Integer place) -> String
+
+      # The file in the cache that holds the instrumented source of the file
+      # at `path`, or nil when that file isn't instrumented. It compares
+      # `path`'s key with the keys in the table, and reads nothing from
+      # disk, so the hook pays only a Hash lookup for each file Ruby loads.
+      #
+      # - `path`: String, a file's path, as Ruby gives it to the hook.
+      def file: (String path) -> String?
+
+      INDEX: String
+
+      SEPARATOR: String
+
+      NUL_IN_PATH: String
+    end
+  end
+end

@@ -1,0 +1,33 @@
+module Stryker
+  module Runtime
+    # The override of `prepend` that keeps the loader's hook in front, as
+    # [Keeping the hook ahead of Bootsnap](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#keeping-the-hook-ahead-of-bootsnap)
+    # specifies. `Stryker::Runtime::Loader.install` prepends it to the
+    # singleton class of `RubyVM::InstructionSequence`'s singleton class, so
+    # it runs for every `prepend` on that singleton class.
+    #
+    # Bootsnap prepends its `load_iseq` module twice, so two copies of the
+    # hook stack in front of it. A library that bypasses `prepend`, such as
+    # by calling `Module#prepend_features`, isn't seen; the loading check
+    # catches what that leaves uninstrumented.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Runtime::Loader.install(cache_directory)
+    # require "bootsnap"
+    # RubyVM::InstructionSequence.singleton_class.ancestors.first(3).map(&:name)
+    # # => [nil, nil, "Bootsnap::CompileCache::ISeq::InstructionSequenceMixin"],
+    # #    two copies of the hook first
+    # ```
+    module KeepAhead : Module
+      # Prepends `modules`, as `Module#prepend` does, and then prepends a
+      # new copy of the hook (`Stryker::Runtime::Hook.copy`) in front of
+      # them when any of them is a rival (`Stryker::Runtime::Hook.rival?`).
+      # Returns the singleton class.
+      #
+      # - `modules`: Module, each module to prepend.
+      def prepend: (*Module modules) -> self
+    end
+  end
+end

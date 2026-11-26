@@ -1,0 +1,110 @@
+module Stryker
+  module Runtime
+    # The loader, as
+    # [Loading instrumented code](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#loading-instrumented-code)
+    # specifies: it serves each instrumented file's instrumented source in
+    # place of the file, under the file's path, so `__FILE__`,
+    # `require_relative`, `$LOADED_FEATURES`, and backtraces name the
+    # project's file. It works with `require`, `require_relative`, `load`,
+    # and autoloads, Zeitwerk's included, because each of them compiles a
+    # file from disk. Nothing is written into the project.
+    #
+    # A project process calls `install` before any of the project's code
+    # loads, and the dry run calls `check` when its tests have run.
+    #
+    # The loader serves Ruby files only. An ERB template loads by
+    # [another route](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/erb.md#loading-the-instrumented-text).
+    # `load_iseq` is part of CRuby's `RubyVM` API, which JRuby and
+    # TruffleRuby don't call.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # require "stryker/runtime"
+    # Stryker::Runtime::Loader.install(cache_directory)
+    # require "invoice"
+    # # loads the instrumented source of lib/invoice.rb, under lib/invoice.rb
+    # Stryker::Runtime::Loader.check
+    # # => nil, when the hook served every instrumented file that loaded
+    # ```
+    module Loader
+      # The cache that the hook serves from: an empty one until `install`
+      # reads one. Shareable, so the hook reads it in any Ractor.
+      CACHE: Cache
+
+      # The files in the cache that the hook served in this process, from
+      # the main Ractor. The loading check reads it. It isn't shareable, so
+      # only the main Ractor touches it.
+      SERVED: Served
+
+      # Installs the loader in this process: it reads the cache in
+      # `directory` into `CACHE`, prepends a copy of Stryker::Runtime::Hook
+      # to `iseq_class`'s singleton class, and prepends
+      # Stryker::Runtime::KeepAhead to the singleton class of that singleton
+      # class, so a module that defines `load_iseq` and is prepended later,
+      # such as Bootsnap's, gets a copy of the hook in front of it. Returns
+      # nil.
+      #
+      # Call it before any of the project's code loads, in every project
+      # process: a file that loaded before the call never comes through the
+      # hook, and the loading check reports it. A second call replaces
+      # `CACHE` and prepends another copy of the hook.
+      #
+      # - `directory`: String, the cache's directory, as the orchestrator
+      #   wrote it with `Stryker::Runtime::Cache.write`.
+      # - `iseq_class`: Class, `RubyVM::InstructionSequence` by default.
+      #   Internal to the runtime: a test passes a stand-in, so the hook
+      #   runs where coverage counts it, and the test process loads its
+      #   files as usual.
+      # - `separator`: String or nil, the system's alternative path
+      #   separator, `File::ALT_SEPARATOR` by default, as
+      #   `Stryker::Runtime::PathKey.of` takes it.
+      def self.install: (String directory, ?Class iseq_class, ?String? separator) -> nil
+
+      # The instrumented source of the file at `path`, compiled with
+      # `RubyVM::InstructionSequence.compile` under `path` as both its file
+      # name and its path, or nil when that file isn't instrumented. It
+      # compares `path`'s key (`Stryker::Runtime::PathKey.of`) with the
+      # cache's. In the main Ractor, it also records in `SERVED` that it
+      # served the file. Raises SyntaxError when the instrumented source
+      # doesn't parse, so the load fails as it would for the file itself.
+      #
+      # The hook calls it for every file Ruby loads, in whichever Ractor
+      # loads it. In a Ractor other than the main one it records nothing:
+      # `load` there adds nothing to `$LOADED_FEATURES`, which is all the
+      # loading check reads, and `require` there runs in the main Ractor.
+      #
+      # - `path`: String, the file's path, as Ruby gave it to the hook.
+      # - `ractor`: Ractor, the one that runs the call by default. Internal
+      #   to the runtime: a test in the main Ractor passes a stand-in for
+      #   another, because coverage counts no line that another Ractor runs.
+      def self.serve: (String path, ?Ractor | Object ractor) -> RubyVM::InstructionSequence?
+
+      # The loading check, as
+      # [The loading check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-loading-check)
+      # specifies. The dry run calls it once its tests have run. Returns nil
+      # when the hook served every instrumented file in `features`. Raises
+      # Stryker::Runtime::LoadingError otherwise, listing each instrumented
+      # file that loaded without the hook, whatever the cause, and naming the
+      # module ahead of the hook (`Stryker::Runtime::Hook.ahead`) when there
+      # is one.
+      #
+      # A file in `features` matches an instrumented file when its path, or
+      # its real path, has one of that file's keys
+      # (`Stryker::Runtime::PathKey.of_file`), so a file that the hook
+      # missed because Ruby gave it through another symbolic link is listed
+      # too. An instrumented file that no test loaded isn't in `features`,
+      # and isn't an error. It resolves the real path of each file in
+      # `features` once.
+      #
+      # - `features`: Array of String, `$LOADED_FEATURES` by default.
+      # - `iseq_class`: Class, `RubyVM::InstructionSequence` by default, as
+      #   `install` takes it.
+      def self.check: (?Array[String] features, ?Class iseq_class) -> nil
+
+      private def self.use: (Cache cache) -> Cache
+
+      private def self.missed?: (String feature) -> bool
+    end
+  end
+end

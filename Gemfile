@@ -17,6 +17,12 @@ gem "minitest-mock", "~> 5.27"
 gem "rake", "~> 13.0"
 # Measures test coverage, and fails below 100% of lines and branches.
 gem "simplecov", "~> 1.3"
+# Prepends a load_iseq of its own, which the loader's tests check the hook
+# stays ahead of, in processes of their own. The runtime never loads it.
+gem "bootsnap", "~> 1.26", require: false
+# Autoloads the project that the loader's tests check comes through the hook,
+# in processes of their own. The runtime never loads it.
+gem "zeitwerk", "~> 2.8", require: false
 
 # Lints the code and the Ruby in Markdown, with the plugins below.
 gem "rubocop", "~> 1.21"

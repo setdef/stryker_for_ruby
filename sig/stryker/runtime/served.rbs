@@ -1,0 +1,36 @@
+module Stryker
+  module Runtime
+    # The files in the cache that the loader's hook has served in this
+    # process, which the loading check reads. Any thread of the main Ractor
+    # may call its methods: it holds a lock while it reads or adds. A forked
+    # child inherits what its parent served.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # served = Stryker::Runtime::Served.new
+    # served.add("/tmp/d20261126-1-abc/0.rb")
+    # served.include?("/tmp/d20261126-1-abc/0.rb")
+    # # => true
+    # ```
+    class Served
+      # Builds a record of no files.
+      def initialize: () -> void
+
+      # Records that the hook served `file`. Returns nil.
+      #
+      # - `file`: String, a file in the cache.
+      def add: (String file) -> nil
+
+      # Whether the hook served `file`.
+      #
+      # - `file`: String, a file in the cache.
+      def include?: (String file) -> bool
+
+      private
+
+      @lock: Thread::Mutex
+      @files: Set[String]
+    end
+  end
+end
