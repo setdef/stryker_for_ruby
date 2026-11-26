@@ -183,8 +183,8 @@ Every value that passes between stages is a `Data.define` class: immutable, comp
 | Value | What it holds |
 | - | - |
 | `Config` | Every option of the run, after the file and the command line are merged. |
-| `Location` | A start and an end position, each a line and a column, as the report schema defines them. |
-| `Mutant` | Its ID, its file, its mutator's name, its location, and its replacement text. |
+| `Location` | A start and an end `Position`, each a line and a column, as the report schema defines them. |
+| `Mutant` | Its ID, its file, its mutator's name, and its text edit: the byte offsets of the stretch it replaces, and its replacement text. |
 | `Test` | Its ID in the framework, its name, and its file and location when the framework gives them. |
 | `TestResult` | A test, whether it passed, failed, or was skipped, its failure message, and its time. |
 | `DryRunResult` | Each test's result and the mutant IDs in its bucket, and the static bucket. |

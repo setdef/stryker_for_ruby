@@ -1,0 +1,32 @@
+module Stryker
+  # A place in a source file, as the
+  # [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)
+  # gives it: a line and a column, each counted from 1.
+  #
+  # A position is a value: two positions with the same line and column are
+  # equal. It checks neither number, so a position with a line or a column
+  # below 1 is one the schema rejects.
+  #
+  # ## Examples
+  #
+  # The first character of a file:
+  #
+  # ```ruby
+  # Stryker::Position.new(line: 1, column: 1)
+  # # => #<data Stryker::Position line=1, column=1>
+  # ```
+  class Position < Data
+    # The line, counted from 1.
+    attr_reader line: Integer
+
+    # The column, counted from 1.
+    attr_reader column: Integer
+
+    # Builds the position at `line` and `column`.
+    #
+    # - `line`: Integer, the line, counted from 1.
+    # - `column`: Integer, the column, counted from 1.
+    def self.new: (line: Integer, column: Integer) -> instance
+                | (Integer line, Integer column) -> instance
+  end
+end

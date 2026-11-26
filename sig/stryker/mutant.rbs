@@ -1,0 +1,67 @@
+module Stryker
+  # One change to a source file, of the kind a programmer could make by
+  # mistake. A run inserts each mutant into the code and runs the tests that
+  # reach it, to learn whether any of them fails.
+  #
+  # A mutator returns each mutant as a text edit on the original source: the
+  # bytes from `start_offset` up to `end_offset` give way to `replacement`.
+  # The offsets count bytes from the start of the file, as Prism's do, not
+  # characters, so a file with multibyte characters has offsets larger than
+  # its character indexes. When `start_offset` equals `end_offset`, the edit
+  # inserts `replacement` and removes nothing. When `replacement` is empty,
+  # the edit removes the bytes and inserts nothing.
+  #
+  # A mutant is a value: two mutants with equal members are equal. It checks
+  # none of its members against the file.
+  #
+  # ## Examples
+  #
+  # A mutant that turns the `+` of `total = a + b` into a `-`, in a file
+  # whose first line this is:
+  #
+  # ```ruby
+  # Stryker::Mutant.new(
+  #   id: 7,
+  #   file: "lib/invoice.rb",
+  #   mutator_name: "ArithmeticOperator",
+  #   start_offset: 10,
+  #   end_offset: 11,
+  #   replacement: "-"
+  # )
+  # ```
+  class Mutant < Data
+    # The mutant's ID, unique in the run.
+    attr_reader id: Integer
+
+    # The path of the file the mutant changes.
+    attr_reader file: String
+
+    # The name of the mutator that made the mutant, in the naming scheme that
+    # the Stryker tools share, such as `"ArithmeticOperator"`.
+    attr_reader mutator_name: String
+
+    # The offset, in bytes from the start of the file, of the first byte the
+    # edit replaces.
+    attr_reader start_offset: Integer
+
+    # The offset, in bytes from the start of the file, of the byte just after
+    # the last one the edit replaces.
+    attr_reader end_offset: Integer
+
+    # The text that takes the place of the replaced bytes.
+    attr_reader replacement: String
+
+    # Builds the mutant.
+    #
+    # - `id`: Integer, the mutant's ID, unique in the run.
+    # - `file`: String, the path of the file the mutant changes.
+    # - `mutator_name`: String, the name of the mutator that made the mutant.
+    # - `start_offset`: Integer, the offset of the first byte the edit
+    #   replaces.
+    # - `end_offset`: Integer, the offset of the byte just after the last one
+    #   the edit replaces.
+    # - `replacement`: String, the text that takes the place of those bytes.
+    def self.new: (id: Integer, file: String, mutator_name: String, start_offset: Integer, end_offset: Integer, replacement: String) -> instance
+                | (Integer id, String file, String mutator_name, Integer start_offset, Integer end_offset, String replacement) -> instance
+  end
+end

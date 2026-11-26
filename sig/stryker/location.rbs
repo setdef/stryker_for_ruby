@@ -1,0 +1,37 @@
+module Stryker
+  # The stretch of a source file that a mutant changes, as the
+  # [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)
+  # gives it: a start position, which is part of the stretch, and an end
+  # position, which isn't. A report shows each mutant's location beside its
+  # replacement text.
+  #
+  # A location is a value: two locations with equal positions are equal. It
+  # doesn't check that `start` comes before `end`. When they are equal, the
+  # location is empty: a mutant there inserts its replacement text and removes
+  # nothing.
+  #
+  # ## Examples
+  #
+  # The `+` of `total = a + b`, on line 3:
+  #
+  # ```ruby
+  # Stryker::Location.new(
+  #   start: Stryker::Position.new(line: 3, column: 11),
+  #   end: Stryker::Position.new(line: 3, column: 12)
+  # )
+  # ```
+  class Location < Data
+    # The first position in the stretch.
+    attr_reader start: Position
+
+    # The position just after the stretch.
+    attr_reader end: Position
+
+    # Builds the location from `start` to `end`.
+    #
+    # - `start`: Position, the first position in the stretch.
+    # - `end`: Position, the position just after the stretch.
+    def self.new: (start: Position, end: Position) -> instance
+                | (Position start, Position end_) -> instance
+  end
+end

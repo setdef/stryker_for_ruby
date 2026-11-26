@@ -59,6 +59,13 @@ Markdown/Syntax:
   # No Markdown satisfies both this cop and those alerts.
   Enabled: false
 
+Style/DataInheritance:
+  # The form this cop wants, Foo = Data.define(...) do ... end, is a constant to
+  # RDoc: it never sees the methods in the block, so the coverage check doesn't
+  # count them. A constant defined in the block also lands in the enclosing
+  # namespace. The class form costs one unnamed superclass.
+  Enabled: false
+
 Style/Documentation:
   inherit_mode:
     merge:
