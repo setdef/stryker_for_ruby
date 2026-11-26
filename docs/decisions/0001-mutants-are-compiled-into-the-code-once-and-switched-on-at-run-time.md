@@ -60,7 +60,7 @@ Confidence: probes show that option 1 works. On Ruby 3.3.11, 3.4.13, 4.0.10, and
 
 ### Confirmation
 
-The instrumenter's tests run each kind of site from the placement design with no mutant active and with each mutant active, on every Ruby version in CI, and compare the output with the original code and with the plain mutant. The loading check and the loader's tests come when the loader is built. The dry run's loading check will fail a run when an instrumented file loaded without the hook, and the loader's tests will check the `prepend` override on every Ruby version in CI.
+The instrumenter's tests run each kind of site from the placement design with no mutant active and with each mutant active, on every Ruby version in CI, and compare the output with the original code and with the plain mutant. The loader's tests check the `prepend` override on every Ruby version in CI: `LoaderTest` and `HookTest` on a stand-in for `RubyVM::InstructionSequence`, and `LoaderProcessTest` on the real class, where a `load_iseq` prepended after the hook, as Bootsnap prepends its own, still leaves the hook in front. `LoadingCheckTest` checks that the loading check lists each instrumented file that loaded without the hook, and names a module that got ahead of it. The dry run doesn't call the loading check yet, so no test runs it there.
 
 ## More Information
 

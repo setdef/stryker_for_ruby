@@ -45,7 +45,7 @@ Confidence: a probe shows that option 1 works ([#7](https://github.com/setdef/st
 
 ### Confirmation
 
-Nothing checks this decision yet. A reviewer reads every change to the gemspec's dependencies and to what the runtime requires.
+`StandardLibraryTest` starts a Ruby process that requires the runtime and every value that crosses a pipe, and fails when that process loads a file from outside the gem's `lib` folder, Ruby's library folders, and the folders of the `json` that RubyGems activates. It also fails when the process loads Prism, refract, or Erubi. Nothing checks the gemspec's dependencies, so a reviewer reads every change to them.
 
 ## More Information
 
