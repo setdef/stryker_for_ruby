@@ -19,6 +19,7 @@ flowchart TB
 - **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog).
 - **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
 - **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
+- **Run each mutant in isolation.** An isolation adapter runs each mutant run in a clean process: a fresh process for a static mutant, on every system. [Loading and isolation](loading-and-isolation.md#isolation) specifies it.
 
 ## Two kinds of process
 
@@ -138,7 +139,7 @@ end
 A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
-- **`_Isolation`** runs mutant runs, each in a process that ran no test before it.
+- **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapter is `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
 - **`_Reporter`** receives each domain event of a run.
 - **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../configuration.md#the-configuration-file) says how to use.
 

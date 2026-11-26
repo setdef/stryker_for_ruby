@@ -1,0 +1,30 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # The processes that ran the sample project's code. Each records its
+      # process ID as the name of a file in the project's `pids` folder, and
+      # holds a lock on that file for as long as it lives, because signal 0
+      # can't tell on Windows whether a process ended: it finds a process
+      # that ended while anything still holds a handle to it.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # Stryker::Testing::IsolationContract::SampleProcesses.running(sample.root)
+      # # => [], once every process has ended
+      # ```
+      module SampleProcesses
+        # The ID of each recorded process that hasn't ended.
+        #
+        # - `root`: String, the sample project's root.
+        def self.running: (String root) -> Array[Integer]
+
+        # Whether the process that recorded itself in the file at `path` has
+        # ended, so that its lock on the file is free.
+        #
+        # - `path`: String, the path of the process's file.
+        def self.ended?: (String path) -> bool
+      end
+    end
+  end
+end

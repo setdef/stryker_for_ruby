@@ -2,7 +2,7 @@ module Stryker
   # What happened when one test ran: whether it passed, failed, or was
   # skipped, the failure's message, and how long it took. The test runner
   # adapter makes one for each test it runs, and a project process writes it
-  # to a pipe as soon as the test finishes, so a failure reaches the
+  # out as soon as the test finishes, so a failure reaches the
   # orchestrator even when the process ends before it writes anything else
   # ([#20](https://github.com/setdef/stryker_for_ruby/issues/20)).
   #

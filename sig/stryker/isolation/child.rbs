@@ -1,0 +1,59 @@
+module Stryker
+  module Isolation
+    # A process that an adapter started for a run, and its waiter: the
+    # thread that `Process.detach` starts, which reaps the process when it
+    # ends, so it never lingers as a zombie.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # child = Stryker::Isolation::Child.new(pid)
+    # child.running_after?(1.5)
+    # # => false, when it ended within 1.5 seconds
+    # child.status
+    # # => #<Process::Status: pid 4242 exit 0>
+    # ```
+    class Child
+      # The process's ID.
+      attr_reader pid: Integer
+
+      # `Process`, or a stand-in in a test.
+      @process: singleton(::Process)
+
+      # The thread that waits for the process and reaps it.
+      @waiter: Process::Waiter
+
+      # Starts waiting for the process `pid`.
+      #
+      # - `pid`: Integer, the process's ID.
+      # - `process`: `Process`, or a stand-in in a test.
+      def initialize: (Integer pid, ?singleton(::Process) process) -> void
+
+      # Waits at most `seconds` for the process to end, kills it and its
+      # group when it is still running then, and returns whether it was.
+      #
+      # - `seconds`: Integer or Float, how long to wait.
+      def end_within: (Integer | Float seconds) -> bool
+
+      # Whether the process has ended and been reaped.
+      def ended?: () -> bool
+
+      # Kills what the process left running in its group, once it has
+      # ended, as `Stryker::Isolation::ProcessGroup.kill_rest` does.
+      def kill_rest: () -> nil
+
+      # The process's status, once it has ended. Waits until it does.
+      def status: () -> Process::Status
+
+      # Kills the process and its group while it runs, and waits until it
+      # has ended.
+      def stop: () -> nil
+
+      private
+
+      # Kills the process and its group, as
+      # `Stryker::Isolation::ProcessGroup.kill` does.
+      def kill: () -> nil
+    end
+  end
+end

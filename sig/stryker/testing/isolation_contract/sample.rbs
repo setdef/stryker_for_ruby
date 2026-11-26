@@ -1,0 +1,23 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # What the contract's tests share: a sample project in a new folder
+      # for each test, and the runs of its tests through the adapter.
+      module Sample : ::Minitest::Test, _IsolationHost
+        private
+
+        # Writes a sample project, whose runs are static when the adapter
+        # runs static mutants, yields it, and removes it.
+        def with_sample: [T] () { (SampleProject sample) -> T } -> T
+
+        # Starts the adapter for `sample`, runs `runs`, stops it, and
+        # returns each result by its mutant's ID.
+        def isolated: (SampleProject sample, Array[MutantRun] runs, ?concurrency: Integer) -> Hash[Integer, MutantResult]
+
+        # The result of one run of mutant `mutant_id` with the sample tests
+        # `names`, in a sample project of its own.
+        def isolated_one: (Integer mutant_id, *Symbol names, ?timeout_ms: Integer) -> MutantResult
+      end
+    end
+  end
+end

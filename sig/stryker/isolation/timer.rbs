@@ -1,0 +1,36 @@
+module Stryker
+  module Isolation
+    # The time limit of one run, from when the run's process started. It
+    # reads the monotonic clock, so a change to the system clock during a
+    # run changes no time limit.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # timer = Stryker::Isolation::Timer.new(1500)
+    # timer.left
+    # # => 1.4999...
+    # ```
+    class Timer
+      # The monotonic time, in seconds, when the run's time is up.
+      @deadline: Float
+
+      # When the timer started, in seconds of the monotonic clock.
+      @started: Float
+
+      # The monotonic clock's time now, in seconds.
+      def self.now: () -> Float
+
+      # Starts the timer.
+      #
+      # - `milliseconds`: Integer, the run's time limit.
+      def initialize: (Integer milliseconds) -> void
+
+      # The seconds left before the deadline, or 0 when none are left.
+      def left: () -> Float
+
+      # How long ago the timer started, in milliseconds.
+      def elapsed_ms: () -> Float
+    end
+  end
+end

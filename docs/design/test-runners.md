@@ -61,7 +61,7 @@ The adapter passes `run_suite` a reporter it defines, `Outcome`, which keeps eve
 | Nothing for the test, as for a test of an abstract class | `skipped` | none |
 | The test's result, passed | `passed` | none |
 
-A test that skips and then raises in `teardown` is skipped, because Minitest counts a result by its first failure. An exception that Minitest lets through, such as `SystemExit` from a test that calls `exit`, leaves `run` at once, after the observer heard the test start and before it hears the test finish. [#20](https://github.com/setdef/stryker_for_ruby/issues/20) says how the orchestrator judges such a run.
+A test that skips and then raises in `teardown` is skipped, because Minitest counts a result by its first failure. An exception that Minitest lets through, such as `SystemExit` from a test that calls `exit`, leaves `run` at once, after the observer heard the test start and before it hears the test finish. [How a run's outcome becomes a status](loading-and-isolation.md#how-a-runs-outcome-becomes-a-status) says how the orchestrator judges such a run.
 
 ### Retries
 

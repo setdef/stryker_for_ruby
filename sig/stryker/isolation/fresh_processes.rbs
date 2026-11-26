@@ -1,0 +1,72 @@
+module Stryker
+  module Isolation
+    # The `Stryker::_Isolation` adapter for static mutants, on Linux,
+    # macOS, and Windows, as
+    # [Static mutants on every system](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#static-mutants-on-every-system)
+    # specifies. Each run gets a fresh project process, with its mutant
+    # named in `STRYKER_ACTIVE_MUTANT` before the process starts, so the
+    # mutant's switch takes the mutated branch while its file loads. The
+    # process loads the project's code and tests, runs the run's tests, and
+    # writes each test's start and result to a file as it happens. The
+    # adapter keeps up to `concurrency` processes running at once, learns
+    # that each ended from a `Process.detach` waiter, kills a process that
+    # runs past its time limit, and judges each run from its file once its
+    # process ended.
+    #
+    # A runtime mutant's run works here too, at the cost of a fresh process
+    # for each run.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # isolation = Stryker::Isolation::FreshProcesses.new(cache_directory, project_root)
+    # isolation.start(config)
+    # begin
+    #   isolation.run_all(static_runs) { |result| reporter.call(Stryker::Events::MutantTested.new(result:)) }
+    # ensure
+    #   isolation.stop
+    # end
+    # ```
+    class FreshProcesses
+      # The text of the error for runs before `start`.
+      UNSTARTED: String
+
+      # What starts each process.
+      @launch: StaticLaunch
+
+      # The options of the run, from `start`.
+      @config: Config?
+
+      # The processes still running.
+      @running: FreshWatches
+
+      # Builds the adapter.
+      #
+      # - `directory`: String, the cache's directory.
+      # - `root`: String, the project's root, the current folder by
+      #   default.
+      # - `launch`: Stryker::Isolation::StaticLaunch, what starts each
+      #   process, or a stand-in in a test.
+      def initialize: (String directory, ?String root, ?StaticLaunch launch) -> void
+
+      # Keeps `config`.
+      def start: (Config config) -> nil
+
+      # Runs every run, and yields each result as it arrives. Raises
+      # `Stryker::Isolation::Error` before `start`. When it raises, or the
+      # block does, it kills every process still running, waits until each
+      # ended, and deletes their folders.
+      def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+
+      # Kills every process still running, waits until each ended, and
+      # deletes their folders.
+      def stop: () -> nil
+
+      private
+
+      # Starts processes from `waiting` while fewer than `concurrency` run,
+      # and yields the result of each that ended, or of the next to end.
+      def step: (Array[MutantRun] waiting, Config config) { (MutantResult result) -> void } -> void
+    end
+  end
+end

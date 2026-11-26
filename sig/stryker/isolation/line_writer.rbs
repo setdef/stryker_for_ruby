@@ -1,0 +1,43 @@
+module Stryker
+  module Isolation
+    # Writes messages to a pipe or a file, one JSON object per line, as
+    # [The protocol](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-protocol)
+    # specifies. It turns sync mode on, so each line reaches the pipe or the
+    # file at once and survives the process's `exit!`. Each line goes in one
+    # write under a lock, so the lines of two threads never mix.
+    #
+    # When the reader has gone, which raises `Errno::EPIPE`, a write does
+    # nothing.
+    #
+    # `Stryker::Isolation::RunReport` is the kind that a run's process
+    # writes.
+    class LineWriter
+      # The pipe or file the lines go to.
+      @io: IO
+
+      # The lock that each write holds.
+      @lock: Thread::Mutex
+
+      # Builds the writer, and turns on sync mode for `io`.
+      #
+      # - `io`: IO, the pipe or file to write to.
+      def initialize: (IO io) -> void
+
+      # Runs the block, and then writes `{"ended":true}` and returns 0.
+      # When the block raises a StandardError, a ScriptError, or
+      # SystemExit, which a test that calls `exit` raises, it writes
+      # `{"error":...}` with the exception's class and message instead, such
+      # as `"SystemExit: exit"`, and returns 1. It lets any
+      # other exception through.
+      def conclude: () { () -> void } -> Integer
+
+      private
+
+      # Writes `message` as one line of JSON, as `Stryker::JsonValue.plain`
+      # converts it, and returns nil.
+      #
+      # - `message`: Hash, the message, with Symbol keys.
+      def write: (Hash[Symbol, JsonValue::member] message) -> nil
+    end
+  end
+end

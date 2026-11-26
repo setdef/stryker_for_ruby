@@ -1,0 +1,62 @@
+module Stryker
+  # Runs mutant runs, each in a process that ran no test before it. The
+  # adapter in the gem is `Stryker::Isolation::FreshProcesses`, for static
+  # mutants on every system. The contract tests in
+  # `Stryker::Testing::IsolationContract` hold every adapter to the same
+  # behavior.
+  #
+  # An adapter judges each run by what its process said as each test
+  # finished, as
+  # [How a run's outcome becomes a status](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#how-a-runs-outcome-becomes-a-status)
+  # specifies: a failed test is `Killed`, whatever the process did after
+  # it.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # isolation = Stryker::Isolation::FreshProcesses.new(cache_directory, project_root)
+  # isolation.start(config)
+  # begin
+  #   isolation.run_all(runs) { |result| puts("#{result.mutant.id} #{result.status}") }
+  # ensure
+  #   isolation.stop
+  # end
+  # ```
+  interface _Isolation
+    # Starts what the runs need, with the options of `config`: `concurrency` for how many runs go at once, and
+    # `test_runner` for the test framework. Raises
+    # `Stryker::Isolation::Error` when it can't.
+    def start: (Config config) -> void
+
+    # Runs every run, up to `config.concurrency` at a time, and yields each
+    # run's result as it arrives, in the order the runs end. When the block
+    # raises, or the adapter does, every process the adapter started for
+    # the runs has ended before the exception leaves `run_all`.
+    def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+
+    # Ends every process the adapter started, and waits until each has
+    # ended. Calling it twice does nothing the second time.
+    def stop: () -> void
+  end
+
+  # The adapters of the `Stryker::_Isolation` port, and the code that runs
+  # each mutant run in a clean process.
+  # [Isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#isolation)
+  # specifies them.
+  #
+  # Part of it runs in the orchestrator: the adapters, which start the
+  # project processes, read what they write, and judge each run. The rest
+  # runs in a project process and loads nothing outside the standard
+  # library: the entry point, `Stryker::Isolation::ProjectProcess`, and the
+  # code that runs a run's tests and writes what happens.
+  module Isolation
+    # What `Stryker::Isolation::Finisher` reports to: a writer of lines
+    # that writes how the block it ran ended.
+    interface _Report
+      # Runs the block, writes whether it finished or why it didn't, and
+      # returns the exit status for the process: 0 when it finished, 1 when
+      # it raised.
+      def conclude: () { () -> void } -> Integer
+    end
+  end
+end

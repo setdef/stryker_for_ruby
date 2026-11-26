@@ -1,0 +1,59 @@
+module Stryker
+  module Isolation
+    # One run in a fresh process, as the orchestrator keeps it: the run, and
+    # a temporary folder of the run's own, made with `Dir.mktmpdir`, which
+    # holds the file that holds the process's run, the file the process
+    # writes its messages to, and the files of its standard output and
+    # standard error. No name that the project chose becomes part of a path.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # fresh = Stryker::Isolation::FreshRun.new(run)
+    # fresh.paths
+    # # => ["<folder>/run", "<folder>/results"]
+    # fresh.result(ending).status
+    # # => "Killed"
+    # ```
+    class FreshRun
+      # The run.
+      attr_reader run: MutantRun
+
+      # The run's folder.
+      @folder: String
+
+      # The files of the process's standard output and standard error.
+      @outputs: OutputFiles
+
+      # Makes the run's folder.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      def initialize: (MutantRun run) -> void
+
+      # Writes the run's file, as JSON in binary mode, and returns its path
+      # and the path of the results' file, for the process's arguments.
+      def paths: () -> [String, String]
+
+      # The options of `Process.spawn` for the process's standard streams:
+      # standard input on the null device, and standard output and standard
+      # error on files in the run's folder.
+      def output_options: () -> Hash[Symbol, String]
+
+      # The run's result, from the results' file, `ending`, and the last
+      # lines of the process's standard error. Deletes the run's folder. A
+      # process that ended before it opened the results' file has no
+      # messages.
+      #
+      # - `ending`: Stryker::Isolation::Ending, how the process ended.
+      def result: (Ending ending) -> MutantResult
+
+      # Deletes the run's folder, if it is still there.
+      def remove: () -> void
+
+      private
+
+      # What the process wrote to the results' file.
+      def results_text: () -> String
+    end
+  end
+end

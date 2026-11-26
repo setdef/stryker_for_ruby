@@ -1,0 +1,17 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # The contract's test that each run starts clean, as
+      # [ADR 0002](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/decisions/0002-every-mutant-runs-in-a-clean-process.md)
+      # records.
+      module State : ::Minitest::Test, _IsolationHost
+        include Sample
+
+        # A run that changes a global, a constant's contents, a class
+        # variable, and an environment variable, and defines a constant,
+        # leaves each run after it unchanged, one run at a time.
+        def test_a_run_that_changes_state_leaves_the_next_run_unchanged: () -> void
+      end
+    end
+  end
+end

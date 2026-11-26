@@ -1,0 +1,7 @@
+# RBS's core signature of IO.select takes a timeout whose divmod gives an
+# Integer, which rules out a Float, though Ruby takes one. This covers the
+# call the isolation adapters make.
+class IO
+  def self.select: (Array[IO] read_array, Array[IO]? write_array, Array[IO]? error_array, Float? timeout) -> [Array[IO], Array[IO], Array[IO]]?
+                 | ...
+end

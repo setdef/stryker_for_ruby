@@ -1,0 +1,20 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # The contract's tests that no process outlives the adapter. Each
+      # process that loads the sample project's test helper records its
+      # process ID, and a sample test records its own, so the contract can
+      # check every process that ran the project's code.
+      module Cleanup : ::Minitest::Test, _IsolationHost
+        include Sample
+
+        # Every recorded process has ended when `stop` returns.
+        def test_every_process_has_ended_when_stop_returns: () -> void
+
+        # With one run still running, a block that raises at the first
+        # result leaves no recorded process running when `run_all` raises.
+        def test_every_process_has_ended_when_the_block_raises: () -> void
+      end
+    end
+  end
+end
