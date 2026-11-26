@@ -34,6 +34,21 @@ Two cases leave the body in place. A body that the edit's range already holds go
 
 The plain mutant that this page names is always the original file with the mutant's edit made and these bodies removed. The instrumented file keeps every body, under the original branch of the switch.
 
+### An edit inside a heredoc's body
+
+An edit inside a heredoc's body lies outside the range of the heredoc's opener and of every node around the opener. A node holds such an edit when its range holds the heredoc's opener, so the switch goes on the heredoc's node, the `StringNode` or `InterpolatedStringNode` whose range is the opener, unless a node inside the heredoc's interpolation holds the edit. The mutant's text is that node with the edit made in its body, which refract writes as a string literal on one line (see [The mutant adds no line break](#the-mutant-adds-no-line-break)), and the original branch keeps the opener, which reads the body below:
+
+```text
+# Original:
+s = <<~EOS
+  hello
+EOS
+# Instrumented, with mutant 1 replacing `hello` by `hellx`:
+s = (::Stryker::Active.id == 1 ? ("hellx\n") : (::Stryker::Active.hit(1); (<<~EOS)))
+  hello
+EOS
+```
+
 ## Splicing into the original bytes
 
 Prism parses the file, and the instrumenter splices each switch into the original bytes around the node it wraps, on the lines that node already occupies. Everything outside the switches stays as it was, byte for byte: comments, heredocs, magic comments such as `# frozen_string_literal: true`, and the data after `__END__`.
@@ -99,7 +114,7 @@ A mutant's text goes into its branch on one line. A node that spans several line
 
 The instrumenter puts each mutant's text on one line:
 
-- When the mutant's text fits on one line, it goes into the switch as it is, unless it holds a heredoc opener. A heredoc opener in a mutant branch would read the body on the lines below the switch, which the original branch's opener reads. So when the edit leaves a heredoc opener of the wrapped node in place, or its replacement holds `<<`, the mutant's text takes the next path, where refract writes each heredoc as a string literal.
+- When the mutant's text fits on one line, it goes into the switch as it is, unless it holds a heredoc opener. A heredoc opener in a mutant branch would read the body on the lines below the switch, which the original branch's opener reads. So when the edit leaves a heredoc opener of the wrapped node in place, or its replacement holds `<<`, the mutant's text takes the next path, where refract writes each heredoc as a string literal. So does the text of an edit inside a heredoc's body, which lies outside the wrapped node's range (see [An edit inside a heredoc's body](#an-edit-inside-a-heredocs-body)).
 - Otherwise, the instrumenter makes the plain mutant, which is the whole file with the edit applied and the bodies of any replaced heredoc openers removed (see [A heredoc opener's edit](#a-heredoc-openers-edit)), parses it with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses it as one statement that refract formats exactly as it formatted the node.
 - When the mutant's text has no one-line form, the site gets no mutant. The run reports how many sites it skipped this way, and why.
 
@@ -161,6 +176,7 @@ Only the node kinds that the rows with "yes" name, and the kinds that the rows w
 | A word of `%w[]` or `%i[]` | `%w[a b]`, `a` to `c` | `StringNode`, `SymbolNode` | no: the switch goes on the array |
 | Heredoc opener: `<<EOS`, `<<~EOS`, `<<~'EOS'`, with a method call after it, or as an argument with more arguments after it | `<<~EOS` to `'z'` | `StringNode`, `InterpolatedStringNode`, `XStringNode`, `CallNode` | yes, on one line only |
 | A node whose range spans a heredoc's body | `f(<<~A, 2)` to `nil` | `CallNode` | yes |
+| A line of a heredoc's body, also in a method or in the second of two heredocs on one line | `hello` to `hellx` | `StringNode`, `InterpolatedStringNode` | yes: the switch goes on the heredoc's opener, and the mutant's text is a string literal |
 | Expression inside a heredoc's interpolation | `#{x + 1}` | the expression's node | yes |
 | Symbol, interpolated symbol, `&:sym` | `:a` to `:b` | `SymbolNode`, `InterpolatedSymbolNode` | yes |
 | Label key in a hash | `{ a: 1 }`, `a:` to `b:` | `SymbolNode` | no: the switch goes on the hash |

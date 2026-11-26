@@ -11,7 +11,9 @@ module Stryker
     # one line with `Stryker::Instrumenter::OneLine`. A
     # heredoc left in the text would read its body from the lines below the
     # switch, which the original branch's heredoc reads, so such a text takes
-    # the second path too: refract writes the heredoc as a string literal.
+    # the second path too: refract writes the heredoc as a string literal. So
+    # does the text of a mutant whose edit lies inside a heredoc's body, whose
+    # switch wraps the heredoc's opener.
     class MutantText
       # The text of `mutant`'s branch in the switch that wraps `node`, as
       # binary, or nil when the text has no form on one line. Raises
@@ -45,6 +47,10 @@ module Stryker
       def on_one_line?: (String edited) -> bool
 
       def heredoc_kept?: () -> bool
+
+      def edited_in_place: () -> String?
+
+      def formatted: () -> String?
     end
   end
 end

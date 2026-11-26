@@ -53,10 +53,15 @@ module Stryker
 
       # How many bytes longer the plain mutant makes the range of `node`, a
       # node of the original file that holds the mutant's edit: the bytes
-      # that the edit adds, less the bodies that lie inside the node.
+      # that the edit adds, less the bodies that lie inside the node. An edit
+      # inside a heredoc's body that lies after the node's range adds none.
       #
       # - `node`: Prism::node, the node in the original file.
       def growth_within: (Prism::node node) -> Integer
+
+      private
+
+      def edit_growth_within: (Prism::Location location) -> Integer
     end
   end
 end

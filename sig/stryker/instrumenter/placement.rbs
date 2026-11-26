@@ -7,22 +7,39 @@ module Stryker
     # can. `Stryker::Instrumenter::Lineage` decides which nodes can.
     #
     # An edit inside a heredoc's body lies outside the range of the heredoc's
-    # opener, and of every node around the opener. The search still finds the
-    # nodes inside the body, but a node holds the mutant only when its
-    # location, which leaves out the bodies of the heredocs it opens, holds
-    # the edit.
+    # opener, and of every node around the opener. A node holds such an edit
+    # when its range holds the opener, so the switch goes on the heredoc
+    # itself, or on a node inside its interpolation that holds the edit.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # source = "s = <<~EOS\n  hello\nEOS\n"
+    # tree = Prism.parse(source).value
+    # heredocs = Stryker::Instrumenter::Heredoc.in(tree)
+    # bodies = heredocs.map { |heredoc| [heredoc, Stryker::Instrumenter::HeredocBody.of(heredoc, heredocs)] }
+    # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "StringLiteral",
+    #                              start_offset: 13, end_offset: 18, replacement: "hellx")
+    # Stryker::Instrumenter::Placement.node_for(tree, mutant, bodies).slice
+    # # => "<<~EOS"
+    # ```
     class Placement
       # The node whose source range the switch for `mutant` wraps, in `tree`,
       # or nil when no node around the mutant's site can hold a switch.
       #
       # - `tree`: Prism::ProgramNode, the parsed file.
       # - `mutant`: Stryker::Mutant, an edit on that file.
-      def self.node_for: (Prism::ProgramNode tree, Mutant mutant) -> Prism::node?
+      # - `bodies`: Array of pairs, each a heredoc in the file and the
+      #   Stryker::Instrumenter::Span of its body, as
+      #   `Stryker::Instrumenter::HeredocBody.of` gives it.
+      def self.node_for: (Prism::ProgramNode tree, Mutant mutant, Array[[Heredoc::node, Span]] bodies) -> Prism::node?
 
       # Prepares to search for `mutant`'s edit.
       #
       # - `mutant`: Stryker::Mutant, the edit.
-      def initialize: (Mutant mutant) -> void
+      # - `bodies`: Array of pairs, each a heredoc in the file and the
+      #   Stryker::Instrumenter::Span of its body.
+      def initialize: (Mutant mutant, Array[[Heredoc::node, Span]] bodies) -> void
 
       # The innermost node in `tree` that holds the edit and can hold a
       # switch, or nil when there is none.
@@ -34,12 +51,11 @@ module Stryker
       private
 
       @mutant: Mutant
+      @openers: Array[Span]
 
       def holder_below: (Lineage lineage, Prism::node? holder) -> Prism::node?
 
       def child_covering: (Prism::node node) -> Prism::node?
-
-      def child_with_heredoc_body_covering: (Array[Prism::node] children) -> Prism::node?
 
       def covers?: (Prism::node node) -> bool
     end

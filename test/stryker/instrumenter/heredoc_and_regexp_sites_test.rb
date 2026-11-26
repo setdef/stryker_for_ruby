@@ -77,6 +77,24 @@ class HeredocAndRegexpSitesTest < Minitest::Test
     assert_site(source, ["<<B", "'z'"], holder: Prism::StringNode)
   end
 
+  def test_a_line_of_a_heredocs_body
+    assert_site("s = <<~EOS\n  hello\nEOS\np s\n", %w[hello hellx], holder: Prism::StringNode)
+  end
+
+  def test_a_line_of_an_interpolated_heredocs_body
+    assert_site("x = 1\ns = <<~EOS\n  hello \#{x}\nEOS\np s\n", %w[hello hellx], holder: Prism::InterpolatedStringNode)
+  end
+
+  def test_a_line_of_a_heredocs_body_in_a_method
+    assert_site("def f\n  <<~EOS\n    hello\n  EOS\nend\np f\n", %w[hello hellx], holder: Prism::StringNode)
+  end
+
+  def test_a_line_of_the_body_of_the_second_of_two_heredocs_on_a_line
+    source = "def f(a, b)\n  [a, b]\nend\np f(<<A, <<B)\none\nA\ntwo\nB\n"
+
+    assert_site(source, %w[two six], holder: Prism::StringNode)
+  end
+
   def test_an_expression_inside_a_heredocs_interpolation
     assert_site("x = 2\ns = <<~EOS\n  v=\#{x + 1}\nEOS\np s\n", ["x + 1", "x - 1"], holder: Prism::CallNode)
   end

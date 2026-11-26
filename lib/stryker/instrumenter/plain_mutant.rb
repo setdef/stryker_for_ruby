@@ -17,9 +17,13 @@ module Stryker
       end
 
       def growth_within(node)
-        end_offset = node.location.end_offset
-        inside = bodies.select { |body| body.end_offset <= end_offset }
-        mutant.growth - inside.sum(&:length)
+        location = node.location
+        end_offset = location.end_offset
+        edit_growth_within(location) - bodies.sum { |body| (body.end_offset <= end_offset) ? body.length : 0 }
+      end
+
+      private def edit_growth_within(location)
+        mutant.inside?(location) ? mutant.growth : 0
       end
     end
   end

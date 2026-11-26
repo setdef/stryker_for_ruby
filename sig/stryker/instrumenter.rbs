@@ -105,6 +105,7 @@ module Stryker
     @source: String
     @tree: Prism::ProgramNode
     @heredocs: Array[Heredoc::node]
+    @bodies: Array[[Heredoc::node, Span]]
 
     def outcome: (Mutant mutant) -> Outcome
 

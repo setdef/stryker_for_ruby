@@ -6,12 +6,13 @@ require_relative "span"
 module Stryker
   class Instrumenter
     class Placement
-      def self.node_for(tree, mutant)
-        new(mutant).holder_in(tree)
+      def self.node_for(tree, mutant, bodies)
+        new(mutant, bodies).holder_in(tree)
       end
 
-      def initialize(mutant)
+      def initialize(mutant, bodies)
         @mutant = mutant
+        @openers = bodies.filter_map { |heredoc, body| Span.of(heredoc.location) if mutant.inside?(body) }
       end
 
       def holder_in(tree)
@@ -26,16 +27,15 @@ module Stryker
       end
 
       private def child_covering(node)
-        children = node.compact_child_nodes
-        children.find { |child| covers?(child) } || child_with_heredoc_body_covering(children)
-      end
-
-      private def child_with_heredoc_body_covering(children)
-        children.find { |child| @mutant.inside?(Span.extent(child)) }
+        node.compact_child_nodes.find { |child| covers?(child) }
       end
 
       private def covers?(node)
-        @mutant.inside?(node.location)
+        # An edit inside a heredoc's body lies outside the location of the
+        # heredoc's opener and of every node around it, so a node holds such
+        # an edit when its location holds the opener.
+        location = node.location
+        @mutant.inside?(location) || @openers.any? { |opener| opener.within?(location) }
       end
     end
   end

@@ -3,6 +3,7 @@
 require "prism"
 require_relative "instrumenter/error"
 require_relative "instrumenter/heredoc"
+require_relative "instrumenter/heredoc_body"
 require_relative "instrumenter/mutant_text"
 require_relative "instrumenter/outcome"
 require_relative "instrumenter/placement"
@@ -25,6 +26,7 @@ module Stryker
       @source = source
       @tree = result.value
       @heredocs = Heredoc.in(@tree)
+      @bodies = @heredocs.map { |heredoc| [heredoc, HeredocBody.of(heredoc, @heredocs)] }
     end
 
     def instrument(mutants)
@@ -34,7 +36,7 @@ module Stryker
     end
 
     private def outcome(mutant)
-      node = Placement.node_for(@tree, mutant)
+      node = Placement.node_for(@tree, mutant, @bodies)
       plain = PlainMutant.of(@source, @heredocs, mutant)
       return Outcome.new(mutant:, node:, text: nil, valid: false) unless plain.result.success?
 

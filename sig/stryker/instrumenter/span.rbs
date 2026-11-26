@@ -22,12 +22,10 @@ module Stryker
       # - `growth`: Integer, how many bytes to add at its end.
       def self.grown: (_Span span, Integer growth) -> Span
 
-      # The stretch that `node` and every node inside it take up. It is
-      # longer than the node's location when the node holds a heredoc
-      # opener, whose body lies on the lines below.
+      # The stretch that `span` takes up.
       #
-      # - `node`: Prism::node, the node.
-      def self.extent: (Prism::node node) -> Span
+      # - `span`: Stryker::_Span, a stretch, such as a `Prism::Location`.
+      def self.of: (_Span span) -> Span
 
       # How many bytes the stretch has.
       def length: () -> Integer
@@ -36,6 +34,11 @@ module Stryker
       #
       # - `other`: Stryker::_Span, another stretch.
       def same?: (_Span other) -> bool
+
+      # Whether this stretch lies inside `other`, or is `other`.
+      #
+      # - `other`: Stryker::_Span, another stretch.
+      def within?: (_Span other) -> bool
     end
   end
 end
