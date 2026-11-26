@@ -1,0 +1,36 @@
+module Stryker
+  class Instrumenter
+    # Changes the bytes of a source with `Stryker::Instrumenter::Patch`es. The
+    # offsets are those of the source as it was before any patch: each patch
+    # changes the bytes that it names there, whichever patches come before it
+    # in the source.
+    #
+    # `Stryker::Instrumenter::PlainMutant` builds its text with patches, in the
+    # orchestrator and in a parse worker alike, and
+    # `Stryker::Instrumenter::InPlace` leaves heredoc bodies out with them.
+    #
+    # ## Examples
+    #
+    # Of patches that meet at one offset, the one listed first ends up last,
+    # so an insertion listed after a replacement that starts at its offset
+    # goes in front of it:
+    #
+    # ```ruby
+    # patches = [
+    #   Stryker::Instrumenter::Patch.new(1, 1, ")"),
+    #   Stryker::Instrumenter::Patch.new(0, 1, "x"),
+    #   Stryker::Instrumenter::Patch.new(0, 0, "("),
+    # ]
+    # Stryker::Instrumenter::Patches.apply("a", patches)
+    # # => "(x)"
+    # ```
+    module Patches
+      # `source` with `patches` made, as bytes in the encoding of `source`.
+      #
+      # - `source`: String, a file's source, in any encoding.
+      # - `patches`: Array of Stryker::Instrumenter::Patch, the changes. The
+      #   bytes that they replace don't overlap.
+      def self.apply: (String source, Array[Patch] patches) -> String
+    end
+  end
+end

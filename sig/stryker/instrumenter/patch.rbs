@@ -1,0 +1,59 @@
+module Stryker
+  class Instrumenter
+    # A change to a source: the bytes from one offset to another, replaced by
+    # a text. A patch whose offsets are equal inserts the text.
+    class Patch < Data
+      # The offset of the first byte that the patch replaces.
+      attr_reader start_offset: Integer
+
+      # The offset of the byte after the last one that the patch replaces.
+      attr_reader end_offset: Integer
+
+      # The text that goes in place of those bytes, whose bytes go in as they
+      # are.
+      attr_reader text: String
+
+      # Builds the patch.
+      #
+      # - `start_offset`: Integer, the offset of the first byte it replaces.
+      # - `end_offset`: Integer, the offset of the byte after its last.
+      # - `text`: String, the replacement.
+      def self.new: (start_offset: Integer, end_offset: Integer, text: String) -> instance
+                  | (Integer start_offset, Integer end_offset, String text) -> instance
+
+      # The patch that puts `text` at `offset`, replacing nothing.
+      #
+      # - `offset`: Integer, where the text goes.
+      # - `text`: String, the text.
+      def self.insert: (Integer offset, String text) -> Patch
+
+      # The patch that puts `text` in place of the bytes of `span`.
+      #
+      # - `span`: Stryker::_Span, the stretch to replace, such as a
+      #   `Prism::Location` or a `Stryker::Mutant`.
+      # - `text`: String, the replacement.
+      def self.replace: (_Span span, String text) -> Patch
+
+      # The patch that takes out the bytes of `span`.
+      #
+      # - `span`: Stryker::_Span, the stretch to remove.
+      def self.remove: (_Span span) -> Patch
+
+      # How many bytes longer the patch makes the source: the bytes it adds,
+      # less the bytes it replaces.
+      def growth: () -> Integer
+
+      # Whether the bytes that the patch replaces lie inside `span`, or are
+      # its bytes.
+      #
+      # - `span`: Stryker::_Span, a stretch of the source.
+      def within?: (_Span span) -> bool
+
+      # `bytes` with the patch made, as binary. `bytes` has the offsets that
+      # the patch names.
+      #
+      # - `bytes`: String, bytes of a source.
+      def splice: (String bytes) -> String
+    end
+  end
+end

@@ -27,9 +27,6 @@ module Stryker
       # - `span`: Stryker::_Span, a stretch, such as a `Prism::Location`.
       def self.of: (_Span span) -> Span
 
-      # How many bytes the stretch has.
-      def length: () -> Integer
-
       # The stretch as long as this one that starts `bytes` bytes later, or
       # earlier when `bytes` is negative.
       #

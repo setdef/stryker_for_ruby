@@ -11,10 +11,6 @@ module Stryker
         new(start_offset: span.start_offset, end_offset: span.end_offset)
       end
 
-      def length
-        end_offset - start_offset
-      end
-
       def shifted(bytes)
         Span.new(start_offset: start_offset + bytes, end_offset: end_offset + bytes)
       end

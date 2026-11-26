@@ -1,32 +1,43 @@
 # frozen_string_literal: true
 
+require_relative "patch"
+require_relative "patches"
+require_relative "span"
+require_relative "syntax"
+
 module Stryker
   class Instrumenter
-    class PlainMutant < Data.define(:mutant, :span, :result)
-      def self.without(source, bodies)
-        bodies.reverse.reduce(source.b) do |text, body|
-          "#{text.byteslice(0, body.start_offset)}#{text.byteslice((body.end_offset)..)}".b
-        end
+    class PlainMutant < Data.define(:mutant, :bodies, :node)
+      def self.of(mutant, bodies, location)
+        new(mutant:, bodies:, node: Span.of(location))
       end
 
-      def self.wrapped(text, span)
-        start_offset = span.start_offset
-        end_offset = span.end_offset
-        "#{text.byteslice(0, start_offset)}(#{text.byteslice(start_offset...end_offset)})" \
-          "#{text.byteslice(end_offset..)}".b
+      def patches
+        [*edits, Patch.insert(node.start_offset, "("), Patch.insert(node.end_offset, ")")]
       end
 
-      def self.growth(mutant, bodies, location)
-        end_offset = location.end_offset
-        edit_growth(mutant, location) - bodies.sum { |body| (body.end_offset <= end_offset) ? body.length : 0 }
+      def text(source)
+        Patches.apply(source, patches)
       end
 
-      def self.edit_growth(mutant, location)
-        mutant.inside?(location) ? mutant.growth : 0
+      def parse(source)
+        Syntax.parse(text(source))
       end
-      private_class_method(:edit_growth)
 
-      # @dynamic mutant, span, result
+      def valid?(source)
+        parse(source).success?
+      end
+
+      def inside
+        inner = edits.select { |patch| patch.within?(node) }
+        Span.grown(node, inner.sum(&:growth)).shifted(1)
+      end
+
+      private def edits
+        [*bodies.map { |body| Patch.remove(body) }, Patch.replace(mutant, mutant.replacement)]
+      end
+
+      # @dynamic mutant, bodies, node
     end
   end
 end

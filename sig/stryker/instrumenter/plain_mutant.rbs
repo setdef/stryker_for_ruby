@@ -6,6 +6,12 @@ module Stryker
     # active, the instrumented file has to run as this file runs. When the
     # plain mutant doesn't parse, the mutant isn't valid Ruby.
     #
+    # A `Stryker::Instrumenter::PlainMutant` holds what it takes to make the
+    # plain mutant from the file's source, and not the plain mutant itself,
+    # which is as large as the file. `patches` gives that as the changes to
+    # the original source, which `Stryker::Instrumenter::Patches` makes, in this
+    # process or in a parse worker's.
+    #
     # The text is the node's source with the mutant's edit made. The plain
     # mutant also leaves out the body of every heredoc whose opener the edit
     # replaces, unless the replacement holds `<<`. An opener that the edit
@@ -27,56 +33,73 @@ module Stryker
     # source = "total = a + b\n"
     # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "Case",
     #                              start_offset: 8, end_offset: 13, replacement: "a) + (b")
-    # node = Prism.parse(source).value.statements.body.first.value
-    # plain = Stryker::Instrumenter::Outcomes.new(source, []).plain_mutant(mutant, node)
-    # [plain.result.source.source, plain.result.success?]
+    # node = Stryker::Instrumenter::Span.new(start_offset: 8, end_offset: 13)
+    # plain = Stryker::Instrumenter::PlainMutant.new(mutant:, bodies: [], node:)
+    # [plain.text(source), plain.valid?(source)]
     # # => ["total = (a) + (b)\n", true]
     # ```
     class PlainMutant < Data
       # The mutant.
       %a{pure} attr_reader mutant: Mutant
 
-      # Where the mutant's text lies in the plain mutant, inside the
-      # parentheses.
-      %a{pure} attr_reader span: Span
+      # The heredoc bodies that the plain mutant leaves out, in the order of
+      # the file.
+      %a{pure} attr_reader bodies: Array[Span]
 
-      # What Prism makes of the plain mutant.
-      %a{pure} attr_reader result: Prism::ParseResult
+      # The node of the original file that the mutant's switch wraps.
+      %a{pure} attr_reader node: Span
 
       # Builds the plain mutant from its parts.
       #
       # - `mutant`: Stryker::Mutant, the mutant.
-      # - `span`: Stryker::Instrumenter::Span, where its text lies.
-      # - `result`: Prism::ParseResult, what Prism makes of the file.
-      def self.new: (mutant: Mutant, span: Span, result: Prism::ParseResult) -> instance
-                  | (Mutant mutant, Span span, Prism::ParseResult result) -> instance
+      # - `bodies`: Array of Stryker::Instrumenter::Span, the heredoc bodies
+      #   to leave out.
+      # - `node`: Stryker::Instrumenter::Span, the node that the switch wraps.
+      def self.new: (mutant: Mutant, bodies: Array[Span], node: Span) -> instance
+                  | (Mutant mutant, Array[Span] bodies, Span node) -> instance
 
-      # `source` without `bodies`, as binary.
-      #
-      # - `source`: String, a file's source.
-      # - `bodies`: Array of Stryker::Instrumenter::Span, stretches of
-      #   `source` that don't overlap, in the order of the file.
-      def self.without: (String source, Array[Span] bodies) -> String
-
-      # `text` with the stretch at `span` in parentheses, as binary.
-      #
-      # - `text`: String, a file's source.
-      # - `span`: Stryker::Instrumenter::Span, a stretch of `text`.
-      def self.wrapped: (String text, Span span) -> String
-
-      # How many bytes longer `mutant`'s edit, with `bodies` removed, makes
-      # the range of the node at `location`, a node of the original file
-      # that holds the edit: the bytes that the edit adds, less the bodies
-      # that lie inside the node. An edit inside a heredoc's body that lies
-      # after the node's range adds none.
+      # The plain mutant of `mutant`, whose switch wraps the node at
+      # `location`, a node of the original file that holds the edit.
       #
       # - `mutant`: Stryker::Mutant, the mutant.
       # - `bodies`: Array of Stryker::Instrumenter::Span, the heredoc bodies
       #   that the plain mutant leaves out, in the order of the file.
       # - `location`: Prism::Location, the node's range.
-      def self.growth: (Mutant mutant, Array[Span] bodies, Prism::Location location) -> Integer
+      def self.of: (Mutant mutant, Array[Span] bodies, Prism::Location location) -> PlainMutant
 
-      private def self.edit_growth: (Mutant mutant, Prism::Location location) -> Integer
+      # The changes to the original source that make the plain mutant, for
+      # `Stryker::Instrumenter::Patches`: the bodies left out, the mutant's
+      # edit, the opening parenthesis before the node, and the closing one
+      # after it. The edit comes before the opening parenthesis in the list,
+      # which puts the parenthesis in front of it when the edit starts where
+      # the node does.
+      def patches: () -> Array[Patch]
+
+      # The plain mutant's text, in the encoding of `source`.
+      #
+      # - `source`: String, the file's source, which the mutant is an edit
+      #   on.
+      def text: (String source) -> String
+
+      # What Prism makes of the plain mutant's text, with the syntax of the
+      # running Ruby.
+      #
+      # - `source`: String, the file's source.
+      def parse: (String source) -> Prism::ParseResult
+
+      # Whether the plain mutant parses, which is whether the mutant is
+      # valid Ruby.
+      #
+      # - `source`: String, the file's source.
+      def valid?: (String source) -> bool
+
+      # Where the mutant's text lies in the plain mutant, inside the
+      # parentheses: the node's range with the bytes that the edit adds and
+      # the bodies that lie inside the node taken into account, and moved
+      # past the opening parenthesis.
+      def inside: () -> Span
+
+      private def edits: () -> Array[Patch]
     end
   end
 end

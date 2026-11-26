@@ -17,7 +17,8 @@ module Stryker
     #                              start_offset: 4, end_offset: 5, replacement: "return")
     # node = Prism.parse(source).value.statements.body.first.value
     # outcomes = Stryker::Instrumenter::Outcomes.new(source, [])
-    # outcomes.plain_mutant(mutant, node).result.source.source
+    # plain = Stryker::Instrumenter::PlainMutant.of(mutant, [], node.location)
+    # plain.text(source)
     # # => "x = (return)\n"
     # outcomes.of(mutant, node).skip.reason
     # # => :does_not_parse
@@ -38,14 +39,6 @@ module Stryker
       # - `node`: Prism::node, the node of the original file that the
       #   mutant's switch wraps, or nil when no node can hold it.
       def of: (Mutant mutant, Prism::node? node) -> Outcome
-
-      # The plain mutant of `mutant`, whose switch wraps `node`, parsed.
-      #
-      # - `mutant`: Stryker::Mutant, the mutant, an edit inside `node`, or
-      #   inside the body of a heredoc whose opener `node` holds.
-      # - `node`: Prism::node, the node of the original file that the
-      #   mutant's switch wraps.
-      def plain_mutant: (Mutant mutant, Prism::node node) -> PlainMutant
 
       private
 

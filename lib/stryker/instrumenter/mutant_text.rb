@@ -20,8 +20,6 @@ module Stryker
       end
 
       def text
-        return unless @plain.result.success?
-
         edited = edited_in_place
         on_one_line?(edited) ? edited : formatted
       end
@@ -33,8 +31,8 @@ module Stryker
       end
 
       private def formatted
-        parsed = @plain.result
-        found = MutatedNode.at(parsed.value, @plain.span)
+        parsed = @plain.parse(@source)
+        found = MutatedNode.at(parsed.value, @plain.inside)
         found && OneLine.of(found, parsed)
       end
 
