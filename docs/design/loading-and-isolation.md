@@ -75,9 +75,9 @@ Both ways give the same verdicts, because both make the text with the same patch
 
 ### When a worker fails
 
-A worker that ends, or writes a line that is not a verdict, makes the pool raise `Stryker::Instrumenter::Error`. The message gives the ID and file of the mutant whose plain mutant the worker was parsing. No verdict that a worker didn't give reaches the instrumenter: an error is never a mutant that survives.
+A worker that ends, or writes a line that is not a verdict, makes the pool raise `Stryker::Instrumenter::Error`. The message gives the ID and file of the mutant whose plain mutant the worker was parsing, and the last 10 lines that the worker wrote to its standard error, when it wrote any. No verdict that a worker didn't give reaches the instrumenter: an error is never a mutant that survives.
 
-No worker outlives its pool. The pool ends every worker when it stops, when the block that opened it ends, and when it raises, and the next use of a pool that raised starts new workers. A worker's standard error is the orchestrator's standard error, so what a failing worker writes there appears where the run's own errors do.
+No worker outlives its pool. The pool ends every worker when it stops, when the block that opened it ends, and when it raises, and the next use of a pool that raised starts new workers. The pool starts each worker with its standard error going to a temporary file, and deletes the file when it stops the worker. A pipe that nothing reads fills up, and a worker that writes to a full pipe waits for ever, so a file stands in for the pipe. What a worker writes to its standard error reaches the message of the error that its failure raises, and appears nowhere else.
 
 > [!WARNING]
 > The pool never times out a worker. A worker that stops answering without ending stops the run.

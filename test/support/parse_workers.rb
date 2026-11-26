@@ -25,6 +25,7 @@ module ParseWorkers
     real: 'require "stryker/instrumenter/parse_worker"; Stryker::Instrumenter::ParseWorker.serve',
     ends_at_once: "exit 3",
     dies_after_taking_the_job: "#{TAKE}; exit 2",
+    dies_with_a_message: "#{TAKE}; warn('boom'); exit 2",
     answers_with_text: "#{TAKE}; puts('oops'); sleep",
     answers_with_json_that_is_no_verdict: "#{TAKE}; puts('{\"id\":999}'); sleep",
   }.freeze

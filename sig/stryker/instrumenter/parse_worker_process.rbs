@@ -8,8 +8,10 @@ module Stryker
     #
     # A worker that ends, or writes anything but a verdict, makes `ask` or
     # `verdict` stop the process and raise `Stryker::Instrumenter::Error`
-    # that gives the ID and file of the plain mutant's mutant. The worker's standard error is this
-    # process's, so what the worker writes there reaches the same place.
+    # that gives the ID and file of the plain mutant's mutant, and the last
+    # lines that the worker wrote to its standard error. The worker's
+    # standard error goes to a temporary file, which `stop` deletes (see
+    # `Stryker::Instrumenter::ParseWorkerStderr`).
     #
     # ## Examples
     #
@@ -22,8 +24,9 @@ module Stryker
     # worker.stop
     # ```
     class ParseWorkerProcess
-      # Starts the process, with its pipes. Raises `SystemCallError` when the
-      # command can't start.
+      # Starts the process, with its pipes and a temporary file for its
+      # standard error. Raises `SystemCallError` when the command can't
+      # start, after it has deleted the file.
       #
       # - `command`: Array of String, the program and its arguments, which
       #   no shell reads.
@@ -34,7 +37,9 @@ module Stryker
       # - `input`: IO, the pipe to the process's standard input.
       # - `output`: IO, the pipe from its standard output.
       # - `waiter`: Process::Waiter, the thread that waits for the process.
-      def initialize: (IO input, IO output, Process::Waiter waiter) -> void
+      # - `errors`: Stryker::Instrumenter::ParseWorkerStderr, the file that
+      #   the process writes its standard error to.
+      def initialize: (IO input, IO output, Process::Waiter waiter, ParseWorkerStderr errors) -> void
 
       # Gives the worker the source that the plain mutants it is asked about
       # are edits on. The worker doesn't answer, and a worker that has ended
@@ -62,21 +67,19 @@ module Stryker
       # Whether the process is running.
       def running?: () -> bool
 
-      # Ends the process, if it is running, and closes its pipes. It may be
-      # called again.
+      # Ends the process, if it is running, closes its pipes, and deletes the
+      # file of its standard error. It may be called again.
       def stop: () -> void
 
       private
 
-      @input: IO
-      @output: IO
+      @pipes: ParseWorkerPipes
       @waiter: Process::Waiter
-
-      def tell: (String line) -> bool
-
-      def close_input: () -> void
+      @errors: ParseWorkerStderr
 
       def failure: (Mutant mutant, String? reply) -> Error
+
+      def halt: () -> void
 
       def kill: () -> void
     end

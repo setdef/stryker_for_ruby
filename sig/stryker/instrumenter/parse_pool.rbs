@@ -30,8 +30,9 @@ module Stryker
     # ends every worker first, and the next call starts new ones.
     #
     # A worker that ends, or writes something that isn't its verdict, raises
-    # `Stryker::Instrumenter::Error` with the plain mutant it was parsing.
-    # The pool never gives a verdict that a worker didn't give.
+    # `Stryker::Instrumenter::Error` with the plain mutant it was parsing and
+    # the last lines of its standard error. The pool never gives a verdict
+    # that a worker didn't give.
     #
     # ## Examples
     #

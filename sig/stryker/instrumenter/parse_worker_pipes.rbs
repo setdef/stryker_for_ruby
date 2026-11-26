@@ -1,0 +1,37 @@
+module Stryker
+  class Instrumenter
+    # The two pipes to a parse worker: the one to its standard input, which
+    # takes a line at a time, and the one from its standard output. It
+    # tells whether the worker took a line, and closes both pipes even when
+    # the worker has ended.
+    class ParseWorkerPipes
+      # Prepares to use two pipes that are open.
+      #
+      # - `input`: IO, the pipe to the worker's standard input.
+      # - `output`: IO, the pipe from its standard output.
+      def initialize: (IO input, IO output) -> void
+
+      # Writes `line` and a line feed. Gives false when the worker has ended
+      # or the pipe is closed, and true otherwise.
+      #
+      # - `line`: String, what to write.
+      def write: (String line) -> bool
+
+      # The next line from the worker, with its line feed, or nil when the
+      # worker has ended and the pipe holds nothing more. Waits until there
+      # is a line.
+      def read: () -> String?
+
+      # Closes both pipes. A line that the worker never read, which Windows
+      # reports as `Errno::EPIPE` when the pipe closes, raises nothing.
+      def close: () -> void
+
+      private
+
+      @input: IO
+      @output: IO
+
+      def close_input: () -> void
+    end
+  end
+end

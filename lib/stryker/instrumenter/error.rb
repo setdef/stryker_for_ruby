@@ -14,11 +14,22 @@ module Stryker
         new("The #{subject} doesn't parse: #{lines.join('; ')}.")
       end
 
-      def self.parse_worker(mutant, reply)
-        job = "the plain mutant of mutant #{mutant.id} in #{mutant.file}"
+      def self.parse_worker(mutant, reply, errors)
+        job = placed(mutant)
         fault = reply ? "answered #{job} with #{reply.strip.inspect}, not a result" : "ended while it parsed #{job}"
-        new("A parse worker #{fault}.")
+        worker_failure(fault, errors)
       end
+
+      def self.worker_failure(fault, errors)
+        report = errors.empty? ? "" : "\nThe last lines it wrote to standard error:\n#{errors}"
+        new("A parse worker #{fault}.#{report}")
+      end
+      private_class_method(:worker_failure)
+
+      def self.placed(mutant)
+        "the plain mutant of mutant #{mutant.id} in #{mutant.file}"
+      end
+      private_class_method(:placed)
     end
   end
 end

@@ -17,6 +17,7 @@ target :lib do
   library "date"
   library "digest"
   library "timeout"
+  library "tempfile"
   library "tmpdir"
   library "uri"
   library "stringio"

@@ -1,34 +1,38 @@
 # frozen_string_literal: true
 
-require "open3"
 require_relative "error"
 require_relative "parse_reply"
 require_relative "parse_request"
+require_relative "parse_worker_pipes"
+require_relative "parse_worker_stderr"
 
 module Stryker
   class Instrumenter
     class ParseWorkerProcess
       def self.start(command)
-        input, output, waiter = Open3.popen2(*command)
-        new(input, output, waiter)
+        errors = ParseWorkerStderr.open
+        input, output, waiter = errors.popen(command)
+        new(input, output, waiter, errors)
       end
 
-      def initialize(input, output, waiter)
-        @input = input
-        @output = output
+      def initialize(input, output, waiter, errors)
+        @pipes = ParseWorkerPipes.new(input, output)
         @waiter = waiter
+        @errors = errors
       end
 
       def give(source)
-        tell(ParseRequest.source(source))
+        @pipes.write(ParseRequest.source(source))
       end
 
       def ask(plain)
-        raise(failure(plain.mutant, nil)) unless tell(ParseRequest.plain(plain))
+        return if @pipes.write(ParseRequest.plain(plain))
+
+        raise(failure(plain.mutant, nil))
       end
 
       def verdict(plain)
-        reply = @output.gets
+        reply = @pipes.read
         ParseReply.read(reply.to_s)
       rescue ArgumentError
         raise(failure(plain.mutant, reply))
@@ -39,30 +43,21 @@ module Stryker
       end
 
       def stop
-        kill if running?
-        @waiter.join
-        close_input
-        @output.close
-      end
-
-      private def tell(line)
-        @input.puts(line)
-        true
-      rescue IOError, SystemCallError
-        false
-      end
-
-      private def close_input
-        # Closing flushes what a worker that has ended never read, which
-        # raises Errno::EPIPE on Windows.
-        @input.close
-      rescue Errno::EPIPE
-        nil
+        halt
+        @pipes.close
+        @errors.close
       end
 
       private def failure(mutant, reply)
+        halt
+        error = Error.parse_worker(mutant, reply, @errors.last_lines)
         stop
-        Error.parse_worker(mutant, reply)
+        error
+      end
+
+      private def halt
+        kill if running?
+        @waiter.join
       end
 
       private def kill

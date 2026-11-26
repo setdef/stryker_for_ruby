@@ -1,47 +1,13 @@
 # frozen_string_literal: true
 
-require_relative("../../support/parse_workers")
+require_relative("../../support/parse_worker_processes")
 require "minitest/mock"
 require "open3"
 
 # Checks one parse worker's process: what it answers, the errors that name
 # the plain mutant, and that it ends.
 class ParseWorkerProcessTest < Minitest::Test
-  include ParseWorkers
-
-  SERVE = 'require "stryker/instrumenter/parse_worker"; Stryker::Instrumenter::ParseWorker.serve'
-  private_constant(:SERVE)
-
-  def teardown
-    @workers&.each(&:stop)
-  end
-
-  def start(program = SERVE)
-    command = [RbConfig.ruby, "-I", LIB, "-e", "$stdout.sync = true; #{program}"]
-    worker = Stryker::Instrumenter::ParseWorkerProcess.start(command)
-    (@workers ||= []) << worker
-    worker
-  end
-
-  # The first of +plains+: it replaces the 1 in "x = 1" by "y", which parses.
-  def plain
-    plains(1).first
-  end
-
-  # Waits until the process has ended, and Ruby has noticed.
-  def wait_for_end(worker)
-    sleep(0.01) while worker.running?
-  end
-
-  def asked(worker, plain)
-    worker.give("x = 1\n")
-    worker.ask(plain)
-    worker
-  end
-
-  def failure(worker)
-    assert_raises(Stryker::Instrumenter::Error) { yield(worker) }
-  end
+  include ParseWorkerProcesses
 
   def test_a_worker_says_that_a_plain_mutant_that_parses_does
     worker = asked(start, plain)
@@ -123,7 +89,8 @@ class ParseWorkerProcessTest < Minitest::Test
 
   def test_stop_closes_both_pipes
     input, output, waiter = Open3.popen2(RbConfig.ruby, "-e", "sleep")
-    Stryker::Instrumenter::ParseWorkerProcess.new(input, output, waiter).stop
+    errors = Stryker::Instrumenter::ParseWorkerStderr.open
+    Stryker::Instrumenter::ParseWorkerProcess.new(input, output, waiter, errors).stop
 
     assert_equal([true, true], [input.closed?, output.closed?])
   end
@@ -133,7 +100,8 @@ class ParseWorkerProcessTest < Minitest::Test
     input, output, waiter = Open3.popen2(RbConfig.ruby, "-e", "exit 0")
     unreadable = Object.new
     unreadable.define_singleton_method(:close) { raise(Errno::EPIPE) }
-    worker = Stryker::Instrumenter::ParseWorkerProcess.new(unreadable, output, waiter)
+    errors = Stryker::Instrumenter::ParseWorkerStderr.open
+    worker = Stryker::Instrumenter::ParseWorkerProcess.new(unreadable, output, waiter, errors)
     worker.stop
     input.close
 

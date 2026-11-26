@@ -51,6 +51,14 @@ class ParsePoolFailureTest < Minitest::Test
     end
   end
 
+  def test_it_puts_the_last_lines_of_the_standard_error_of_a_worker_in_the_message
+    with_workers do |folder|
+      message = failure(:dies_with_a_message, folder).message
+
+      assert_equal("The last lines it wrote to standard error:\nboom", message.lines.drop(1).join)
+    end
+  end
+
   def test_it_raises_when_the_command_does_not_exist
     assert_raises(SystemCallError) do
       Pool.open(2, 1, ["stryker-no-such-command"]) { |pool| pool.valid(SOURCE, plains(1)) }

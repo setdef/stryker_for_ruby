@@ -25,12 +25,19 @@ module Stryker
 
       # The error for a parse worker that ended, or answered with anything but
       # the verdict, with a message that gives the ID and file of the mutant
-      # whose plain mutant it was parsing.
+      # whose plain mutant it was parsing, and the last lines it wrote to its
+      # standard error.
       #
       # - `mutant`: Stryker::Mutant, the mutant whose plain mutant the worker
       #   was parsing.
       # - `reply`: String, the line the worker wrote, or nil when it ended.
-      def self.parse_worker: (Mutant mutant, String? reply) -> Error
+      # - `errors`: String, the last lines that the worker wrote to its
+      #   standard error, or an empty string.
+      def self.parse_worker: (Mutant mutant, String? reply, String errors) -> Error
+
+      private def self.worker_failure: (String fault, String errors) -> Error
+
+      private def self.placed: (Mutant mutant) -> String
     end
   end
 end

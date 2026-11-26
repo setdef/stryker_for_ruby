@@ -1,0 +1,61 @@
+module Stryker
+  class Instrumenter
+    # The temporary file that holds the standard error of one parse worker.
+    # A worker that has its standard error in a pipe that nothing reads waits
+    # for ever once the pipe is full, so the pool gives each worker a file
+    # instead, and reads the end of it when the worker fails.
+    #
+    # The file is a `Tempfile` in the system's temporary directory. `close`
+    # deletes it, and the worker has to have ended first on Windows, which
+    # doesn't delete a file that a process has open.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # errors = Stryker::Instrumenter::ParseWorkerStderr.open
+    # input, output, waiter = errors.popen(["ruby", "worker.rb"])
+    # errors.last_lines
+    # # => "worker.rb:3:in 'serve': boom (RuntimeError)"
+    # errors.close
+    # ```
+    class ParseWorkerStderr
+      # How many lines `last_lines` gives at most.
+      LINES: Integer
+
+      # Makes the file.
+      def self.open: () -> ParseWorkerStderr
+
+      # Prepares to read the end of a file.
+      #
+      # - `file`: Tempfile, the file that a worker writes to, in binary mode.
+      def initialize: (Tempfile file) -> void
+
+      # The file, open for writing, as the `err` option of a spawn takes it.
+      def stream: () -> File
+
+      # Starts the process that writes its standard error to the file, with
+      # a pipe to its standard input and from its standard output, as
+      # `Open3.popen2` does. Closes the file and raises when the command can't
+      # start.
+      #
+      # - `command`: Array of String, the program and its arguments, which
+      #   no shell reads.
+      def popen: (Array[String] command) -> [IO, IO, Process::Waiter]
+
+      # The last lines in the file, up to `LINES` of them, without the blank
+      # space around them, or an empty string when the worker wrote nothing.
+      # It reads the last 8 KiB of the file at most. A byte that isn't valid
+      # UTF-8 becomes U+FFFD.
+      def last_lines: () -> String
+
+      # Closes the file and deletes it. It may be called again.
+      def close: () -> void
+
+      private
+
+      TAIL_BYTES: Integer
+
+      @file: Tempfile
+    end
+  end
+end

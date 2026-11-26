@@ -1,0 +1,6 @@
+# The signature that ships with RBS leaves out the `err` option, which
+# `Process.spawn` takes: where the process writes its standard error.
+module Open3
+  def self.popen2: (*String, err: IO) -> [IO, IO, Process::Waiter]
+                 | ...
+end
