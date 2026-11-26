@@ -1,0 +1,51 @@
+module Stryker
+  class Configure
+    # Turns checked settings into a `Stryker::Config`: it fills in what the
+    # project decides, and converts a percentage and a whole-number factor.
+    class Resolution
+      # The patterns of `mutate` when no setting gives any: the Ruby and ERB
+      # files in `lib` and `app`, leaving out the `test` and `spec` folders
+      # at any depth and the files that end in `_test.rb` or `_spec.rb`. Each
+      # pattern that starts with `!` leaves files out.
+      MUTATE: Array[String]
+
+      @settings: Hash[String, Setting]
+      @root: String
+      @processors: Integer
+
+      # Builds the resolution.
+      #
+      # - `settings`: Hash, the settings by name, already checked.
+      # - `root`: String, the project's root.
+      # - `processors`: Integer, the number that a percentage `concurrency`
+      #   is a share of.
+      def initialize: (Hash[String, Setting] settings, String root, Integer processors) -> void
+
+      # Returns the config. `mutate` is the default patterns and
+      # `testRunner` is chosen from the project's folders, when no setting
+      # gives them. Raises `Stryker::ConfigError` when no setting names a
+      # test runner and the project has neither or both of `test/` and
+      # `spec/`.
+      def config: () -> Config
+
+      private
+
+      # Returns the settings' values, keyed by the config's field names.
+      def given: () -> Hash[Symbol, Object?]
+
+      # Returns the factor on the dry-run time as a Float, when a setting
+      # gives one, as a hash for `with`: a whole number in a file is
+      # a valid factor that `Stryker::Config` holds as a Float.
+      def factor: (Hash[Symbol, Object?] values) -> Hash[Symbol, Float]
+
+      # Returns the test runner that the settings name, or the one that the
+      # project's folders pick.
+      def runner: (Hash[Symbol, Object?] values) -> String
+
+      # Returns `value` when it is a count, and when it is a percentage, that
+      # share of the processors, rounded half up as StrykerJS rounds it, and
+      # at least 1. With no value, returns the default for the processors.
+      def concurrency: (Object? value) -> Integer
+    end
+  end
+end

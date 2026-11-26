@@ -1,0 +1,42 @@
+module Stryker
+  class Configure
+    # The type that each option takes, as a check and as a phrase for an
+    # error message.
+    module Types
+      # One type: what to call it in a message, and the check for a value.
+      class Kind < Data
+        # The type as a phrase that follows "takes", such as `a string`.
+        attr_reader description: String
+
+        # The check: true for a value of the type.
+        attr_reader test: ^(Object? value) -> bool
+
+        # Builds a kind.
+        def self.new: (description: String, test: ^(Object? value) -> bool) -> instance
+                    | (String description, ^(Object? value) -> bool test) -> instance
+
+        # Returns whether `value` has the type.
+        def accepts?: (Object? value) -> bool
+      end
+
+      # The form of a percentage for `concurrency`: 0 to 100, with a percent
+      # sign.
+      PERCENT: Regexp
+
+      # The kind of each option, by the option's name. A name that is no
+      # option has a kind that accepts every value.
+      KINDS: Hash[String, Kind]
+
+      # Returns the type of an array of Strings. `what` names the strings
+      # in a message: `file patterns`.
+      def self.list_of: (String what) -> Kind
+
+      # Returns `value` as an Array of Strings. The check has already made
+      # sure that it is one, and the conversion tells Steep the type.
+      def self.strings: (Object? value) -> Array[String]
+
+      # Returns the type of a whole number in a range.
+      def self.whole_number: (String description, Range[Integer?] range) -> Kind
+    end
+  end
+end

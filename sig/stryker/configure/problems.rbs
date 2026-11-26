@@ -1,0 +1,30 @@
+module Stryker
+  class Configure
+    # Checks settings and describes each thing wrong with them, as one line of
+    # text for a person. For each setting it runs the checks in
+    # `Stryker::Configure::Checks` in order, and keeps the lines of the first
+    # check that has any, so that a value of the wrong type is never checked
+    # for its content.
+    class Problems
+      @settings: Array[Setting]
+      @root: String
+
+      # Builds the check.
+      #
+      # - `settings`: Array of Setting, every setting from the file and the
+      #   command line, including ones that a later setting replaces.
+      # - `root`: String, the project's root, which `mutate`'s patterns must
+      #   stay inside.
+      def initialize: (Array[Setting] settings, String root) -> void
+
+      # Returns one line for each problem, in the order of the settings, or
+      # an empty array when there is none.
+      def to_a: () -> Array[String]
+
+      private
+
+      # The lines for one setting.
+      def about: (Setting setting) -> Array[String]
+    end
+  end
+end

@@ -1,0 +1,86 @@
+module Stryker
+  # The first stage of a run: reads the configuration file and the options
+  # from the command line, checks every option, and returns one
+  # `Stryker::Config`, as
+  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-pipeline)
+  # describes. [Configuration](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/configuration.md)
+  # lists every option for users.
+  #
+  # Configure takes each option from the first of these that has it:
+  #
+  # 1. the options from the command line;
+  # 2. the configuration file;
+  # 3. the defaults. `Stryker::Config::DEFAULTS` has them, and Configure
+  #    works out the three that depend on the project or the machine:
+  #    `mutate`, `testRunner`, and `concurrency`.
+  #
+  # Before it resolves anything, Configure checks every option in the file
+  # and on the command line, including the ones that a higher source
+  # replaces. It raises one `Stryker::ConfigError` whose message has a line
+  # for each problem. A problem is an option that doesn't exist (the line
+  # suggests the nearest name), a value of the wrong type (the line gives the
+  # option, the type it takes, and the value), a name in
+  # `mutator.excludedMutations` that no mutator has (the line lists the valid
+  # names), or a pattern in `mutate` that resolves outside the project's
+  # root. Each line names the file or the flag that the value came from.
+  #
+  # Configure parses no `argv`: the `stryker` command does, and passes the
+  # result as `options`.
+  #
+  # ## Examples
+  #
+  # A project with a `test/` folder and no configuration file:
+  #
+  # ```ruby
+  # config = Stryker::Configure.call(root: "/work/invoices")
+  # config.test_runner
+  # # => "minitest"
+  # config.mutate
+  # # => ["lib/**/*.rb", "app/**/*.rb", "lib/**/*.erb", "app/**/*.erb", "!**/test/**/*", ...]
+  # ```
+  #
+  # An option from the command line over the file's:
+  #
+  # ```ruby
+  # Stryker::Configure.call(options: { "thresholds.break" => 75 }, root: "/work/invoices").threshold_break
+  # # => 75
+  # ```
+  #
+  # A misspelled option:
+  #
+  # ```ruby
+  # Stryker::Configure.call(options: { "testRunnr" => "rspec" })
+  # # => Stryker::ConfigError: Unknown option "--test-runnr" on the command line. Did you mean "--test-runner"?
+  # ```
+  class Configure
+    @processors: Integer
+
+    # Reads the file and the options, checks them, and returns the config.
+    # It builds a Configure for this machine and calls it with the keywords.
+    def self.call: (?options: Hash[String | Symbol, Object?], ?file: String?, ?root: String) -> Config
+
+    # Builds a Configure for a machine.
+    #
+    # - `processors`: Integer, the number of logical processors that a
+    #   percentage `concurrency` is a share of, and that the default
+    #   `concurrency` comes from. It defaults to the number of this machine.
+    def initialize: (?processors: Integer) -> void
+
+    # Reads the file and the options, checks them, and returns the config.
+    # Raises `Stryker::ConfigError` for a file that can't be used, for any
+    # option that fails a check, and for a project whose test runner can't be
+    # chosen.
+    #
+    # - `options`: Hash, the options from the command line, keyed by option
+    #   name, such as `"testRunner"` or `"thresholds.break"`, as a String or a
+    #   Symbol. A value has the type that its option takes: a list is an
+    #   Array, a count is an Integer, and `concurrency` may also be a
+    #   percentage String. It defaults to no options.
+    # - `file`: String or nil, the configuration file that the user named,
+    #   relative to `root` or absolute. With nil, Configure looks for the
+    #   default files in `root`.
+    # - `root`: String, the project's root. It defaults to the current
+    #   directory.
+    def call: (?options: Hash[String | Symbol, Object?], ?file: String?, ?root: String) -> Config
+  end
+end

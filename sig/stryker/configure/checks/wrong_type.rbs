@@ -1,0 +1,20 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that the setting's value has the type that its option takes. The
+      # line names the option, the type, and the value. A setting whose name
+      # is no option passes, because `UnknownOption` has refused it: the
+      # type of such a name accepts every value.
+      class WrongType
+        @setting: Setting
+        @kind: Types::Kind
+
+        # Builds the check.
+        def initialize: (Setting setting) -> void
+
+        # Returns the line for a value of the wrong type, or none.
+        def to_a: () -> Array[String]
+      end
+    end
+  end
+end

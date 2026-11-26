@@ -1,0 +1,25 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that each name in `mutator.excludedMutations` is the name of a
+      # mutator in `Stryker::Mutators::ALL`, with its letter case. It applies
+      # to no other option. The line lists the names that no mutator has, and
+      # the valid names.
+      class UnknownMutators
+        @setting: Setting
+        @names: Array[String]
+
+        # Builds the check.
+        def initialize: (Setting setting) -> void
+
+        # Returns the line for the unknown names, or none.
+        def to_a: () -> Array[String]
+
+        private
+
+        # The line for the unknown names.
+        def message: (Array[String] unknown) -> String
+      end
+    end
+  end
+end

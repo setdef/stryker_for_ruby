@@ -1,0 +1,29 @@
+module Stryker
+  class Configure
+    # One option as the user gave it, before any check: the option's name,
+    # its value as the file or the command line holds it, and where it came
+    # from.
+    class Setting < Data
+      # The option's name, with a dot between a nested option and its
+      # parents: `thresholds.break`.
+      attr_reader name: String
+
+      # The value as read, which may have the wrong type.
+      attr_reader value: Object?
+
+      # Where the value came from.
+      attr_reader origin: Origin
+
+      # Returns the setting's name in quotes, followed by where it came from,
+      # as `Origin#mention` writes it.
+      def mention: () -> String
+
+      # Returns an option's name as this setting's origin spells it.
+      def spell: (String option) -> String
+
+      # Builds a setting.
+      def self.new: (name: String, value: Object?, origin: Origin) -> instance
+                  | (String name, Object? value, Origin origin) -> instance
+    end
+  end
+end

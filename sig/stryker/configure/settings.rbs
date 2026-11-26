@@ -1,0 +1,36 @@
+module Stryker
+  class Configure
+    # Turns the file's options and the command line's into lists of
+    # `Stryker::Configure::Setting`, and merges lists.
+    module Settings
+      # Flattens the options of a file into one setting for each option, with
+      # nested options named by their dotted path. An object that is the value
+      # of a known option, such as `{}` for `mutate`, stays a value, so that
+      # the type check can refuse it. An object under a name that isn't an
+      # option is read as a group of options.
+      #
+      # - `options`: Hash, the file's options as the adapter read them.
+      # - `origin`: Origin, the file.
+      # - `prefix`: String or nil, the dotted path of the group that
+      #   `options` is the content of.
+      def self.from_file: (Hash[String, Object?] options, Origin origin, ?String? prefix) -> Array[Setting]
+
+      # Finds the project's configuration file as `Stryker::ConfigSources`
+      # does, reads it, and returns its settings, or none when the project has
+      # no file. Raises `Stryker::ConfigError` for a file that can't be used.
+      #
+      # - `root`: String, the project's root.
+      # - `file`: String or nil, the file that the user named.
+      def self.from_project: (String root, String? file) -> Array[Setting]
+
+      # Makes one setting for each option from the command line, named as a
+      # String whether the caller gave a String or a Symbol.
+      def self.from_flags: (Hash[String | Symbol, Object?] options) -> Array[Setting]
+
+      # Returns the settings by name. When two settings have a name, the
+      # later one wins, so a list of the file's settings followed by the
+      # command line's gives the command line precedence.
+      def self.merge: (Array[Setting] settings) -> Hash[String, Setting]
+    end
+  end
+end

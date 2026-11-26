@@ -1,0 +1,31 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that each pattern of `mutate` resolves inside the project's
+      # root. It applies to no other option. A pattern is outside when its
+      # path, with the dots resolved and the leading `!` dropped, is neither
+      # the root nor inside it. It reads only the text of the path: a glob
+      # wildcard or a brace alternative is part of a name, so `{lib,../x}/*`
+      # isn't expanded.
+      class OutsidePatterns
+        @setting: Setting
+        @root: String
+
+        # Builds the check.
+        #
+        # - `setting`: Setting, any setting.
+        # - `root`: String, the project's root.
+        def initialize: (Setting setting, String root) -> void
+
+        # Returns one line for each pattern that is outside the root, or
+        # none.
+        def to_a: () -> Array[String]
+
+        private
+
+        # Whether the pattern is outside the root.
+        def outside?: (String pattern) -> bool
+      end
+    end
+  end
+end

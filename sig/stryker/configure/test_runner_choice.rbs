@@ -1,0 +1,31 @@
+module Stryker
+  class Configure
+    # Chooses the test runner for a project that no setting names one for:
+    # `minitest` for a project with a `test/` folder, and `rspec` for one with
+    # a `spec/` folder. A file called `test` isn't a `test/` folder.
+    class TestRunnerChoice
+      # The test runner for each folder whose presence picks it.
+      RUNNERS: Hash[Symbol, String]
+
+      @root: String
+
+      # Builds the choice.
+      #
+      # - `root`: String, the project's root.
+      def initialize: (String root) -> void
+
+      # Returns the name of the project's test runner. Raises
+      # `Stryker::ConfigError` when the project has neither folder or both,
+      # with a message that says to set `testRunner` or pass `--test-runner`.
+      def name: () -> String
+
+      private
+
+      # The runner of each folder that the project has.
+      def found: () -> Hash[Symbol, String]
+
+      # The message for a project with neither folder or both.
+      def cannot_choose: () -> String
+    end
+  end
+end

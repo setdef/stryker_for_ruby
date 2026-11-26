@@ -25,6 +25,7 @@ target :lib do
   library "etc"
   library "prism"
   library "psych"
+  library "did_you_mean"
 end
 
 target :tasks do

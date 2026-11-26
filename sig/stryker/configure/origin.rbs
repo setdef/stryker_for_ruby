@@ -1,0 +1,29 @@
+module Stryker
+  class Configure
+    # Where an option's value came from: a configuration file, or the command
+    # line. It decides how an error names an option: as the file spells it,
+    # or as the flag that sets it.
+    class Origin < Data
+      # The name of the configuration file, as the user wrote it or as the
+      # default file is called, or nil for the command line.
+      attr_reader label: String?
+
+      # Builds an origin.
+      def self.new: (label: String?) -> instance
+                  | (String? label) -> instance
+
+      # Returns the origin of the options from the command line.
+      def self.flags: () -> Origin
+
+      # Returns `name` as this origin spells it: unchanged for a file, and
+      # as a flag for the command line. The flag is the kebab-case form of
+      # the camelCase name, with its dots kept: `mutator.excludedMutations`
+      # is `--mutator.excluded-mutations`, and `timeoutMS` is `--timeout-ms`.
+      def spell: (String name) -> String
+
+      # Returns the name in quotes, followed by where it came from: `"timeoutMS"
+      # in stryker.config.json`, or `"--timeout-ms" on the command line`.
+      def mention: (String name) -> String
+    end
+  end
+end

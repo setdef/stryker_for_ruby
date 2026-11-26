@@ -1,0 +1,36 @@
+module Stryker
+  class Configure
+    # The checks that `Stryker::Configure::Problems` runs on each setting.
+    # Each is built with the setting, and `to_a` returns the lines that
+    # describe what is wrong, or an empty array when the setting passes the
+    # check or the check doesn't apply to it.
+    module Checks
+      # Checks that the setting's name is an option. A name that isn't one is
+      # a line that names it as the origin spells it, and that suggests the
+      # nearest option's name when one is near, as `DidYouMean::SpellChecker`
+      # finds it. A name that groups options, such as `thresholds`, is a line
+      # that says it isn't an option itself and lists the options it groups.
+      class UnknownOption
+        @setting: Setting
+        @name: String
+
+        # Builds the check.
+        def initialize: (Setting setting) -> void
+
+        # Returns the line for an unknown name, or none.
+        def to_a: () -> Array[String]
+
+        private
+
+        # The options that the setting's name is the parent of.
+        def grouped: () -> Array[String]
+
+        # The line for a name that groups options.
+        def not_an_option: () -> String
+
+        # The question that names the nearest option, or nothing.
+        def suggestion: () -> String
+      end
+    end
+  end
+end
