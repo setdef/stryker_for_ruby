@@ -47,4 +47,48 @@ class OperandTest < Minitest::Test
   def test_a_node_with_no_string_is_no_heredoc
     assert_equal([false, false], ["a", "foo(1, b)"].map { |source| holds_heredoc?(source) })
   end
+
+  def left_text(source)
+    Stryker::Mutators::Operand.left_text(operand(source))
+  end
+
+  def test_a_defined_check_with_no_parentheses_goes_in_parentheses_on_the_left
+    assert_equal("(defined? b)", left_text("defined? b"))
+  end
+
+  def test_a_not_with_no_parentheses_goes_in_parentheses_on_the_left
+    assert_equal("(not b)", left_text("not b"))
+  end
+
+  def test_an_and_goes_in_parentheses_on_the_left
+    assert_equal(["(a and b)", "(a && b)"], ["a and b", "a && b"].map { |source| left_text(source) })
+  end
+
+  def test_an_or_goes_in_parentheses_on_the_left
+    assert_equal(["(a or b)", "(a || b)"], ["a or b", "a || b"].map { |source| left_text(source) })
+  end
+
+  def test_a_defined_check_with_parentheses_is_its_text_on_the_left
+    assert_equal("defined?(b)", left_text("defined?(b)"))
+  end
+
+  def test_a_not_with_parentheses_is_its_text_on_the_left
+    assert_equal("not(b)", left_text("not(b)"))
+  end
+
+  def test_a_bang_is_its_text_on_the_left
+    assert_equal("!b", left_text("!b"))
+  end
+
+  def test_an_operand_in_parentheses_is_its_text_on_the_left
+    sources = ["(a and b)", "(not b)", "(defined? b)"]
+
+    assert_equal(sources, sources.map { |source| left_text(source) })
+  end
+
+  def test_other_operands_are_their_text_on_the_left
+    sources = ["a", "f(1)", "a + b", "-a"]
+
+    assert_equal(sources, sources.map { |source| left_text(source) })
+  end
 end

@@ -21,7 +21,9 @@ module Stryker
     # The `<=>` row swaps the operands, with the text between them kept, and
     # makes no mutant when the two operands have the same text, such as
     # `x <=> x`, or when an operand holds a heredoc opener, because swapping
-    # the openers would give each the other's body. The edit covers the whole
+    # the openers would give each the other's body. A right operand that is a
+    # `defined?` with no parentheses goes in parentheses on the left: `a <=>
+    # defined? b` becomes `(defined? b) <=> a`. The edit covers the whole
     # call.
     #
     # It makes no mutant of `===`, which is case equality, of `eql?` and

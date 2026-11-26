@@ -39,6 +39,27 @@ class EqualityOperatorSpaceshipTest < Minitest::Test
     assert_equal(["x1 <=> x", "x <=> x.y"], replacements("x <=> x1") + replacements("x.y <=> x"))
   end
 
+  def test_puts_a_swapped_defined_operand_that_has_no_parentheses_in_parentheses
+    # Written as defined? b <=> a, the mutant would mean defined?(b <=> a).
+    assert_equal(["(defined? b) <=> a"], replacements("a <=> defined? b"))
+  end
+
+  def test_the_mutant_of_a_defined_operand_that_has_no_parentheses_is_the_whole_file_with_the_swap
+    assert_equal(["x = (defined? b) <=> a\n"], mutated("x = a <=> defined? b\n"))
+  end
+
+  def test_keeps_a_defined_operand_that_has_parentheses_as_written
+    assert_equal(["defined?(b) <=> a"], replacements("a <=> defined?(b)"))
+  end
+
+  def test_swaps_the_comparison_inside_a_defined_check_as_any_other
+    assert_equal(["b <=> a"], replacements("defined? a <=> b"))
+  end
+
+  def test_keeps_an_operand_in_parentheses_as_written
+    assert_equal(["(b and c) <=> a", "(not b) <=> a"], replacements("a <=> (b and c)") + replacements("a <=> (not b)"))
+  end
+
   def test_makes_no_mutant_when_both_operands_hold_a_heredoc_opener
     # Swapping the openers would give each the other's body.
     assert_empty(edits("foo(<<~A) <=> bar(<<~B)\n  a\nA\n  b\nB\n"))

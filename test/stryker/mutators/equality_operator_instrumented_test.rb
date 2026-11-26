@@ -46,6 +46,13 @@ class EqualityOperatorInstrumentedTest < Minitest::Test
     assert_equal(1, assert_mutator_site(source, mutator, holder: Prism::CallNode).size)
   end
 
+  def test_the_spaceship_with_a_defined_operand
+    # The swap is (defined? x) <=> 'zzz', and defined? x <=> 'zzz' would mean something else.
+    source = "x = 1\np('zzz' <=> defined? x)\n"
+
+    assert_equal(1, assert_mutator_site(source, mutator, holder: Prism::CallNode).size)
+  end
+
   def test_the_spaceship_in_a_comparable
     assert_equal(3, assert_mutator_site(MONEY, mutator, holder: Prism::CallNode).size)
   end

@@ -28,7 +28,7 @@ module Stryker
       end
 
       private def operand_swap
-        [[receiver.location, argument.slice], [argument.location, receiver.slice]]
+        [[receiver.location, Operand.left_text(argument)], [argument.location, receiver.slice]]
       end
 
       # @dynamic self.of, self.edits

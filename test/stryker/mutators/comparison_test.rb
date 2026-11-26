@@ -32,6 +32,24 @@ class ComparisonTest < Minitest::Test
     assert_equal([nil] * 3, sources.map { |source| comparison(source, %i[<=>]).swapped })
   end
 
+  # Ruby parses no bare and, or, or not as an operand, so these comparisons are
+  # built by hand, with the operand taken out of its parentheses.
+  def test_puts_a_swapped_operand_that_is_a_bare_and_or_or_or_not_in_parentheses
+    swapped = ["a <=> (b and c)", "a <=> (b or c)", "a <=> (not b)"].map { |source| bare_operand_swap(source) }
+
+    assert_equal(["(b and c) <=> (a)", "(b or c) <=> (a)", "(not b) <=> (a)"], swapped)
+  end
+
+  def bare_operand_swap(source)
+    call = Prism.parse(source).value.statements.body.first
+    arguments = call.arguments.copy(arguments: [bare_argument(call)])
+    Stryker::Mutators::Comparison.of(call.copy(arguments:), %i[<=>]).swapped.replacement
+  end
+
+  def bare_argument(call)
+    call.arguments.arguments.first.body.body.first
+  end
+
   def test_a_comparison_of_the_file_with_the_script_name_says_so
     checks = ["__FILE__ == $0", "$0 == __FILE__", "__FILE__ == $PROGRAM_NAME", "$PROGRAM_NAME == __FILE__"]
 

@@ -2,7 +2,7 @@ module Stryker
   module Mutators
     # What a mutator that moves an operand to another place needs to know about
     # it: whether it holds a heredoc opener, which a move would part from its
-    # body.
+    # body, and how to write it on the left of an operator.
     #
     # ## Examples
     #
@@ -10,6 +10,10 @@ module Stryker
     # call = Prism.parse("a <=> <<~TEXT\n  b\nTEXT\n").value.statements.body.first
     # Stryker::Mutators::Operand.holds_heredoc?(call.arguments.arguments.first)
     # # => true
+    #
+    # call = Prism.parse("a <=> defined? b").value.statements.body.first
+    # Stryker::Mutators::Operand.left_text(call.arguments.arguments.first)
+    # # => "(defined? b)"
     # ```
     module Operand
       # Whether `node`, or a node inside it, is a heredoc opener such as
@@ -20,7 +24,18 @@ module Stryker
       # - `node`: Prism::node, the operand.
       def self.holds_heredoc?: (Prism::node node) -> bool
 
+      # The text of `node` for the place left of a binary operator. An operand
+      # that binds looser than an operator goes in parentheses: a `defined?`
+      # with no parentheses, a `not` with none, an `and`, or an `or`. Without
+      # them, `defined? b <=> a` reads as `defined?(b <=> a)`. Any other
+      # operand is its source text, and so is one already in parentheses.
+      #
+      # - `node`: Prism::node, the operand.
+      def self.left_text: (Prism::node node) -> String
+
       private def self.heredoc_opener?: (Prism::node node) -> bool
+
+      private def self.loose?: (Prism::node node) -> bool
     end
   end
 end

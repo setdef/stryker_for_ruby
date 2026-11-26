@@ -33,7 +33,9 @@ module Stryker
       # the text between them, or nil when the swap would give back the
       # original, because the operands have the same text, or when an operand
       # holds a heredoc opener, because a heredoc's body follows its opener and
-      # the swap would give each opener the other's body.
+      # the swap would give each opener the other's body. The right operand
+      # goes in parentheses when it binds looser than `<=>`, as
+      # `Stryker::Mutators::Operand.left_text` defines.
       def swapped: () -> Edit?
 
       # Whether the comparison is `==` between `__FILE__` and `$0` or
