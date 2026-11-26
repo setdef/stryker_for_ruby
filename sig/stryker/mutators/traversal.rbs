@@ -1,0 +1,44 @@
+module Stryker
+  module Mutators
+    # Goes through the nodes of a parsed file, each one before the nodes
+    # inside it, and gives each with the nodes above it. It goes into the
+    # children that `Stryker::Mutators::Sites.children` lists, so it skips the
+    # sites that no mutator makes a mutant of. The recursion goes as deep as
+    # the tree does.
+    #
+    # ## Examples
+    #
+    # The nodes of a file that reads one file with `require`, and the class of
+    # each one's parent:
+    #
+    # ```ruby
+    # tree = Prism.parse("require 'json'\nx = 1\n").value
+    # Stryker::Mutators::Traversal.new(tree).each { |node, ancestors| puts "#{node.class} #{ancestors.last.class}" }
+    # # ProgramNode NilClass
+    # # StatementsNode ProgramNode
+    # # CallNode StatementsNode
+    # # LocalVariableWriteNode StatementsNode
+    # # IntegerNode LocalVariableWriteNode
+    # ```
+    class Traversal
+      # Prepares to go through `tree`.
+      #
+      # - `tree`: Prism::node, the root of the file.
+      def initialize: (Prism::node tree) -> void
+
+      # Yields each node, and its ancestors from the root down to its parent.
+      # The array of ancestors is the traversal's own, which it changes after
+      # each call, so a block that keeps it has to copy it.
+      #
+      # - `block`: called with each node and its ancestors.
+      def each: () { (Prism::node node, Array[Prism::node] ancestors) -> void } -> void
+
+      private
+
+      @tree: Prism::node
+      @ancestors: Array[Prism::node]
+
+      def visit: (Prism::node node) { (Prism::node, Array[Prism::node]) -> void } -> void
+    end
+  end
+end

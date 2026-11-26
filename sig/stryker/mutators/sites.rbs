@@ -1,0 +1,36 @@
+module Stryker
+  module Mutators
+    # Leaves out of a walk the sites that no mutator makes a mutant of, from
+    # the table of
+    # [Sites that get no mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#sites-that-get-no-mutant)
+    # that belong to the tree and not to one mutator:
+    #
+    # - the arguments of a call to `require`, `require_relative`, `load`, or
+    #   `autoload` with no receiver, and of `autoload` on a module, because
+    #   Ruby evaluates them while the file loads;
+    # - a call with no receiver to `sig` with a block, which is a Sorbet type
+    #   signature, and everything inside it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # call = Prism.parse("require 'json'").value.statements.body.first
+    # Stryker::Mutators::Sites.children(call)
+    # # => []
+    # ```
+    module Sites
+      # The children of `node` that a walk goes into, in the order of
+      # `node.compact_child_nodes`. The children that the rules above leave
+      # out aren't in it, and a node that is a type signature has none.
+      #
+      # - `node`: Prism::node, a node of the file.
+      def self.children: (Prism::node node) -> Array[Prism::node]
+
+      LOADERS: Array[Symbol]
+
+      private def self.type_signature?: (Prism::node node) -> bool
+
+      private def self.loader_arguments: (Prism::node node) -> Prism::ArgumentsNode?
+    end
+  end
+end

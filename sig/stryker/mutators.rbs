@@ -1,0 +1,9 @@
+module Stryker
+  # The mutators of the catalog, and what runs them.
+  # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md)
+  # specifies the catalog. A mutator is any object that fits
+  # `Stryker::_Mutator`, and `Stryker::Mutators::Walk` runs a list of them
+  # over a parsed file.
+  module Mutators
+  end
+end

@@ -1,0 +1,59 @@
+module Stryker
+  # The change that one mutant makes to a source file: the bytes from
+  # `start_offset` up to `end_offset` give way to `replacement`. A mutator
+  # returns its edits, and the run turns each into a `Stryker::Mutant` by
+  # adding what a mutator doesn't know: the mutator's name, the file, and the
+  # mutant's ID.
+  #
+  # The offsets count bytes from the start of the file, as Prism's do. An edit
+  # is a value: two edits with equal members are equal. It checks none of its
+  # members against the file.
+  #
+  # ## Examples
+  #
+  # The edit that turns the `+` of `a + b` into a `-`, in a file that holds
+  # only that:
+  #
+  # ```ruby
+  # Stryker::Edit.new(start_offset: 0, end_offset: 5, replacement: "a - b")
+  # # => #<data Stryker::Edit start_offset=0, end_offset=5, replacement="a - b">
+  # ```
+  class Edit < Data
+    # The offset, in bytes from the start of the file, of the first byte the
+    # edit replaces.
+    attr_reader start_offset: Integer
+
+    # The offset, in bytes from the start of the file, of the byte just after
+    # the last one the edit replaces.
+    attr_reader end_offset: Integer
+
+    # The text that takes the place of the replaced bytes.
+    attr_reader replacement: String
+
+    # Builds the edit.
+    #
+    # - `start_offset`: Integer, the offset of the first byte the edit
+    #   replaces.
+    # - `end_offset`: Integer, the offset of the byte just after the last one
+    #   the edit replaces.
+    # - `replacement`: String, the text that takes the place of those bytes.
+    def self.new: (start_offset: Integer, end_offset: Integer, replacement: String) -> instance
+                | (Integer start_offset, Integer end_offset, String replacement) -> instance
+
+    # The edit that replaces all of `span` with `replacement`.
+    #
+    # - `span`: Stryker::_Span, the stretch to replace, such as the
+    #   `Prism::Location` of a node.
+    # - `replacement`: String, the text that takes its place.
+    #
+    # ```ruby
+    # node = Prism.parse("a + b").value.statements.body.first
+    # Stryker::Edit.over(node.location, "a - b")
+    # # => #<data Stryker::Edit start_offset=0, end_offset=5, replacement="a - b">
+    # ```
+    def self.over: (_Span span, String replacement) -> Edit
+
+    # The members, by name.
+    def to_h: () -> { start_offset: Integer, end_offset: Integer, replacement: String }
+  end
+end

@@ -13,6 +13,7 @@ target :lib do
   library "fileutils"
   library "minitest"
   library "date"
+  library "digest"
   library "timeout"
   library "uri"
   library "stringio"

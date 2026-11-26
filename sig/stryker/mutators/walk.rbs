@@ -1,0 +1,49 @@
+module Stryker
+  module Mutators
+    # Walks a parsed file, asks each mutator for its edits at every node, and
+    # returns the file's mutants with their IDs. Each mutator gets a walk of
+    # its own through the file.
+    #
+    # The mutants come in the order of the catalog's table: each mutator's
+    # mutants in turn, in the order of the list given, and each mutator's own
+    # in the order its sites start in the file. The edits of one site stay in
+    # the order the mutator gave them. `Stryker::Mutators::Roster` leaves out
+    # the mutants that would show nothing and numbers the rest, and
+    # `Stryker::Mutators::Traversal` leaves out the sites that no mutator
+    # makes a mutant of.
+    #
+    # ## Examples
+    #
+    # Every mutant of a file, with the IDs of the second file of a run
+    # following those of the first:
+    #
+    # ```ruby
+    # result = Prism.parse("total = a + b\n")
+    # walk = Stryker::Mutators::Walk.new(file: "lib/invoice.rb", result:, mutators:, first_id: 8)
+    # walk.mutants.map { |mutant| [mutant.id, mutant.mutator_name, mutant.replacement] }
+    # # => [[8, "ArithmeticOperator", "a - b"]]
+    # ```
+    class Walk
+      # Prepares to walk the file.
+      #
+      # - `file`: String, the file's path, which each mutant holds.
+      # - `result`: Prism::ParseResult, the file parsed. A result with errors
+      #   raises ArgumentError.
+      # - `mutators`: Array of Stryker::_Mutator, the mutators to ask, in the
+      #   order of the catalog's table.
+      # - `first_id`: Integer, the ID of the first mutant.
+      def initialize: (file: String, result: Prism::ParseResult, mutators: Array[_Mutator], ?first_id: Integer) -> void
+
+      # The file's mutants, in the order above.
+      def mutants: () -> Array[Mutant]
+
+      private
+
+      @tree: Prism::ProgramNode
+      @mutators: Array[_Mutator]
+      @roster: Roster
+
+      def candidates_of: (_Mutator mutator) -> Array[Candidate]
+    end
+  end
+end

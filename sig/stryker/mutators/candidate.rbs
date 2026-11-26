@@ -1,0 +1,58 @@
+module Stryker
+  module Mutators
+    # An edit that a mutator made at a node, with where the node starts, so
+    # that a walk can put a mutator's edits in the order of the file. The
+    # `Stryker::Mutators::Roster` turns the ones it keeps into mutants.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # candidate = Stryker::Mutators::Candidate.new(mutator:, site_start: 8, edit:)
+    # candidate.mutant("lib/invoice.rb", 7).id
+    # # => 7
+    # ```
+    class Candidate < Data
+      # The mutator that made the edit.
+      attr_reader mutator: _Mutator
+
+      # The offset, in bytes from the start of the file, of the node the edit
+      # is for. It differs from the edit's own start when the edit covers
+      # only a keyword.
+      attr_reader site_start: Integer
+
+      # The edit.
+      attr_reader edit: Edit
+
+      # Builds the candidate.
+      #
+      # - `mutator`: Stryker::_Mutator, the mutator that made the edit.
+      # - `site_start`: Integer, the offset of the start of the node.
+      # - `edit`: Stryker::Edit, the edit.
+      def self.new: (mutator: _Mutator, site_start: Integer, edit: Edit) -> instance
+                  | (_Mutator mutator, Integer site_start, Edit edit) -> instance
+
+      # The candidates that `mutator` makes at `node`, one for each of its
+      # edits, in the order the mutator gives them.
+      #
+      # - `mutator`: Stryker::_Mutator, the mutator to ask.
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above `node`, as
+      #   `Stryker::_Mutator#edits` takes them.
+      def self.at: (_Mutator mutator, Prism::node node, Array[Prism::node] ancestors) -> Array[Candidate]
+
+      # `candidates` in the order of the file: by where each one's node
+      # starts. Candidates whose nodes start together keep the order they
+      # have in `candidates`.
+      #
+      # - `candidates`: Array of Stryker::Mutators::Candidate, the candidates
+      #   to sort, in the order a walk found them.
+      def self.in_order: (Array[Candidate] candidates) -> Array[Candidate]
+
+      # The mutant of the edit, in `file`, with `id`.
+      #
+      # - `file`: String, the path of the file.
+      # - `id`: Integer, the mutant's ID.
+      def mutant: (String file, Integer id) -> Mutant
+    end
+  end
+end

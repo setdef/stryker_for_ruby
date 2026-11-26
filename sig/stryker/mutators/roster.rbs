@@ -1,0 +1,45 @@
+module Stryker
+  module Mutators
+    # Chooses which of a file's candidates become mutants, and numbers them.
+    # It leaves out two kinds of candidate that would show nothing, as
+    # [Mutants the mutators don't make](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#mutants-the-mutators-dont-make)
+    # says:
+    #
+    # - a candidate whose file is the same as the original's, and
+    # - a candidate whose file is the same as an earlier candidate's, so that
+    #   of two identical mutants the first one stays. In `!!ready`, removing
+    #   either `!` gives `!ready`.
+    #
+    # It compares each candidate's whole file by a SHA-256 digest. It reads no
+    # disable comment, so it treats every candidate as live. The IDs count up
+    # from the first ID in the order of the candidates, with none left out.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # roster = Stryker::Mutators::Roster.new(file: "lib/invoice.rb", source: "total = a + b\n", first_id: 8)
+    # roster.mutants(candidates).map(&:id)
+    # # => [8, 9]
+    # ```
+    class Roster
+      # Prepares to choose the mutants of one file.
+      #
+      # - `file`: String, the file's path, which each mutant holds.
+      # - `source`: String, the file's source.
+      # - `first_id`: Integer, the ID of the first mutant.
+      def initialize: (file: String, source: String, first_id: Integer) -> void
+
+      # The mutants of `candidates`, in their order, less the ones above.
+      #
+      # - `candidates`: Array of Stryker::Mutators::Candidate, in the order
+      #   the mutants come in.
+      def mutants: (Array[Candidate] candidates) -> Array[Mutant]
+
+      private
+
+      @file: String
+      @source: String
+      @first_id: Integer
+    end
+  end
+end

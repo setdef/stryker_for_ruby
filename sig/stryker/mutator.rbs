@@ -1,0 +1,31 @@
+module Stryker
+  # Finds the sites of one kind in a parsed file, and says what each mutant
+  # at a site changes. `Stryker::Mutators::Walk` calls `edits` once for each
+  # node of a file, in the order of the tree, and turns the edits into
+  # `Stryker::Mutant` values. [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md)
+  # specifies each mutator's pairs.
+  #
+  # Ruby checks nothing about the interface: any object with these two
+  # methods is a mutator, and Steep checks each class's signatures against it.
+  #
+  # A mutator keeps no state between calls. The walk leaves out the sites
+  # that no mutator makes a mutant of ([Sites that get no
+  # mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#sites-that-get-no-mutant)),
+  # so a mutator applies only the rules of its own section.
+  interface _Mutator
+    # The mutator's name in the report's `mutatorName` field, such as
+    # `"ArithmeticOperator"`.
+    def name: () -> String
+
+    # The edits of the mutants that this mutator makes at `node`, or an empty
+    # array when `node` isn't a site of its kind. Each edit covers the whole
+    # node that the mutator changes. The edits come in the order of the
+    # mutator's table, so a pair that the table lists first comes first.
+    #
+    # - `node`: Prism::node, a node of the file.
+    # - `ancestors`: Array of Prism::node, the nodes above `node`, from the
+    #   root of the file to its parent. The array belongs to the walk, which
+    #   changes it after the call, so read it only during the call.
+    def edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+  end
+end
