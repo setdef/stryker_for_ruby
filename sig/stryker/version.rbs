@@ -1,3 +1,5 @@
 module Stryker
+  # The version of the stryker_for_ruby gem, in the form that RubyGems and
+  # Semantic Versioning share: <tt>MAJOR.MINOR.PATCH</tt>.
   VERSION: String
 end

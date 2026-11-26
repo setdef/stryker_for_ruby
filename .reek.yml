@@ -1,0 +1,7 @@
+---
+detectors:
+  IrresponsibleModule:
+    # Reek flags a class or module in lib/ that has no comment above it. The
+    # documentation of lib/ lives in sig/**/*.rbs, and a comment above a
+    # definition in a .rb file fails the docs:placement check.
+    enabled: false

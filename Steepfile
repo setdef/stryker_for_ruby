@@ -17,3 +17,12 @@ target :lib do
   library "securerandom"
   library "erb"
 end
+
+target :tasks do
+  signature "tasks/sig"
+  check "tasks/ruby_doc_comments.rb"
+
+  configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
+
+  library "ripper"
+end

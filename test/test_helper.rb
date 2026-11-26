@@ -8,6 +8,7 @@ SimpleCov.start do
   deprecations(:raise)
   cover("lib/**/*.rb")
   cover("tasks/critic_faults.rb")
+  cover("tasks/ruby_doc_comments.rb")
   enable_coverage(:branch)
   minimum_coverage(line: 100, branch: 100)
   coverage(:line) { minimum(100, per: :file) }

@@ -2,14 +2,5 @@
 
 require_relative "stryker/version"
 
-# Mutation testing for Ruby and ERB.
-#
-# Your tests pass, but would they fail if the code were wrong? This project
-# answers that question by inserting bugs, called mutants, into your source
-# code one at a time and running your tests against each. Every mutant that
-# no test catches points to a missing or weak test.
-#
-# This module is the namespace for the project's code. It holds the version
-# and nothing else so far.
 module Stryker
 end

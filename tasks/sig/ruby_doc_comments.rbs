@@ -1,0 +1,18 @@
+class RubyDocComments
+  type token = [[Integer, Integer], Symbol, String, Ripper::Lexer::State]
+
+  MODIFIER: Regexp
+  DEFINITION: Regexp
+  DIRECTIVE: Regexp
+  SKIPPED: Array[Symbol]
+
+  def self.in_source: (String source, String path) -> Array[String]
+
+  def self.code_line_numbers: (Array[token] tokens) -> Array[Integer]
+
+  def self.comment_lines: (Array[token] tokens, Array[String] lines) -> Array[Integer]
+
+  def self.definition?: (Array[String] lines, Integer? number) -> bool
+
+  def self.message: (String path, Integer line) -> String
+end

@@ -55,7 +55,7 @@ For example: `feat(mutators): add a string literal mutator`, or `docs: describe 
 - **Keep each change to what its task needs,** and match the style of the code around it. Put a refactor in a separate commit.
 - **Test every change in behavior.** Confirm that each new test fails without the change: a test that passes either way proves nothing.
 - **Update the user documentation** in the same commit as a change to anything users see.
-- **Comment why, not what.** Rename a variable or extract a method instead of explaining unclear code. Write a comment for a reason the code can't show, such as a constraint from outside the project or the choice of an algorithm. Give every public class and method a doc comment. Don't leave commented-out code, history notes, or decorative divider comments in the source.
+- **Comment why, not what.** Rename a variable or extract a method instead of explaining unclear code. Write a comment for a reason the code can't show, such as a constraint from outside the project or the choice of an algorithm. Write the doc comment for every public class, module, constant, and method in the matching `.rbs` declaration in `sig/`, and keep `.rb` files to comments that say why the code is written as it is or warn about something tricky. A comment directly above a `def`, `class`, or `module` in `lib/` is RDoc documentation, so put it inside the body. Don't leave commented-out code, history notes, or decorative divider comments in the source.
 
 ## Security
 
@@ -68,7 +68,7 @@ Stryker (for Ruby) runs other people's test suites and reads and writes their fi
 
 ## Quality gates
 
-`bundle exec rake` runs the quality gates: RubyCritic, RuboCop, Steep, test coverage, documentation coverage, and `reuse lint`. Every change has to pass all of them, with zero errors and zero warnings. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
+`bundle exec rake` runs the quality gates: RubyCritic, RuboCop, Steep, test coverage, documentation coverage, `docs:placement` (which fails on a doc comment in a `.rb` file), and `reuse lint`. Every change has to pass all of them, with zero errors and zero warnings. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
 
 ## Architecture decisions
 
