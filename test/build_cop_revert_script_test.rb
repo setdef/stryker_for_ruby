@@ -56,7 +56,8 @@ class BuildCopRevertScriptTest < Minitest::Test
   end
 
   def test_a_revert_is_a_persons_to_revert
-    ["revert: feat: bad", 'Revert "feat: bad"'].each_with_index do |subject, index|
+    subjects = ["revert: feat: bad", "revert(loader): feat: bad", "revert!: feat: bad", 'Revert "feat: bad"']
+    subjects.each_with_index do |subject, index|
       bad = pushed_commit(subject, "s#{index}.txt")
       before = origin_head
 

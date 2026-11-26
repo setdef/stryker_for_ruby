@@ -117,10 +117,10 @@ revert)
     exit 0
   fi
   subject=$(git log -1 --format=%s "$commit")
-  # A revert of the cop's own revert would undo its work: a person decides
-  # those.
+  # A revert of a revert, the cop's or a person's, would undo its work: a
+  # person decides those.
   case "$subject" in
-  "revert: "* | "Revert \""*)
+  "revert: "* | "revert("* | "revert!"* | "Revert \""*)
     echo "::warning::The build cop would revert $commit ($subject), which is a person's to revert: $reason"
     exit 0
     ;;
