@@ -72,7 +72,7 @@ Stryker (for Ruby) runs other people's test suites and reads and writes their fi
 
 ## Architecture decisions
 
-The project records its architecture decisions as Architecture Decision Records (ADRs). Most decisions don't earn an ADR. A decision does when the system's structure rests on it and undoing it would mean rewriting a large part of the code.
+The project records its architecture decisions as Architecture Decision Records (ADRs), in [`docs/decisions/`](docs/decisions/README.md). Most decisions don't earn an ADR. A decision does when the system's structure rests on it and undoing it would mean rewriting a large part of the code. How the code works, including the detail of a decision that has an ADR, goes in the design documents in [`docs/design/`](docs/design/README.md), which the code is built to match.
 
 One keeper writes the ADRs: the keeper decides which decisions earn a record, writes each one, and numbers them. Everyone else, people and agents, writes no ADR. Instead, report to the keeper each decision your work needs, with the options you weighed and the evidence for each, and each line of an existing ADR that your change makes untrue.
 
