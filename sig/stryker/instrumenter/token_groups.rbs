@@ -1,0 +1,41 @@
+module Stryker
+  class Instrumenter
+    # Sorts Prism's tokens into the groups that open and close each other,
+    # for `Stryker::Instrumenter::TokenBalance`: parentheses, brackets,
+    # braces, keyword pairs that end with `end`, strings and symbols,
+    # regexps, interpolations, `=begin` and `=end`, and heredocs. Every
+    # opener of a group closes with a closer of the same group, such as `(`,
+    # which Prism lexes as `PARENTHESIS_LEFT`, `PARENTHESIS_LEFT_GROUPING`,
+    # or `PARENTHESIS_LEFT_PARENTHESES`, with `)`, and `%w[` with `]`, which
+    # ends a string. A `do` after `while`, `until`, or `for`, and a modifier
+    # such as the `if` in `a if b`, open nothing.
+    #
+    # Prism 1.7 and Prism 2 lex some tokens under different types, such as
+    # `{` for a hash, so both types of each are in the groups.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tokens = Prism.lex("f(:a, :\"b\")").value.map(&:first)
+    # tokens.map { |token| Stryker::Instrumenter::TokenGroups.opened(token) }
+    # # => [nil, :parenthesis, nil, nil, nil, :string, nil, nil, nil, nil]
+    # ```
+    module TokenGroups
+      # The group that `token` opens, or nil when it opens none.
+      #
+      # - `token`: Prism::Token, a token.
+      def self.opened: (Prism::Token token) -> Symbol?
+
+      # The group that `token` closes, or nil when it closes none. A closer
+      # that Prism adds, empty, where the source has none, such as the
+      # terminator of a heredoc with no body, closes `:nothing`, which no
+      # token opens.
+      #
+      # - `token`: Prism::Token, a token.
+      def self.closed: (Prism::Token token) -> Symbol?
+
+      OPENERS: Hash[Symbol, Symbol]
+      CLOSERS: Hash[Symbol, Symbol]
+    end
+  end
+end
