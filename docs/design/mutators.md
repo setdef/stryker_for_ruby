@@ -1,6 +1,6 @@
 # Mutators
 
-This page specifies which mutants **Stryker (for Ruby)** makes and how it reports each one. It covers the catalog of mutators and the exact pairs each one makes, the mutators that run when nothing is configured, the sites that get no mutant, the equivalent mutants the mutators avoid, the disable comment, the fields each mutant fills in the report, and what changes in ERB templates. Where each mutant's switch goes is in [Mutant placement](mutant-placement.md), and the terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies which mutants **Stryker (for Ruby)** makes and how it reports each one. It covers the catalog of mutators and the exact pairs each one makes, the mutators that run when nothing is configured, the sites that get no mutant, the equivalent mutants the mutators avoid, the disable comment, and the fields each mutant fills in the report. Where each mutant's switch goes is in [Mutant placement](mutant-placement.md), and the terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 Every rule here serves one aim: each mutant that survives should be worth acting on. A survivor shows that no test would catch a mistake at its site, and its reader then writes a test, strengthens one, or removes the code. People who meet survivors they can't act on learn to ignore the report, so the catalog leaves out pairs whose survivors would show nothing. Each mutant's `location`, `replacement`, and `coveredBy` in the report show its reader where the mutant is, what it changed, and which tests ran it.
 
@@ -588,19 +588,6 @@ Character class shorthand "\d" was replaced with "\D" at offset 1.
 
 A `Regex` mutant has a description whatever its status, `Ignored` included.
 
-## ERB
-
-Mutants in an ERB template come only from sites inside one tag ([#9](https://github.com/setdef/stryker_for_ruby/issues/9)): a switch never wraps a node that spans tags, because its mutant branch would have to hold the HTML between them. Every mutator makes the same pairs in a tag as in a `.rb` file. What differs:
-
-- **`BlockStatement` makes no mutant of a body that spans tags,** such as the body of `<% items.each do |item| %>` ... `<% end %>`, which is HTML and other tags. A body inside one tag, such as `<%= items.map { |item| item.name }.join(", ") %>`, gets its mutant.
-- **`BooleanLiteral` makes no mutant of an `unless` or `until` that spans tags.** The edit covers only the keyword, but the switch has to wrap the whole `UnlessNode` or `UntilNode`. Its condition is inside one tag, so it gets its `ConditionalExpression` mutants.
-- **`CallExpression` and `StringLiteral` in an output tag change what the page renders.** `<%= order.total %>` becomes `<%= nil %>`, which renders nothing. A test that checks the rendered page kills the mutant.
-- **Every ERB mutant is a runtime mutant,** because a template runs only while it renders ([#9](https://github.com/setdef/stryker_for_ruby/issues/9)), so `static` is `false`.
-- **`location` is in the template file,** at the template's lines and columns.
-- **The disable comment** is a Ruby comment: it goes inside a Ruby tag, or in an ERB comment tag, as `<%# Stryker disable next-line all %>`. Its next line is the next line of the template that holds a Ruby tag. StrykerJS reads a disable comment in the comment syntax of the embedded language, inside the `<script>` block of a `.vue` or `.html` file, and reads no HTML comment, because it parses no markup for mutants. **Stryker (for Ruby)** mutates no template markup either, so there is no markup-comment form to follow. The extractor blanks an ERB comment tag and a tag whose code is a one-line `#` comment ([The extraction rules](erb.md#the-extraction-rules)), so Prism lists no comment for either. The extractor records the text and line of each, and the disable-comment reader reads those along with Prism's comments, so a disable comment in either form takes effect.
-
-The sites that get no mutant are the same in a template as in a `.rb` file.
-
 ## What this design doesn't do
 
 - It doesn't detect equivalent mutants beyond the ones the source text proves.
@@ -609,4 +596,3 @@ The sites that get no mutant are the same in a template as in a `.rb` file.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
 - It doesn't put the **Kills it** text in the report.
 - It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.
-- It doesn't make a mutant of a template node that spans ERB tags.

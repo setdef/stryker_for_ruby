@@ -9,8 +9,6 @@ This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn
 | [A hit from a non-main Ractor can't be recorded](#a-hit-from-a-non-main-ractor-cant-be-recorded) | yes | yes |
 | [A fork while a Ractor is running crashes the child](#a-fork-while-a-ractor-is-running-crashes-the-child) | yes | no |
 | [`require` in a non-main Ractor raises](#require-in-a-non-main-ractor-raises) | yes | no |
-| [`ERB.new` raises in a non-main Ractor](#erbnew-raises-in-a-non-main-ractor) | yes | yes |
-| [Stdlib ERB's constructor has other parameters](#stdlib-erbs-constructor-has-other-parameters) | yes | no |
 | [A private index method called through `self` in a multiple assignment](#a-private-index-method-called-through-self-in-a-multiple-assignment) | yes | no |
 
 ## A hit from a non-main Ractor can't be recorded
@@ -26,14 +24,6 @@ In a process that records hits, which is the dry run and its fork parent, the pr
 ## `require` in a non-main Ractor raises
 
 **Ruby 3.3.** `require` in a non-main Ractor raises inside RubyGems, with or without **Stryker (for Ruby)**. On Ruby 3.4 and later it runs in the main Ractor, so the loader's hook serves the instrumented source there. `load` in a non-main Ractor calls the hook in that Ractor on every version.
-
-## `ERB.new` raises in a non-main Ractor
-
-**Ruby 3.3 and 3.4.** `ERB.new` raises `Ractor::IsolationError` in a non-main Ractor, before any prepend of **Stryker (for Ruby)** runs, because of `ERB::NOT_GIVEN`. A template that a project compiles with stdlib ERB in a non-main Ractor fails with or without **Stryker (for Ruby)**. On Ruby 4.0 and later it works, and Erubi works in a non-main Ractor on every version.
-
-## Stdlib ERB's constructor has other parameters
-
-**Ruby 3.3.** Ruby 3.3 ships ERB 4.0.3, whose `ERB#initialize` takes `safe_level`, `legacy_trim_mode`, and `legacy_eoutvar` besides the parameters of ERB 6.0, which Ruby 3.4 and later ship. The ERB prepend is written for the 6.0 list only. Where a method's parameters match no list a prepend is written for, the runtime leaves that library unpatched and the dry run reports it by name and version, so a template that stdlib ERB renders on Ruby 3.3 loads uninstrumented. [ERB templates](design/erb.md#the-prepends-declare-the-exact-parameter-lists) has the rule.
 
 ## A private index method called through `self` in a multiple assignment
 

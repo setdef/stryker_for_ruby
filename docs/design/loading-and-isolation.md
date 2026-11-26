@@ -116,7 +116,7 @@ The loader installs the hook before any of the project's code loads, in every pr
 
 `load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so **Stryker (for Ruby)** runs on CRuby only.
 
-The hook serves Ruby files. An ERB template reaches Ruby as text through Rails, `ERB`, Erubi, or Tilt, so it loads by another route: see [ERB templates](erb.md#loading-the-instrumented-text).
+The hook serves Ruby files.
 
 ### Finding an instrumented file
 
@@ -152,7 +152,7 @@ Bootsnap prepends its module twice, so two copies of the hook stack in front of 
 
 The loading check catches an instrumented file that loaded without going through the hook, whatever the cause. The dry run, the first run of the whole suite with no mutant active, ends with it. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. A path in `$LOADED_FEATURES` matches an instrumented file when the path, or its real path, has one of that file's keys, so a file that the hook missed because Ruby gave it through another symbolic link is found too. The loader resolves a real path only for an absolute path. Ruby lists a built-in feature such as `thread.rb` by its bare name, and resolving that against the current directory would match a project's own `thread.rb`, which no hook served, and fail the dry run. A file counts as served only when the hook served it under the exact path that Ruby loaded it under. Ruby records a loaded file in `$LOADED_FEATURES` under the path it gave the hook, and one file can come under two paths, so a file that loaded under two spellings, with the hook serving one, is listed under the other. A second call to `install` in the same process replaces the table and starts the record of served files again, so a file served before it doesn't count. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
 
-The loading check covers Ruby files. For ERB templates, the dry run reports the ones that no hook served: see [What the dry run reports](erb.md#what-the-dry-run-reports).
+The loading check covers Ruby files.
 
 An instrumented file that no test loaded isn't an error: no test reaches its mutants, and the plan reports them as having no coverage.
 
@@ -259,8 +259,7 @@ Ruby 3.3 and 3.4 are unsupported. [Ruby 3.3 and 3.4](../older-ruby.md) lists wha
 
 ### Lookup tables
 
-Every lookup table that the runtime keeps is shareable, because a non-main Ractor that reads a constant holding an unshareable object raises `Ractor::IsolationError`. The ERB tables are shareable too ([Lookup tables are shareable](erb.md#lookup-tables-are-shareable)).
-
+Every lookup table that the runtime keeps is shareable, because a non-main Ractor that reads a constant holding an unshareable object raises `Ractor::IsolationError`.
 ## What this design doesn't do
 
 - It doesn't reuse a process for a second run, on any system.

@@ -12,9 +12,7 @@ module Stryker
     # A project process calls `install` before any of the project's code
     # loads, and the dry run calls `check` when its tests have run.
     #
-    # The loader serves Ruby files only. An ERB template loads by
-    # [another route](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/erb.md#loading-the-instrumented-text).
-    # `load_iseq` is part of CRuby's `RubyVM` API, which JRuby and
+    # The loader serves Ruby files only. `load_iseq` is part of CRuby's `RubyVM` API, which JRuby and
     # TruffleRuby don't call.
     #
     # ## Examples
