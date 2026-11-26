@@ -1,0 +1,47 @@
+module Stryker
+  module Mutators
+    # An operation that compares its operands, such as `a < b` or `a <=> b`,
+    # with what a mutator of comparisons needs to know about its operands.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # call = Prism.parse("a <=> b").value.statements.body.first
+    # Stryker::Mutators::Comparison.of(call, [:<=>]).swapped.replacement
+    # # => "b <=> a"
+    # ```
+    class Comparison < Operation
+      # The comparison that `node` is, as `Stryker::Mutators::Operation.of`
+      # defines an operation.
+      #
+      # - `node`: Prism::node, the node.
+      # - `names`: Array of Symbol, the operator names to accept.
+      def self.of: (Prism::node node, Array[Symbol] names) -> Comparison?
+
+      # The edits of the mutants that `pairs` lists for `node`, as
+      # `Stryker::Mutators::Operation.edits` defines them, with the
+      # comparison for the block to look at.
+      #
+      # - `node`: Prism::node, the node.
+      # - `pairs`: Hash of Symbol to Array of String, the operator names and
+      #   the operators to replace each with.
+      # - `block`: called with the comparison, and true when it makes no
+      #   mutant.
+      def self.edits: (Prism::node node, Hash[Symbol, Array[String]] pairs) { (Comparison) -> boolish } -> Array[Edit]
+
+      # The edit that covers the whole call and swaps its operands, keeping
+      # the text between them, or nil when the operands have the same text,
+      # because the swap would give back the original.
+      def swapped: () -> Edit?
+
+      # Whether the comparison is `==` between `__FILE__` and `$0` or
+      # `$PROGRAM_NAME`, in either order: the check that a file is the script
+      # that runs. The comparison is by the operands' text.
+      def script_check?: () -> bool
+
+      PROGRAM_NAMES: Array[String]
+
+      private def operand_swap: () -> Array[[Prism::Location, String]]
+    end
+  end
+end

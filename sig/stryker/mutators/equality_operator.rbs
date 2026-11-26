@@ -1,0 +1,58 @@
+module Stryker
+  module Mutators
+    # Changes a comparison to the one a programmer could have written by
+    # mistake. It mutates a call named `<`, `<=`, `>`, `>=`, `==`, `!=`, or
+    # `<=>` that is written as an operator between a receiver and one
+    # argument, with no `.`.
+    #
+    # Each ordering comparison gets a boundary mutant, which only a test at
+    # the boundary kills, and a negation, which any test of the outcome kills:
+    #
+    # | Original | Mutants |
+    # | - | - |
+    # | `a < b` | `a <= b`, `a >= b` |
+    # | `a <= b` | `a < b`, `a > b` |
+    # | `a > b` | `a >= b`, `a <= b` |
+    # | `a >= b` | `a > b`, `a < b` |
+    # | `a == b` | `a != b` |
+    # | `a != b` | `a == b` |
+    # | `a <=> b` | `b <=> a` |
+    #
+    # The `<=>` row swaps the operands, with the text between them kept, and
+    # makes no mutant when the two operands have the same text, such as
+    # `x <=> x`. The edit covers the whole call.
+    #
+    # It makes no mutant of `===`, which is case equality, of `eql?` and
+    # `equal?`, which are method calls, or of the check that a file is the
+    # script, `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, in either
+    # order, because the `true` mutant would run the script's code inside the
+    # test process.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#equalityoperator)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # call = Prism.parse("ok = a < b").value.statements.body.first.value
+    # Stryker::Mutators::EqualityOperator.new.edits(call, []).map(&:replacement)
+    # # => ["a <= b", "a >= b"]
+    # ```
+    class EqualityOperator
+      # The mutator's name in the report: `"EqualityOperator"`.
+      def name: () -> String
+
+      # The edits at `node`: the boundary mutant and the negation, in that
+      # order, for a comparison, the swap for `<=>`, and none for any other
+      # node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      PAIRS: Hash[Symbol, Array[String]]
+
+      private def pairs: () -> Hash[Symbol, Array[String]]
+    end
+  end
+end
