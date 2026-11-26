@@ -48,18 +48,20 @@ module Stryker
       # - `path`: String, the file's path.
       def load_began: (String path) -> nil
 
-      # Records `message`, sent from `ractor`. A message from the main
-      # Ractor goes to `Stryker::Runtime::RECORDER`. One from any other goes
-      # to the collector. Returns nil.
+      # Sends `message` from `ractor`. A message from the main Ractor makes
+      # `deliver` yield, so the block records it with
+      # `Stryker::Runtime::RECORDER`. One from any other goes to the
+      # collector, and the block doesn't run. Returns nil.
       #
-      # `hit` and `load_began` pass the Ractor that runs them. It is internal
-      # to the runtime, and public so that a test in the main Ractor can pass
-      # a stand-in for another, because coverage counts no line that another
-      # Ractor runs.
+      # `hit` and `load_began` pass the Ractor that runs them, and a block
+      # that calls the recorder method for their kind of message. It is
+      # internal to the runtime, and public so that a test in the main Ractor
+      # can pass a stand-in for another, because coverage counts no line that
+      # another Ractor runs.
       #
       # - `message`: Array of Integer, a hit's IDs, or String, a path.
       # - `ractor`: Ractor, where the message comes from.
-      def deliver: (message message, Ractor ractor) -> nil
+      def deliver: (message message, Ractor ractor) { () -> void } -> nil
     end
   end
 end

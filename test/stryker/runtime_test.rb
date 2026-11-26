@@ -38,6 +38,11 @@ class RuntimeTest < Minitest::Test
     Stryker::Runtime::Recording.new(collector: Stryker::Runtime::Collector.new)
   end
 
+  # The block of a message from another Ractor, where it must not run.
+  def only_the_main_ractor
+    raise(NotImplementedError, "a message from another Ractor reached the recorder")
+  end
+
   def test_activate_sets_the_constant_to_a_shareable_holder
     # A holder that isn't frozen, as any object with the holder's methods can
     # be.
@@ -102,7 +107,7 @@ class RuntimeTest < Minitest::Test
   def test_a_hit_from_another_ractor_goes_to_the_collector
     collector = []
 
-    assert_nil(Stryker::Runtime::Recording.new(collector:).deliver([910_004], Object.new))
+    assert_nil(Stryker::Runtime::Recording.new(collector:).deliver([910_004], Object.new) { only_the_main_ractor })
     assert_equal([[910_004]], collector)
     refute_includes(Stryker::Runtime::RECORDER.static, 910_004)
   end
@@ -120,7 +125,7 @@ class RuntimeTest < Minitest::Test
 
   def test_a_load_from_another_ractor_goes_to_the_collector
     collector = []
-    Stryker::Runtime::Recording.new(collector:).deliver("lib/invoice.rb", Object.new)
+    Stryker::Runtime::Recording.new(collector:).deliver("lib/invoice.rb", Object.new) { only_the_main_ractor }
 
     assert_equal(["lib/invoice.rb"], collector)
   end
@@ -136,7 +141,7 @@ class RuntimeTest < Minitest::Test
 
   def test_a_hit_from_the_main_ractor_skips_the_collector
     collector = []
-    Stryker::Runtime::Recording.new(collector:).deliver([910_005], Ractor.main)
+    Stryker::Runtime::Recording.new(collector:).hit(910_005)
 
     assert_empty(collector)
     assert_includes(Stryker::Runtime::RECORDER.static, 910_005)

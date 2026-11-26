@@ -99,30 +99,25 @@ module Stryker
 
       # Drains the collector into the current bucket, then makes `test`'s
       # bucket current, a new one, or the one it had when it ran before.
-      # Returns nil. Raises RuntimeError, naming both tests, when another
-      # test is running.
+      # Returns nil. Raises RuntimeError, naming both tests, and drains
+      # nothing, when another test is running.
       #
       # - `test`: Object, the test, as the test runner adapter gives it.
       def test_started: (Object test) -> nil
 
       # Drains the collector into the current test's bucket, then makes the
-      # static bucket current. Returns nil. Raises RuntimeError when no test
-      # is running.
+      # static bucket current. Returns nil. Raises RuntimeError, and drains
+      # nothing, when no test is running.
       #
       # - `result`: Object, the test's result, which the recorder doesn't
       #   read.
       def test_finished: (Object result) -> nil
 
-      # Records a message from a holder: `record` for an Array of IDs, or
-      # `load_began` for a path. Returns nil.
-      #
-      # - `message`: Array of Integer or String.
-      def receive: (message message) -> nil
-
       # Records a hit for the mutants with `ids` in the current bucket, or in
       # the static bucket when it is a static hit. Returns nil. A hit whose
       # mutants are all in the current bucket already, with no stack check
-      # due, returns after that membership check, without the lock.
+      # due, returns after that membership check, without the lock. See
+      # `Stryker::Runtime::Buckets#recorded?` for why that check needs none.
       #
       # - `ids`: Array of Integer, the mutants' IDs.
       def record: (Array[Integer] ids) -> nil

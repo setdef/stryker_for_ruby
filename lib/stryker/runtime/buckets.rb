@@ -27,21 +27,27 @@ module Stryker
         @runs.each_value.map(&:loads).reduce(Set.new, :merge)
       end
 
-      def start(test)
+      def check_start(test)
         # A runner adapter that reports out of order has a fault, and a hit
         # then has no bucket that is certainly its own, so this raises
-        # instead of guessing, before the block can change anything.
+        # instead of guessing.
         raise(overlap(test)) if @current
 
-        yield
+        nil
+      end
+
+      def start(test)
         @current = (@runs[test] ||= TestRun.new)
         nil
       end
 
-      def finish
+      def check_finish
         raise(NO_TEST_RUNNING) unless @current
 
-        yield
+        nil
+      end
+
+      def finish
         @current = nil
       end
 

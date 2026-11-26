@@ -2,16 +2,19 @@ module Stryker
   module Runtime
     # The buckets of a Stryker::Runtime::Recorder: the static bucket, each
     # test's bucket, and which of them is current. The recorder holds its
-    # lock around every call, so a Buckets itself takes none.
+    # lock around every call except `recorded?`, so a Buckets itself takes
+    # none.
     #
     # ## Examples
     #
     # ```ruby
     # buckets = Stryker::Runtime::Buckets.new
     # buckets.record([1])
-    # buckets.start("InvoiceTest#test_total") { nil }
+    # buckets.check_start("InvoiceTest#test_total")
+    # buckets.start("InvoiceTest#test_total")
     # buckets.record([7])
-    # buckets.finish { nil }
+    # buckets.check_finish
+    # buckets.finish
     # buckets.tests
     # # => {"InvoiceTest#test_total" => #<Set: {7}>}
     # ```
@@ -29,28 +32,44 @@ module Stryker
       # The path of every file whose load began during a test, as a new Set.
       def loaded: () -> Set[String]
 
-      # Runs the block, then makes `test`'s bucket current: a new one, or
-      # the one it had when it ran before. Returns nil. Raises RuntimeError,
-      # naming both tests, without running the block, when another test is
-      # running.
+      # Raises RuntimeError, naming both tests, when another test is running,
+      # and does nothing otherwise. Returns nil. The recorder calls it before
+      # `start`, so that a refused start has drained nothing.
       #
       # - `test`: Object, the test.
-      def start: (Object test) { () -> nil } -> nil
+      def check_start: (Object test) -> nil
 
-      # Runs the block, then makes the static bucket current. Returns nil.
-      # Raises RuntimeError, without running the block, when no test is
-      # running.
-      def finish: () { () -> nil } -> nil
+      # Makes `test`'s bucket current: a new one, or the one it had when it
+      # ran before. Returns nil. Call `check_start` first.
+      #
+      # - `test`: Object, the test.
+      def start: (Object test) -> nil
+
+      # Raises RuntimeError when no test is running, and does nothing
+      # otherwise. Returns nil. The recorder calls it before `finish`.
+      def check_finish: () -> nil
+
+      # Makes the static bucket current. Returns nil. Call `check_finish`
+      # first.
+      def finish: () -> nil
 
       # Whether a hit for the mutants with `ids` would change nothing: every
       # one is in the current bucket, and no stack check is due for it.
-      # Takes no lock, and changes nothing.
+      # Changes nothing.
+      #
+      # The recorder calls it without its lock, which is safe for three
+      # reasons. Under the GVL, `Set#include?` and `Hash#[]` never see
+      # another thread's change half made. A stale `false` only sends the
+      # recorder to take its lock, where `record` merges the IDs again. A
+      # stale `true` is for IDs that the bucket held when the method read it,
+      # and a hit for them adds nothing. And the method reads the current
+      # bucket once, so the whole answer comes from one bucket.
       #
       # - `ids`: Array of Integer, the mutants' IDs.
       def recorded?: (Array[Integer] ids) -> bool
 
-      # Records a message from a holder: `record` for an Array of IDs, or
-      # `load_began` for a path. Returns nil.
+      # Records a message that the collector drained: `record` for an Array
+      # of IDs, or `load_began` for a path. Returns nil.
       #
       # - `message`: Array of Integer or String.
       def receive: (message message) -> nil

@@ -53,24 +53,25 @@ module Stryker
       end
 
       def test_started(test)
-        # A hit sent from another Ractor before this test started lands in
-        # the static bucket, not in this test's.
-        @lock.synchronize { @buckets.start(test) { drain_held } }
+        # The check comes first, so that a refused start drains nothing. A
+        # hit sent from another Ractor before this test started lands in the
+        # static bucket, not in this test's.
+        @lock.synchronize do
+          @buckets.check_start(test)
+          drain_held
+          @buckets.start(test)
+        end
       end
 
       def test_finished(_result)
-        @lock.synchronize { @buckets.finish { drain_held } }
-      end
-
-      def receive(message)
-        message.is_a?(String) ? load_began(message) : record(message)
+        @lock.synchronize do
+          @buckets.check_finish
+          drain_held
+          @buckets.finish
+        end
       end
 
       def record(ids)
-        # A hit whose mutants are all in the current bucket, with no stack
-        # check due, would change nothing, so it returns before the lock.
-        # Under the GVL, Set#include? never sees another thread's change half
-        # made.
         return if @buckets.recorded?(ids)
 
         @lock.synchronize { @buckets.record(ids) }

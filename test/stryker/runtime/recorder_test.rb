@@ -3,18 +3,10 @@
 require_relative("../../test_helper")
 require "stryker/runtime"
 
-# Checks the buckets that the hit recorder keeps, the files it lists, and how
-# it drains its collector. static_hits_test.rb checks hits made while a file
-# loads inside a test.
+# Checks the buckets that the hit recorder keeps and the files it lists.
+# recorder_drain_test.rb checks how it drains its collector, and
+# static_hits_test.rb checks hits made while a file loads inside a test.
 class RecorderTest < Minitest::Test
-  # A collector that hands over the messages queued in it.
-  Queued = Struct.new(:messages) do
-    def drain
-      messages.slice!(0..)
-    end
-  end
-  private_constant(:Queued)
-
   def recorder
     @recorder ||= Stryker::Runtime::Recorder.new
   end
@@ -61,7 +53,10 @@ class RecorderTest < Minitest::Test
 
   def test_the_buckets_it_returns_are_copies
     recorder.record([7])
-    during(:first) { [[8], "lib/invoice.rb"].each { |message| recorder.receive(message) } }
+    during(:first) do
+      recorder.record([8])
+      recorder.load_began("lib/invoice.rb")
+    end
     static, tests, loaded = everything
     [static, tests[:first], loaded].each(&:clear)
 
@@ -75,37 +70,6 @@ class RecorderTest < Minitest::Test
     during(:second) { recorder.load_began("lib/tax.rb") }
 
     assert_equal(Set["lib/invoice.rb", "lib/tax.rb"], recorder.loaded)
-  end
-
-  def test_it_receives_a_hit_or_a_path
-    during(:first) { [[7], "lib/invoice.rb"].each { |message| recorder.receive(message) } }
-
-    assert_equal([{ first: Set[7] }, Set["lib/invoice.rb"]], [recorder.tests, recorder.loaded])
-  end
-
-  def test_it_drains_the_collector_when_asked
-    recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
-
-    assert_equal([nil, Set[7], Set.new], [recorder.drain, recorder.static, recorder.loaded])
-  end
-
-  def test_asked_to_drain_with_no_collector_it_does_nothing
-    assert_nil(recorder.drain)
-  end
-
-  def test_it_drains_the_collector_before_a_test_starts_into_the_static_bucket
-    recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
-    during(:first) { nil }
-
-    assert_equal([Set[7], { first: Set.new }, Set.new], everything)
-  end
-
-  def test_it_drains_the_collector_after_a_test_into_that_tests_bucket
-    collector = Queued.new([])
-    recorder.collect_from(collector)
-    during(:first) { collector.messages.push([8], "lib/invoice.rb") }
-
-    assert_equal([Set.new, { first: Set[8] }, Set["lib/invoice.rb"]], everything)
   end
 
   # A runner adapter that reports out of order has a fault, and the recorder
