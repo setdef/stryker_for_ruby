@@ -22,15 +22,6 @@ module Stryker
         end
         false
       end
-
-      def self.frame_paths(path, separator = File::ALT_SEPARATOR)
-        # Ruby gives the hook the path it resolved, which can hold a symbolic
-        # link or "..", and gives the frames of a file it compiles itself the
-        # real path. A file the hook compiles gets the path the hook gave.
-        [path, File.realpath(path)].map { |form| PathKey.of(form, separator) }
-      rescue SystemCallError
-        [PathKey.of(path, separator)]
-      end
     end
   end
 end

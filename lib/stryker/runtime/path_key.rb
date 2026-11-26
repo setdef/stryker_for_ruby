@@ -10,6 +10,15 @@ module Stryker
         # only in case.
         separator ? path.tr(separator, "/").downcase : path
       end
+
+      def self.of_file(path, separator = File::ALT_SEPARATOR)
+        # Ruby gives the hook the path it resolved, which can hold a symbolic
+        # link or "..", and gives a file it compiles itself the real path, in
+        # its frames and in $LOADED_FEATURES.
+        [path, File.realpath(path)].map { |form| of(form, separator) }
+      rescue SystemCallError
+        [of(path, separator)]
+      end
     end
   end
 end

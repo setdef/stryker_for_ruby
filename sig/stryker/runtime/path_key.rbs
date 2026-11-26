@@ -27,6 +27,26 @@ module Stryker
       #   separator, `File::ALT_SEPARATOR` by default: a backslash on
       #   Windows, and nil elsewhere.
       def self.of: (String path, ?String? separator) -> String
+
+      # The keys of the two paths that can name the file at `path`: `path`
+      # itself, and its real path, with every symbolic link and `..`
+      # resolved. Ruby gives the loader's hook a path that can hold either,
+      # and gives a file that Ruby or Bootsnap compiles its real path, in the
+      # file's frames and in `$LOADED_FEATURES`. A file that the hook
+      # compiles shows the path the hook received. When no file is at
+      # `path`, it is the key of `path` alone. It reads the disk once, to
+      # resolve the real path.
+      #
+      # - `path`: String, a file's path.
+      # - `separator`: String or nil, as `of` takes it.
+      #
+      # ```ruby
+      # Stryker::Runtime::PathKey.of_file("/var/app/lib/invoice.rb")
+      # # => ["/var/app/lib/invoice.rb", "/private/var/app/lib/invoice.rb"], on macOS
+      # Stryker::Runtime::PathKey.of_file("C:\\App\\Lib\\Invoice.rb", "\\")
+      # # => ["c:/app/lib/invoice.rb"], when no file is there
+      # ```
+      def self.of_file: (String path, ?String? separator) -> Array[String]
     end
   end
 end

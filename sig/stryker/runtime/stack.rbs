@@ -34,38 +34,14 @@ module Stryker
       # Each check costs 1.5 to 2.3 µs at 23 frames, a test body's usual
       # depth, and 17.5 to 28.8 µs at 303 frames.
       #
-      # - `paths`: Set of String, the files' paths as `frame_paths` gives
-      #   them, called with the same `separator`.
+      # - `paths`: Set of String, the files' paths as
+      #   `Stryker::Runtime::PathKey.of_file` gives them, called with the same
+      #   `separator`.
       # - `separator`: String or nil, the system's alternative path
       #   separator, `File::ALT_SEPARATOR` by default. When it isn't nil,
-      #   each frame's path is normalized as `frame_paths` normalizes its
-      #   paths.
+      #   each frame's path is normalized with
+      #   `Stryker::Runtime::PathKey.of`.
       def self.loading?: (Set[String] paths, ?String? separator) -> bool
-
-      # The paths that the frames of the file at `path` can show: `path`
-      # itself, which a file that the loader's hook compiles shows, and its
-      # real path, with every symbolic link and `..` resolved, which a file
-      # that Ruby or Bootsnap compiles shows. Ruby gives the hook a path
-      # that can hold either. When no file is at `path`, it is `path` alone.
-      #
-      # Each path is normalized with Stryker::Runtime::PathKey, as the
-      # loader normalizes paths: with a `separator`, each `separator`
-      # becomes `/`, and every letter is lowercased. With none, a path stays
-      # as it is, because a case-sensitive file system has files that
-      # differ only in case.
-      #
-      # - `path`: String, the path that Ruby gave the loader's hook.
-      # - `separator`: String or nil, the system's alternative path
-      #   separator, `File::ALT_SEPARATOR` by default: a backslash on
-      #   Windows, and nil elsewhere.
-      #
-      # ```ruby
-      # Stryker::Runtime::Stack.frame_paths("/var/app/lib/invoice.rb")
-      # # => ["/var/app/lib/invoice.rb", "/private/var/app/lib/invoice.rb"], on macOS
-      # Stryker::Runtime::Stack.frame_paths("C:\\App\\Lib\\Invoice.rb", "\\")
-      # # => ["c:/app/lib/invoice.rb"], when no file is there
-      # ```
-      def self.frame_paths: (String path, ?String? separator) -> Array[String]
 
       TOP_LEVEL_LABELS: Set[String]
     end

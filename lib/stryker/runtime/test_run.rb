@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "path_key"
 require_relative "stack"
 
 module Stryker
@@ -22,7 +23,7 @@ module Stryker
 
       def load_began(path)
         @loads << path
-        @frame_paths.merge(Stack.frame_paths(path))
+        @frame_paths.merge(PathKey.of_file(path))
         @checked.clear
         nil
       end
