@@ -5,6 +5,10 @@ module Stryker
     # tells whether the worker took a line, and closes both pipes even when
     # the worker has ended.
     class ParseWorkerPipes
+      # Raised by `read` when its time is up before a whole line has come.
+      class DeadlinePassed < StandardError
+      end
+
       # Prepares to use two pipes that are open.
       #
       # - `input`: IO, the pipe to the worker's standard input.
@@ -18,9 +22,10 @@ module Stryker
       def write: (String line) -> bool
 
       # The next line from the worker, with its line feed, or nil when the
-      # worker has ended and the pipe holds nothing more. Waits until there
-      # is a whole line, and raises `Timeout::Error` when `seconds` pass
-      # first, even when the worker has written the start of a line.
+      # worker has ended and the pipe holds nothing more. A carriage return
+      # before the line feed, which Windows adds, is dropped. Waits until
+      # there is a whole line, and raises `DeadlinePassed` when `seconds`
+      # pass first, even when the worker has written the start of a line.
       #
       # - `seconds`: Float, how long to wait.
       def read: (Float seconds) -> String?
@@ -31,9 +36,15 @@ module Stryker
 
       private
 
+      CHUNK: Integer
+
       @input: IO
       @output: IO
+      @buffer: String
+      @ended: bool
 
+      def take: () -> String?
+      def fill: (ParseDeadline deadline) -> void
       def close_input: () -> void
     end
   end

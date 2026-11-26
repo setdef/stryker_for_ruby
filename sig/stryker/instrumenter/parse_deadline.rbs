@@ -1,0 +1,20 @@
+module Stryker
+  class Instrumenter
+    # A moment some seconds from now, on a clock that does not jump when
+    # the system's time is set. The parse pool uses it to limit how long it
+    # waits for a worker.
+    class ParseDeadline
+      # Starts counting.
+      #
+      # - `seconds`: Float, how long from now the deadline is.
+      def initialize: (Float seconds) -> void
+
+      # How many seconds are left, which is 0.0 once the deadline has passed.
+      def left: () -> Float
+
+      private
+
+      @at: Float
+    end
+  end
+end

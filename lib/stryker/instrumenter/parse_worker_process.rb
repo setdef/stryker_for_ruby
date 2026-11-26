@@ -5,6 +5,7 @@ require_relative "parse_limit"
 require_relative "parse_reply"
 require_relative "parse_request"
 require_relative "parse_worker_child"
+require_relative "parse_worker_pipes"
 require_relative "parse_worker_stderr"
 
 module Stryker
@@ -52,7 +53,7 @@ module Stryker
         ParseReply.read(reply.to_s)
       rescue ArgumentError
         raise(failure(mutant, reply))
-      rescue Timeout::Error
+      rescue ParseWorkerPipes::DeadlinePassed
         raise(silence(mutant))
       end
 

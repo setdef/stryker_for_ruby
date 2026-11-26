@@ -21,7 +21,7 @@ module Stryker
 
       # The next line from the process, or nil when it has ended and written
       # nothing more. Waits until there is a whole line, and raises
-      # `Timeout::Error` when `seconds` pass first.
+      # `ParseWorkerPipes::DeadlinePassed` when `seconds` pass first.
       #
       # - `seconds`: Float, how long to wait.
       def read: (Float seconds) -> String?
