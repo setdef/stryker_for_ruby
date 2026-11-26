@@ -121,6 +121,13 @@ class ParseWorkerProcessTest < Minitest::Test
     refute_predicate(worker, :running?)
   end
 
+  def test_stop_closes_both_pipes
+    input, output, waiter = Open3.popen2(RbConfig.ruby, "-e", "sleep")
+    Stryker::Instrumenter::ParseWorkerProcess.new(input, output, waiter).stop
+
+    assert_equal([true, true], [input.closed?, output.closed?])
+  end
+
   def test_stop_may_find_what_the_worker_never_read_when_it_closes_the_pipe
     # On Windows, closing the pipe to a worker that has ended raises Errno::EPIPE for a line the worker never read.
     input, output, waiter = Open3.popen2(RbConfig.ruby, "-e", "exit 0")
