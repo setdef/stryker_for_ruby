@@ -35,7 +35,9 @@ module Stryker
     private def outcome(mutant)
       node = Placement.node_for(@tree, mutant)
       plain = PlainMutant.of(@source, @heredocs, mutant)
-      Outcome.new(mutant:, node:, text: node && MutantText.of(@source, plain, node))
+      return Outcome.new(mutant:, node:, text: nil, valid: false) unless plain.result.success?
+
+      Outcome.new(mutant:, node:, text: node && MutantText.of(@source, plain, node), valid: true)
     end
 
     private def parsed(output)

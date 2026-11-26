@@ -1,7 +1,8 @@
 module Stryker
   class Instrumenter
     # What the instrumenter found for one mutant: the node its switch wraps,
-    # and the text of its branch, either of which can be missing.
+    # and the text of its branch, either of which can be missing, and whether
+    # the mutant is valid Ruby.
     class Outcome < Data
       # The mutant.
       %a{pure} attr_reader mutant: Mutant
@@ -13,13 +14,18 @@ module Stryker
       # The text of the mutant's branch, or nil when it has none on one line.
       %a{pure} attr_reader text: String?
 
+      # Whether the plain mutant of the mutant parses. A mutant that is not
+      # valid has no text.
+      %a{pure} attr_reader valid: bool
+
       # Builds the outcome.
       #
       # - `mutant`: Stryker::Mutant, the mutant.
       # - `node`: Prism::node, the node its switch wraps, or nil.
       # - `text`: String, the text of its branch, or nil.
-      def self.new: (mutant: Mutant, node: Prism::node?, text: String?) -> instance
-                  | (Mutant mutant, Prism::node? node, String? text) -> instance
+      # - `valid`: bool, whether the plain mutant parses.
+      def self.new: (mutant: Mutant, node: Prism::node?, text: String?, valid: bool) -> instance
+                  | (Mutant mutant, Prism::node? node, String? text, bool valid) -> instance
 
       # The site of the mutant's switch, with its one branch, or nil when the
       # mutant got no switch.
@@ -27,6 +33,10 @@ module Stryker
 
       # The mutant with the reason it got no switch, or nil when it got one.
       def skip: () -> Skip?
+
+      private
+
+      def reason: () -> Skip::reason
     end
   end
 end

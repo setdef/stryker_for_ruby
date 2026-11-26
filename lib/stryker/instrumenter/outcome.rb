@@ -7,7 +7,7 @@ require_relative "skip"
 module Stryker
   class Instrumenter
     # steep:ignore:start
-    class Outcome < Data.define(:mutant, :node, :text)
+    class Outcome < Data.define(:mutant, :node, :text, :valid)
       # steep:ignore:end
       def site
         return unless node && text
@@ -23,7 +23,13 @@ module Stryker
       def skip
         return if text
 
-        Skip.new(mutant:, reason: node ? :no_one_line_form : :no_switch_site)
+        Skip.new(mutant:, reason:)
+      end
+
+      private def reason
+        return :does_not_parse unless valid
+
+        node ? :no_one_line_form : :no_switch_site
       end
     end
   end

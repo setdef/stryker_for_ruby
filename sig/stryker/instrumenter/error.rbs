@@ -3,8 +3,11 @@ module Stryker
     # Raised when the instrumenter can't make valid Ruby: when the file's
     # source doesn't parse, when the instrumented source doesn't parse, or
     # when a mutant whose text spans several lines doesn't make one node at
-    # its site. The last two mean that a mutant's replacement makes invalid
-    # code. The message gives each line, or the mutant's ID.
+    # its site. A mutant whose plain mutant doesn't parse raises none of
+    # these: it gets no switch. The last two mean that a switch can't hold a
+    # mutant that is valid Ruby, which is a fault in the instrumenter, or in
+    # the mutator that made the mutant. The message gives each line, or the
+    # mutant's ID.
     class Error < StandardError
       # The error for source that doesn't parse, with a message that gives
       # each of Prism's `errors` and its line.

@@ -1,6 +1,6 @@
 # Mutant placement
 
-This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The reasons for compiling every mutant into the code once and switching it on at run time are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, the mutants that aren't valid Ruby, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The reasons for compiling every mutant into the code once and switching it on at run time are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 ## The text edit
 
@@ -120,6 +120,12 @@ When no enclosing node can hold a switch, the site gets no mutant. That is the c
 The mutators make no mutant in the arguments of a call to `require`, `require_relative`, or `load` with no receiver. Ruby evaluates those arguments while the file loads, so every such mutant would be static, and a changed path makes Ruby load another file or raise `LoadError`, which shows nothing about the project's tests. StrykerJS's string-literal mutator skips the argument of `require()` in the same way.
 
 A site whose mutant's text has no one-line form gets no mutant either, as [The mutant adds no line break](#the-mutant-adds-no-line-break) says.
+
+## Mutants that aren't valid Ruby
+
+A mutator's replacement can make a file that doesn't parse. The instrumenter parses each mutant's plain mutant, and a mutant whose plain mutant doesn't parse gets no switch. The result lists it as skipped, with the reason `:does_not_parse`, and the run reports it with the [report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)'s status `CompileError`, for a mutant that is invalid.
+
+A fault in the instrumenter is a different case. When every plain mutant parses and the instrumented file doesn't, the instrumenter raises `Stryker::Instrumenter::Error` and the run stops. A replacement that ends with a comment is such a case: `1 # why` makes a plain mutant that parses, and a switch that doesn't, because the comment swallows the rest of the line.
 
 ## Kinds of site
 
@@ -252,4 +258,5 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 - It doesn't mutate the path given to `require`, `require_relative`, or `load`.
 - It doesn't keep a site's mutant runtime when its switch has to move out to a definition or a class body: such a mutant is static.
 - It doesn't make a mutant whose text has no one-line form. The run counts such sites instead.
+- It doesn't make a mutant whose plain mutant doesn't parse. The run reports such a mutant as `CompileError`.
 - It doesn't keep the original layout inside a mutant's text when the wrapped node spans several lines: the instrumenter formats that text with refract.

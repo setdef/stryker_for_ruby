@@ -85,6 +85,15 @@ module SiteCase
     assert_equal(plain, run_ruby(folder, instrumented, mutant.id), "With mutant #{mutant.id} active:\n#{instrumented}")
   end
 
+  def instrument(source, *edits)
+    mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
+    Stryker::Instrumenter.instrument(source, mutants)
+  end
+
+  def skips(result)
+    result.skipped.map { |skip| [skip.mutant.id, skip.reason] }
+  end
+
   def site_mutant(source, id, needle, replacement, occurrence = 0)
     bytes = source.b
     start_offset = occurrence.succ.times.reduce(-1) { |acc, _elem| bytes.index(needle.b, acc + 1) }

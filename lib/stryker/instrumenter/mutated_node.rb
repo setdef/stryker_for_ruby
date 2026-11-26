@@ -14,7 +14,7 @@ module Stryker
         span = Span.grown(node.location, plain.growth_within(node))
         result = plain.result
         found = at(result.value, span)
-        return found if found && result.success?
+        return found if found
 
         raise(Error, "Mutant #{plain.mutant.id} doesn't parse as one node where its switch goes.")
       end

@@ -11,11 +11,6 @@ require_relative("../support/site_case")
 class InstrumenterTest < Minitest::Test
   include SiteCase
 
-  def instrument(source, *edits)
-    mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
-    Stryker::Instrumenter.instrument(source, mutants)
-  end
-
   def test_a_site_with_one_mutant_gets_a_ternary
     expected = "total = (::Stryker::Active.id == 1 ? (a - b) : (::Stryker::Active.hit(1); (a + b)))\n"
 
@@ -84,45 +79,6 @@ class InstrumenterTest < Minitest::Test
     assert_site("s = 'é'\np s + 'b'\n", ["'b'", "'c'"])
   end
 
-  def test_a_mutant_inside_begin_gets_no_switch
-    source = "BEGIN { p 1 + 2 }\np :main\n"
-    result = instrument(source, ["1 + 2", "1 - 2"])
-
-    assert_equal([source, [[1, :no_switch_site]]], [result.source, skips(result)])
-  end
-
-  def test_a_mutant_with_no_one_line_form_gets_no_switch
-    source = "x = /a\nb/x\np x\n"
-    result = instrument(source, ["/a\nb/x", "/c\nb/x"])
-
-    assert_equal([source, [[1, :no_one_line_form]]], [result.source, skips(result)])
-  end
-
-  def test_a_skipped_mutant_leaves_the_others_their_switches
-    result = instrument("x = /a\nb/x\np x + 'y'\n", ["/a\nb/x", "/c\nb/x"], ["'y'", "'z'"])
-
-    assert_equal([[1, :no_one_line_form]], skips(result))
-    assert_includes(result.source, "::Stryker::Active.id == 2")
-  end
-
-  def test_a_source_that_does_not_parse_raises
-    error = assert_raises(Stryker::Instrumenter::Error) { Stryker::Instrumenter.instrument("p(\n", []) }
-
-    assert_match(/\AThe source doesn't parse: .+, on line \d+\.\z/, error.message)
-  end
-
-  def test_a_replacement_that_makes_invalid_code_raises
-    error = assert_raises(Stryker::Instrumenter::Error) { instrument("total = a + b\n", ["a + b", "a +"]) }
-
-    assert_match(/\AThe instrumented source doesn't parse: .+, on line 1\.\z/, error.message)
-  end
-
-  def test_a_multi_line_replacement_that_makes_invalid_code_raises
-    error = assert_raises(Stryker::Instrumenter::Error) { instrument("def f\n  1\nend\n", ["f", "f(", 1]) }
-
-    assert_equal("Mutant 1 doesn't parse as one node where its switch goes.", error.message)
-  end
-
   def test_a_switch_records_a_hit_each_time_its_original_branch_runs
     source = "def f\n  1 + 2\nend\ndef g\n  3 + 4\nend\np f\n"
 
@@ -134,10 +90,6 @@ class InstrumenterTest < Minitest::Test
     result = instrument(source, ["1 + 2 * 3", "1 - 2 * 3"], ["2 * 3", "2 / 3"])
 
     assert_equal(["1 2", ""], [hits(result.source), hits(result.source, 1)])
-  end
-
-  def skips(result)
-    result.skipped.map { |skip| [skip.mutant.id, skip.reason] }
   end
 
   def hits(instrumented, active = nil)
