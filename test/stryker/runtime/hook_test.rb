@@ -70,6 +70,17 @@ class HookTest < Minitest::Test
     assert_same(front, Stryker::Runtime::Hook.ahead(iseq_class))
   end
 
+  def test_the_first_of_two_modules_ahead_of_the_hook_is_the_one_that_is_ahead
+    iseq_class = Class.new
+    behind = rival
+    front = rival
+    iseq_class.singleton_class.prepend(Stryker::Runtime::Hook.copy)
+    iseq_class.singleton_class.prepend(behind)
+    iseq_class.singleton_class.prepend(front)
+
+    assert_same(front, Stryker::Runtime::Hook.ahead(iseq_class))
+  end
+
   def test_the_module_ahead_is_the_one_that_defines_load_iseq_not_one_that_includes_it
     iseq_class = Class.new
     front = rival

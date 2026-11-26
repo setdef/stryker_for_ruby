@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../test_helper")
+require "minitest/mock"
 require "stryker/runtime/cache"
 require "tmpdir"
 
@@ -57,6 +58,19 @@ class CacheTest < Minitest::Test
     text = text(written("/app/lib/invoice.rb": source), "/app/lib/invoice.rb")
 
     assert_equal([source.b, Encoding::UTF_8], [text.b, text.encoding])
+  end
+
+  # A text-mode write turns each LF into CRLF on Windows only, so the bytes of
+  # a file say nothing about the mode anywhere else. The writes show that
+  # each file goes out in binary mode on every system.
+  def test_every_file_is_written_in_binary_mode
+    names = []
+    record = -> (file, _data) { names << File.basename(file) }
+    sources = { "/app/lib/invoice.rb": "A\r\n", "/app/lib/receipt.rb": "B\r\n" }.transform_keys(&:to_s)
+
+    File.stub(:binwrite, record) { Stryker::Runtime::Cache.write(directory, sources) }
+
+    assert_equal(%w[0.rb 1.rb index], names)
   end
 
   # Ruby reads a source file as UTF-8 whatever the default external encoding
