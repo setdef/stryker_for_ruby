@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     stryker_for_ruby (0.0.0)
-      prism (>= 1.0)
+      prism (>= 1.7)
       refract (~> 2.0)
 
 GEM
