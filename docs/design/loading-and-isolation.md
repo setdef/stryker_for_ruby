@@ -1,0 +1,121 @@
+# Loading and isolation
+
+This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the loader's hook, the check that the hook saw every instrumented file, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
+
+## Terms
+
+- **Instrumented file:** a project file matched by the `mutate` option. The instrumenter produces instrumented source for it, which holds every mutant in the file behind a switch.
+- **Active mutant:** the one mutant whose switch takes the mutated branch. At most one mutant is active in a process. With none active, the instrumented code behaves as the original.
+- **Runtime mutant:** a mutant whose switch runs while a test runs. Setting it active at any time before the test starts is enough.
+- **Static mutant:** a mutant whose switch runs only while its file loads, such as one in a constant's value or a class body. It takes effect only when it is active before the file loads. [Coverage](coverage.md) says how Stryker (for Ruby) tells the two apart.
+- **Mutant run:** one run of a chosen set of tests with one mutant active.
+
+## Loading instrumented code
+
+### The `load_iseq` hook
+
+Ruby compiles every file it loads from disk, whether through `require`, `require_relative`, `load`, or an autoload such as Zeitwerk's. Before it compiles one, CRuby calls `RubyVM::InstructionSequence.load_iseq(path)`, if that method exists. When the method returns an instruction sequence, Ruby runs it in place of compiling the file. When it returns `nil`, Ruby compiles the file as usual.
+
+The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
+
+- When `path` is an instrumented file's path, it compiles that file's instrumented source with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served `path`, and returns the result.
+- For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
+
+Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: in a probe project that Zeitwerk loads, every instrumented file came through the hook.
+
+The loader installs the hook before any instrumented file loads, in every process that runs tests: the parent that forks, each fresh process, and each process in the Windows pool.
+
+`load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so Stryker (for Ruby) runs on CRuby only.
+
+### The hook and Bootsnap
+
+Bootsnap, for its compile cache, prepends a module with a `load_iseq` method to the same singleton class. Of two prepended modules, Ruby calls the one prepended last first, so whichever of the two was installed last answers:
+
+| Installed last | What happens to an instrumented file |
+| - | - |
+| The hook | The hook serves the instrumented source. Bootsnap still serves every other file from its cache. |
+| Bootsnap | Bootsnap serves the original file from its cache, and the hook never sees the call, because Bootsnap's `load_iseq` doesn't call `super`. Every mutant in that file has no effect, and no error is raised. |
+
+> [!WARNING]
+> When Bootsnap installs its compile cache after the hook, the run gives wrong results without any error. Every test passes with every mutant active, so every mutant in an affected file would be reported as surviving. The loading check below exists to catch this.
+
+### The loading check
+
+The dry run, the first run of the whole suite with no mutant active, ends with a check. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
+
+An instrumented file that no test loaded isn't an error: no test reaches its mutants, and the plan reports them as having no coverage.
+
+### Paths on Windows
+
+The loader compares each `path` it receives with the list of instrumented files. On Windows, Ruby can pass the same file with a different spelling: a lowercase drive letter, other letter case in the directory names, or backslashes. Before comparing, the loader normalizes both sides: it replaces each `\` with `/` and folds letter case.
+
+> [!WARNING]
+> Without that normalization, the hook doesn't recognize a file whose path is spelled differently, and the file loads uninstrumented with no error. A probe that put the project's `lib` folder on `$LOAD_PATH` with its letter case swapped, or with a lowercase drive letter, loaded every file uninstrumented. The loading check compares normalized paths too, so it catches a file that the hook missed this way.
+
+### Approaches that don't work
+
+Two other ways to load instrumented code look simpler. Probes on Ruby 3.3, 3.4, 4.0, and 4.1-dev found faults in both.
+
+**A sandbox copy first on `$LOAD_PATH`.** Writing the instrumented files to a copy of the project and putting the copy's `lib` first on `$LOAD_PATH` does make the mutants take effect. But `__FILE__`, `__dir__`, `$LOADED_FEATURES`, and backtraces then name the sandbox instead of the project, so a test that checks a path sees the sandbox's. Bootsnap's cache also keys on a file's size and modification time in whole seconds, so a rewrite of the same size within the same second loads the old code from the cache.
+
+**Hooks on `require`, `require_relative`, and `load`.** Prepending to `Kernel` needs all three hooks; with `require` alone, files loaded by `require_relative` stay uninstrumented. On Ruby 3.4 and later, in a project that Zeitwerk loads, hooks installed before Bootsnap fail with `NoMethodError: super: no superclass method 'require'`. On Windows, a file required by two spellings of its path loads twice.
+
+## Isolation
+
+Every mutant run happens in a process that has run no test before it, and that process ends when the run does. Nothing is reused for a second run. The isolation adapter that does this depends on the system and on the kind of mutant:
+
+| Mutant | Linux and macOS | Windows |
+| - | - | - |
+| Runtime | A child forked from a loaded parent | A process from the pool |
+| Static | A fresh process with the mutant ID in its environment | The same |
+
+Each child or process reports back to the orchestrator over a pipe, one JSON object per line. The orchestrator parses that with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests.
+
+### Forking on Linux and macOS
+
+The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them.
+
+The dry run is itself a forked child, with no mutant active.
+
+For each runtime mutant run, the parent:
+
+1. opens a pipe and forks;
+2. in the child, closes the read end, sets the active mutant, runs the run's tests through the test runner adapter, stopping at the first failure, writes the result to the pipe, and ends with `exit!`;
+3. in the parent, reads the result, and waits for the child.
+
+The parent keeps up to `concurrency` children running at once. When a child runs past the run's time limit, the parent kills it, and the run's result is a timeout.
+
+> [!WARNING]
+> The child must end with `exit!`, never `exit`. A forked child inherits the parent's `at_exit` handlers, and `exit` runs them. `minitest/autorun` registers one that runs the test suite, so a child that calls `exit` runs every test again with the mutant still active.
+
+`exit!` also skips flushing Ruby's write buffers. A pipe's write end from `IO.pipe` is in sync mode, so a write reaches the pipe at once and survives `exit!`. A child must not turn sync mode off on it, or its result is lost.
+
+A fork costs about 0.6 ms on Linux from a parent of about 15 MB, and about 2 ms on macOS from a parent that has loaded a gem's test suite ([#4](https://github.com/setdef/stryker_for_ruby/issues/4)). From a parent of about 750 MB, it costs about 9 to 19 ms on Linux.
+
+### The process pool on Windows
+
+Windows has no `fork`: `Process.respond_to?(:fork)` is `false`, and `Process.fork` raises `NotImplementedError`. So each runtime mutant run gets a fresh `ruby` process instead, from a pool the orchestrator starts ahead of time.
+
+Each process in the pool installs the hook, loads the test helper and test files through the test runner adapter, and then waits for one run on a pipe. When it receives a mutant ID and the run's test IDs, it sets the active mutant, runs the tests, stopping at the first failure, sends the result back over a pipe, and exits. The orchestrator keeps `concurrency` processes in the pool, starting a new one as each exits, so a process loads the project while others run their tests.
+
+A pool process loads the code before it learns its mutant, so the pool runs runtime mutants only.
+
+A fresh process is expensive on Windows. On one probe machine, `ruby -e 1` took about 130 ms, of which about 110 ms was RubyGems: `ruby --disable-gems -e 1` took about 17 ms. Starting a process, loading three instrumented files, and running one Minitest test took about 285 ms. [#4](https://github.com/setdef/stryker_for_ruby/issues/4) gives 412 ms and 1,035 ms for the start of a process for two real gems' test suites.
+
+### Static mutants on every system
+
+A static mutant's switch runs once, while its file loads. Setting the mutant active afterwards changes nothing, because the switch never runs again. A probe set a static mutant in a constant's value active after load, and the constant kept its original value.
+
+So every static mutant run gets a fresh process, on every system, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The runtime reads that variable when it loads, before any of the project's code, so the switch takes the mutated branch while the file loads. The run includes every test, because a value set at load time can reach any test.
+
+### A file first loaded inside a test
+
+A file that the project first requires inside a test, rather than from the test helper or another file loaded before the tests, loads during that test. Its load-time code then runs during that test, so its switches record their hits under that test instead of in the static bucket. A probe that required such a file in one test and used its constant in a second test recorded the constant's mutant as reached by the first test only.
+
+Such a mutant is planned as a runtime mutant, and its run includes only the test that loaded the file. Other tests that depend on what the file set at load time aren't in the run, so a mutant that one of them would have killed can be reported as surviving.
+
+## What this design doesn't do
+
+- It doesn't reuse a process for a second run, on any system.
+- It doesn't run on Ruby implementations other than CRuby.
+- It doesn't make Bootsnap and the hook work in either order. When Bootsnap installs its compile cache after the hook, the dry run fails.
