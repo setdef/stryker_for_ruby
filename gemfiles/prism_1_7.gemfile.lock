@@ -112,7 +112,11 @@ GEM
     minitest (6.1.0)
       drb (~> 2.0)
       prism (>= 1.5, < 3)
+    minitest-hooks (1.5.4)
+      minitest (> 5.3)
     minitest-mock (5.27.0)
+    minitest-retry (0.3.1)
+      minitest (>= 5.0)
     mize (0.8.0)
     msgpack (1.8.7)
     ostruct (0.6.3)
@@ -282,7 +286,9 @@ DEPENDENCIES
   irb (~> 1.18)
   json_schemer (~> 2.5)
   minitest (~> 6.0)
+  minitest-hooks (~> 1.5)
   minitest-mock (~> 5.27)
+  minitest-retry (~> 0.3)
   ostruct (~> 0.6.3)
   prism (= 1.7.0)
   rake (~> 13.0)
@@ -348,7 +354,9 @@ CHECKSUMS
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   method_source (1.1.0) sha256=181301c9c45b731b4769bc81e8860e72f9161ad7d66dd99103c9ab84f560f5c5
   minitest (6.1.0) sha256=ff373595aa8888631e8a5463986a76b3845346ae6d7fa46e139c1633d418076e
+  minitest-hooks (1.5.4) sha256=1254069f3da51fea234dc4ff974108d03d19260ad5c4b78eed9695726a5069b8
   minitest-mock (5.27.0) sha256=7040ed7185417a966920987eaa6eaf1be4ea1fc5b25bb03ff4703f98564a55b0
+  minitest-retry (0.3.1) sha256=9b8282c5c1684a04b330526b90f39e42b7cec1b91abf70af6526e64131df186f
   mize (0.8.0) sha256=0ecfe6aba0f0a42bfcb771c12e085703e797da6e5446a1f2cd8dc90d6fba87c0
   msgpack (1.8.7) sha256=dfefec761b5f9047e6e8d95d2c7f8af4b3725d984a01942adc533aa819a2df33
   ostruct (0.6.3) sha256=95a2ed4a4bd1d190784e666b47b2d3f078e4a9efda2fccf18f84ddc6538ed912

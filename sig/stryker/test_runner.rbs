@@ -1,0 +1,70 @@
+module Stryker
+  # The port where **Stryker (for Ruby)** meets a test framework: it lists the
+  # project's tests, and runs a chosen set of them, one at a time, in a
+  # project process. `Stryker::TestRunners::MinitestRunner` is the adapter
+  # for Minitest 6. [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-ports)
+  # shows where it fits, and
+  # [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/test-runners.md)
+  # specifies the adapters.
+  #
+  # Ruby checks nothing about the interface: any object with these two
+  # methods is a test runner. Steep checks each adapter's signatures against
+  # it, and `Stryker::Testing::TestRunnerContract` checks each adapter's
+  # behavior.
+  #
+  # ## Examples
+  #
+  # A dry run lists every test, then runs them all with the hit recorder as
+  # the observer, so each test's hits land in that test's bucket:
+  #
+  # ```ruby
+  # runner = Stryker::TestRunners::MinitestRunner.new(Dir.pwd)
+  # tests = runner.load_tests
+  # results = runner.run(tests.map(&:id), bail: false, observer: Stryker::Runtime::RECORDER)
+  # ```
+  #
+  # A mutant run runs only the tests that reached the mutant, and stops at
+  # the first that fails, because one failure kills the mutant:
+  #
+  # ```ruby
+  # runner.run(["Shop::DiscountTest#test_rate", "Shop::CartTest#test_total"], bail: true, observer: observer)
+  # ```
+  interface _TestRunner
+    # Loads the project's test helper and test files, and returns every test
+    # they define, without running any. The tests come in the same order in
+    # every process that loads the same files, and each test's ID is the
+    # same in every such process, because each mutant run is given its
+    # tests by the IDs from the dry run.
+    def load_tests: () -> Array[Test]
+
+    # Runs the tests with `test_ids`, in that order, one at a time, and
+    # returns a result for each test it ran, in the same order. Calls
+    # `observer.test_started` before each test and `observer.test_finished`
+    # after it, so no two tests overlap. Runs no test whose ID isn't in
+    # `test_ids`.
+    #
+    # With `bail` true, it stops after the first test that fails, so the
+    # results end with that test's. A skipped test doesn't stop it. With
+    # `bail` false, it runs every test.
+    #
+    # Raises ArgumentError, before it runs any test, when an ID isn't one
+    # that `load_tests` returned.
+    #
+    # - `test_ids`: Array of String, the IDs of the tests to run.
+    # - `bail`: true to stop after the first failing test.
+    # - `observer`: Stryker::_TestObserver, told when each test starts and
+    #   finishes.
+    def run: (Array[String] test_ids, bail: bool, observer: _TestObserver) -> Array[TestResult]
+  end
+
+  # Hears when each test starts and finishes. The hit recorder,
+  # `Stryker::Runtime::Recorder`, is one: it makes each test's bucket
+  # current while that test runs.
+  interface _TestObserver
+    # Called just before `test` starts.
+    def test_started: (Test test) -> void
+
+    # Called just after the test of `result` finishes.
+    def test_finished: (TestResult result) -> void
+  end
+end

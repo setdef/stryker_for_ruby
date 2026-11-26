@@ -1,0 +1,26 @@
+module Stryker
+  module Testing
+    module TestRunnerContract
+      # The contract's tests of which tests `run` runs, in what order, and
+      # what the observer hears.
+      module Running : ::Minitest::Test, _TestRunnerHost
+        include Sample
+
+        # `run` runs each chosen test once, in the order given, and returns
+        # their results in that order.
+        def test_run_runs_each_chosen_test_once_in_the_order_given: () -> void
+
+        # `run` with no IDs runs nothing and returns no result.
+        def test_run_runs_no_test_when_given_none: () -> void
+
+        # The observer hears each start before the test runs, and each finish
+        # after it, one test at a time.
+        def test_the_observer_hears_each_start_before_the_test_and_each_finish_after_it: () -> void
+
+        # `run` raises ArgumentError for an unknown ID before it runs any
+        # test or tells the observer anything.
+        def test_run_refuses_an_unknown_id_before_it_runs_any_test: () -> void
+      end
+    end
+  end
+end

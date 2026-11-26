@@ -1,0 +1,22 @@
+module Stryker
+  module Testing
+    module TestRunnerContract
+      # The contract's tests of `bail`.
+      module Bail : ::Minitest::Test, _TestRunnerHost
+        include Sample
+
+        # With `bail`, `run` stops after a failed assertion.
+        def test_bail_stops_after_the_first_failed_assertion: () -> void
+
+        # With `bail`, `run` stops after an error raised outside an assertion.
+        def test_bail_stops_after_an_error_raised_outside_an_assertion: () -> void
+
+        # With `bail`, a skipped test doesn't stop `run`.
+        def test_bail_runs_on_past_a_skipped_test: () -> void
+
+        # Without `bail`, every chosen test runs after a failure.
+        def test_without_bail_every_test_runs_after_a_failure: () -> void
+      end
+    end
+  end
+end

@@ -13,6 +13,12 @@ gem "minitest", "~> 6.0"
 gem "json_schemer", "~> 2.5"
 # Stubs objects in the tests.
 gem "minitest-mock", "~> 5.27"
+# Adds hooks that run around a whole test class, which the Minitest adapter's
+# tests run, in processes of their own.
+gem "minitest-hooks", "~> 1.5", require: false
+# Runs a failing test again, which the Minitest adapter's tests check adds to
+# the test's bucket, in processes of their own.
+gem "minitest-retry", "~> 0.3", require: false
 # Runs the tasks.
 gem "rake", "~> 13.0"
 # Measures test coverage, and fails below 100% of lines and branches.

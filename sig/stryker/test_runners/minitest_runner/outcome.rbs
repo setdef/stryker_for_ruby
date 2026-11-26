@@ -1,0 +1,72 @@
+module Stryker
+  module TestRunners
+    class MinitestRunner
+      # The Minitest reporter for one test's run: it notes every result that
+      # Minitest records while the test runs, and makes the test's
+      # `Stryker::TestResult` from them. Besides the test's result,
+      # Minitest records one for a hook around the whole class that fails,
+      # such as minitest-hooks' `before_all`, under the hook's name.
+      #
+      # It has the methods of Minitest's reporter API that a class's run
+      # calls, and no others. Its time starts when it is built.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # outcome = Stryker::TestRunners::MinitestRunner::Outcome.new("test_rate")
+      # Shop::DiscountTest.run_suite(outcome, include: /\Atest_rate\z/)
+      # outcome.result(test).status
+      # # => "passed"
+      # ```
+      class Outcome
+        # The monotonic clock's time, in milliseconds.
+        def self.now: () -> Float
+
+        # Builds the reporter for the test with the method `name`, and
+        # starts its time.
+        #
+        # - `name`: String, the test's method's name.
+        def initialize: (String name) -> void
+
+        # Does nothing, and returns nil. Minitest calls it before each test.
+        def prerecord: (singleton(::Minitest::Runnable) klass, String name) -> nil
+
+        # Notes `result`, and returns nil: as Minitest prints it, when it
+        # failed or raised, and its code, when it is the test's result.
+        #
+        # - `result`: Minitest::Result, a result that Minitest recorded.
+        def record: (::Minitest::Result result) -> nil
+
+        # Returns true. Minitest's handler for the INFO signal calls it, and
+        # on true prints only the running test's name and time.
+        def passed?: () -> true
+
+        # The test's result, with the time since the reporter was built:
+        # `"failed"` when any result failed or raised, with each of those as
+        # Minitest prints it for the message; else `"passed"` when the
+        # test's result passed; else `"skipped"`, with no message, which
+        # covers a test that skipped and one that Minitest never ran.
+        #
+        # - `test`: Stryker::Test, the test.
+        def result: (Test test) -> TestResult
+
+        private
+
+        # Minitest's code for a result that passed.
+        PASSED: String
+
+        # Minitest's code for a result that skipped.
+        SKIPPED: String
+
+        @name: String
+        @started: Float
+        @failures: Array[String]
+        @code: String?
+
+        def status: () -> String
+
+        def failure_message: () -> String?
+      end
+    end
+  end
+end

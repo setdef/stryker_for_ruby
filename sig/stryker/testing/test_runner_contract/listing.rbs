@@ -1,0 +1,19 @@
+module Stryker
+  module Testing
+    module TestRunnerContract
+      # The contract's tests of `load_tests`.
+      module Listing : ::Minitest::Test, _TestRunnerHost
+        include Sample
+
+        # `load_tests` lists every sample test, each ID once.
+        def test_load_tests_returns_each_sample_test_once: () -> void
+
+        # `load_tests` runs no sample test.
+        def test_load_tests_runs_no_test: () -> void
+
+        # Each result's test is one that `load_tests` returned.
+        def test_each_result_holds_the_test_that_load_tests_returned: () -> void
+      end
+    end
+  end
+end

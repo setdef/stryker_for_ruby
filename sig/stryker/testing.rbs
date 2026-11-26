@@ -1,0 +1,24 @@
+module Stryker
+  # The contract tests: one Minitest module for each port, holding the tests
+  # that every adapter of that port passes. `require "stryker/testing"` loads
+  # them, in a test process that already uses Minitest.
+  # [Contract tests](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#contract-tests)
+  # says how they fit.
+  #
+  # - `Stryker::Testing::TestRunnerContract` checks an adapter of the
+  #   `Stryker::_TestRunner` port.
+  module Testing
+    # What a test class that includes `Stryker::Testing::TestRunnerContract`
+    # defines.
+    interface _TestRunnerHost
+      # The adapter under test, for a project whose suite is the contract's
+      # sample suite. The contract calls `load_tests` on it before each
+      # `run`, so it may return the same adapter every time.
+      def runner_under_test: () -> _TestRunner
+
+      # The ID of each test of the sample suite, keyed by its role in
+      # `Stryker::Testing::TestRunnerContract::ROLES`.
+      def sample_test_ids: () -> Hash[Symbol, String]
+    end
+  end
+end

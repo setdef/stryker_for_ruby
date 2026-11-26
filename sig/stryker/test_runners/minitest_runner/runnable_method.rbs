@@ -1,0 +1,45 @@
+module Stryker
+  module TestRunners
+    class MinitestRunner
+      # One test of a Minitest class: the class, its method's name, and the
+      # `Stryker::Test` for it.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # test = Stryker::Test.new(id: "Shop::DiscountTest#test_rate", name: "test_rate", file: nil, location: nil)
+      # method = Stryker::TestRunners::MinitestRunner::RunnableMethod.new(Shop::DiscountTest, "test_rate", test)
+      # method.run(Stryker::Runtime::RECORDER).status
+      # # => "passed"
+      # ```
+      class RunnableMethod
+        # The test it runs.
+        attr_reader test: Test
+
+        # Builds the method `name` of `klass`, with `test` as its Stryker::Test.
+        #
+        # - `klass`: a Minitest::Runnable subclass.
+        # - `name`: String, the method's name.
+        # - `test`: Stryker::Test, the test.
+        def initialize: (singleton(::Minitest::Runnable) klass, String name, Test test) -> void
+
+        # Tells `observer` that the test started, runs it with
+        # `Minitest::Runnable.run_suite` and a filter that matches only its
+        # method, tells `observer` that it finished, and returns its result.
+        # While it runs, `Minitest.parallel_executor` is
+        # `Stryker::TestRunners::MinitestRunner::InlineExecutor`.
+        #
+        # - `observer`: Stryker::_TestObserver.
+        def run: (_TestObserver observer) -> TestResult
+
+        private
+
+        @klass: singleton(::Minitest::Runnable)
+        @name: String
+        @filter: Regexp
+
+        def run_in_minitest: () -> TestResult
+      end
+    end
+  end
+end

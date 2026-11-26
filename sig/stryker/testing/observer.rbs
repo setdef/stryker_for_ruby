@@ -1,0 +1,31 @@
+module Stryker
+  module Testing
+    # A `Stryker::_TestObserver` that records each event it hears, with how
+    # many sample tests had recorded a run in `Stryker::Testing::SampleRuns`
+    # by then. The count shows whether the observer heard a test start
+    # before the test ran, and finish after it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # observer = Stryker::Testing::Observer.new
+    # runner.run(["SampleTest#test_passes"], bail: false, observer:)
+    # observer.events
+    # # => [[:started, "SampleTest#test_passes", 0], [:finished, "SampleTest#test_passes", 1]]
+    # ```
+    class Observer
+      # Each event, oldest first: `[:started, id, count]` or
+      # `[:finished, id, count]`.
+      attr_reader events: Array[[Symbol, String, Integer]]
+
+      # Builds an observer that has heard nothing.
+      def initialize: () -> void
+
+      # Records `[:started, test.id, count]`.
+      def test_started: (Test test) -> void
+
+      # Records `[:finished, result.test.id, count]`.
+      def test_finished: (TestResult result) -> void
+    end
+  end
+end

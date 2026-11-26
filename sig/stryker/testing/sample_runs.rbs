@@ -1,0 +1,39 @@
+module Stryker
+  module Testing
+    # The log of the sample suite's runs: each test of the sample suite of
+    # `Stryker::Testing::TestRunnerContract` records its role here when it
+    # starts, so the contract can tell which tests really ran, how often,
+    # and in what order, whatever results the adapter returns.
+    #
+    # Every method may be called from any thread.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Testing::SampleRuns.ran(:skips)
+    # Stryker::Testing::SampleRuns.ran(:passes)
+    # Stryker::Testing::SampleRuns.count
+    # # => 2
+    # Stryker::Testing::SampleRuns.take
+    # # => [:skips, :passes]
+    # Stryker::Testing::SampleRuns.take
+    # # => []
+    # ```
+    module SampleRuns
+      # The roles recorded and not yet taken, oldest first.
+      RUNS: Thread::Queue
+
+      # Records that the sample test with `role` ran, and returns nil.
+      #
+      # - `role`: Symbol, the test's role, such as `:passes`.
+      def self.ran: (Symbol role) -> nil
+
+      # Every role recorded since the last call, oldest first, and forgets
+      # them.
+      def self.take: () -> Array[Symbol]
+
+      # How many roles are recorded since the last call to `take`.
+      def self.count: () -> Integer
+    end
+  end
+end

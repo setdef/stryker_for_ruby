@@ -120,12 +120,14 @@ module Stryker
   # Lists and runs the project's tests in one framework.
   interface _TestRunner
     # Loads the project's test helper and test files, and returns every test
-    # they define, without running any.
+    # they define, without running any. Every process that loads the same
+    # files gets the same tests, with the same IDs.
     def load_tests: () -> Array[Test]
 
-    # Runs the tests with these IDs, in order. Calls observer.test_started
-    # before each test and observer.test_finished after it. Stops after the
-    # first failing test when bail is true.
+    # Runs the tests with these IDs, in order, one at a time. Calls
+    # observer.test_started before each test and observer.test_finished
+    # after it. Stops after the first failing test when bail is true. Raises
+    # ArgumentError, before it runs any test, for an ID it doesn't know.
     def run: (Array[String] test_ids, bail: bool, observer: _TestObserver) -> Array[TestResult]
   end
 
@@ -169,7 +171,7 @@ end
 
 A port says what the core needs, and nothing about how an adapter does it:
 
-- **`_TestRunner`** has the Minitest and RSpec adapters ([#5](https://github.com/setdef/stryker_for_ruby/issues/5)). RSpec has a built-in way to stop at the first failure (`--fail-fast`); Minitest 6 has none, so the Minitest adapter supplies one.
+- **`_TestRunner`** has the Minitest and RSpec adapters ([#5](https://github.com/setdef/stryker_for_ruby/issues/5)). RSpec has a built-in way to stop at the first failure (`--fail-fast`); Minitest 6 has none, so the Minitest adapter supplies one. [Test runners](test-runners.md) specifies the adapters, and how the Minitest adapter runs one chosen test, which Minitest has no public way to do.
 - **`_Isolation`** has the fork adapter for Linux and macOS and the fresh-process adapter, which runs the Windows pool and every static run on every system. The orchestrator sends each run to the adapter for its system and its kind of mutant.
 - **`_Reporter`** has one adapter per entry in the `reporters` option. A reporter that needs every result, such as the JSON reporter, builds its output when it receives `RunCompleted`. One that shows progress acts on each `MutantTested`.
 - **`_ConfigSource`** has one adapter per file format. Both read text with `ConfigSources::TextFile`, which refuses a file that isn't an object of options, and each adds the parser of its format. The YAML adapter reads with `Psych.safe_load`, never `YAML.unsafe_load`, because the file comes from the project. An adapter raises `Stryker::ConfigError` for a file that can't be read or parsed, and names the file in the message. `ConfigSources.locate` chooses the file and its adapter: the file the user names, or else `stryker.config.json` or `stryker.config.yml` in the project's root. It raises `ConfigError` when both default files exist, or when a named file doesn't exist or isn't JSON or YAML.
@@ -177,6 +179,8 @@ A port says what the core needs, and nothing about how an adapter does it:
 ### Contract tests
 
 `require "stryker/testing"` loads one Minitest module per port: `Stryker::Testing::TestRunnerContract`, `IsolationContract`, `ReporterContract`, and `ConfigSourceContract`. Each holds the tests that every adapter of its port must pass. To test an adapter, include the module in a test class and define the method it calls to build the adapter under test. The gem's adapters pass the same contracts, so an adapter written outside the gem is held to the same behavior.
+
+`TestRunnerContract` runs a sample suite of four tests, written for the adapter's framework: one passes, one fails an assertion, one raises an error outside any assertion, and one skips. Each sample test first records its role in `Stryker::Testing::SampleRuns`, so the contract counts the tests that really ran, as well as checking the results that the adapter returns. The test class defines `runner_under_test`, which returns the adapter for the sample suite, and `sample_test_ids`, which gives each sample test's ID by its role. The contract runs the sample suite in the test process. The RBS documentation of `Stryker::Testing::TestRunnerContract` has an example.
 
 ## Values and events
 
@@ -214,7 +218,7 @@ Stages never call a reporter directly, so adding a reporter changes no stage.
 | Deciding what each mutant changes | the mutator that finds its site |
 | Producing instrumented source | the instrumenter |
 | Serving instrumented source to Ruby, and checking that every loaded instrumented file came through the hook | the loader |
-| Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework |
+| Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework ([Test runners](test-runners.md)) |
 | Recording which tests reach which mutants | the hit recorder in the Stryker runtime |
 | Choosing each mutant's tests, kind of run, and time limit | Plan |
 | A clean process for each run, time limits, and killing a run that passes its limit | the isolation adapter, whose parts run in the orchestrator and in the project processes ([who enforces each limit](loading-and-isolation.md#how-results-reach-the-orchestrator)) |
@@ -233,6 +237,7 @@ Domain-driven design's tactical patterns, such as repositories, aggregates, and 
 - [Mutant placement](mutant-placement.md), for how the instrumenter places each switch.
 - [ERB templates](erb.md), for how ERB templates get mutants and how their instrumented text loads.
 - [Coverage](coverage.md), for how the dry run maps tests to mutants.
+- [Test runners](test-runners.md), for how each test runner adapter lists and runs a project's tests.
 - [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), for why mutants are compiled into the code once and switched on at run time.
 - [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md), for why every mutant runs in a clean process.
 - [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md), for why the processes that load the project's code load only the runtime.

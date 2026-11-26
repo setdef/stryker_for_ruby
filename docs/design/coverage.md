@@ -9,7 +9,7 @@ Every switch in the instrumented code records a hit when it runs in the dry run:
 The recorder has two kinds of bucket:
 
 - **The static bucket** is current from the moment the runtime loads until the first test starts, and again between tests. Hits recorded while the project's code and tests load land here. A hit made while a file loads inside a test lands here too, as [Static hits inside a test](#static-hits-inside-a-test) specifies.
-- **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's. A test that starts again, as a retry through `minitest-retry` or `rspec-retry` starts it, adds to the bucket it already has, because every attempt reached those mutants.
+- **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's. A test that starts again, as a retry through `minitest-retry` or `rspec-retry` starts it, adds to the bucket it already has, because every attempt reached those mutants. On Minitest 6, `minitest-retry` runs every attempt between one start and one finish, so its attempts share one bucket that way too ([Test runners](test-runners.md#retries)).
 
 The recorder takes a lock around every change to its buckets and every read of them, so a test's threads can record hits while the test runner adapter starts and ends tests.
 

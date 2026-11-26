@@ -1,0 +1,145 @@
+module Stryker
+  module TestRunners
+    # The `Stryker::_TestRunner` adapter for Minitest 6. It loads a
+    # project's test helper and test files into the process it runs in,
+    # lists the tests they define, and runs a chosen set of them one at a
+    # time, as [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/test-runners.md#minitest)
+    # specifies.
+    #
+    # It loads only the standard library until `load_tests` runs. Minitest
+    # comes from the project: the adapter refers to Minitest only after the
+    # project's files have loaded it, so it uses whatever release of
+    # Minitest 6 the project's bundle has.
+    #
+    # Each test's ID is its class's name and its method's name, as Minitest
+    # prints a test in its output, such as `"Shop::DiscountTest#test_rate"`.
+    # A test in a `describe` block has the block's name as its class's name,
+    # such as `"Shop::Discount#test_0001_applies the rate"`.
+    #
+    # `load_tests` changes the process for good:
+    #
+    # - It puts each of `libs` on `$LOAD_PATH`, as `rake test` does.
+    # - It takes every test class out of Minitest's list of classes to run,
+    #   so the block that `minitest/autorun` registers with `at_exit` runs no
+    #   test when the process exits normally. That block still prints
+    #   Minitest's summary of a run of 0 tests to standard output.
+    # - It sets `Minitest.seed` to 0 when the project set none, because
+    #   `Minitest.run`, which sets it otherwise, never runs.
+    #
+    # Each test runs as Minitest runs a class's tests with `--include`, by
+    # `Minitest::Runnable.run_suite` with a filter that matches only that
+    # test's method, so the hooks that a plugin or the project adds to a
+    # class's run, its test's run, or a test's setup all run. A class that
+    # calls `parallelize_me!` runs its test at once, in its turn, in the
+    # thread that called `run`.
+    #
+    # A test's result comes from every result that Minitest records while
+    # it runs:
+    #
+    # - `"failed"` when any of them failed or raised, including a hook that
+    #   runs around the whole class, such as minitest-hooks' `before_all`.
+    #   The message holds each one as Minitest prints it.
+    # - `"skipped"` when the test skipped, as Minitest counts it from the
+    #   test's first failure, and when Minitest ran nothing for it, as for a
+    #   test of a class that calls `abstract_test_case!`.
+    # - `"passed"` otherwise.
+    #
+    # An exception that Minitest lets through, such as SystemExit from a
+    # test that calls `exit`, leaves `run` at once, after the observer heard
+    # the test start and before it hears the test finish.
+    #
+    # ## Examples
+    #
+    # A project with Minitest's usual layout, run from its root:
+    #
+    # ```ruby
+    # runner = Stryker::TestRunners::MinitestRunner.new(Dir.pwd)
+    # runner.load_tests.map(&:id)
+    # # => ["Shop::CartTest#test_total", "Shop::DiscountTest#test_rate"]
+    # ```
+    #
+    # A project that keeps its tests in `spec/` and its helper there:
+    #
+    # ```ruby
+    # Stryker::TestRunners::MinitestRunner.new(Dir.pwd, helper: "spec/spec_helper.rb", files: ["spec/**/*_spec.rb"], libs: %w[lib spec])
+    # ```
+    #
+    # Running two tests, stopping at the first failure:
+    #
+    # ```ruby
+    # results = runner.run(["Shop::DiscountTest#test_rate", "Shop::CartTest#test_total"], bail: true, observer: observer)
+    # results.map(&:status)
+    # # => ["failed"]
+    # ```
+    class MinitestRunner
+      # The test helper's default path, from the project's root.
+      HELPER: String
+
+      # The default patterns of the test files, from the project's root:
+      # Minitest::TestTask's defaults.
+      FILES: Array[String]
+
+      # The default folders to put on `$LOAD_PATH`, from the project's root:
+      # Minitest::TestTask's defaults.
+      LIBS: Array[String]
+
+      # Builds the adapter for the project at `root`. Loads nothing.
+      #
+      # - `root`: String, the project's root folder.
+      # - `helper`: String, the test helper's path from `root`, which
+      #   `load_tests` loads first when the file exists. `HELPER` by default.
+      # - `files`: Array of String, glob patterns from `root` that match
+      #   the test files. `FILES` by default.
+      # - `libs`: Array of String, folders from `root` to put on
+      #   `$LOAD_PATH`. `LIBS` by default.
+      def initialize: (String root, ?helper: String, ?files: Array[String], ?libs: Array[String]) -> void
+
+      # Puts `libs` on `$LOAD_PATH`, then requires the helper and each test
+      # file in the order of their paths, and returns every test of every
+      # class in Minitest's list, in the order the classes were defined,
+      # each class's tests sorted by name. Runs no test. Loads the files the
+      # first time only, and returns the same tests every time after.
+      #
+      # Each test's file is its method's file from the project's root, or
+      # its whole path when it is outside the root, or nil when Ruby gives
+      # no file for the method. Its location is nil, because Ruby gives a
+      # method's first line and no end.
+      #
+      # Raises NameError naming `Minitest` when the files never load
+      # Minitest. Raises Stryker::UnsupportedError, naming the tests, when a
+      # test class with tests has no name, or when two tests have the same
+      # ID, because an ID must stand for one test in every process.
+      def load_tests: () -> Array[Test]
+
+      # Runs the tests with `test_ids`, in that order, one at a time, as
+      # `Stryker::_TestRunner#run` says, and returns their results. Each
+      # result's time is the monotonic clock's, in milliseconds, from just
+      # after the observer hears the test start to when Minitest finishes
+      # it. Loads the tests first when `load_tests` never did.
+      #
+      # - `test_ids`: Array of String, the IDs of the tests to run.
+      # - `bail`: true to stop after the first failing test.
+      # - `observer`: Stryker::_TestObserver, told when each test starts and
+      #   finishes.
+      def run: (Array[String] test_ids, bail: bool, observer: _TestObserver) -> Array[TestResult]
+
+      private
+
+      # The status of a result that stops a run, by `bail`: `"failed"`, or
+      # none.
+      STOPPING_STATUS: Hash[bool, String?]
+
+      @root: Root
+      @helper: String
+      @files: Array[String]
+      @libs: Array[String]
+      @catalog: Catalog?
+
+      def catalog: () -> Catalog
+
+      def load_catalog: () -> Catalog
+
+      def paths: () -> Array[String]
+    end
+  end
+end

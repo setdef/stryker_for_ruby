@@ -196,7 +196,7 @@ For each runtime mutant run, the parent:
 The parent keeps up to `concurrency` children running at once. When a child runs past the run's time limit, the parent kills it, and the run's result is a timeout, which the parent relays like any other result.
 
 > [!WARNING]
-> The child must end with `exit!`, never `exit`. A forked child inherits the parent's `at_exit` handlers, and `exit` runs them. `minitest/autorun` registers one that runs the test suite, so a child that calls `exit` runs every test again with the mutant still active.
+> The child must end with `exit!`, never `exit`. A forked child inherits the parent's `at_exit` handlers, and `exit` runs them, the project's own included, with the mutant still active. `minitest/autorun` registers one that runs every test class in Minitest's list. The Minitest adapter empties that list when it loads the tests ([Test runners](test-runners.md#why-the-adapter-empties-minitests-list-of-classes)), so that handler runs no test, though it still prints Minitest's report of a run of 0 tests.
 
 `exit!` also skips flushing Ruby's write buffers. A pipe's write end from `IO.pipe` is in sync mode, so a write reaches the pipe at once and survives `exit!`. A child must not turn sync mode off on it, or its result is lost.
 

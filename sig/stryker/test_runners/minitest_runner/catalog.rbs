@@ -1,0 +1,65 @@
+module Stryker
+  module TestRunners
+    class MinitestRunner
+      # The tests that the Minitest adapter took from Minitest, by ID: one
+      # `Stryker::TestRunners::MinitestRunner::RunnableMethod` for each
+      # method name that a test class's `runnable_methods` returns. It keeps no
+      # class without such a method, such as `Minitest::Test` itself.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # root = Stryker::TestRunners::MinitestRunner::Root.new(Dir.pwd)
+      # catalog = Stryker::TestRunners::MinitestRunner::Catalog.new([Shop::DiscountTest], root)
+      # catalog.tests.map(&:id)
+      # # => ["Shop::DiscountTest#test_bulk_rate", "Shop::DiscountTest#test_rate"]
+      # catalog.runnable_methods(["Shop::DiscountTest#test_rate"]).first.test.file
+      # # => "test/shop/discount_test.rb"
+      # ```
+      class Catalog
+        # Takes every class out of `Minitest::Runnable.runnables`, which
+        # leaves that list empty, sets `Minitest.seed` to 0 when it is nil,
+        # and returns the catalog of the classes. Raises what `new` raises,
+        # after the list is empty.
+        #
+        # - `root`: Stryker::TestRunners::MinitestRunner::Root, the
+        #   project's root.
+        def self.take: (Root root) -> Catalog
+
+        # Builds the catalog of `classes`, with each test's file from
+        # `root`. Raises Stryker::UnsupportedError when a class with tests
+        # has no name, or when two tests have the same ID.
+        #
+        # - `classes`: Array of Minitest::Runnable subclasses.
+        # - `root`: Stryker::TestRunners::MinitestRunner::Root, the
+        #   project's root.
+        def initialize: (Array[singleton(::Minitest::Runnable)] classes, Root root) -> void
+
+        # Every test, in the order of the classes, each class's sorted by
+        # name.
+        def tests: () -> Array[Test]
+
+        # The tests with `ids`, in the same order. Raises ArgumentError,
+        # naming the first ID that no test has.
+        #
+        # - `ids`: Array of String, the tests' IDs.
+        def runnable_methods: (Array[String] ids) -> Array[RunnableMethod]
+
+        private
+
+        # The message for a test class with tests and no name.
+        ANONYMOUS: String
+
+        # The message for two tests with the same ID.
+        TWICE: String
+
+        @root: Root
+        @methods: Hash[String, RunnableMethod]
+
+        def add: (singleton(::Minitest::Runnable) klass) -> void
+
+        def add_method: (singleton(::Minitest::Runnable) klass, String id, String name) -> RunnableMethod
+      end
+    end
+  end
+end

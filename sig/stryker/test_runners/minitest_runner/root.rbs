@@ -1,0 +1,51 @@
+module Stryker
+  module TestRunners
+    class MinitestRunner
+      # A project's root folder, and the paths of the project's files
+      # relative to it.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # root = Stryker::TestRunners::MinitestRunner::Root.new("/work/shop")
+      # root.expand("test/test_helper.rb")
+      # # => "/work/shop/test/test_helper.rb"
+      # root.relative("/work/shop/test/cart_test.rb")
+      # # => "test/cart_test.rb"
+      # root.relative("/gems/shared/examples.rb")
+      # # => "/gems/shared/examples.rb"
+      # ```
+      class Root
+        # Builds the root at `path`, expanded. Reads nothing from the disk.
+        #
+        # - `path`: String, the root folder.
+        def initialize: (String path) -> void
+
+        # `path` expanded from the root; an absolute `path` as it is.
+        #
+        # - `path`: String, a path from the root.
+        def expand: (String path) -> String
+
+        # The whole path of each file under the root that one of `patterns`
+        # matches, in the order Dir.glob gives them.
+        #
+        # - `patterns`: Array of String, glob patterns from the root.
+        def files: (Array[String] patterns) -> Array[String]
+
+        # `path` from the root, when it begins with the root's path or the
+        # root's real path, with every symbolic link resolved; otherwise
+        # `path` as it is. The first call reads the root's real path.
+        #
+        # - `path`: String, a whole path.
+        def relative: (String path) -> String
+
+        private
+
+        @path: String
+        @prefixes: Array[String]?
+
+        def prefixes: () -> Array[String]
+      end
+    end
+  end
+end

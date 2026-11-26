@@ -1,0 +1,108 @@
+module Stryker
+  module Testing
+    # The tests that every adapter of the `Stryker::_TestRunner` port
+    # passes. Include it in a Minitest test class, and define the two
+    # methods of `Stryker::Testing::_TestRunnerHost` there: one that returns
+    # the adapter, and one that gives the IDs of the sample suite's tests.
+    #
+    # The sample suite is a suite of four tests, written for the adapter's
+    # framework, one for each role in `ROLES`. Each test first calls
+    # `Stryker::Testing::SampleRuns.ran` with its role, so the contract can
+    # tell which tests really ran, and in what order. Then:
+    #
+    # | Role | What the test does after `ran` |
+    # | - | - |
+    # | `:passes` | Passes. |
+    # | `:fails` | Fails an assertion whose message is `FAILURE`. |
+    # | `:errors` | Raises an error whose message is `ERROR`, outside any assertion. |
+    # | `:skips` | Skips. |
+    #
+    # The contract checks that `load_tests` lists every sample test and
+    # runs none, and that `run` runs each chosen test exactly once, in
+    # order, runs no other test, tells the observer before and after each
+    # test, gives each the right status and message, stops after the first
+    # failure when `bail` is true, and refuses an unknown ID before it runs
+    # anything. A test that never runs but counts as passed would make a
+    # mutant survive that a test would have killed, so most checks count
+    # the sample suite's calls to `ran`, not only the results.
+    #
+    # Its tests come in four modules, which it includes:
+    # `Stryker::Testing::TestRunnerContract::Listing`, `Running`, `Results`,
+    # and `Bail`.
+    #
+    # The contract runs the sample suite in the test process, so the
+    # adapter loads the suite there once, and the suite's tests stay
+    # defined there.
+    #
+    # ## Examples
+    #
+    # A Minitest adapter's contract test, with the sample suite in
+    # `test/fixtures/sample/test/sample_test.rb`:
+    #
+    # ```ruby
+    # require "stryker/testing"
+    #
+    # class SampleTest < Minitest::Test
+    #   def test_passes
+    #     Stryker::Testing::SampleRuns.ran(:passes)
+    #   end
+    #
+    #   def test_fails
+    #     Stryker::Testing::SampleRuns.ran(:fails)
+    #     flunk(Stryker::Testing::TestRunnerContract::FAILURE)
+    #   end
+    #
+    #   def test_errors
+    #     Stryker::Testing::SampleRuns.ran(:errors)
+    #     raise(Stryker::Testing::TestRunnerContract::ERROR)
+    #   end
+    #
+    #   def test_skips
+    #     Stryker::Testing::SampleRuns.ran(:skips)
+    #     skip
+    #   end
+    # end
+    # ```
+    #
+    # ```ruby
+    # require "stryker/testing"
+    #
+    # class MyRunnerContractTest < Minitest::Test
+    #   include Stryker::Testing::TestRunnerContract
+    #
+    #   RUNNER = MyRunner.new("test/fixtures/sample")
+    #
+    #   def runner_under_test
+    #     RUNNER
+    #   end
+    #
+    #   def sample_test_ids
+    #     Stryker::Testing::TestRunnerContract::ROLES.to_h { |role| [role, "SampleTest#test_#{role}"] }
+    #   end
+    # end
+    # ```
+    #
+    # > [!WARNING]
+    # > Name neither method with a `test_` prefix. Minitest runs every
+    # > public method whose name starts with `test_` as a test.
+    module TestRunnerContract : ::Minitest::Test, _TestRunnerHost
+      # The message of the assertion that the `:fails` sample test fails.
+      FAILURE: String
+
+      # The message of the error that the `:errors` sample test raises.
+      ERROR: String
+
+      # The sample suite's roles: `:passes`, `:fails`, `:errors`, and
+      # `:skips`.
+      ROLES: Array[Symbol]
+
+      include Listing
+
+      include Running
+
+      include Results
+
+      include Bail
+    end
+  end
+end

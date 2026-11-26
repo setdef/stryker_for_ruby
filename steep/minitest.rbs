@@ -1,0 +1,10 @@
+# RBS's signatures for Minitest are Minitest 5's. Minitest 6 renamed
+# Runnable.run, which ran a class's suite, to Runnable.run_suite, and
+# Runnable.run_one_method, which ran one method, to Runnable.run. These cover
+# the two calls the Minitest adapter makes.
+class Minitest::Runnable
+  def self.run_suite: (untyped reporter, ?Hash[Symbol, untyped] options) -> untyped
+
+  def self.run: (singleton(Minitest::Runnable) klass, String method_name, untyped reporter) -> untyped
+              | ...
+end

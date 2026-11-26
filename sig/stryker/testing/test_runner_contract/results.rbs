@@ -1,0 +1,26 @@
+module Stryker
+  module Testing
+    module TestRunnerContract
+      # The contract's tests of each result's status, message, and time.
+      module Results : ::Minitest::Test, _TestRunnerHost
+        include Sample
+
+        # The `:passes` test passes, with no message and a time of 0 or more.
+        def test_a_passing_test_passes_with_no_message_and_its_time: () -> void
+
+        # The `:fails` test fails, and its message holds `FAILURE`.
+        def test_a_failed_assertion_fails_with_its_message: () -> void
+
+        # The `:errors` test fails, and its message holds `ERROR`.
+        def test_an_error_raised_outside_an_assertion_fails_with_its_message: () -> void
+
+        # The `:skips` test is skipped, with no message.
+        def test_a_skipped_test_is_skipped_with_no_message: () -> void
+
+        private
+
+        def assert_fails_with: (Symbol role, String message) -> void
+      end
+    end
+  end
+end

@@ -1,0 +1,21 @@
+module Stryker
+  module Testing
+    module TestRunnerContract
+      # What the contract's tests share: clearing
+      # `Stryker::Testing::SampleRuns` before each test, and running sample
+      # tests by their roles.
+      module Sample : ::Minitest::Test, _TestRunnerHost
+        # Clears the recorded roles before each test.
+        def setup: () -> void
+
+        private
+
+        def ids: (*Symbol roles) -> Array[String]
+
+        def loaded_runner: () -> _TestRunner
+
+        def run_roles: (*Symbol roles, bail: bool) -> Array[TestResult]
+      end
+    end
+  end
+end
