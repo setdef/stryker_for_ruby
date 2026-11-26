@@ -7,5 +7,5 @@ Why the design is the way it is, where that rests on an architecture decision, i
 Start with the architecture page, which lists every part and links to the page for each.
 
 - [Architecture](architecture.md): the pipeline of a run, the ports and their adapters, the values and events that pass between the parts, and where each responsibility lives.
-- [Loading and isolation](loading-and-isolation.md): the `load_iseq` hook that serves instrumented code, the check that every instrumented file came through it, and the clean process each mutant run gets on Linux, macOS, and Windows.
+- [Loading and isolation](loading-and-isolation.md): the orchestrator and the project processes, the cache of instrumented source, the `load_iseq` hook that serves it and stays ahead of Bootsnap, the check that every instrumented file came through the hook, and the clean process each mutant run gets on Linux, macOS, and Windows.
 - [Coverage](coverage.md): how the dry run records which tests reach each mutant, how it finds static mutants, and why Ruby's `Coverage` library doesn't do this.

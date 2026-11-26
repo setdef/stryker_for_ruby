@@ -1,6 +1,6 @@
 # Loading and isolation
 
-This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the loader's hook, the check that the hook saw every instrumented file, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
+This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
 
 ## Terms
 
@@ -9,6 +9,23 @@ This page specifies how instrumented code gets into a Ruby process, and how each
 - **Runtime mutant:** a mutant whose switch runs while a test runs. Setting it active at any time before the test starts is enough.
 - **Static mutant:** a mutant whose switch runs only while its file loads, such as one in a constant's value or a class body. It takes effect only when it is active before the file loads. [Coverage](coverage.md) says how **Stryker (for Ruby)** tells the two apart.
 - **Mutant run:** one run of a chosen set of tests with one mutant active.
+- **Orchestrator:** the process that `stryker run` starts.
+- **Project process:** a process that loads the project's code.
+
+## Two kinds of process
+
+The orchestrator never loads the project's code, and a project process never instruments, plans, or reports:
+
+| Process | What it does | The code of **Stryker (for Ruby)** that it loads |
+| - | - | - |
+| The orchestrator | Reads the configuration, finds and parses the files, instruments them, writes the cache, starts the project processes, plans the mutant runs, collects the results, and writes the reports. | The code that instruments, plans, and reports, with Prism and refract. |
+| A project process: the parent that forks, each child forked from it, each process in the Windows pool, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which includes the hook, the switch, and the hit recorder, and which uses nothing outside the standard library. |
+
+Prism and refract load only in the orchestrator.
+
+### The cache
+
+The orchestrator writes the instrumented source of every instrumented file to a cache outside the project: a temporary directory that it makes with `Dir.mktmpdir`, and deletes when the run ends. A project process reads instrumented source only from that cache. Nothing is written into the project.
 
 ## Loading instrumented code
 
@@ -18,30 +35,28 @@ Ruby compiles every file it loads from disk, whether through `require`, `require
 
 The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
 
-- When `path` is an instrumented file's path, it compiles that file's instrumented source with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served `path`, and returns the result.
+- When `path` is an instrumented file's path, it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served `path`, and returns the result.
 - For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
 
 Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: in a probe project that Zeitwerk loads, every instrumented file came through the hook.
 
-The loader installs the hook before any instrumented file loads, in every process that runs tests: the parent that forks, each fresh process, and each process in the Windows pool.
+The loader installs the hook before any of the project's code loads, in every project process: the parent that forks, each fresh process, and each process in the Windows pool.
 
 `load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so **Stryker (for Ruby)** runs on CRuby only.
 
-### The hook and Bootsnap
+### Keeping the hook ahead of Bootsnap
 
-Bootsnap, for its compile cache, prepends a module with a `load_iseq` method to the same singleton class. Of two prepended modules, Ruby calls the one prepended last first, so whichever of the two was installed last answers:
+Bootsnap, for its compile cache, prepends a module with a `load_iseq` method to the same singleton class. Of two prepended modules, Ruby calls the one prepended last first, and Bootsnap's `load_iseq` doesn't call `super`. So a Bootsnap module prepended after the hook would serve the original file, and every mutant in it would have no effect, with no error raised.
 
-| Installed last | What happens to an instrumented file |
-| - | - |
-| The hook | The hook serves the instrumented source. Bootsnap still serves every other file from its cache. |
-| Bootsnap | Bootsnap serves the original file from its cache, and the hook never sees the call, because Bootsnap's `load_iseq` doesn't call `super`. Every mutant in that file has no effect, and no error is raised. |
+A new Rails 8.1 app sets up Bootsnap from its test helper, after the hook: `test/test_helper.rb` requires `config/environment`, which requires `config/application`, which requires `config/boot`, and `config/boot.rb` runs `require "bootsnap/setup"`. Turning Bootsnap's compile cache off doesn't help. Requiring `bootsnap` calls `Bootsnap::CompileCache::ISeq.install!(nil)`, which prepends the module even when `DISABLE_BOOTSNAP` or `DISABLE_BOOTSNAP_COMPILE_CACHE` is set, or when the app calls `Bootsnap.setup(compile_cache_iseq: false)`. With no cache directory, the module's `load_iseq` compiles the original file, and still doesn't call `super`.
 
-> [!WARNING]
-> When Bootsnap installs its compile cache after the hook, the run gives wrong results without any error. Every test passes with every mutant active, so every mutant in an affected file would be reported as surviving. The loading check below exists to catch this.
+So the loader keeps the hook in front. When it installs the hook, before any of the project's code loads, it also overrides `prepend` on `RubyVM::InstructionSequence.singleton_class`. Whenever a module that defines `load_iseq` is prepended after the hook, the override prepends a new copy of the hook module in front of it. The copy is new because Ruby doesn't move a module that is already among the ancestors, so prepending the first hook module again would change nothing.
+
+Bootsnap prepends its module twice, so two copies of the hook stack in front of it. Both behave the same: for an instrumented file, the front copy serves the instrumented source; for any other file, each copy calls `super`, and Bootsnap serves the file from its cache as usual. The override covers any library that prepends `load_iseq` after the hook, not only Bootsnap.
 
 ### The loading check
 
-The dry run, the first run of the whole suite with no mutant active, ends with a check. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
+The loading check catches an instrumented file that loaded without going through the hook, whatever the cause. The dry run, the first run of the whole suite with no mutant active, ends with it. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
 
 An instrumented file that no test loaded isn't an error: no test reaches its mutants, and the plan reports them as having no coverage.
 
@@ -69,7 +84,7 @@ Every mutant run happens in a process that has run no test before it, and that p
 | Runtime | A child forked from a loaded parent | A process from the pool |
 | Static | A fresh process with the mutant ID in its environment | The same |
 
-Each child or process reports back to the orchestrator over a pipe, one JSON object per line. The orchestrator parses that with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests.
+Every result reaches the orchestrator over pipes, one JSON object per line. Each process that reads one parses it with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests.
 
 ### Forking on Linux and macOS
 
@@ -118,4 +133,6 @@ Such a mutant is planned as a runtime mutant, and its run includes only the test
 
 - It doesn't reuse a process for a second run, on any system.
 - It doesn't run on Ruby implementations other than CRuby.
-- It doesn't make Bootsnap and the hook work in either order. When Bootsnap installs its compile cache after the hook, the dry run fails.
+- It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
+- It doesn't load Prism or refract in a project process.
+- It doesn't write instrumented source into the project.
