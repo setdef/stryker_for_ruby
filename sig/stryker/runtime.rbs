@@ -132,10 +132,11 @@ module Stryker
     # raises Ractor::ClosedError.
     #
     # On Ruby 4.0 and later, the default collector is a new collector
-    # Ractor, and Ruby prints its warning that Ractors are experimental
-    # unless the process has already started a Ractor. On Ruby 3.3 and 3.4
-    # there is none, so a hit in another Ractor raises
-    # `Stryker::UnsupportedError`.
+    # Ractor, started as `Stryker::Runtime::Collector.start` describes: Ruby
+    # doesn't print its warning that Ractors are experimental, and the
+    # runtime writes a line to standard error that says why the project's
+    # first Ractor gets none. On Ruby 3.3 and 3.4 there is none, so a hit in
+    # another Ractor raises `Stryker::UnsupportedError`.
     #
     # - `collector`: Stryker::Runtime::Collector, or nil for none. A new
     #   collector Ractor on Ruby 4.0 and later, and nil before, by default.

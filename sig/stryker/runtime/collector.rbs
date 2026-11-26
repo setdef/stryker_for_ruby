@@ -35,11 +35,30 @@ module Stryker
 
       # Starts a collector Ractor, with a reply port that the calling Ractor
       # owns, or returns nil on Ruby 3.3 and 3.4, which have no
-      # `Ractor::Port`. Ruby prints its warning that Ractors are
-      # experimental, unless the process has already started one.
+      # `Ractor::Port`. It starts nothing there, and says nothing.
+      #
+      # Ruby warns that Ractors are experimental for the first Ractor that a
+      # process starts, and never again in that process. A forked child
+      # starts over, and Ruby warns again for its first. The runtime must
+      # not print that warning in the project's place, so it starts the
+      # collector with `warning[:experimental]` off and puts it back as it
+      # was, even when the start fails. The project's first Ractor then gets
+      # no warning from Ruby, so when the warning was on, the runtime writes
+      # `NOTICE` and a newline to `stderr`, before the project's code runs.
+      # When the warning was off, it writes nothing.
       #
       # - `ractor_class`: Ractor, or a stand-in for it in a test.
-      def self.start: (?singleton(Ractor) ractor_class) -> Collector?
+      # - `warning`: Warning, or a stand-in whose `[]` and `[]=` take
+      #   `:experimental`.
+      # - `stderr`: IO, where the notice goes.
+      def self.start: (?singleton(Ractor) ractor_class, ?_Warning warning, ?_Stderr stderr) -> Collector?
+
+      # Starts a Ractor that runs `serve`, with `reply` as its port.
+      private def self.launch: (singleton(Ractor) ractor_class, Ractor::Port[Array[message]] reply) -> Ractor
+
+      # Runs the block with `warning[:experimental]` off, as `start`
+      # describes, and returns the block's value.
+      private def self.quietly: (_Warning warning, _Stderr stderr) { () -> Ractor } -> Ractor
 
       # What the collector Ractor runs: it receives each message from
       # `inbox` and keeps it, and on a drain sends the messages kept since
@@ -51,6 +70,26 @@ module Stryker
       def self.serve: (singleton(Ractor) inbox, Ractor::Port[Array[message]] reply) -> void
 
       DRAIN: :drain
+
+      # The line that `start` writes to standard error when Ruby's warning
+      # that Ractors are experimental was on.
+      NOTICE: String
+
+      # The category of Ruby's warnings that `start` turns off, as `Warning`
+      # has it.
+      interface _Warning
+        # Whether Ruby prints the warnings of `category`.
+        def []: (:experimental category) -> bool
+
+        # Turns the warnings of `category` on or off, and returns `enabled`.
+        def []=: (:experimental category, bool enabled) -> bool
+      end
+
+      # Where `start` writes its notice.
+      interface _Stderr
+        # Writes `line` and a newline.
+        def puts: (String line) -> nil
+      end
 
       private def self.batch: (singleton(Ractor) inbox, Array[message] messages) -> Array[message]
 

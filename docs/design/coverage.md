@@ -124,6 +124,16 @@ A collector that was drained only when each test ends put a hit sent between tes
 
 Sending a hit to the collector costs about 115 to 200 ns. A hit in the main Ractor costs about 30 ns, or 11 ns with YJIT.
 
+#### Ruby's warning that Ractors are experimental
+
+When `Warning[:experimental]` is on, Ruby 4.0 and later print "Ractor API is experimental and may change in future versions of Ruby." for the first Ractor that a process starts. `Ractor.new` checks whether the process is still in single-Ractor mode, and starting a Ractor ends that mode for good. A second `Ractor.new` prints nothing, even after the first Ractor has finished, and `Ractor::Port.new` starts no Ractor and prints nothing. A forked child is in single-Ractor mode again, so Ruby warns again for the child's first Ractor.
+
+So the collector, which starts before the project's code does, takes the warning that the project's first Ractor would have had. The runtime can't keep it for the project, and it must not print Ruby's warning in the project's place. It starts the collector with `Warning[:experimental]` turned off, puts the setting back, and writes one line to standard error, before the project's code runs:
+
+> Stryker (for Ruby) started a Ractor to record hits from your Ractors. Ruby warns that Ractors are experimental only for the first Ractor a process starts, so it won't print that warning for yours.
+
+The runtime writes the line only when the warning was on. Every process that starts a collector writes it, so the dry run's forked child writes it again. On Ruby 3.3 and 3.4 the runtime starts no Ractor, so it writes nothing and the project's first Ractor gets Ruby's warning.
+
 ### Ruby 3.3 and 3.4
 
 On Ruby 3.3 and 3.4, no mechanism that the probes tried records a hit from a non-main Ractor reliably. A send from a thread inside a non-main Ractor hangs. A thread in the main Ractor that reads a port or `Ractor.main` never ran while the test's main thread waited on a Ractor, so no hit arrived. So in the dry run, a switch that runs in a non-main Ractor raises `Stryker::UnsupportedError`, and its message mentions Ruby 4.0. The test fails, the dry run fails, and no mutant runs. The run fails loudly instead of losing hits.
