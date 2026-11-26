@@ -11,3 +11,4 @@ Start with the architecture page, which lists every part and links to the page f
 - [Mutant placement](mutant-placement.md): the text edit each mutator returns, how the instrumenter splices each mutant's switch into the original source and keeps every line where it was, and the kinds of site that hold a switch.
 - [ERB templates](erb.md): which files are templates (names that end in `.erb`), how the extractor finds the Ruby in an ERB template with Erubi's regexp, where mutants go in a template, how the instrumented text reaches Rails, stdlib `ERB`, Erubi, and Tilt, and the templates that load uninstrumented.
 - [Coverage](coverage.md): how the dry run records which tests reach each mutant, how it finds static mutants, how a hit made in a Ractor is recorded, and why Ruby's `Coverage` library doesn't do this.
+- [Ruby 3.3 and 3.4](../older-ruby.md): the versions that aren't supported but aren't blocked, and the problems found on them.

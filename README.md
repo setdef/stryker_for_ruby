@@ -15,7 +15,7 @@ For an introduction to mutation testing and [Stryker Mutator](https://stryker-mu
 
 ## Compatibility
 
-Because [Prism](https://github.com/ruby/prism) only supports parsing Ruby 3.3 and later, **Stryker (for Ruby)** will not add support for older versions of Ruby.
+**Stryker (for Ruby)** supports Ruby 4.0 and later. Ruby 3.3 and 3.4 may work, but they are unsupported, and [the problems found on them](./docs/older-ruby.md) are listed. Because [Prism](https://github.com/ruby/prism) only supports parsing Ruby 3.3 and later, **Stryker (for Ruby)** will not add support for older versions of Ruby.
 
 ## Getting Started
 
