@@ -10,7 +10,7 @@ module Stryker
     # writes exactly as it wrote the node, so a join that changed the code's
     # meaning gives nil. Parsing the joined line in its file keeps what the
     # code around it allows, such as `yield` in a method, `break` and `next`
-    # in a block, and `retry` in a `rescue`, which don't parse on their own.
+    # in a block, and `retry` in a `rescue`, which don't parse alone.
     #
     # ## Examples
     #

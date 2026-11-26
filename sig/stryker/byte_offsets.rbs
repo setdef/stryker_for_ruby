@@ -32,6 +32,6 @@ module Stryker
 
     # Raises ArgumentError with `message`, followed by the size of `text` in
     # bytes.
-    def self.refuse: (String text, String message) -> bot
+    private def self.refuse: (String text, String message) -> bot
   end
 end
