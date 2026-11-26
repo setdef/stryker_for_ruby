@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 
 # Approved `untyped` occurrences in sig/**/*.rbs, each with justification.
-# Currently none: every RBS declaration is fully typed.
+# None are approved: every RBS declaration is fully typed.
