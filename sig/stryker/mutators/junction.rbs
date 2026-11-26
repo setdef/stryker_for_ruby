@@ -1,0 +1,46 @@
+module Stryker
+  module Mutators
+    # An `&&`, `||`, `and`, or `or` that joins two operands: the node that
+    # Prism calls an `AndNode` or an `OrNode`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("a && b").value.statements.body.first
+    # Stryker::Mutators::Junction.of(node).edit({ "&&": "||" }).replacement
+    # # => "a || b"
+    # ```
+    class Junction < Data
+      # The `AndNode` or `OrNode`.
+      attr_reader node: Prism::AndNode | Prism::OrNode
+
+      # Builds the junction.
+      #
+      # - `node`: Prism::AndNode or Prism::OrNode, the node.
+      def self.new: (node: Prism::AndNode | Prism::OrNode) -> instance
+                  | (Prism::AndNode | Prism::OrNode node) -> instance
+
+      # The junction that `node` is, or nil when it isn't an `AndNode` or an
+      # `OrNode`.
+      #
+      # - `node`: Prism::node, the node.
+      def self.of: (Prism::node node) -> Junction?
+
+      # The edit that covers the whole node and replaces its operator with the
+      # one that `swaps` gives, keeping the text around it. When the last of a
+      # chain of `||` becomes `&&`, the edit puts the rest of the chain in
+      # parentheses: `a || b || c` becomes `(a || b) && c`, since `a || b && c`
+      # would mean `a || (b && c)`. Parentheses aren't needed for `&&` in a
+      # chain, for `and` and `or`, which have one level of precedence, or for an
+      # `||` whose left operand isn't an `||`.
+      #
+      # - `swaps`: Hash of Symbol to String, the operator that replaces each
+      #   operator.
+      def edit: (Hash[Symbol, String] swaps) -> Edit
+
+      private def swap: (Hash[Symbol, String] swaps) -> [_Span, String]
+
+      private def grouping: () -> Array[[_Span, String]]
+    end
+  end
+end

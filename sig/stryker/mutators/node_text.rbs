@@ -23,6 +23,12 @@ module Stryker
       #   place of a part of `node` and the text that replaces it. They come
       #   in the order of the source.
       def self.replacing: (Prism::node node, Array[[_Span, String]] changes) -> String
+
+      # The change that puts `node` in parentheses, as a pair for `replacing`:
+      # the node's place, and its source between `(` and `)`.
+      #
+      # - `node`: Prism::node, the node.
+      def self.parenthesized: (Prism::node node) -> [_Span, String]
     end
   end
 end

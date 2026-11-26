@@ -208,6 +208,8 @@ The `<=>` row swaps the operands instead of changing the operator. Ruby orders v
 | `a and b` | `a or b` | A test where one side is truthy and the other falsy. |
 | `a or b` | `a and b` | A test where one side is truthy and the other falsy. |
 
+When the last `||` of a chain such as `a || b || c` becomes `&&`, the replacement is `(a || b) && c`, with the operands before that `||` in parentheses, because `a || b && c` would group the other way. The other three pairs need no parentheses, since each gives a replacement that groups as the original does.
+
 StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"` is the idiom for a default, and it takes the `||` pair.
 
 ### `MethodExpression`

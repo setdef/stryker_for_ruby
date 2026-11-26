@@ -3,6 +3,10 @@
 module Stryker
   module Mutators
     module NodeText
+      def self.parenthesized(node)
+        [node.location, "(#{node.slice})"]
+      end
+
       def self.replacing(node, changes)
         source = node.slice
         start = node.location.start_offset
