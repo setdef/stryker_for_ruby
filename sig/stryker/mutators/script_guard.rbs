@@ -1,0 +1,39 @@
+module Stryker
+  module Mutators
+    # The check that a file is the script that runs, `__FILE__ == $0` or
+    # `__FILE__ == $PROGRAM_NAME`, and the nodes whose result it decides. A
+    # mutant that changes whether the check is true, or whether it decides its
+    # condition, runs the file's script code inside the test process, where it
+    # does whatever the script does. A mutator that makes such a mutant leaves
+    # these nodes alone.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("main if __FILE__ == $0").value.statements.body.first
+    # Stryker::Mutators::ScriptGuard.decided_by?(node)
+    # # => true
+    # ```
+    module ScriptGuard
+      # Whether `node` is the check, with any parentheses around it ignored.
+      #
+      # - `node`: Prism::node, the node.
+      def self.check?: (Prism::node node) -> bool
+
+      # Whether the check is the condition or an operand of `node`, with any
+      # parentheses around it ignored: the condition of an `if`, an `unless`, a
+      # `while`, an `until`, or a ternary, an operand of `&&`, `||`, `and`, or
+      # `or`, or the operand of `!` or `not`. The nodes inside the check's
+      # operands and the body of the condition's node aren't decided by it.
+      #
+      # - `node`: Prism::node, the node.
+      def self.decided_by?: (Prism::node node) -> bool
+
+      private def self.deciders: (Prism::node node) -> Array[Prism::node]
+
+      private def self.negated: (Prism::node node) -> Array[Prism::node]
+
+      private def self.unparenthesized: (Prism::node node) -> Prism::node
+    end
+  end
+end

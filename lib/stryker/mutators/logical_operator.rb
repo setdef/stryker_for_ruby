@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "junction"
+require_relative "script_guard"
 
 module Stryker
   module Mutators
@@ -13,6 +14,8 @@ module Stryker
       end
 
       def self.edits(node, _ancestors)
+        return [] if ScriptGuard.decided_by?(node)
+
         [Junction.of(node)&.edit(SWAPS)].compact
       end
     end

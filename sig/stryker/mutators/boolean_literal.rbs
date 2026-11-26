@@ -16,6 +16,11 @@ module Stryker
     # its whole body, so the report's replacement is `if` or `while`. A `!`
     # written as a method call, `x.!`, gets no mutant. `nil` isn't a boolean
     # literal, and no mutator makes `nil` from `false`.
+    #
+    # It makes no mutant of an `unless`, an `until`, or a negation whose
+    # condition or operand is the check that a file is the script,
+    # `__FILE__ == $0`, as in `unless __FILE__ == $0`: the mutant would run the
+    # script's code inside the test process.
     # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#booleanliteral)
     # specifies the pairs and the reasons.
     #

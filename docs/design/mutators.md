@@ -74,6 +74,8 @@ Ruby's `**`, `<<`, and `>>` get no mutant, as in StrykerJS. `<<` is mostly appen
 
 `unless c` is `if !c`, and `until c` is `while !c`, so turning `unless` into `if` is the same mutation as StrykerJS's removal of the `!` in `if (!c)`. An `unless` hides its negation in the keyword, which makes a compound condition such as `unless paid && shipped` easy to get backwards, and a survivor shows that no test takes the other branch. A project that turns off `BooleanLiteral` turns these off too. Because the node spans its whole body, the edit for these two covers only the keyword, and the report's `replacement` is `if` or `while`.
 
+An `unless`, an `until`, or a negation whose condition or operand is the comparison `__FILE__ == $0` gets no mutant, as in `unless __FILE__ == $0` and `!(__FILE__ == $0)` (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
 ### `EqualityOperator`
 
 It mutates a `CallNode` named `<`, `<=`, `>`, `>=`, `==`, `!=`, or `<=>`, written as an operator between a receiver and one argument.
@@ -110,6 +112,8 @@ A swapped operand that is a bare `defined?`, `not`, `and`, or `or` goes in paren
 | `a or b` | `a and b` | A test where one side is truthy and the other falsy. |
 
 When the last `||` of a chain such as `a || b || c` becomes `&&`, the replacement is `(a || b) && c`, with the operands before that `||` in parentheses, because `a || b && c` would group the other way. The other three pairs need no parentheses, since each gives a replacement that groups as the original does.
+
+An operator that has the comparison `__FILE__ == $0` as an operand gets no mutant, as in `__FILE__ == $0 and main` (see [Sites that get no mutant](#sites-that-get-no-mutant)).
 
 StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"` is the idiom for a default, and it takes the `||` pair.
 
@@ -160,6 +164,7 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 | Comments, magic comments such as `# frozen_string_literal: true`, and the data after `__END__` | They aren't code that Prism gives a mutator. The instrumenter keeps them byte for byte ([Splicing into the original bytes](mutant-placement.md#splicing-into-the-original-bytes)). |
 | `freeze` | No mutator removes a call to `freeze`, or the `-` or `+` before a string literal. The receiver behaves the same unfrozen unless some code changes it, and only a test that expects `FrozenError` would kill the mutant, so it would survive on every frozen constant. |
 | The comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round, wherever it stands | A mutant that makes the comparison true, such as `true` in its place or `!=` for `==`, runs the file's script code inside the test process, where it does whatever the script does. The comparison gets none whether it is a condition or a value. |
+| A node whose condition or operand is that comparison, with any parentheses around the comparison ignored: an `if`, `unless`, `elsif`, `while`, `until`, or ternary condition, an operand of `&&`, `\|\|`, `and`, or `or`, and the operand of `!` or `not` | A mutator that changes such a node makes no mutant of it, `LogicalOperator` and `BooleanLiteral` among them, because each mutant would change whether the comparison decides, and run the file's script code inside the test process, as `true` in place of the comparison does. `__FILE__ == $0 and main`, `unless __FILE__ == $0`, and `!(__FILE__ == $0)` get none, as the bare `if __FILE__ == $0` gets none. The mutants inside such a node, in its body or in an operand that isn't the comparison, are made. |
 | A call with no receiver to `sig` with a block, and everything inside the block | It is a [Sorbet](https://sorbet.org) type signature, the counterpart of the type annotations that StrykerJS never mutates. The block is out of every mutator's reach, so no mutator makes a mutant of a call, a literal, or an operator inside it. |
 | Code inside `BEGIN { }`, and a mutant with no one-line form | See [Mutant placement](mutant-placement.md#sites-that-get-no-mutant). |
 

@@ -3,6 +3,7 @@
 require "prism"
 require_relative "prefix"
 require_relative "respelling"
+require_relative "script_guard"
 
 module Stryker
   module Mutators
@@ -23,6 +24,8 @@ module Stryker
       end
 
       def self.edits(node, _ancestors)
+        return [] if ScriptGuard.decided_by?(node)
+
         Respelling.edits(node, RESPELLINGS) + Prefix.edits(node, NEGATIONS) { false }
       end
     end

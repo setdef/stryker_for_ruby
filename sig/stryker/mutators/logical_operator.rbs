@@ -13,6 +13,10 @@ module Stryker
     # The edit covers the whole node, and the text between the operands stays
     # as it was. A chain of `||` needs one more step: `a || b || c` becomes
     # `(a || b) && c`, which keeps the grouping of the original.
+    #
+    # It makes no mutant of an operator that has the check that a file is the
+    # script, `__FILE__ == $0`, as an operand, as in `__FILE__ == $0 and main`:
+    # the mutant would run the script's code inside the test process.
     # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#logicaloperator)
     # specifies the pairs.
     #
