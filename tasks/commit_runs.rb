@@ -53,7 +53,7 @@ class CommitRuns
     jobs(run).any? { |job| names.include?(job["name"]) && job["conclusion"] == "failure" && job["run_attempt"] > 1 }
   end
 
-  # The Verdict for +commit+'s newest run that was not cancelled, by the jobs
+  # The Verdict for +commit+'s newest run that was not canceled, by the jobs
   # named +failed+. With +only+, the runs counted are those on branches that
   # start with it.
   def verdict(commit, failed, only: nil)

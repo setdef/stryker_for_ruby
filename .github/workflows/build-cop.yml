@@ -18,7 +18,7 @@
 # trunk's first-parent commits from git, and works on the oldest red run on
 # trunk after its newest green one, a run that passed every job. The jobs that
 # failed in that run are the failure. Each commit between the green run's head
-# and the red run's head is judged by its newest run that was not cancelled,
+# and the red run's head is judged by its newest run that was not canceled,
 # on any branch, by those jobs alone: bad when one of them failed, good when
 # all passed, and not known otherwise. Each step is one of:
 #
@@ -78,7 +78,7 @@
 #
 # It does not cover: a run that ci.yml's concurrency replaced while waiting
 # has no run of its own, and the cop judges that commit by a run on a bisect
-# branch; a run red only for cancelled jobs, which no commit failed; and a
+# branch; a run red only for canceled jobs, which no commit failed; and a
 # failure that passes on every second attempt, which reverts nothing and ends
 # when a later run on trunk passes.
 name: Build cop

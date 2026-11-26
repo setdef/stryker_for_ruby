@@ -77,7 +77,7 @@ bisect)
   # The branch says the run was asked for. GitHub may list that run only
   # minutes later, and until it does the next call finds no run of the commit
   # and says to bisect it again; dispatching again would run it twice. A
-  # branch whose runs were all cancelled, by a person or by the next
+  # branch whose runs were all canceled, by a person or by the next
   # dispatch, asks again.
   if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
     any=$(gh run list --workflow ci.yml --branch "$branch" --event workflow_dispatch --json databaseId --jq length)

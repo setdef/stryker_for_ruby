@@ -85,7 +85,7 @@ class BuildCop
     failed = @runs.failed_jobs(red)
     return narrow(commits, failed) unless failed.empty?
 
-    BuildCopStep.of(:none, "run #{red['id']} has no job that failed, only ones cancelled or no runner took")
+    BuildCopStep.of(:none, "run #{red['id']} has no job that failed, only ones canceled or no runner took")
   end
 
   # Bisects +commits+, oldest first, the first green and the last red, by
