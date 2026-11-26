@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+# The Gemfile with Prism pinned to 1.7.0, the lowest release the gemspec
+# allows. CI runs the tests with it, through BUNDLE_GEMFILE, to check the
+# Prism APIs the gem calls on that release.
+eval_gemfile("../Gemfile")
+
+# The lowest Prism release the gemspec allows.
+gem "prism", "1.7.0"
