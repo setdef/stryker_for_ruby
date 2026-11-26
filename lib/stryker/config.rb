@@ -29,6 +29,7 @@ module Stryker
       "mutator.excludedMutations": :excluded_mutations,
       incremental: :incremental,
     }.transform_keys(&:to_s).freeze
+    NO_EXCLUDED_MUTATIONS = Array(nil).freeze
     DEFAULTS = {
       reporters: %w[clear-text progress html].freeze,
       threshold_high: 80,
@@ -36,11 +37,10 @@ module Stryker
       threshold_break: nil,
       timeout_ms: 5000,
       timeout_factor: 1.5,
-      # Steep infers no element type for an empty array literal.
-      excluded_mutations: Array.new(0, "").freeze,
+      excluded_mutations: NO_EXCLUDED_MUTATIONS,
       incremental: false,
     }.freeze
-    public_constant(:OPTIONS, :DEFAULTS)
+    public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS)
 
     def self.default_concurrency(processors = Etc.nprocessors)
       return processors if processors <= 4

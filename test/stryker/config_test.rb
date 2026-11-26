@@ -100,4 +100,10 @@ class ConfigTest < Minitest::Test
 
     assert_equal([true, true], defaults.map(&:frozen?))
   end
+
+  def test_the_default_of_excluded_mutations_is_the_frozen_empty_list_that_the_config_names
+    assert_same(Stryker::Config::NO_EXCLUDED_MUTATIONS, Stryker::Config::DEFAULTS[:excluded_mutations])
+    assert_empty(Stryker::Config::NO_EXCLUDED_MUTATIONS)
+    assert_predicate(Stryker::Config::NO_EXCLUDED_MUTATIONS, :frozen?)
+  end
 end

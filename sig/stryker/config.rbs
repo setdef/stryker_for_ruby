@@ -34,6 +34,12 @@ module Stryker
   # # => 70
   # ```
   class Config < Data
+    # The empty list of mutator names, frozen. It is the default of
+    # `excluded_mutations`. The source writes it as `Array(nil)`, because Steep
+    # wants a type annotation on `[]` and RuboCop refuses the trailing comment
+    # that would hold one.
+    NO_EXCLUDED_MUTATIONS: Array[String]
+
     # The default of each field that has one, other than `concurrency`, whose
     # default depends on the machine. Every field has one except `mutate` and
     # `test_runner`. Each array is frozen.
