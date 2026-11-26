@@ -68,6 +68,14 @@ module Stryker
       # - `collector`: Stryker::Runtime::Collector, or nil.
       def collect_from: (Collector? collector) -> nil
 
+      # Moves every message that the collector holds into the current bucket,
+      # and returns nil. It does nothing when the recorder has no collector.
+      # The process that forks calls it before each fork, so the hits that
+      # Ractors made while it loaded are in the static bucket that its
+      # children inherit. Call it only from the Ractor that started the
+      # collector, in the process that started it.
+      def drain: () -> nil
+
       # Drains the collector into the current bucket, then makes `test`'s
       # bucket current. Returns nil. Raises RuntimeError, naming both tests,
       # when another test is running.
@@ -110,8 +118,6 @@ module Stryker
       @collector: Collector?
 
       def overlap: (Object test) -> String
-
-      def drain: () -> void
     end
   end
 end

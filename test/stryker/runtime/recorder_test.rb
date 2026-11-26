@@ -82,6 +82,16 @@ class RecorderTest < Minitest::Test
     assert_equal([{ first: Set[7] }, Set["lib/invoice.rb"]], [recorder.tests, recorder.loaded])
   end
 
+  def test_it_drains_the_collector_when_asked
+    recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
+
+    assert_equal([nil, Set[7], Set.new], [recorder.drain, recorder.static, recorder.loaded])
+  end
+
+  def test_asked_to_drain_with_no_collector_it_does_nothing
+    assert_nil(recorder.drain)
+  end
+
   def test_it_drains_the_collector_before_a_test_starts_into_the_static_bucket
     recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
     during(:first) { nil }

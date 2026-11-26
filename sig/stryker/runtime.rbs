@@ -18,12 +18,24 @@ module Stryker
   # and [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md)
   # specify. It loads nothing outside the standard library.
   #
-  # `require "stryker/runtime"` sets `Stryker::Active` from the environment,
-  # before any of the project's code loads. When `STRYKER_ACTIVE_MUTANT`
-  # holds a mutant's ID, as it does in the fresh process of a static mutant's
-  # run, that mutant is active from the start, so its switch takes the
-  # mutated branch while its file loads. Otherwise no mutant is active, and
-  # every hit goes to `Stryker::Runtime::RECORDER`.
+  # `require "stryker/runtime"` starts the runtime from the environment
+  # with `Stryker::Runtime.start`, before any of the project's code loads.
+  # When `STRYKER_ACTIVE_MUTANT` holds a mutant's ID, as it does in the
+  # fresh process of a static mutant's run, that mutant is active from the
+  # start, so its switch takes the mutated branch while its file loads.
+  # Otherwise no mutant is active, and every hit goes to
+  # `Stryker::Runtime::RECORDER`.
+  #
+  # With no mutant active, on Ruby 4.0 and later, the runtime also starts a
+  # collector Ractor as it loads, so a hit from another Ractor reaches the
+  # recorder in every process that records hits, as
+  # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+  # specifies. A process that forks calls `Stryker::Runtime::RECORDER.drain`
+  # before each fork, so the hits that Ractors made while it loaded are in
+  # the static bucket that its children inherit. A forked child can't use the
+  # collector that its parent started: the dry run's child calls
+  # `Stryker::Runtime.start_dry_run`, and a mutant run's child calls
+  # `Stryker::Runtime.activate_mutant`.
   #
   # ## Examples
   #
@@ -71,8 +83,8 @@ module Stryker
       def load_began: (String path) -> nil
     end
 
-    # Where `Stryker::Runtime.holder_for` reads the active mutant's ID.
-    # `ENV` is one, and so is a Hash of Strings.
+    # Where `Stryker::Runtime.start` reads the active mutant's ID. `ENV` is
+    # one, and so is a Hash of Strings.
     interface _Environment
       # The value of the variable `name`, or `default` when it isn't set.
       def fetch: (String name, nil default) -> String?
@@ -86,20 +98,25 @@ module Stryker
     # goes here.
     RECORDER: Recorder
 
-    # The holder for the mutant whose ID is in `environment`'s
-    # `STRYKER_ACTIVE_MUTANT`, or a Stryker::Runtime::Recording when that
-    # variable isn't set. Raises ArgumentError when the variable holds
-    # anything other than a decimal integer, an empty string included.
+    # Starts the runtime from `environment`, as `require "stryker/runtime"`
+    # does with `ENV`. When its `STRYKER_ACTIVE_MUTANT` holds a mutant's ID,
+    # that mutant becomes active, as `Stryker::Runtime.activate_mutant` does
+    # it. Otherwise no mutant is active, and the process records hits, as
+    # `Stryker::Runtime.start_dry_run` does it, with a new collector. Raises
+    # ArgumentError when the variable holds anything other than a decimal
+    # integer, an empty string included.
     #
     # - `environment`: Stryker::Runtime::_Environment, such as `ENV`.
+    # - `namespace`: Module, where the constant is. Stryker by default.
+    # - `recorder`: Stryker::Runtime::Recorder. `Stryker::Runtime::RECORDER`
+    #   by default.
     #
     # ```ruby
-    # Stryker::Runtime.holder_for({ "STRYKER_ACTIVE_MUTANT" => "7" })
+    # Stryker::Runtime.start({ "STRYKER_ACTIVE_MUTANT" => "7" })
+    # Stryker::Active
     # # => #<data Stryker::Runtime::ActiveMutant id=7>
-    # Stryker::Runtime.holder_for({})
-    # # => #<data Stryker::Runtime::Recording collector=nil>
     # ```
-    def self.holder_for: (_Environment environment) -> _Holder
+    def self.start: (?_Environment environment, ?Module namespace, ?Recorder recorder) -> _Holder
 
     # Makes `holder` shareable and sets `namespace`'s `Active` constant to
     # it, replacing the holder there. It removes the old constant first, so
@@ -117,19 +134,24 @@ module Stryker
 
     # Makes the mutant with `id` active, as `Stryker::Runtime.activate`
     # does with a Stryker::Runtime::ActiveMutant. A forked child or a pool
-    # process calls it before its run.
+    # process calls it before its run. It also makes `recorder` drain
+    # nothing from then on, because a forked child can't use the collector
+    # that its parent started, and a mutant run records no hit.
     #
     # - `id`: Integer, the mutant's ID.
     # - `namespace`: Module, where the constant is. Stryker by default.
-    def self.activate_mutant: (Integer id, ?Module namespace) -> _Holder
+    # - `recorder`: Stryker::Runtime::Recorder. `Stryker::Runtime::RECORDER`
+    #   by default.
+    def self.activate_mutant: (Integer id, ?Module namespace, ?Recorder recorder) -> _Holder
 
-    # Readies the process for the dry run: it hands `collector` to
+    # Readies the process to record hits: it hands `collector` to
     # `recorder`, which drains it when each test starts and ends, and makes
     # `namespace`'s `Active` a Stryker::Runtime::Recording that sends to
-    # `collector` each hit made in a Ractor other than the main one. The
-    # dry run's forked child calls it before its first test, after the
+    # `collector` each hit made in a Ractor other than the main one.
+    # `Stryker::Runtime.start` calls it when no mutant is active. The dry
+    # run's forked child calls it again before its first test, after the
     # fork: in a forked child, a send to a Ractor that the parent started
-    # raises Ractor::ClosedError.
+    # raises Ractor::ClosedError. Each call starts a new collector Ractor.
     #
     # On Ruby 4.0 and later, the default collector is a new collector
     # Ractor, started as `Stryker::Runtime::Collector.start` describes: Ruby

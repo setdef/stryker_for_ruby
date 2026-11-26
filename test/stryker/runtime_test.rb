@@ -15,32 +15,21 @@ class RuntimeTest < Minitest::Test
       messages
     end
   end
-  private_constant(:Drained)
+  # A collector in a forked child that its parent started, which can't be
+  # drained.
+  Closed = Class.new do
+    def drain
+      raise(Ractor::ClosedError)
+    end
+  end
+  private_constant(:Closed, :Drained)
 
   def namespace
     @namespace ||= Module.new
   end
 
-  # An environment with STRYKER_ACTIVE_MUTANT set to +value+. ENV has only
-  # string keys, which RuboCop's Style/StringHashKeys forbids in a literal.
-  def environment(value)
-    { STRYKER_ACTIVE_MUTANT: value }.transform_keys(&:to_s)
-  end
-
-  def test_an_id_in_the_environment_makes_that_mutant_active
-    holder = Stryker::Runtime.holder_for(environment("7"))
-
-    assert_equal(Stryker::Runtime::ActiveMutant.new(id: 7), holder)
-  end
-
-  def test_no_id_in_the_environment_makes_a_holder_that_records
-    assert_equal(Stryker::Runtime::Recording.new, Stryker::Runtime.holder_for({}))
-  end
-
-  def test_an_id_that_is_not_a_decimal_integer_raises
-    ["", "seven", "0x7"].each do |value|
-      assert_raises(ArgumentError) { Stryker::Runtime.holder_for(environment(value)) }
-    end
+  def recorder
+    @recorder ||= Stryker::Runtime::Recorder.new
   end
 
   def test_activate_sets_the_constant_to_a_shareable_holder
@@ -58,6 +47,13 @@ class RuntimeTest < Minitest::Test
     Stryker::Runtime.activate_mutant(9, namespace)
 
     assert_equal(9, namespace::Active.id)
+  end
+
+  def test_a_mutant_made_active_leaves_the_collector_its_parent_started
+    recorder.collect_from(Closed.new)
+    Stryker::Runtime.activate_mutant(9, namespace, recorder)
+
+    assert_nil(recorder.test_started(:first))
   end
 
   def test_activate_returns_the_holder

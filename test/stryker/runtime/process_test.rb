@@ -16,7 +16,24 @@ class ProcessTest < Minitest::Test
   READ = <<~RUBY
     p [Stryker::Active.id, take_value(Ractor.new { Stryker::Active.id })]
   RUBY
-  private_constant(:READ)
+
+  # Makes a hit in another Ractor, and prints what the recorder holds once it
+  # has drained, or the error that the hit raised.
+  LOADED_HIT = <<~RUBY
+    require "stryker/runtime"
+    begin
+      p take_value(Ractor.new { Stryker::Active.hit(7) })
+      Stryker::Runtime::RECORDER.drain
+      p Stryker::Runtime::RECORDER.static.to_a
+    rescue Ractor::RemoteError => error
+      p [error.cause.class, error.cause.message.include?("Ruby 4.0"), Stryker::Runtime::RECORDER.static.to_a]
+    end
+  RUBY
+  private_constant(:LOADED_HIT, :READ)
+
+  def ports?
+    Ractor.const_defined?(:Port, false)
+  end
 
   def test_an_id_in_the_environment_is_active_from_the_start
     output, = run_program("require 'stryker/runtime'\n#{READ}", { STRYKER_ACTIVE_MUTANT: "7" })
@@ -48,17 +65,13 @@ class ProcessTest < Minitest::Test
     assert_equal("nil\n#{Set[7, 8].inspect}\n", run_program(program).first)
   end
 
-  def test_a_hit_in_another_ractor_with_no_collector_fails_the_ractor
-    program = <<~RUBY
-      require "stryker/runtime"
-      begin
-        take_value(Ractor.new { Stryker::Active.hit(7) })
-      rescue Ractor::RemoteError => error
-        p [error.cause.class, error.cause.message.include?("Ruby 4.0"), Stryker::Runtime::RECORDER.static.to_a]
-      end
-    RUBY
+  # A process that records hits starts a collector as it loads, on Ruby 4.0
+  # and later, so a hit from another Ractor reaches the recorder when it
+  # drains. Before 4.0 nothing records such a hit, so the hit raises.
+  def test_a_hit_in_another_ractor_while_the_runtime_loads_reaches_the_recorder_or_raises
+    expected = ports? ? "nil\n[7]\n" : "[Stryker::UnsupportedError, true, []]\n"
 
-    assert_equal("[Stryker::UnsupportedError, true, []]\n", run_program(program).first)
+    assert_equal(expected, run_program(LOADED_HIT).first)
   end
 
   def test_a_hit_in_another_ractor_in_a_mutant_run_records_nothing

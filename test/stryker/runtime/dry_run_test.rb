@@ -61,11 +61,10 @@ class DryRunTest < Minitest::Test
     p [recorder.static.to_a.sort, recorder.tests[:first].to_a.sort, recorder.loaded.superset?(Set[invoice_path, tax_path])]
   RUBY
 
-  # Starts the dry run, and then the project's first Ractor, as the project's
-  # code would.
+  # Loads the runtime, and then starts the project's first Ractor, as the
+  # project's code would.
   FIRST_RACTOR = <<~RUBY
     require "stryker/runtime"
-    Stryker::Runtime.start_dry_run
     take_value(Ractor.new { 1 })
     p Warning[:experimental]
   RUBY
@@ -99,7 +98,7 @@ class DryRunTest < Minitest::Test
     assert_equal(["true\n", ports? ? [notice] : [:ruby_warning]], [output, errors])
   end
 
-  def test_the_dry_run_says_nothing_when_the_warning_is_off
+  def test_the_runtime_says_nothing_when_the_warning_is_off
     output, errors = run_program(FIRST_RACTOR, { RUBYOPT: "-W:no-experimental" }, all: true)
 
     assert_equal(["false\n", []], [output, errors])

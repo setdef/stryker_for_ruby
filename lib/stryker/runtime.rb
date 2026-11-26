@@ -11,9 +11,9 @@ module Stryker
     RECORDER = Recorder.new
     public_constant(:RECORDER, :VARIABLE)
 
-    def self.holder_for(environment)
+    def self.start(environment = ENV, namespace = Stryker, recorder = RECORDER)
       id = environment.fetch(VARIABLE, nil)
-      id ? ActiveMutant.new(id: Integer(id, 10)) : Recording.new
+      id ? activate_mutant(Integer(id, 10), namespace, recorder) : start_dry_run(Collector.start, namespace, recorder)
     end
 
     def self.activate(holder, namespace = Stryker)
@@ -26,7 +26,10 @@ module Stryker
       namespace.const_set(:Active, shareable)
     end
 
-    def self.activate_mutant(id, namespace = Stryker)
+    def self.activate_mutant(id, namespace = Stryker, recorder = RECORDER)
+      # A forked child can't drain the collector its parent started, and a
+      # mutant run uses no hits.
+      recorder.collect_from(nil)
       activate(ActiveMutant.new(id:), namespace)
     end
 
@@ -35,6 +38,6 @@ module Stryker
       activate(Recording.new(collector:), namespace)
     end
 
-    activate(holder_for(ENV))
+    start
   end
 end

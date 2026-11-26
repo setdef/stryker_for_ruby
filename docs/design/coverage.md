@@ -115,7 +115,9 @@ A hit made in the main Ractor goes straight to the recorder. A hit made in anoth
 
 ### Ruby 4.0 and later
 
-On Ruby 4.0 and later, the runtime starts a collector Ractor for the dry run, and a switch in another Ractor sends each hit to it. The recorder drains the collector when each test starts and when it ends:
+On Ruby 4.0 and later, the runtime starts a collector Ractor in every process that records hits, and a switch in another Ractor sends each hit to it. A process records hits when no mutant is active: the fork parent, which starts its collector as the runtime loads, before the project's code, and the dry run's forked child. A forked child can't use its parent's Ractors, so the dry run's child starts a collector of its own after the fork. A mutant run starts none, and its `hit` returns at once.
+
+The fork parent runs no test, so it drains its collector before each fork, and a hit that a Ractor made while the project loaded is in the static bucket that every child inherits. In the dry run, the recorder drains the collector when each test starts and when it ends:
 
 - A hit sent between tests is drained when the next test starts, before that test's bucket becomes current, so it lands in the static bucket.
 - A hit from a Ractor that finished during a test is drained when the test ends, so it lands in that test's bucket.
@@ -136,7 +138,7 @@ The runtime writes the line only when the warning was on. Every process that sta
 
 ### Ruby 3.3 and 3.4
 
-On Ruby 3.3 and 3.4, no mechanism that the probes tried records a hit from a non-main Ractor reliably. A send from a thread inside a non-main Ractor hangs. A thread in the main Ractor that reads a port or `Ractor.main` never ran while the test's main thread waited on a Ractor, so no hit arrived. So in the dry run, a switch that runs in a non-main Ractor raises `Stryker::UnsupportedError`, and its message mentions Ruby 4.0. The test fails, the dry run fails, and no mutant runs. The run fails loudly instead of losing hits.
+On Ruby 3.3 and 3.4, no mechanism that the probes tried records a hit from a non-main Ractor reliably. A send from a thread inside a non-main Ractor hangs. A thread in the main Ractor that reads a port or `Ractor.main` never ran while the test's main thread waited on a Ractor, so no hit arrived. So in a process that records hits, a switch that runs in a non-main Ractor raises `Stryker::UnsupportedError`, and its message mentions Ruby 4.0. The test fails, the dry run fails, and no mutant runs. The run fails loudly instead of losing hits.
 
 ### A Ractor still running when its test ends
 

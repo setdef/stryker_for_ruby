@@ -33,6 +33,14 @@ module Stryker
         nil
       end
 
+      def drain
+        collector = @collector
+        return unless collector
+
+        collector.drain.each { |message| receive(message) }
+        nil
+      end
+
       def test_started(test)
         # A runner adapter that reports out of order has a fault, and a hit
         # then has no bucket that is certainly its own, so the recorder
@@ -71,13 +79,6 @@ module Stryker
       private def overlap(test)
         "The test runner adapter reported that #{test.inspect} started while #{@runs.key(@current).inspect} " \
           "was still running, so Stryker (for Ruby) can't tell which test a hit belongs to."
-      end
-
-      private def drain
-        collector = @collector
-        return unless collector
-
-        collector.drain.each { |message| receive(message) }
       end
     end
   end
