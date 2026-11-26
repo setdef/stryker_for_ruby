@@ -30,63 +30,6 @@ class ProjectSideTest < Minitest::Test
     end
   end
 
-  def test_forking_forks_a_child_with_a_pipe_of_its_own
-    process = FakeProcess.new
-    pid, reader = Stryker::Isolation::Forking.new(nil, nil, process).start(sample_run)
-
-    assert_equal([FakeProcess::PID, [[:fork]]], [pid, process.calls])
-    assert_kind_of(IO, reader)
-  ensure
-    reader&.close
-  end
-
-  def test_a_forked_child_leads_a_group_changes_its_streams_and_runs_its_run
-    process = FakeProcess.new
-    streams = Calls.new
-    forked_run = Calls.new
-    Stryker::Isolation::Forking.new(streams, forked_run, process).child(sample_run(7), :writer)
-
-    assert_equal([[[:setpgid, 0, 0]], [[7]]], [process.calls, streams.calls])
-    assert_equal([[sample_run(7), :writer]], forked_run.calls)
-  end
-
-  def test_forking_gives_the_end_of_each_childs_standard_error
-    Dir.mktmpdir do |folder|
-      File.binwrite(File.join(folder, "7.err"), "[BUG] crash\n")
-      streams = Stryker::Isolation::ForkedStreams.new(StringIO.new, Stryker::Isolation::OutputFiles.new(folder))
-
-      assert_equal(
-        "[BUG] crash\n",
-        Stryker::Isolation::Forking.new(streams, nil, FakeProcess.new).errors(sample_run(7))
-      )
-    end
-  end
-
-  def test_a_forked_child_closes_the_parents_pipe_and_writes_its_output_to_files_of_its_own
-    Dir.mktmpdir do |folder|
-      results = StringIO.new
-      streams = Stryker::Isolation::ForkedStreams.new(results, Stryker::Isolation::OutputFiles.new(folder))
-      File.open(File::NULL, "w") { |stdout| File.open(File::NULL, "w") { |stderr| crash(streams, stdout, stderr) } }
-
-      assert_equal([true, "[BUG] crash\n"], [results.closed?, streams.tail(7)])
-    end
-  end
-
-  def crash(streams, stdout, stderr)
-    streams.call(7, stdout, stderr)
-    stderr.write("[BUG] crash\n")
-  end
-
-  def test_a_forked_run_makes_its_mutant_active_and_writes_each_test
-    runner = Runner.new
-    runtime = Runtime.new
-    writer = StringIO.new
-    Stryker::Isolation::ForkedRun.new(runner, Finisher.new, runtime).call(sample_run(9), writer)
-
-    assert_equal([9, [[:run, ["SampleTest#test_value"], true]]], [runtime.active, runner.calls])
-    assert_equal(%w[started finished ended], kinds(writer.string))
-  end
-
   def test_a_static_run_loads_the_tests_runs_its_run_and_writes_each_test
     runner, finisher, written = static_run(5)
 
@@ -118,12 +61,6 @@ class ProjectSideTest < Minitest::Test
   end
 
   def test_the_modes_build_from_their_arguments
-    reader, writer = IO.pipe
-    parent = Stryker::Isolation::ForkParent.build(Runner.new, [writer.fileno.to_s, Dir.tmpdir])
-
-    assert_kind_of(Stryker::Isolation::ForkParent, parent)
     assert_kind_of(Stryker::Isolation::StaticRun, Stryker::Isolation::StaticRun.build(Runner.new, %w[0.run 0.results]))
-  ensure
-    [reader, writer].each { |io| io&.close }
   end
 end

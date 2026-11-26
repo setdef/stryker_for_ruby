@@ -24,11 +24,9 @@ module Stryker
     # #     "static", cache_directory, "minitest", "7.run", "7.results"]
     # ```
     module ProjectProcess
-      # What a project process does, by the name of its mode:
-      # `"fork-parent"`, the parent that forks a child for each runtime
-      # mutant's run, and `"static"`, the fresh process of a static
-      # mutant's run.
-      MODES: Hash[String, singleton(ForkParent) | singleton(StaticRun)]
+      # What a project process does, by the name of its mode: `"static"`,
+      # the fresh process of a static mutant's run.
+      MODES: Hash[String, singleton(StaticRun)]
 
       # The test runner adapters, by the name in the `testRunner` option.
       RUNNERS: Hash[String, singleton(TestRunners::MinitestRunner)]
@@ -43,7 +41,7 @@ module Stryker
       # - `argv`: Array of String, `ARGV` by default.
       # - `loader`: `Stryker::Runtime::Loader`, or a stand-in in a test.
       # - `modes`: Hash, `MODES` unless a test passes others.
-      def self.main: (?Array[String] argv, ?singleton(Runtime::Loader) loader, ?Hash[String, singleton(ForkParent) | singleton(StaticRun)] modes) -> void
+      def self.main: (?Array[String] argv, ?singleton(Runtime::Loader) loader, ?Hash[String, singleton(StaticRun)] modes) -> void
     end
   end
 end

@@ -22,45 +22,6 @@ class LaunchTest < Minitest::Test
     [environment, argv, options]
   end
 
-  def test_the_parent_starts_with_no_mutant_active_and_its_results_on_a_descriptor_of_their_own
-    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call("minitest")
-    environment, argv, = spawned
-
-    assert_equal({ Stryker::Isolation::Command::ACTIVE_MUTANT => nil }, environment)
-    assert_equal(%w[fork-parent /cache minitest], argv.last(5).first(3))
-    assert_match(/\A\d+\z/, argv[-2])
-  ensure
-    parent&.stop
-  end
-
-  # Launches the parent with the stand-in, and returns what it was asked to
-  # spawn with, and the parent.
-  def parent_spawned
-    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call("minitest")
-    [*spawned, parent]
-  end
-
-  def test_the_parent_runs_in_the_project_with_its_output_in_files_and_in_a_group_of_its_own
-    _, argv, options, parent = parent_spawned
-
-    assert_equal(Stryker::Isolation::OutputFiles.new(argv.last).paths("parent"), options.values_at(:out, :err))
-    assert_equal(
-      ["/project", Stryker::Isolation::ProcessGroup::SYSTEM.spawn_options],
-      [options[:chdir], options.slice(:pgroup)]
-    )
-  ensure
-    parent&.stop
-  end
-
-  def test_the_parent_gets_its_results_pipe_and_the_orchestrator_closes_its_own_end_of_it
-    _, _, options, parent = parent_spawned
-    output = options.keys.find { |key| key.is_a?(IO) }
-
-    assert_equal([output, true], [options[output], output.closed?])
-  ensure
-    parent&.stop
-  end
-
   # Launches a fresh process of mutant 7's static run with the stand-in, and
   # returns what it was asked to spawn with, the run's file, and the watch.
   def fresh_spawned

@@ -1,9 +1,7 @@
 module Stryker
   # Runs mutant runs, each in a process that ran no test before it. The
-  # adapters in the gem are `Stryker::Isolation::ForkPerRun`, for runtime
-  # mutants on Linux and macOS, and `Stryker::Isolation::FreshProcesses`,
-  # for static mutants on every system. The orchestrator sends each run to
-  # the adapter for its system and its kind of mutant. The contract tests in
+  # adapter in the gem is `Stryker::Isolation::FreshProcesses`, for static
+  # mutants on every system. The contract tests in
   # `Stryker::Testing::IsolationContract` hold every adapter to the same
   # behavior.
   #
@@ -25,8 +23,7 @@ module Stryker
   # end
   # ```
   interface _Isolation
-    # Starts what the runs need, such as the parent that forks, with the
-    # options of `config`: `concurrency` for how many runs go at once, and
+    # Starts what the runs need, with the options of `config`: `concurrency` for how many runs go at once, and
     # `test_runner` for the test framework. Raises
     # `Stryker::Isolation::Error` when it can't.
     def start: (Config config) -> void
@@ -50,9 +47,8 @@ module Stryker
   # Part of it runs in the orchestrator: the adapters, which start the
   # project processes, read what they write, and judge each run. The rest
   # runs in a project process and loads nothing outside the standard
-  # library: the entry point, `Stryker::Isolation::ProjectProcess`, the
-  # loop of the parent that forks, and the code that runs a run's tests and
-  # writes what happens.
+  # library: the entry point, `Stryker::Isolation::ProjectProcess`, and the
+  # code that runs a run's tests and writes what happens.
   module Isolation
     # What `Stryker::Isolation::Finisher` reports to: a writer of lines
     # that writes how the block it ran ended.
