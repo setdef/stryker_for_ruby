@@ -5,29 +5,40 @@ module Stryker
     # refract's converter and formatter write the node as valid Ruby that
     # means what the node means, without comments and with heredocs as string
     # literals. `Stryker::Instrumenter::LineJoin` then joins the lines. The
-    # result counts only when Prism
-    # parses it as one statement that refract writes exactly as it wrote the
-    # node, so a join that changed the code's meaning gives nil.
+    # result counts only when Prism parses the plain mutant with the joined
+    # line in place of the node, and finds there one node that refract
+    # writes exactly as it wrote the node, so a join that changed the code's
+    # meaning gives nil. Parsing the joined line in its file keeps what the
+    # code around it allows, such as `yield` in a method, `break` and `next`
+    # in a block, and `retry` in a `rescue`, which don't parse on their own.
     #
     # ## Examples
     #
     # ```ruby
-    # node = Prism.parse("def total(a, b)\n  a + b\nend\n").value.statements.body.first
-    # Stryker::Instrumenter::OneLine.of(node)
-    # # => "def total(a, b) a.+(b); end"
+    # source = "def g\n  if ready\n    yield\n  end\nend\n"
+    # unchanged = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "None",
+    #                                 start_offset: 0, end_offset: 0, replacement: "")
+    # plain = Stryker::Instrumenter::PlainMutant.of(source, [], unchanged)
+    # node = plain.result.value.statements.body.first.body.body.first
+    # Stryker::Instrumenter::OneLine.of(node, plain)
+    # # => "if ready; yield; end"
     # ```
     module OneLine
       # The code of `node` on one line, as binary, or nil when it has none:
-      # when a line
-      # break is inside a token, such as a regexp written over several lines,
-      # or when the joined line doesn't parse back to the same code.
+      # when a line break is inside a token, such as a regexp written over
+      # several lines, or when the plain mutant with the joined line in
+      # place of `node` doesn't parse back to the same code.
       #
-      # - `node`: Prism::node, the node to write.
-      def self.of: (Prism::node node) -> String?
+      # - `node`: Prism::node, the node to write, a node of `plain`.
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the file that holds
+      #   `node`.
+      def self.of: (Prism::node node, PlainMutant plain) -> String?
 
       private def self.format: (Prism::node node) -> String
 
-      private def self.same?: (String joined, String formatted) -> bool
+      private def self.same?: (Prism::node? found, String formatted) -> bool
+
+      private def self.found_in_place: (Prism::node node, PlainMutant plain, String joined) -> Prism::node?
     end
   end
 end

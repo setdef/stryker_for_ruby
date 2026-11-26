@@ -78,7 +78,7 @@ class InstrumenterSkipsTest < Minitest::Test
   end
 
   def test_a_multi_line_replacement_that_makes_no_one_node_gets_no_switch
-    source = "if c\n  1\nend\n"
+    source = "c = true\nx = if c\n  1\nend\np x\n"
     result = instrument(source, ["if c", "if c then 5 end; if c"], %w[1 2])
 
     assert_equal([[1, :no_one_line_form]], skips(result))

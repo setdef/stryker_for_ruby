@@ -28,7 +28,7 @@ module Stryker
   # - `:no_one_line_form`: the mutant's text spans several lines, and has no
   #   form on one line, as a regexp with a line break inside it, or its plain
   #   mutant parses but has no one node where its switch goes, as when
-  #   `if c` becomes `if c then 5 end; if c`.
+  #   `x = if c` becomes `x = if c then 5 end; if c`.
   # - `:does_not_parse`: the plain mutant, the original file with only the
   #   mutant's edit made, doesn't parse. A run reports such a mutant with the
   #   status `CompileError`.

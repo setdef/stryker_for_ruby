@@ -16,7 +16,6 @@ module Stryker
       def self.at(tree, span)
         tree.breadth_first_search { |node| !CONTAINERS.include?(node.class) && span.same?(node.location) }
       end
-      private_class_method(:at)
     end
   end
 end

@@ -6,18 +6,26 @@ module Stryker
     # which names are local variables.
     module MutatedNode
       # The node that takes up `node`'s range in the plain mutant, as Prism
-      # parses it, or nil when no one node does, as when `if c` becomes
-      # `if c then 5 end; if c`. The range ends as many bytes later as the
-      # plain mutant adds inside `node`. The plain mutant must parse.
+      # parses it, or nil when no one node does, as when `x = if c` becomes
+      # `x = if c then 5 end; if c`. When the edit makes several statements
+      # where a body held only `node`, it is the body's `StatementsNode`. The
+      # range ends as many bytes later as the plain mutant adds inside
+      # `node`. The plain mutant must parse.
       #
       # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant.
       # - `node`: Prism::node, the node in the original file, which holds the
       #   mutant's edit.
       def self.of: (PlainMutant plain, Prism::node node) -> Prism::node?
 
-      CONTAINERS: Array[singleton(Prism::Node)]
+      # The node in `tree` whose range is `span`, the outermost one when
+      # several have it, or nil when none does. A `ProgramNode` with that
+      # range doesn't count, so the result is the statements it holds.
+      #
+      # - `tree`: Prism::node, the node to search, usually a parsed file.
+      # - `span`: Stryker::Instrumenter::Span, the range to find.
+      def self.at: (Prism::node tree, Span span) -> Prism::node?
 
-      private def self.at: (Prism::node tree, Span span) -> Prism::node?
+      CONTAINERS: Array[singleton(Prism::Node)]
     end
   end
 end

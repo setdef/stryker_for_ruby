@@ -1,0 +1,19 @@
+module Stryker
+  class Instrumenter
+    # Puts code in place of a node of the plain mutant, for
+    # `Stryker::Instrumenter::OneLine` to parse a joined line where the
+    # node stands.
+    module InPlace
+      # The plain mutant's source with `text` in place of `node`, and
+      # without the bodies of the heredocs whose openers `node` holds and
+      # that lie below it. `text` holds no opener to read those bodies, which
+      # would stay in the file as code.
+      #
+      # - `node`: Prism::node, a node of the plain mutant.
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant.
+      # - `text`: String, the code that takes the node's place, with no
+      #   heredoc opener.
+      def self.of: (Prism::node node, PlainMutant plain, String text) -> String
+    end
+  end
+end

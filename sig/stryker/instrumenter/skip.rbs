@@ -16,8 +16,8 @@ module Stryker
     #   refract's formatting of it has no form on one line, as a regexp with
     #   a line break inside it. A switch on several lines would move every
     #   line after it. It is also the reason when the plain mutant parses but
-    #   has no one node where the switch goes, as when `if c` becomes
-    #   `if c then 5 end; if c`, so there is no text to put on one line.
+    #   has no one node where the switch goes, as when `x = if c` becomes
+    #   `x = if c then 5 end; if c`, so there is no text to put on one line.
     # - `:does_not_parse`: the plain mutant, the original file with only the
     #   mutant's edit made, doesn't parse, so the mutant is not valid Ruby. A
     #   run reports it with the status `CompileError` of the shared report
