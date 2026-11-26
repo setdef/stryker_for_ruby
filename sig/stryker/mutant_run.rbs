@@ -44,7 +44,7 @@ module Stryker
     # The IDs of the tests whose bucket held the mutant in the dry run. For a
     # runtime mutant, they are its `test_ids`. A static mutant's run holds
     # every test, and this lists only the tests that recorded a hit
-    # ([What the report holds](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#what-the-report-holds)).
+    # ([#27](https://github.com/setdef/stryker_for_ruby/issues/27)).
     attr_reader covered_by: Array[String]
 
     # The run's time limit in milliseconds. A run that passes it has the

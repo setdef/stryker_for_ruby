@@ -6,7 +6,7 @@ module Stryker
   # wrote, and the plan makes one for each mutant that won't run, with the
   # status `NoCoverage`, `Ignored`, or `CompileError`. The JSON reporter turns
   # each into an entry of the report's `files.<path>.mutants`
-  # ([What the report holds](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#what-the-report-holds)).
+  # ([#27](https://github.com/setdef/stryker_for_ruby/issues/27)).
   #
   # A mutant result is a value: two results with equal members are equal. It
   # refuses a `status` that isn't in `Stryker::MutantResult::STATUSES` with
@@ -56,7 +56,7 @@ module Stryker
     attr_reader status: String
 
     # The reason for the status, in the words of
-    # [The status reason](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#the-status-reason),
+    # [#27](https://github.com/setdef/stryker_for_ruby/issues/27),
     # or nil for a status that has none.
     attr_reader status_reason: String?
 

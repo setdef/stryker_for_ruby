@@ -125,7 +125,7 @@ A run's limit is the dry-run time of the tests that reach the mutant, times `tim
 
 The names of the mutators that make no mutant, such as `"BooleanLiteral"`. The default is an empty list.
 
-A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](design/mutators.md#turning-mutators-off) lists the names and says what an excluded mutator's mutants report.
+A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](design/mutators.md#the-catalog) lists the names.
 
 ### `incremental`
 
