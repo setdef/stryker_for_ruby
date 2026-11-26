@@ -35,6 +35,11 @@ Style/EndlessMethod:
   # their documentation comments.
   EnforcedStyle: disallow
 
+Layout/EndOfLine:
+  # .gitattributes checks every file out with LF on every system. RuboCop's
+  # default style, native, expects CRLF on Windows.
+  EnforcedStyle: lf
+
 Style/Copyright:
   # The project's files have no copyright headers, and REUSE.toml covers them,
   # so no Ruby file has a notice for this cop to find.
