@@ -19,7 +19,7 @@ module Stryker
     #
     # ```ruby
     # result = Prism.parse("total = a + b\n")
-    # walk = Stryker::Mutators::Walk.new(file: "lib/invoice.rb", result:, mutators:, first_id: 8)
+    # walk = Stryker::Mutators::Walk.new(file: "lib/invoice.rb", result:, first_id: 8)
     # walk.mutants.map { |mutant| [mutant.id, mutant.mutator_name, mutant.replacement] }
     # # => [[8, "ArithmeticOperator", "a - b"]]
     # ```
@@ -30,9 +30,9 @@ module Stryker
       # - `result`: Prism::ParseResult, the file parsed. A result with errors
       #   raises ArgumentError.
       # - `mutators`: Array of Stryker::_Mutator, the mutators to ask, in the
-      #   order of the catalog's table.
+      #   order of the catalog's table. By default, `Stryker::Mutators::ALL`.
       # - `first_id`: Integer, the ID of the first mutant.
-      def initialize: (file: String, result: Prism::ParseResult, mutators: Array[_Mutator], ?first_id: Integer) -> void
+      def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?first_id: Integer) -> void
 
       # The file's mutants, in the order above.
       def mutants: () -> Array[Mutant]

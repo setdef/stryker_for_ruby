@@ -1,0 +1,51 @@
+module Stryker
+  module Mutators
+    # Changes an arithmetic operator to the one a programmer could have
+    # written by mistake. It mutates a call named `+`, `-`, `*`, `/`, or `%`
+    # that is written as an operator between a receiver and one argument,
+    # with no `.`, and makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `a + b` | `a - b` |
+    # | `a - b` | `a + b` |
+    # | `a * b` | `a / b` |
+    # | `a / b` | `a * b` |
+    # | `a % b` | `a * b` |
+    #
+    # The edit covers the whole call, and the text between the operands stays
+    # as it was.
+    #
+    # It makes no mutant when either operand is a string literal, a
+    # `StringNode`, an `InterpolatedStringNode`, or an `XStringNode`, because
+    # in `"=" * 40`, `"%.2f" % total`, and `names * ", "`, the operator
+    # repeats, formats, or joins, and a mutant raises `NoMethodError` at the
+    # first test that runs it. Ruby's `**`, `<<`, and `>>` get no mutant.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#arithmeticoperator)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # call = Prism.parse("total = a + b").value.statements.body.first.value
+    # Stryker::Mutators::ArithmeticOperator.new.edits(call, [])
+    # # => [#<data Stryker::Edit start_offset=8, end_offset=13, replacement="a - b">]
+    # ```
+    class ArithmeticOperator
+      # The mutator's name in the report: `"ArithmeticOperator"`.
+      def name: () -> String
+
+      # The edits at `node`: one for the node that is an arithmetic operator
+      # call with no string operand, and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      PAIRS: Hash[Symbol, Array[String]]
+
+      private def pairs: () -> Hash[Symbol, Array[String]]
+    end
+  end
+end

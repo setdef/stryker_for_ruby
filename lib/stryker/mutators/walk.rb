@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../mutators"
 require_relative "candidate"
 require_relative "roster"
 require_relative "traversal"
@@ -7,7 +8,7 @@ require_relative "traversal"
 module Stryker
   module Mutators
     class Walk
-      def initialize(file:, result:, mutators:, first_id: 1)
+      def initialize(file:, result:, mutators: ALL, first_id: 1)
         raise(ArgumentError, "#{file} doesn't parse, so it has no sites") unless result.success?
 
         @tree = result.value

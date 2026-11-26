@@ -1,0 +1,84 @@
+module Stryker
+  module Mutators
+    # A call written as an operator between a receiver and one argument, such
+    # as `a + b`, and not as a method call, such as `a.+(b)`. A mutator that
+    # changes the operator takes its edits from here.
+    #
+    # ## Examples
+    #
+    # The edits that a table of pairs makes of `a + b`, with no operation
+    # skipped:
+    #
+    # ```ruby
+    # call = Prism.parse("a + b").value.statements.body.first
+    # Stryker::Mutators::Operation.edits(call, { "+": %w[-] }) { false }
+    # # => [#<data Stryker::Edit start_offset=0, end_offset=5, replacement="a - b">]
+    # ```
+    class Operation < Data
+      # The call.
+      attr_reader call: Prism::CallNode
+
+      # The call's receiver: the left operand.
+      attr_reader receiver: Prism::node
+
+      # The call's one argument: the right operand.
+      attr_reader argument: Prism::node
+
+      # Where the operator is written.
+      attr_reader operator_loc: Prism::Location
+
+      # Builds the operation.
+      #
+      # - `call`: Prism::CallNode, the call.
+      # - `receiver`: Prism::node, its receiver.
+      # - `argument`: Prism::node, its argument.
+      # - `operator_loc`: Prism::Location, where the operator is written.
+      def self.new: (call: Prism::CallNode, receiver: Prism::node, argument: Prism::node, operator_loc: Prism::Location) -> instance
+                  | (Prism::CallNode call, Prism::node receiver, Prism::node argument, Prism::Location operator_loc) -> instance
+
+      # The operation that `node` is, or nil when it isn't a call named one
+      # of `names` and written as an operator between a receiver and one
+      # argument. A call with a dot, such as `a.+(b)` or `a&.+(b)`, is one
+      # written as a method call, and a prefix operator, such as `-a`, is a
+      # call named `-@`. A call built by hand without its receiver,
+      # argument, or operator isn't one either.
+      #
+      # - `node`: Prism::node, the node.
+      # - `names`: Array of Symbol, the operator names to accept.
+      def self.of: (Prism::node node, Array[Symbol] names) -> Operation?
+
+      # The edits of the mutants that `pairs` lists for `node`: none when
+      # `node` isn't an operation named by one of its keys, or when the block
+      # is true of the operation.
+      #
+      # - `node`: Prism::node, the node.
+      # - `pairs`: Hash of Symbol to Array of String, the operator names and,
+      #   for each, the operators to replace it with, in the order of the
+      #   mutator's table.
+      # - `block`: called with the operation, and true when it makes no mutant.
+      def self.edits: (Prism::node node, Hash[Symbol, Array[String]] pairs) { (Operation) -> boolish } -> Array[Edit]
+
+      # The edits of the mutants that `pairs` lists for this operation, each
+      # covering the whole call with its operator replaced and the text around
+      # it kept, in the order of the table. None when the block is true of the
+      # operation.
+      #
+      # - `pairs`: Hash of Symbol to Array of String, as for `edits`.
+      # - `block`: called with this operation, and true when it makes no
+      #   mutant.
+      def edits: (Hash[Symbol, Array[String]] pairs) { (Operation) -> boolish } -> Array[Edit]
+
+      # The operator's name, such as `:+`.
+      def operator: () -> Symbol
+
+      # Whether either operand is a string literal, as
+      # `Stryker::Mutators::Strings.literal?` defines it. Such an operator
+      # repeats, formats, or joins, as in `"=" * 40`.
+      def string_operand?: () -> bool
+
+      private def with_operator: (String replacement) -> Edit
+
+      private def self.written: (Prism::CallNode call) -> Operation?
+    end
+  end
+end

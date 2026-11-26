@@ -5,5 +5,8 @@ module Stryker
   # `Stryker::_Mutator`, and `Stryker::Mutators::Walk` runs a list of them
   # over a parsed file.
   module Mutators
+    # Every mutator that is built, in the order of the catalog's table. The
+    # order decides which of two identical mutants a walk keeps.
+    ALL: Array[_Mutator]
   end
 end

@@ -1,0 +1,28 @@
+module Stryker
+  module Mutators
+    # Writes the source of a node with some of its parts replaced, which is
+    # what the edit of a mutator holds: a mutant's edit covers the whole node,
+    # so its replacement reads as code by itself.
+    #
+    # ## Examples
+    #
+    # The call `a + b` with its operator changed:
+    #
+    # ```ruby
+    # call = Prism.parse("a + b").value.statements.body.first
+    # Stryker::Mutators::NodeText.replacing(call, [[call.message_loc, "-"]])
+    # # => "a - b"
+    # ```
+    module NodeText
+      # The source of `node` with the text at each of `changes` replaced.
+      # The result is wrong, with no error, when a location lies outside
+      # `node` or two of them overlap.
+      #
+      # - `node`: Prism::node, the node.
+      # - `changes`: Array of pairs of a Stryker::_Span and a String, each the
+      #   place of a part of `node` and the text that replaces it. They come
+      #   in the order of the source.
+      def self.replacing: (Prism::node node, Array[[_Span, String]] changes) -> String
+    end
+  end
+end
