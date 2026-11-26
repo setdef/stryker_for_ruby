@@ -21,7 +21,7 @@ module Stryker
 
       private def self.leaves_pattern?: (Lineage lineage, Prism::node child) -> bool
 
-      private def self.guard?: (Prism::node condition, Prism::node? parent) -> bool
+      private def self.guard?: (Prism::node? parent) -> bool
     end
   end
 end

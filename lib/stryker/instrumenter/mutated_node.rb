@@ -6,7 +6,7 @@ require_relative "span"
 module Stryker
   class Instrumenter
     module MutatedNode
-      CONTAINERS = [Prism::ProgramNode, Prism::StatementsNode].freeze
+      CONTAINERS = [Prism::ProgramNode].freeze
       private_constant(:CONTAINERS)
 
       def self.of(plain, node)

@@ -48,7 +48,7 @@ module Stryker
 
       def heredoc_kept?: () -> bool
 
-      def edited_in_place: () -> String?
+      def edited_in_place: () -> String
 
       def formatted: () -> String?
     end

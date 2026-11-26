@@ -21,15 +21,11 @@ module Stryker
 
       def text
         edited = edited_in_place
-        (edited && on_one_line?(edited)) ? edited : formatted
+        on_one_line?(edited) ? edited : formatted
       end
 
       private def edited_in_place
         location = @node.location
-        # An edit inside a heredoc's body lies outside the node's location,
-        # so only the plain mutant holds the node's text with the edit made.
-        return unless @mutant.inside?(location)
-
         start_offset = location.start_offset
         @mutant.edit(@source.byteslice(start_offset...(location.end_offset)).to_s, start_offset)
       end

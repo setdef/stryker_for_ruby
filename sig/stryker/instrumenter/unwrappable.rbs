@@ -8,8 +8,8 @@ module Stryker
     # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
     # parentheses change what the code means around:
     #
-    # - a regexp with named captures on the left of `=~`, and that `=~`
-    #   call, so the switch goes on the whole match;
+    # - a regexp with named captures on the left of `=~`, so the switch
+    #   goes on the whole match, whose range the `=~` call shares;
     # - `self` as the receiver of a call, an index, or an assignment to
     #   either, such as `self` in `self.x = 1`, since Ruby calls a private
     #   method through a receiver only when the receiver is the keyword
@@ -32,7 +32,7 @@ module Stryker
       # - `grandparent`: Prism::node, its grandparent, or nil.
       def self.at?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
 
-      private def self.matched_with_captures?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+      private def self.matched_with_captures?: (Prism::node node, Prism::node? grandparent) -> bool
 
       private def self.self_receiver?: (Prism::node node, Prism::node? parent) -> bool
 

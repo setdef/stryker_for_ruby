@@ -28,14 +28,14 @@ module Stryker
         node = lineage.node
         case node
         when Prism::PinnedExpressionNode then node.expression.equal?(child)
-        when Prism::IfNode, Prism::UnlessNode then guard?(node, lineage.parent) && node.predicate.equal?(child)
+        when Prism::IfNode, Prism::UnlessNode then guard?(lineage.parent) && node.predicate.equal?(child)
         else false
         end
       end
       private_class_method(:leaves_pattern?)
 
-      def self.guard?(condition, parent)
-        parent.is_a?(Prism::InNode) && parent.pattern.equal?(condition)
+      def self.guard?(parent)
+        parent.is_a?(Prism::InNode)
       end
       private_class_method(:guard?)
     end
