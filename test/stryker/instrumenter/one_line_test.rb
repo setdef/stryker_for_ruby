@@ -29,4 +29,22 @@ class OneLineTest < Minitest::Test
   def test_code_that_joins_into_two_statements_has_no_line
     assert_nil(Stryker::Instrumenter::OneLine.of(node("a\nb\n")))
   end
+
+  def test_code_that_joins_into_no_statement_has_no_line
+    interpolation = node("\"\#{\n  a\n}\"\n").body.first.parts.first
+
+    assert_nil(Stryker::Instrumenter::OneLine.of(interpolation), "The joined line is a comment.")
+  end
+
+  def test_code_that_joins_into_a_line_that_does_not_parse_has_no_line
+    block = node("f {\n  g\n}\n").body.first.block
+
+    assert_nil(Stryker::Instrumenter::OneLine.of(block), "The joined line is a hash that doesn't parse.")
+  end
+
+  def test_code_that_joins_into_a_line_that_refract_formats_another_way_has_no_line
+    # refract adds a pair of parentheses around an endless range each time
+    # it formats one.
+    assert_nil(Stryker::Instrumenter::OneLine.of(node("[\n  s[2..]\n]\n").body.first))
+  end
 end

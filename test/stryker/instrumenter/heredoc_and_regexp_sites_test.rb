@@ -35,6 +35,12 @@ class HeredocAndRegexpSitesTest < Minitest::Test
     assert_site(source, ["f(<<~A,\n  body\nA\n  2)", "nil"], holder: Prism::CallNode)
   end
 
+  def test_a_node_whose_range_spans_a_heredocs_body_replaced_by_text_on_several_lines
+    source = "def f(a, b)\n  [a, b]\nend\nx = f(<<~A,\n  body\nA\n  2)\np x\n"
+
+    assert_site(source, ["f(<<~A,\n  body\nA\n  2)", "[1,\n  2]"], holder: Prism::CallNode)
+  end
+
   def test_a_node_whose_mutant_keeps_a_heredoc_on_the_line
     source = "def f(s, b: 0, c: 0)\n  [s, b, c]\nend\np f(<<~A, b: 2)\n  body\nA\n"
 
@@ -86,7 +92,7 @@ class HeredocAndRegexpSitesTest < Minitest::Test
   end
 
   def test_a_line_of_a_heredocs_body_in_a_method
-    assert_site("def f\n  <<~EOS\n    hello\n  EOS\nend\np f\n", %w[hello hellx], holder: Prism::StringNode)
+    assert_site("def f\n  <<~EOS\n    hello\n  EOS\nend\np f\n", %w[hello goodbye], holder: Prism::StringNode)
   end
 
   def test_a_line_of_the_body_of_the_second_of_two_heredocs_on_a_line

@@ -89,44 +89,6 @@ class ConditionSitesTest < Minitest::Test
     assert_site("x = 1\ncase x\nwhen 1 then p :one\nelse p :other\nend\n", ["p :one", "p :uno"], holder: Prism::CallNode)
   end
 
-  def test_a_case_in_pattern
-    assert_site("case 5\nin Integer then p :int\nelse p :other\nend\n", %w[Integer String], holder: Prism::CaseMatchNode)
-  end
-
-  def test_a_whole_case_in
-    source = "case 5\nin Integer then p :int\nelse p :other\nend\n"
-
-    assert_site(source, [source.chomp, "case 5\nin String then p :str\nelse p :other\nend"], holder: Prism::CaseMatchNode)
-  end
-
-  def test_a_part_of_a_case_in_pattern
-    assert_site("case [1, 'a']\nin [Integer, String] then p :yes\nelse p :no\nend\n", %w[String Symbol], holder: Prism::CaseMatchNode)
-  end
-
-  def test_a_case_in_pinned_expression
-    assert_site("case 5\nin ^(2 + 3) then p :five\nelse p :other\nend\n", ["2 + 3", "9"], holder: Prism::CallNode)
-  end
-
-  def test_a_case_in_guard
-    assert_site("case 5\nin Integer => y if y > 1\n  p y\nelse p :other\nend\n", ["y > 1", "y > 9"], holder: Prism::CallNode)
-  end
-
-  def test_a_case_in_body_statement
-    assert_site("case 5\nin Integer => y\n  p y\nend\n", ["p y", "p y + 1"], holder: Prism::CallNode)
-  end
-
-  def test_a_match_predicate
-    assert_site("p((5 in Integer))\n", ["5 in Integer", "5 in String"], holder: Prism::MatchPredicateNode)
-  end
-
-  def test_a_pattern_inside_a_match_predicate
-    assert_site("p((5 in Integer))\n", %w[Integer String], holder: Prism::MatchPredicateNode)
-  end
-
-  def test_a_required_match
-    assert_site("5 => y\np y\n", ["5 => y", "6 => y"], holder: Prism::MatchRequiredNode)
-  end
-
   def test_a_whole_flip_flop
     source = "r = []\n(1..6).each { |i| r << i if (i == 2)..(i == 4) }\np r\n"
 

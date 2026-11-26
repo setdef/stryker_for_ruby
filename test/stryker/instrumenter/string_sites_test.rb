@@ -41,6 +41,10 @@ class StringSitesTest < Minitest::Test
     assert_site("$x = 1\n$y = 2\np \"\#$x\"\n", ["$x", "$y", 1], holder: Prism::InterpolatedStringNode)
   end
 
+  def test_a_part_of_an_interpolated_command_string
+    assert_site("x = 'a'\np `echo \#{x}b`\n", %w[b c], holder: Prism::CallNode)
+  end
+
   def test_adjacent_string_literals_on_one_line
     assert_site("p(\"a\" \"b\")\n", ["\"a\" \"b\"", "'c'"], holder: Prism::InterpolatedStringNode)
   end
