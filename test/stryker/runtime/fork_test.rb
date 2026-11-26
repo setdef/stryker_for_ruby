@@ -18,12 +18,12 @@ class ForkTest < Minitest::Test
     require "stryker/runtime"
     $stdout.sync = true
     recorder = Stryker::Runtime::RECORDER
-    take_value(Ractor.new { Stryker::Active.hit(1) })
+    Ractor.new { Stryker::Active.hit(1) }.value
     recorder.drain
     pid = fork do
       Stryker::Runtime.start_dry_run
       recorder.test_started(:first)
-      take_value(Ractor.new { Stryker::Active.hit(2) })
+      Ractor.new { Stryker::Active.hit(2) }.value
       recorder.test_finished(:passed)
       $stdout.puts([recorder.static.to_a, recorder.tests[:first].to_a].inspect)
       exit!(0)

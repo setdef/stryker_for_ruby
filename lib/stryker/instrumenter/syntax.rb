@@ -15,9 +15,9 @@ module Stryker
       end
 
       def self.version(ruby_version)
-        # Prism 1.0 accepts only 3.3.0, 3.3.1, and 3.4.0, and later releases
-        # accept any patch level, so the minor version with a patch level of
-        # 0 is the one string that every release that knows the minor accepts.
+        # Prism's syntax depends on the minor version only, and it accepts
+        # any patch level, so the minor version with a patch level of 0
+        # stands for every Ruby of that minor.
         version = "#{ruby_version.split('.').first(2).join('.')}.0"
         Prism.parse("", version:)
         version

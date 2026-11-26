@@ -18,11 +18,11 @@ class DryRunTest < Minitest::Test
   RACTORS = <<~RUBY
     require "stryker/runtime"
     recorder = Stryker::Runtime::RECORDER
-    take_value(Ractor.new { Stryker::Active.hit(1) })
+    Ractor.new { Stryker::Active.hit(1) }.value
     recorder.test_started(:first)
-    take_value(Ractor.new { Stryker::Active.hit(2); Stryker::Active.load_began("/app/lib/invoice.rb") })
+    Ractor.new { Stryker::Active.hit(2); Stryker::Active.load_began("/app/lib/invoice.rb") }.value
     recorder.test_finished(:passed)
-    take_value(Ractor.new { Stryker::Active.hit(3) })
+    Ractor.new { Stryker::Active.hit(3) }.value
     recorder.test_started(:second)
     recorder.test_finished(:passed)
     p [recorder.static.to_a.sort, recorder.tests.transform_values(&:to_a), recorder.loaded.to_a]

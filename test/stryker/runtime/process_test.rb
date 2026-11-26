@@ -14,14 +14,14 @@ class ProcessTest < Minitest::Test
 
   # Reads the active mutant's ID in the main Ractor and in another one.
   READ = <<~RUBY
-    p [Stryker::Active.id, take_value(Ractor.new { Stryker::Active.id })]
+    p [Stryker::Active.id, Ractor.new { Stryker::Active.id }.value]
   RUBY
 
   # Makes a hit in another Ractor, and prints what the recorder holds once it
   # has drained.
   LOADED_HIT = <<~RUBY
     require "stryker/runtime"
-    p take_value(Ractor.new { Stryker::Active.hit(7) })
+    p Ractor.new { Stryker::Active.hit(7) }.value
     Stryker::Runtime::RECORDER.drain
     p Stryker::Runtime::RECORDER.static.to_a
   RUBY
@@ -96,7 +96,7 @@ class ProcessTest < Minitest::Test
   end
 
   def test_a_hit_in_another_ractor_in_a_mutant_run_records_nothing
-    program = "require 'stryker/runtime'\np take_value(Ractor.new { Stryker::Active.hit(7) })"
+    program = "require 'stryker/runtime'\np Ractor.new { Stryker::Active.hit(7) }.value"
 
     assert_equal("nil\n", run_program(program, { STRYKER_ACTIVE_MUTANT: "7" }).first)
   end
@@ -118,7 +118,7 @@ class ProcessTest < Minitest::Test
       def active = ::Stryker::Active.id
       before = active
       Stryker::Runtime.activate_mutant(9)
-      p [before, active, take_value(Ractor.new { ::Stryker::Active.id })]
+      p [before, active, Ractor.new { ::Stryker::Active.id }.value]
     RUBY
 
     assert_equal(["[nil, 9, 9]\n", []], run_program(program))

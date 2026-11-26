@@ -26,7 +26,7 @@ class SyntaxTest < Minitest::Test
   private_constant(:IT, :UNKNOWN_RUBY)
 
   def test_parse_reads_the_syntax_of_the_given_ruby
-    reads = %w[3.3.7 3.4.1].map { |ruby| Stryker::Instrumenter::Syntax.parse(IT, ruby).value.inspect }
+    reads = %w[3.3.7 4.0.2].map { |ruby| Stryker::Instrumenter::Syntax.parse(IT, ruby).value.inspect }
 
     assert_equal([false, true], reads.map { |tree| tree.include?("ItLocalVariableReadNode") })
   end

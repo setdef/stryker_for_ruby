@@ -79,19 +79,12 @@ class SelfReceiverSitesTest < Minitest::Test
   end
 
   def test_an_index_in_a_multiple_assignment
-    # Ruby 3.3 calls a private []= through self in a multiple assignment,
-    # and later versions raise there as well, so the mutant changes what the
-    # program prints only on Ruby 3.3.
+    # Ruby raises for a private []= through self in a multiple assignment,
+    # with or without a mutant, so the program's output can't show a wrapped
+    # self there. The place of the switch can.
     source = program("self[:k], y = 2, 3")
     mutant = site_mutant(source, 1, "self", "C.new")
-    instrumented = Stryker::Instrumenter.instrument(source, [mutant]).source
 
-    assert_switch_wraps(Prism::MultiWriteNode, instrumented, mutant)
-    Dir.mktmpdir do |folder|
-      assert_equal(run_ruby(folder, source), run_ruby(folder, instrumented), "With no mutant active.")
-      plain = run_ruby(folder, plain_mutant(source, mutant, Prism::MultiWriteNode))
-
-      assert_equal(plain, run_ruby(folder, instrumented, 1), "With mutant 1 active.")
-    end
+    assert_switch_wraps(Prism::MultiWriteNode, Stryker::Instrumenter.instrument(source, [mutant]).source, mutant)
   end
 end

@@ -19,7 +19,7 @@ class FirstRactorProcessTest < Minitest::Test
   # put the Ractor on the same line.
   FIRST = <<~RUBY
     %s
-    p take_value(Ractor.new { defined?(Stryker::Active) ? Stryker::Active.hit(7) : nil })
+    p Ractor.new { defined?(Stryker::Active) ? Stryker::Active.hit(7) : nil }.value
   RUBY
 
   # Makes a Ractor in the parent and forks a child that readies a dry run, or
@@ -27,10 +27,10 @@ class FirstRactorProcessTest < Minitest::Test
   FORKED = <<~RUBY
     %s
     $stdout.sync = true
-    take_value(Ractor.new { 1 })
+    Ractor.new { 1 }.value
     pid = fork do
       %s
-      p take_value(Ractor.new { defined?(Stryker::Active) ? Stryker::Active.hit(8) : nil })
+      p Ractor.new { defined?(Stryker::Active) ? Stryker::Active.hit(8) : nil }.value
       exit!(0)
     end
     Process.wait(pid)
@@ -52,7 +52,7 @@ class FirstRactorProcessTest < Minitest::Test
   def test_the_projects_first_ractor_prints_ruby_s_warning_on_its_own_line
     _, errors = run_program(format(FIRST, "require 'stryker/runtime'"), {}, all: true)
 
-    assert_equal([true], errors.map { |line| line.start_with?("-e:3: warning: Ractor API is experimental") })
+    assert_equal([true], errors.map { |line| line.start_with?("-e:2: warning: Ractor API is experimental") })
   end
 
   def test_a_forked_childs_first_ractor_prints_what_it_prints_without_the_runtime

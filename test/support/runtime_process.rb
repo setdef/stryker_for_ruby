@@ -9,15 +9,12 @@ require "rbconfig"
 # the test process as it was.
 module RuntimeProcess
   LIB = File.expand_path("../../lib", __dir__)
-  # Defines take_value, which waits for a Ractor and returns its value: Ruby
-  # 4.0 replaced Ractor#take with Ractor#value.
-  TAKE = "def take_value(ractor) = ractor.respond_to?(:value) ? ractor.value : ractor.take\n"
   # Ruby warns when a program starts its first Ractor.
   EXPERIMENTAL = /warning: Ractor( API)? is experimental/
   # A program that waits for a Ractor that never answers would stop the
   # suite, so it gets this many seconds before it is killed.
   SECONDS = 60
-  private_constant(:EXPERIMENTAL, :LIB, :SECONDS, :TAKE)
+  private_constant(:EXPERIMENTAL, :LIB, :SECONDS)
 
   # What +program+ printed, and each line it wrote to standard error other
   # than Ruby's warning about Ractors, run
@@ -25,7 +22,7 @@ module RuntimeProcess
   # With +all+ set, every line it wrote to standard error.
   def run_program(program, environment = {}, all: false)
     variables = { RUBYOPT: nil, RUBYLIB: nil, STRYKER_ACTIVE_MUTANT: nil, **environment }.transform_keys(&:to_s)
-    Open3.popen3(variables, RbConfig.ruby, "-I", LIB, "-e", "#{TAKE}#{program}") do |input, output, errors, waiter|
+    Open3.popen3(variables, RbConfig.ruby, "-I", LIB, "-e", program) do |input, output, errors, waiter|
       input.close
       finished(waiter)
       lines = errors.read.lines
