@@ -1,0 +1,76 @@
+module Stryker
+  module Runtime
+    # The buckets of a Stryker::Runtime::Recorder: the static bucket, each
+    # test's bucket, and which of them is current. The recorder holds its
+    # lock around every call, so a Buckets itself takes none.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # buckets = Stryker::Runtime::Buckets.new
+    # buckets.record([1])
+    # buckets.start("InvoiceTest#test_total") { nil }
+    # buckets.record([7])
+    # buckets.finish { nil }
+    # buckets.tests
+    # # => {"InvoiceTest#test_total" => #<Set: {7}>}
+    # ```
+    class Buckets
+      # The message of the RuntimeError that `finish` raises when no test is
+      # running.
+      NO_TEST_RUNNING: String
+
+      # Builds the buckets with no hits and no tests.
+      def initialize: () -> void
+
+      # A copy of the static bucket.
+      def static: () -> Set[Integer]
+
+      # A copy of each test's bucket, by test, in the order the tests first
+      # started.
+      def tests: () -> Hash[Object, Set[Integer]]
+
+      # The path of every file whose load began during a test, as a new Set.
+      def loaded: () -> Set[String]
+
+      # Runs the block, then makes `test`'s bucket current: a new one, or
+      # the one it had when it ran before. Returns nil. Raises RuntimeError,
+      # naming both tests, without running the block, when another test is
+      # running.
+      #
+      # - `test`: Object, the test.
+      def start: (Object test) { () -> nil } -> nil
+
+      # Runs the block, then makes the static bucket current. Returns nil.
+      # Raises RuntimeError, without running the block, when no test is
+      # running.
+      def finish: () { () -> nil } -> nil
+
+      # Records a message from a holder: `record` for an Array of IDs, or
+      # `load_began` for a path. Returns nil.
+      #
+      # - `message`: Array of Integer or String.
+      def receive: (message message) -> nil
+
+      # Records a hit for the mutants with `ids` in the current bucket, or in
+      # the static bucket when it is a static hit. Returns nil.
+      #
+      # - `ids`: Array of Integer, the mutants' IDs.
+      def record: (Array[Integer] ids) -> nil
+
+      # Records that the file at `path` began to load, during the current
+      # test. Between tests it records nothing. Returns nil.
+      #
+      # - `path`: String, the file's path.
+      def load_began: (String path) -> nil
+
+      private
+
+      @static: Set[Integer]
+      @runs: Hash[Object, TestRun]
+      @current: TestRun?
+
+      def overlap: (Object test) -> String
+    end
+  end
+end

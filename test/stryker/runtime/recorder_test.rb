@@ -40,9 +40,9 @@ class RecorderTest < Minitest::Test
 
   def test_hits_before_any_test_land_in_the_static_bucket
     recorder.record([7, 8])
-    recorder.record([8])
+    recorder.record([9])
 
-    assert_equal([Set[7, 8], {}], buckets)
+    assert_equal([Set[7, 8, 9], {}], buckets)
   end
 
   def test_hits_during_a_test_land_in_that_tests_bucket
@@ -60,11 +60,12 @@ class RecorderTest < Minitest::Test
   end
 
   def test_the_buckets_it_returns_are_copies
-    during(:first) { recorder.load_began("lib/invoice.rb") }
+    recorder.record([7])
+    during(:first) { [[8], "lib/invoice.rb"].each { |message| recorder.receive(message) } }
     static, tests, loaded = everything
     [static, tests[:first], loaded].each(&:clear)
 
-    assert_equal([Set.new, { first: Set.new }, Set["lib/invoice.rb"]], everything)
+    assert_equal([Set[7], { first: Set[8] }, Set["lib/invoice.rb"]], everything)
   end
 
   def test_it_lists_every_file_whose_load_began_during_a_test
@@ -135,12 +136,5 @@ class RecorderTest < Minitest::Test
     during(:first) { nil }
 
     assert_raises(RuntimeError) { recorder.test_finished(:passed) }
-  end
-
-  def test_a_test_may_start_again_after_it_finished
-    during(:first) { recorder.record([7]) }
-    during(:first) { recorder.record([8]) }
-
-    assert_equal([Set.new, { first: Set[8] }], buckets)
   end
 end

@@ -56,6 +56,16 @@ class RuntimeTest < Minitest::Test
     assert_nil(recorder.test_started(:first))
   end
 
+  # Under Stryker, a top-level Active of the project's would be inherited
+  # the same way, and the holder must not replace it.
+  def test_activate_leaves_an_inherited_holder_alone
+    parent = Class.new { const_set(:Active, :inherited) }
+    namespace = Class.new(parent)
+    Stryker::Runtime.activate_mutant(9, namespace)
+
+    assert_equal([9, :inherited], [namespace::Active.id, parent::Active])
+  end
+
   def test_activate_returns_the_holder
     holder = Stryker::Runtime.activate_mutant(9, namespace)
 

@@ -8,7 +8,9 @@ module Stryker
     # a hit is static, and lands in the static bucket instead, as
     # [Static hits inside a test](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#static-hits-inside-a-test)
     # specifies. The stack check runs only after a file has begun to load,
-    # for the next hit of each mutant after each load.
+    # for the next hit of each mutant on each thread after each load. A hit
+    # on one thread doesn't spare another thread's hit its check, because
+    # only the thread that loads the file has its top-level frame.
     #
     # ## Examples
     #
@@ -50,9 +52,11 @@ module Stryker
       @hits: Set[Integer]
       @loads: Set[String]
       @frame_paths: Set[String]
-      @checked: Set[Integer]
+      @checked: ObjectSpace::WeakKeyMap[Thread, Set[Integer]]
 
       def bucket_for: (Array[Integer] ids, Set[Integer] static) -> Set[Integer]
+
+      def check_due?: (Array[Integer] ids) -> bool
     end
   end
 end

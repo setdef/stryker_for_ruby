@@ -1,31 +1,26 @@
 # frozen_string_literal: true
 
-require_relative "test_run"
+require_relative "buckets"
 
 module Stryker
   module Runtime
     class Recorder
-      NO_TEST_RUNNING = "The test runner adapter reported that a test finished while no test was running, " \
-        "so Stryker (for Ruby) can't tell which test a hit belongs to."
-      public_constant(:NO_TEST_RUNNING)
-
       def initialize
-        @static = Set.new
-        @runs = {}
-        @current = nil
+        @lock = Mutex.new
+        @buckets = Buckets.new
         @collector = nil
       end
 
       def static
-        @static.dup
+        @lock.synchronize { @buckets.static }
       end
 
       def tests
-        @runs.transform_values(&:hits)
+        @lock.synchronize { @buckets.tests }
       end
 
       def loaded
-        @runs.each_value.map(&:loads).reduce(Set.new, :merge)
+        @lock.synchronize { @buckets.loaded }
       end
 
       def collect_from(collector)
@@ -34,51 +29,37 @@ module Stryker
       end
 
       def drain
-        collector = @collector
-        return unless collector
-
-        collector.drain.each { |message| receive(message) }
-        nil
+        @lock.synchronize { drain_held }
       end
 
       def test_started(test)
-        # A runner adapter that reports out of order has a fault, and a hit
-        # then has no bucket that is certainly its own, so the recorder
-        # raises instead of guessing.
-        raise(overlap(test)) if @current
-
         # A hit sent from another Ractor before this test started lands in
         # the static bucket, not in this test's.
-        drain
-        @current = @runs[test] = TestRun.new
-        nil
+        @lock.synchronize { @buckets.start(test) { drain_held } }
       end
 
       def test_finished(_result)
-        raise(NO_TEST_RUNNING) unless @current
-
-        drain
-        @current = nil
+        @lock.synchronize { @buckets.finish { drain_held } }
       end
 
       def receive(message)
-        message.is_a?(String) ? load_began(message) : record(message)
+        @lock.synchronize { @buckets.receive(message) }
       end
 
       def record(ids)
-        run = @current
-        run ? run.record(ids, @static) : @static.merge(ids)
-        nil
+        @lock.synchronize { @buckets.record(ids) }
       end
 
       def load_began(path)
-        @current&.load_began(path)
-        nil
+        @lock.synchronize { @buckets.load_began(path) }
       end
 
-      private def overlap(test)
-        "The test runner adapter reported that #{test.inspect} started while #{@runs.key(@current).inspect} " \
-          "was still running, so Stryker (for Ruby) can't tell which test a hit belongs to."
+      private def drain_held
+        collector = @collector
+        return unless collector
+
+        collector.drain.each { |message| @buckets.receive(message) }
+        nil
       end
     end
   end

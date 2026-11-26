@@ -9,7 +9,7 @@ module Stryker
         @hits = Set.new
         @loads = Set.new
         @frame_paths = Set.new
-        @checked = Set.new
+        @checked = ObjectSpace::WeakKeyMap.new
       end
 
       def hits
@@ -33,13 +33,22 @@ module Stryker
       end
 
       private def bucket_for(ids, static)
+        return @hits unless check_due?(ids)
+
+        Stack.loading?(@frame_paths) ? static : @hits
+      end
+
+      private def check_due?(ids)
         # A mutant that this test reached first, and that a file reached
         # later while it loaded, is static, so each load clears the IDs
-        # already checked.
-        return @hits if @loads.empty? || ids.all? { |id| @checked.include?(id) }
+        # already checked. Each thread has its own, because another thread's
+        # stack never holds the loading file's top-level frame. The map
+        # holds its threads weakly, so a finished test keeps none alive.
+        return false if @loads.empty?
 
-        @checked.merge(ids)
-        Stack.loading?(@frame_paths) ? static : @hits
+        checked = (@checked[Thread.current] ||= Set.new)
+        before = checked.size
+        checked.merge(ids).size > before
       end
     end
   end

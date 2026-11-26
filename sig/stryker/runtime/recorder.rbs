@@ -21,7 +21,13 @@ module Stryker
     # ends lands in whatever bucket is current at the next drain.
     #
     # A test's identity is the object passed to `test_started`. A test
-    # started a second time, after it finished, gets a new, empty bucket.
+    # started again after it finished, as a retry through `minitest-retry`
+    # or `rspec-retry` starts it, adds to the bucket it already has: every
+    # attempt reached those mutants.
+    #
+    # Every method may be called from any thread of the main Ractor. The
+    # recorder holds a lock while it changes a bucket or reads one, and each
+    # reader returns a copy made under the lock.
     #
     # The test runner adapter reports tests one at a time. A `test_started`
     # while a test is running, and a `test_finished` while none is, raise
@@ -42,10 +48,6 @@ module Stryker
     # # => {"InvoiceTest#test_total" => #<Set: {7, 8}>}
     # ```
     class Recorder
-      # The message of the RuntimeError that `test_finished` raises when no
-      # test is running.
-      NO_TEST_RUNNING: String
-
       # Builds a recorder with no hits, no tests, and no collector.
       def initialize: () -> void
 
@@ -77,8 +79,9 @@ module Stryker
       def drain: () -> nil
 
       # Drains the collector into the current bucket, then makes `test`'s
-      # bucket current. Returns nil. Raises RuntimeError, naming both tests,
-      # when another test is running.
+      # bucket current, a new one, or the one it had when it ran before.
+      # Returns nil. Raises RuntimeError, naming both tests, when another
+      # test is running.
       #
       # - `test`: Object, the test, as the test runner adapter gives it.
       def test_started: (Object test) -> nil
@@ -112,12 +115,11 @@ module Stryker
 
       private
 
-      @static: Set[Integer]
-      @runs: Hash[Object, TestRun]
-      @current: TestRun?
+      @lock: Thread::Mutex
+      @buckets: Buckets
       @collector: Collector?
 
-      def overlap: (Object test) -> String
+      def drain_held: () -> nil
     end
   end
 end

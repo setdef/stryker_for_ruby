@@ -9,7 +9,9 @@ Every switch in the instrumented code records a hit when it runs in the dry run:
 The recorder has two kinds of bucket:
 
 - **The static bucket** is current from the moment the runtime loads until the first test starts, and again between tests. Hits recorded while the project's code and tests load land here. A hit made while a file loads inside a test lands here too, as [Static hits inside a test](#static-hits-inside-a-test) specifies.
-- **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's.
+- **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's. A test that starts again, as a retry through `minitest-retry` or `rspec-retry` starts it, adds to the bucket it already has, because every attempt reached those mutants.
+
+The recorder takes a lock around every change to its buckets and every read of them, so a test's own threads can record hits while the test runner adapter starts and ends tests.
 
 [What a hit costs](#what-a-hit-costs) gives the cost of a hit and of reading the active mutant's ID.
 
@@ -87,7 +89,9 @@ A class or module body, and a block that runs while the file loads, have the top
 
 The check runs only after a file has begun to load during the current test. A test that loads no file makes no stack check, so the cost falls only on projects that load files lazily.
 
-After each such load, the next hit of each mutant is checked again, even when the mutant is already in the test's bucket. Without that, a mutant that the test itself reached first, and that a file reached later in the same test while it loaded, would stay out of the static bucket. Checking whether a mutant is already in the current bucket adds no measurable cost per hit.
+After each such load, the next hit of each mutant on each thread is checked again, even when the mutant is already in the test's bucket. Without that, a mutant that the test itself reached first, and that a file reached later in the same test while it loaded, would stay out of the static bucket. Each thread keeps its own record of the mutants it has checked since the last load, because only the thread that loads the file has its top-level frame: a hit on a server thread, checked and found to be the test's, doesn't spare the loading file's own hit of that mutant its check.
+
+A mutant that a file's load reaches twice is checked once, so the second hit lands in the test's bucket as well as the first in the static bucket. The plan gives a mutant with a static hit a static run whatever its tests' buckets hold, so the result is the same.
 
 One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3.14, 3.4.13, and 4.0.10 with YJIT off or on, measured as in [What a hit costs](#what-a-hit-costs):
 
