@@ -1,0 +1,46 @@
+module Stryker
+  class Instrumenter
+    # Finds the nodes of a kind that `Stryker::Instrumenter::Holder` lists
+    # that still can't hold a switch where they stand, because parentheses
+    # around them there either don't parse or change what the code means.
+    # From the placement table in
+    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
+    # that is true of:
+    #
+    # - a word of a `%w[]`, `%i[]`, `%W[]`, or `%I[]` array;
+    # - a name in `alias` or `undef`, such as `g` in `alias g f`;
+    # - an `elsif`, which Prism makes an `IfNode` inside its `if`;
+    # - a label key in a hash, such as `a:`;
+    # - a part of an interpolated or adjacent string, symbol, or regexp,
+    #   such as `"a"` in `"a" "b"`;
+    # - a regexp with named captures on the left of `=~`, and that `=~`
+    #   call, so the switch goes on the whole match;
+    # - the bare right side of an assignment, such as `1, 2` in
+    #   `a, b = 1, 2`;
+    # - an integer literal as a flip-flop's endpoint, such as `2` in
+    #   `if 2..4`, and a node in a condition that holds a regexp literal or
+    #   a flip-flop through `!`, `not`, `&&`, `||`, `and`, `or`, or
+    #   parentheses, such as `!/foo/` in `if !/foo/`, so the switch goes on
+    #   the whole conditional, where the construct stays in the condition.
+    #   `Stryker::Instrumenter::Conditional` finds these.
+    module Unwrappable
+      # Whether `node` can't hold a switch where it stands, even when its
+      # kind is one that holds a switch elsewhere.
+      #
+      # - `node`: Prism::node, the node.
+      # - `parent`: Prism::node, its parent, or nil at the root.
+      # - `grandparent`: Prism::node, its grandparent, or nil.
+      def self.at?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+
+      COMPOUNDS: Array[singleton(Prism::Node)]
+
+      private def self.part?: (Prism::node node, Prism::node? parent) -> bool
+
+      private def self.label?: (Prism::node node) -> bool
+
+      private def self.matched_with_captures?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+
+      private def self.bare_array?: (Prism::node node) -> bool
+    end
+  end
+end
