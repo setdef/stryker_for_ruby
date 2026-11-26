@@ -68,7 +68,7 @@ Stryker (for Ruby) runs other people's test suites and reads and writes their fi
 
 ## Quality gates
 
-Every change has to pass five quality gates: RubyCritic, RuboCop, Steep, test coverage, and `reuse lint`. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
+`bundle exec rake` runs the quality gates: RubyCritic, RuboCop, Steep, test coverage, documentation coverage, and `reuse lint`. Every change has to pass all of them, with zero errors and zero warnings. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
 
 ## Architecture decisions
 

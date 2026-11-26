@@ -1,0 +1,55 @@
+# URL pin. The baseline lives in ruby_quality's config/rubocop.yml and is
+# fetched at lint time, so rule changes propagate with no per-repo sync.
+# Works in CI and contributor clones (bundler already needs network).
+
+inherit_from:
+  - https://raw.githubusercontent.com/Kerrick/ruby_quality/main/config/rubocop.yml
+
+plugins:
+  - rubocop-performance
+  - rubocop-minitest
+  - rubocop-rake
+  - rubocop-thread_safety
+  - rubocop-packaging
+  - rubocop-md
+  - rubocop-on-rbs
+
+AllCops:
+  # The baseline sets DisabledByDefault: true, and RuboCop refuses both
+  # settings at once.
+  DisabledByDefault: false
+  EnabledByDefault: true
+  NewCops: enable
+  TargetRubyVersion: "3.3"
+  Exclude:
+    - "tmp/**/*"
+    - "vendor/**/*"
+
+Markdown:
+  # Lint only code blocks tagged ruby. With autodetection on, rubocop-md
+  # parses the console and shell blocks in the docs as Ruby.
+  Autodetect: false
+
+Style/EndlessMethod:
+  # RDoc misreads the end of an endless method, so the methods after it lose
+  # their documentation comments.
+  EnforcedStyle: disallow
+
+Style/Copyright:
+  # REUSE.toml gives every file its copyright and license, so a Ruby file has
+  # no notice of its own for this cop to find.
+  Enabled: false
+
+Lint/ConstantResolution:
+  # RuboCop's docs say enabling this disables Style/RedundantConstantBase.
+  Enabled: false
+
+Style/MissingElse:
+  # RuboCop's docs say this conflicts with Style/EmptyElse's default style.
+  Enabled: false
+
+Markdown/Syntax:
+  # Kramdown doesn't know GitHub's alert syntax, which Markdown files may use
+  # for warnings, so it reports each "> [!warning]" line as an undefined link.
+  # No Markdown satisfies both this cop and those alerts.
+  Enabled: false
