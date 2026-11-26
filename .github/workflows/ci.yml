@@ -1,0 +1,65 @@
+# The gate (`bundle exec rake`) on every Ruby the gem supports, on the
+# development version of Ruby, and on Linux and macOS, for every push to trunk.
+# The job reaches the network only to install pinned tools and gems, and to
+# read the shared RuboCop baseline that .rubocop.yml inherits.
+name: CI
+
+on:
+  push:
+    branches: [trunk]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A push never cancels a run in progress. GitHub keeps one run going and one
+# waiting in the group, and a newer push replaces only the waiting one, so
+# every run that starts finishes, and it covers every commit pushed since the
+# run before it started.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  # Install exactly what Gemfile.lock locks, or fail.
+  BUNDLE_FROZEN: "true"
+  # ruby/setup-ruby installs the Ruby for each job, so mise leaves out the Ruby
+  # that mise.toml pins.
+  MISE_DISABLE_TOOLS: ruby
+
+jobs:
+  gate:
+    name: Gate on Ruby ${{ matrix.ruby }}, ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        # head is the development version of Ruby, the version that mise.toml
+        # calls 4.1-dev.
+        ruby: ["3.3", "3.4", "4.0", head]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@145243922b4465b78e04dd66294782c7de45901f # v1.345.0
+        with:
+          ruby-version: ${{ matrix.ruby }}
+
+      # mise.toml pins the other tools contributors use: the REUSE tool and
+      # pre-commit. CI installs the same pins.
+      - uses: jdx/mise-action@82a612c5ab8bcda7cc5db6b7e81a8e7584c3dc6e # v5.2.3
+        with:
+          version: 2026.10.11
+
+      - name: Install the bundle
+        run: bundle install
+
+      - name: Run the gate
+        run: bundle exec rake
