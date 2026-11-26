@@ -9,6 +9,9 @@ min_version = "2026.10.11"
 ruby = "4.1-dev"
 python = "3.14"
 pre-commit = "latest"
+# mise installs the REUSE tool below with uv, so a computer without pipx can
+# install it.
+uv = "0.13.10"
 # reuse lint checks licensing (rake reuse:lint). charset-normalizer, pure
 # Python, detects file encodings without libmagic, which python-magic needs.
 "pipx:reuse" = { version = "6.3.0", extras = "charset-normalizer" }
