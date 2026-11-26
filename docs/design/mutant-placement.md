@@ -145,7 +145,7 @@ Some nodes can't be wrapped in parentheses where they stand, or change meaning w
 
 Only a node of a kind that a row of [Kinds of site](#kinds-of-site) names as holding a switch can hold one, and only where no row says it can't. The switch moves outward from a node of any other kind. A row whose node is "the expression's node" or "the statement's node" holds a switch only when that node is of a kind some row names. Allowing a kind by mistake gives code that parses and means something else, with no error, where leaving a kind out only gives a coarser switch, further out. So the instrumenter allows only the kinds the tables name, and the switch moves outward from a kind that a later Prism adds until a row names it.
 
-A switch that moves out to a `def`, to a statement in a class body, or to a constant's assignment runs while the file loads, so its mutants become static mutants (see [Loading and isolation](loading-and-isolation.md#static-mutants-on-every-system)).
+A switch that moves out to a `def`, to a statement in a class body, or to a constant's assignment runs while the file loads, so its mutants become static mutants (see [Loading and isolation](loading-and-isolation.md#terms)).
 
 Adjacent string literals joined by a backslash at the end of a line, such as `"a" \` with `"b"` on the next line, can't hold a switch around one part: a switch there gives text that doesn't parse. Prism parses them as one `InterpolatedStringNode` whose parts are `StringNode`s, and a mutant of either part takes its switch on that enclosing `InterpolatedStringNode`. The standard library's `unicode_normalize/tables.rb` has strings written this way.
 

@@ -38,7 +38,7 @@ Two cases raise `Stryker::UnsupportedError`, because an ID must stand for exactl
 > [!WARNING]
 > In a probe that loaded a project, ran some of its tests, and exited normally, the `at_exit` block ran the whole suite again, the tests that weren't chosen included, outside any test's bucket. With the list empty, it ran no test.
 
-The block still runs, and prints Minitest's summary of a run of 0 tests to standard output. A forked child ends with `exit!`, so it runs no `at_exit` block at all ([Forking on Linux and macOS](loading-and-isolation.md#forking-on-linux-and-macos)).
+The block still runs, and prints Minitest's summary of a run of 0 tests to standard output.
 
 ### Running one test
 
