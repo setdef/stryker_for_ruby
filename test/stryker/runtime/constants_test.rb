@@ -10,7 +10,7 @@ class ConstantsTest < Minitest::Test
     constants = [
       [Stryker::Runtime::Buckets, :NO_TEST_RUNNING],
       [Stryker::Runtime::Stack, :TOP_LEVEL_LABELS],
-      [Stryker::Runtime::Recorder, :SECOND_DRY_RUN],
+      [Stryker::Runtime::ProcessCollector, :SECOND_DRY_RUN],
     ]
 
     assert_empty(constants.select { |owner, name| owner.constants.include?(name) })

@@ -8,23 +8,6 @@ require "stryker/runtime"
 # start, with stand-ins, because a real Ractor.new would start a Ractor in the
 # test process. first_ractor_process_test.rb makes real Ractors.
 class FirstRactorTest < Minitest::Test
-  def recorder
-    @recorder ||= Stryker::Runtime::Recorder.new
-  end
-
-  def test_its_collector_is_unstarted_until_its_ractor_starts
-    collector = Stryker::Runtime::Collector.new
-    recorder.collect_from(collector)
-    before = recorder.unstarted_collector
-    collector.started([], nil)
-
-    assert_equal([collector, nil], [before, recorder.unstarted_collector])
-  end
-
-  def test_with_no_collector_it_has_none_to_start
-    assert_nil(recorder.unstarted_collector)
-  end
-
   def test_it_prepares_a_collector_and_installs
     ractor_class = Class.new
     collector = Stryker::Runtime::FirstRactor.prepare(ractor_class)
@@ -43,8 +26,8 @@ class FirstRactorTest < Minitest::Test
     assert_nil(Stryker::Runtime::FirstRactor.unstarted(Object.new))
   end
 
-  def test_the_main_ractor_asks_this_process_s_recorder
-    found = Stryker::Runtime::RECORDER.stub(:unstarted_collector, :collector) do
+  def test_the_main_ractor_asks_this_process_s_collector
+    found = Stryker::Runtime::PROCESS_COLLECTOR.stub(:unstarted, :collector) do
       Stryker::Runtime::FirstRactor.unstarted
     end
 

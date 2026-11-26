@@ -16,9 +16,9 @@ module Stryker
       end
 
       def self.unstarted(ractor = Ractor.current)
-        # A Ractor other than the main one can't read RECORDER, and the main
-        # Ractor makes the first Ractor of a process.
-        RECORDER.unstarted_collector if ractor.equal?(Ractor.main)
+        # A Ractor other than the main one can't read PROCESS_COLLECTOR, and
+        # the main Ractor makes the first Ractor of a process.
+        PROCESS_COLLECTOR.unstarted if ractor.equal?(Ractor.main)
       end
 
       # Ractor.new warns that Ractors are experimental with

@@ -15,8 +15,12 @@ class RecorderDrainTest < Minitest::Test
   end
   private_constant(:Queued)
 
+  def process_collector
+    @process_collector ||= Stryker::Runtime::ProcessCollector.new
+  end
+
   def recorder
-    @recorder ||= Stryker::Runtime::Recorder.new
+    @recorder ||= Stryker::Runtime::Recorder.new(process_collector)
   end
 
   # Runs the block as the test +test+.
@@ -35,7 +39,7 @@ class RecorderDrainTest < Minitest::Test
   end
 
   def test_it_drains_the_collector_when_asked
-    recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
+    process_collector.use(Queued.new([[7], "lib/between.rb"]))
 
     assert_equal([nil, Set[7], Set.new], [recorder.drain, recorder.static, recorder.loaded])
   end
@@ -45,7 +49,7 @@ class RecorderDrainTest < Minitest::Test
   end
 
   def test_it_drains_the_collector_before_a_test_starts_into_the_static_bucket
-    recorder.collect_from(Queued.new([[7], "lib/between.rb"]))
+    process_collector.use(Queued.new([[7], "lib/between.rb"]))
     during(:first) { nil }
 
     assert_equal([Set[7], { first: Set.new }, Set.new], everything)
@@ -53,7 +57,7 @@ class RecorderDrainTest < Minitest::Test
 
   def test_it_drains_the_collector_after_a_test_into_that_tests_bucket
     collector = Queued.new([])
-    recorder.collect_from(collector)
+    process_collector.use(collector)
     during(:first) { collector.messages.push([8], "lib/invoice.rb") }
 
     assert_equal([Set.new, { first: Set[8] }, Set["lib/invoice.rb"]], everything)
@@ -62,7 +66,7 @@ class RecorderDrainTest < Minitest::Test
   def test_a_test_that_starts_while_another_is_running_drains_nothing
     collector = Queued.new([])
     recorder.test_started(:first)
-    recorder.collect_from(collector)
+    process_collector.use(collector)
     collector.messages.push([7])
     assert_raises(RuntimeError) { recorder.test_started(:second) }
 
@@ -71,7 +75,7 @@ class RecorderDrainTest < Minitest::Test
 
   def test_a_test_that_finishes_with_none_running_drains_nothing
     collector = Queued.new([[7]])
-    recorder.collect_from(collector)
+    process_collector.use(collector)
     assert_raises(RuntimeError) { recorder.test_finished(:passed) }
 
     assert_equal([[7]], collector.messages)

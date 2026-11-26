@@ -28,8 +28,12 @@ class RuntimeTest < Minitest::Test
     @namespace ||= Module.new
   end
 
+  def process_collector
+    @process_collector ||= Stryker::Runtime::ProcessCollector.new
+  end
+
   def recorder
-    @recorder ||= Stryker::Runtime::Recorder.new
+    @recorder ||= Stryker::Runtime::Recorder.new(process_collector)
   end
 
   # A holder whose collector has no Ractor, for the tests that send no
@@ -61,8 +65,8 @@ class RuntimeTest < Minitest::Test
   end
 
   def test_a_mutant_made_active_leaves_the_collector_its_parent_started
-    recorder.collect_from(Closed.new)
-    Stryker::Runtime.activate_mutant(9, namespace, recorder)
+    process_collector.use(Closed.new)
+    Stryker::Runtime.activate_mutant(9, namespace, process_collector)
 
     assert_nil(recorder.test_started(:first))
   end
@@ -132,8 +136,7 @@ class RuntimeTest < Minitest::Test
 
   def test_the_dry_run_hands_the_collector_to_the_recorder_and_the_holder
     collector = Drained.new([[7]])
-    recorder = Stryker::Runtime::Recorder.new
-    Stryker::Runtime.start_dry_run(collector, namespace, recorder)
+    Stryker::Runtime.start_dry_run(collector, namespace, process_collector)
     recorder.test_started(:first)
 
     assert_equal([nil, collector, Set[7]], [namespace::Active.id, namespace::Active.collector, recorder.static])

@@ -1,0 +1,66 @@
+module Stryker
+  module Runtime
+    # The collector that a process records hits with, as
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-collector-ractor)
+    # specifies: which Stryker::Runtime::Collector it is, whether its Ractor
+    # has started, and the one dry run that a process may ready. It holds no
+    # collector until a dry run readies one, and holds none again in a
+    # mutant's run.
+    #
+    # `Stryker::Runtime::PROCESS_COLLECTOR` is this process's.
+    # `Stryker::Runtime::FirstRactor` asks it for the collector to start at
+    # the project's first `Ractor.new`, and `Stryker::Runtime::Recorder`
+    # drains it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # process_collector = Stryker::Runtime::ProcessCollector.new
+    # process_collector.drain
+    # # => []
+    # process_collector.dry_run_started(Stryker::Runtime::Collector.new)
+    # process_collector.unstarted.class
+    # # => Stryker::Runtime::Collector
+    # ```
+    class ProcessCollector
+      SECOND_DRY_RUN: String
+
+      # Builds a process collector that holds no collector.
+      def initialize: () -> void
+
+      # Makes the process collector hold `collector`, or none when
+      # `collector` is nil. A mutant's run uses none, because a forked child
+      # can't use the collector that its parent started. Returns nil.
+      #
+      # - `collector`: Stryker::Runtime::Collector, or nil.
+      def use: (Collector? collector) -> nil
+
+      # Makes the process collector hold `collector`, as `use` does, for a
+      # dry run in the process `pid`. Returns nil. Raises RuntimeError when
+      # it already readied a dry run in that process: the isolation adapter
+      # has a fault, and the hits sent to the first collector would be lost.
+      # A forked child, whose pid differs, may ready its own.
+      #
+      # - `collector`: Stryker::Runtime::Collector, or nil.
+      # - `pid`: Integer, `Process.pid` by default. Internal to the runtime,
+      #   so that a test can pass a stand-in for a forked child's.
+      def dry_run_started: (Collector? collector, ?Integer pid) -> nil
+
+      # The collector it holds when its Ractor hasn't started, so that
+      # Stryker::Runtime::FirstRactor starts it, or nil when it holds none or
+      # the one it holds has started.
+      def unstarted: () -> Collector?
+
+      # What the collector it holds was sent since the last drain, as
+      # `Stryker::Runtime::Collector#drain` gives it, or an empty Array when
+      # it holds no collector. Call it only from the Ractor that started the
+      # collector.
+      def drain: () -> Array[message]
+
+      private
+
+      @collector: Collector?
+      @dry_run: Integer?
+    end
+  end
+end

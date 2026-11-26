@@ -12,8 +12,8 @@ class StartTest < Minitest::Test
     @namespace ||= Module.new
   end
 
-  def recorder
-    @recorder ||= Stryker::Runtime::Recorder.new
+  def process_collector
+    @process_collector ||= Stryker::Runtime::ProcessCollector.new
   end
 
   # An environment with STRYKER_ACTIVE_MUTANT set to +value+. ENV has only
@@ -23,7 +23,7 @@ class StartTest < Minitest::Test
   end
 
   def test_an_id_in_the_environment_makes_that_mutant_active
-    Stryker::Runtime.start(environment("7"), namespace, recorder)
+    Stryker::Runtime.start(environment("7"), namespace, process_collector)
 
     assert_equal(Stryker::Runtime::ActiveMutant.new(id: 7), namespace::Active)
   end
@@ -31,7 +31,7 @@ class StartTest < Minitest::Test
   # The collector's Ractor starts at the project's first Ractor.new, not
   # here: the test process has none.
   def test_no_id_in_the_environment_starts_recording_with_a_collector_not_yet_started
-    Stryker::Runtime.start({}, namespace, recorder)
+    Stryker::Runtime.start({}, namespace, process_collector)
     collector = namespace::Active.collector
 
     assert_equal([nil, Stryker::Runtime::Collector, false], [namespace::Active.id, collector.class, collector.started?])
@@ -39,21 +39,15 @@ class StartTest < Minitest::Test
 
   def test_a_second_dry_run_in_one_process_raises
     collector = Stryker::Runtime::Collector.new
-    Stryker::Runtime.start_dry_run(collector, namespace, recorder)
-    error = assert_raises(RuntimeError) { Stryker::Runtime.start_dry_run(collector, namespace, recorder) }
+    Stryker::Runtime.start_dry_run(collector, namespace, process_collector)
+    error = assert_raises(RuntimeError) { Stryker::Runtime.start_dry_run(collector, namespace, process_collector) }
 
     assert_includes(error.message, "twice in one process")
   end
 
-  def test_a_forked_child_readies_a_dry_run_of_its_own
-    recorder.dry_run_started(nil, 1)
-
-    assert_nil(recorder.dry_run_started(nil, 2))
-  end
-
   def test_an_id_that_is_not_a_decimal_integer_raises
     ["", "seven", "0x7"].each do |value|
-      assert_raises(ArgumentError) { Stryker::Runtime.start(environment(value), namespace, recorder) }
+      assert_raises(ArgumentError) { Stryker::Runtime.start(environment(value), namespace, process_collector) }
     end
   end
 end

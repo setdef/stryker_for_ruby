@@ -1,19 +1,15 @@
 # frozen_string_literal: true
 
 require_relative "buckets"
+require_relative "process_collector"
 
 module Stryker
   module Runtime
     class Recorder
-      SECOND_DRY_RUN = "The isolation adapter readied a dry run twice in one process, so the hits sent to the " \
-        "first collector would be lost."
-      private_constant(:SECOND_DRY_RUN)
-
-      def initialize
+      def initialize(process_collector = ProcessCollector.new)
         @lock = Mutex.new
         @buckets = Buckets.new
-        @collector = nil
-        @dry_run = nil
+        @process_collector = process_collector
       end
 
       def static
@@ -26,26 +22,6 @@ module Stryker
 
       def loaded
         @lock.synchronize { @buckets.loaded }
-      end
-
-      def collect_from(collector)
-        @collector = collector
-        nil
-      end
-
-      def dry_run_started(collector, pid = Process.pid)
-        # A forked child inherits the recorder, and readies its own dry run.
-        raise(SECOND_DRY_RUN) if @dry_run == pid
-
-        @dry_run = pid
-        collect_from(collector)
-      end
-
-      def unstarted_collector
-        collector = @collector
-        return unless collector
-
-        collector.unstarted
       end
 
       def drain
@@ -82,10 +58,7 @@ module Stryker
       end
 
       private def drain_held
-        collector = @collector
-        return unless collector
-
-        collector.drain.each { |message| @buckets.receive(message) }
+        @process_collector.drain.each { |message| @buckets.receive(message) }
         nil
       end
     end

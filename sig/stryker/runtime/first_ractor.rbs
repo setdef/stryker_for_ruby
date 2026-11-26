@@ -44,8 +44,8 @@ module Stryker
       def self.install: (?singleton(Ractor) | Module ractor_class) -> nil
 
       # The collector that `new` starts before the Ractor asked for:
-      # `Stryker::Runtime::RECORDER`'s, when it hasn't started and `ractor`
-      # is the main Ractor, or nil. Internal to the runtime: `ractor` exists
+      # `Stryker::Runtime::PROCESS_COLLECTOR`'s, when it hasn't started and
+      # `ractor` is the main Ractor, or nil. Internal to the runtime: `ractor` exists
       # so that a test can pass a stand-in.
       #
       # - `ractor`: Ractor, the calling Ractor by default.

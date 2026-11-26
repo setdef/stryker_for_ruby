@@ -17,7 +17,7 @@ module Stryker
     #
     # ```ruby
     # collector = Stryker::Runtime::Collector.new
-    # Stryker::Runtime::RECORDER.collect_from(collector)
+    # Stryker::Runtime::PROCESS_COLLECTOR.use(collector)
     # collector.started?
     # # => false
     # Ractor.new(collector) { |inbox| 3.times { inbox << [7] } }.join
