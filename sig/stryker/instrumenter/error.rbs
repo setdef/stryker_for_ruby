@@ -35,6 +35,18 @@ module Stryker
       #   standard error, or an empty string.
       def self.parse_worker: (Mutant mutant, String? reply, String errors) -> Error
 
+      # The error for a parse worker that didn't finish a line within its time
+      # limit, with a message that gives the ID and file of the mutant whose
+      # plain mutant it was parsing, the limit, and the last lines it wrote to
+      # its standard error.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant whose plain mutant the worker
+      #   was parsing.
+      # - `seconds`: Float, the time limit.
+      # - `errors`: String, the last lines that the worker wrote to its
+      #   standard error, or an empty string.
+      def self.parse_worker_silent: (Mutant mutant, Float seconds, String errors) -> Error
+
       private def self.worker_failure: (String fault, String errors) -> Error
 
       private def self.placed: (Mutant mutant) -> String

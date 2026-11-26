@@ -19,8 +19,11 @@ module Stryker
 
       # The next line from the worker, with its line feed, or nil when the
       # worker has ended and the pipe holds nothing more. Waits until there
-      # is a line.
-      def read: () -> String?
+      # is a whole line, and raises `Timeout::Error` when `seconds` pass
+      # first, even when the worker has written the start of a line.
+      #
+      # - `seconds`: Float, how long to wait.
+      def read: (Float seconds) -> String?
 
       # Closes both pipes. A line that the worker never read, which Windows
       # reports as `Errno::EPIPE` when the pipe closes, raises nothing.

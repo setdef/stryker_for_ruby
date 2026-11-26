@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../support/parse_workers")
+require "minitest/mock"
 
 # Checks the errors of the pool of parse workers: each names the job, and
 # each leaves no process running.
@@ -8,8 +9,9 @@ class ParsePoolFailureTest < Minitest::Test
   include ParseWorkers
 
   Pool = Stryker::Instrumenter::ParsePool
+  Limit = Stryker::Instrumenter::ParseLimit
   SOURCE = "x = 1\n"
-  private_constant(:Pool, :SOURCE)
+  private_constant(:Limit, :Pool, :SOURCE)
 
   # The error that a pool of two stand-ins with the +behavior+ raises for one
   # plain mutant.
@@ -49,6 +51,26 @@ class ParsePoolFailureTest < Minitest::Test
 
       assert_equal(expected, failure(:ends_at_once, folder).message)
     end
+  end
+
+  def test_it_raises_when_a_worker_does_not_answer_in_time_and_names_the_job
+    with_workers do |folder|
+      expected = "A parse worker gave no answer for the plain mutant of mutant 1 in lib/x.rb within 0.2 seconds."
+
+      message = Limit.stub(:seconds, 0.2) { failure(:never_answers, folder).message }
+
+      assert_equal(expected, message)
+    end
+  end
+
+  def test_it_gives_the_worker_a_limit_from_the_time_that_parsing_the_file_takes
+    seen = []
+    limit = -> (source) { (seen << source) && 0.2 }
+    with_workers do |folder|
+      Limit.stub(:seconds, limit) { failure(:never_answers, folder) }
+    end
+
+    assert_equal([SOURCE], seen)
   end
 
   def test_it_puts_the_last_lines_of_the_standard_error_of_a_worker_in_the_message

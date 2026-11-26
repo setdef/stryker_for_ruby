@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "error"
+require_relative "parse_limit"
 require_relative "parse_reply"
 require_relative "parse_request"
 require_relative "parse_worker_child"
@@ -17,6 +18,11 @@ module Stryker
 
       def initialize(input, output, waiter, errors)
         @child = ParseWorkerChild.new(input, output, waiter, errors)
+        @limit = ParseLimit::FLOOR
+      end
+
+      def wait_at_most(seconds)
+        @limit = seconds
       end
 
       def give(source)
@@ -30,10 +36,7 @@ module Stryker
       end
 
       def verdict(plain)
-        reply = @child.read
-        ParseReply.read(reply.to_s)
-      rescue ArgumentError
-        raise(failure(plain.mutant, reply))
+        heard(plain.mutant)
       end
 
       def running?
@@ -44,9 +47,26 @@ module Stryker
         @child.stop
       end
 
+      private def heard(mutant)
+        reply = @child.read(@limit)
+        ParseReply.read(reply.to_s)
+      rescue ArgumentError
+        raise(failure(mutant, reply))
+      rescue Timeout::Error
+        raise(silence(mutant))
+      end
+
       private def failure(mutant, reply)
+        stopped { |errors| Error.parse_worker(mutant, reply, errors) }
+      end
+
+      private def silence(mutant)
+        stopped { |errors| Error.parse_worker_silent(mutant, @limit, errors) }
+      end
+
+      private def stopped
         @child.halt
-        error = Error.parse_worker(mutant, reply, @child.last_lines)
+        error = yield(@child.last_lines)
         @child.stop
         error
       end

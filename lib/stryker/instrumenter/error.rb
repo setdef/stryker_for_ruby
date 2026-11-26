@@ -20,6 +20,10 @@ module Stryker
         worker_failure(fault, errors)
       end
 
+      def self.parse_worker_silent(mutant, seconds, errors)
+        worker_failure("gave no answer for #{placed(mutant)} within #{format('%g', seconds)} seconds", errors)
+      end
+
       def self.worker_failure(fault, errors)
         report = errors.empty? ? "" : "\nThe last lines it wrote to standard error:\n#{errors}"
         new("A parse worker #{fault}.#{report}")

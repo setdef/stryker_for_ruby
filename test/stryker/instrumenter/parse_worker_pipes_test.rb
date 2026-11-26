@@ -40,7 +40,11 @@ class ParseWorkerPipesTest < Minitest::Test
     @from_worker.puts("two")
     @from_worker.close
 
-    assert_equal(["two\n", nil], [reader.read, reader.read])
+    assert_equal(["two\n", nil], [reader.read(5.0), reader.read(5.0)])
+  end
+
+  def test_it_raises_when_no_line_comes_in_time
+    assert_raises(Timeout::Error) { pipes.read(0.05) }
   end
 
   def test_it_closes_both_pipes

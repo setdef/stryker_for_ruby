@@ -15,8 +15,8 @@ module Stryker
         @pipes.write(line)
       end
 
-      def read
-        @pipes.read
+      def read(seconds)
+        @pipes.read(seconds)
       end
 
       def running?

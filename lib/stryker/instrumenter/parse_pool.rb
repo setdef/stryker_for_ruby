@@ -2,6 +2,7 @@
 
 require "rbconfig"
 require_relative "parse_batch"
+require_relative "parse_limit"
 require_relative "parse_worker_process"
 
 module Stryker
@@ -43,10 +44,15 @@ module Stryker
 
       private def checked(source, plains, count)
         start(count)
-        ParseBatch.new(source, plains, @workers.first(count)).run
+        ParseBatch.new(source, plains, limited(source, count)).run
       rescue
         stop
         raise
+      end
+
+      private def limited(source, count)
+        seconds = ParseLimit.seconds(source)
+        @workers.first(count).each { |worker| worker.wait_at_most(seconds) }
       end
 
       private def start(count)

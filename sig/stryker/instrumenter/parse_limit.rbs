@@ -1,0 +1,28 @@
+module Stryker
+  class Instrumenter
+    # How long the pool waits for a parse worker to answer. A worker that
+    # takes longer is stuck, and the pool kills it.
+    #
+    # The limit is `FACTOR` times the time that parsing the file takes in
+    # this process, and at least `FLOOR` seconds. The floor is there because
+    # the first read from a worker also waits for the worker to start, and
+    # because a file of 30 KB parses in about a millisecond, less time than the
+    # system takes to switch to the worker and back. The page
+    # `docs/design/loading-and-isolation.md` has the measurements for both
+    # numbers.
+    module ParseLimit
+      # How many times the time of one parse in this process a read from a
+      # worker may take.
+      FACTOR: Integer
+
+      # The fewest seconds a read from a worker may take.
+      FLOOR: Float
+
+      # The seconds that a read from a worker may take for a file. Parses
+      # `source` once in this process, for its time.
+      #
+      # - `source`: String, the file's source.
+      def self.seconds: (String source) -> Float
+    end
+  end
+end

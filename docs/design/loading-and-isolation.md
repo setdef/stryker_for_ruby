@@ -75,12 +75,23 @@ Both ways give the same verdicts, because both make the text with the same patch
 
 ### When a worker fails
 
-A worker that ends, or writes a line that is not a verdict, makes the pool raise `Stryker::Instrumenter::Error`. The message gives the ID and file of the mutant whose plain mutant the worker was parsing, and the last 10 lines that the worker wrote to its standard error, when it wrote any. No verdict that a worker didn't give reaches the instrumenter: an error is never a mutant that survives.
+A worker that ends, writes a line that is not a verdict, or doesn't finish a line within its time limit makes the pool raise `Stryker::Instrumenter::Error`. The message gives the ID and file of the mutant whose plain mutant the worker was parsing, and the last 10 lines that the worker wrote to its standard error, when it wrote any. No verdict that a worker didn't give reaches the instrumenter: an error is never a mutant that survives.
 
 No worker outlives its pool. The pool ends every worker when it stops, when the block that opened it ends, and when it raises, and the next use of a pool that raised starts new workers. The pool starts each worker with its standard error going to a temporary file, and deletes the file when it stops the worker. A pipe that nothing reads fills up, and a worker that writes to a full pipe waits for ever, so a file stands in for the pipe. What a worker writes to its standard error reaches the message of the error that its failure raises, and appears nowhere else.
 
-> [!WARNING]
-> The pool never times out a worker. A worker that stops answering without ending stops the run.
+The time limit of a read from a worker is 100 times the time that parsing the file takes in the orchestrator, and at least 30 seconds. The pool measures that time once for each file, by parsing the file in the orchestrator before it reads from any worker. The pool kills a worker that hasn't finished a line when the limit ends, even when it has written the start of one, and the message says how long the limit was.
+
+The factor and the floor come from reads in a pool with as many workers as the computer has processors, on an idle computer and beside CPU-bound processes, up to three for each processor. The table gives, for each file, the time of one parse in the orchestrator and the longest read after a worker's first, as a multiple of that time.
+
+| File | One parse in the orchestrator | Longest read, as a multiple |
+| - | - | - |
+| 1.6 KB | 0.1 ms | 217 |
+| 30 KB | 0.7 to 1.2 ms | 100 |
+| 150 KB | 5 to 46 ms | 13 |
+| 660 KB | 19 to 175 ms | 9 |
+| 5.3 MB | 0.17 to 0.68 s | 2 |
+
+A file of 30 KB or less parses in less time than the system takes to switch to a worker and back, which took 13 to 80 ms, so the multiple for such a file is large and its read is short. The longest read of any file took 1.1 seconds. The factor of 100 is 7 times the largest multiple for a file of 150 KB or more, and the floor of 30 seconds is 27 times the longest read. A worker's first read also waits for the worker to start. That took up to 1.2 seconds, and a pool of 32 workers took 5 to 9 seconds to start on Windows, so the floor is more than three times the longest start. The limit leans long: a limit that a healthy worker reaches stops a healthy run, and one that a stuck worker reaches costs the run 30 seconds or more, once, when it stops with the error.
 
 ## Loading instrumented code
 
@@ -256,7 +267,7 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't run on Ruby implementations other than CRuby.
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
-- It doesn't time out a parse worker, or restart one that failed: a worker's failure raises an error and ends the pool.
+- It doesn't restart a parse worker that failed: a worker's failure raises an error and ends the pool.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
 - It doesn't find an instrumented file that a `load` reaches through a symbolic link with a base name that no instrumented file has. A `load` adds nothing to `$LOADED_FEATURES`, so nothing reports it.
 - It doesn't write instrumented source into the project.

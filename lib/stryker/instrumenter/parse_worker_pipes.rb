@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "timeout"
+
 module Stryker
   class Instrumenter
     class ParseWorkerPipes
@@ -15,8 +17,8 @@ module Stryker
         false
       end
 
-      def read
-        @output.gets
+      def read(seconds)
+        Timeout.timeout(seconds) { @output.gets }
       end
 
       def close

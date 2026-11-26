@@ -6,10 +6,11 @@ module Stryker
     # reads its verdict, in the lines that `Stryker::Instrumenter::ParseRequest`
     # and `ParseReply` define.
     #
-    # A worker that ends, or writes anything but a verdict, makes `ask` or
-    # `verdict` stop the process and raise `Stryker::Instrumenter::Error`
-    # that gives the ID and file of the plain mutant's mutant, and the last
-    # lines that the worker wrote to its standard error. The worker's
+    # A worker that ends, writes anything but a verdict, or doesn't finish a
+    # line within `limit` seconds makes `ask` or `verdict` kill the process
+    # and raise `Stryker::Instrumenter::Error` that gives the ID and file of
+    # the plain mutant's mutant, and the last lines that the worker wrote to
+    # its standard error. The worker's
     # standard error goes to a temporary file, which `stop` deletes (see
     # `Stryker::Instrumenter::ParseWorkerStderr`).
     #
@@ -32,7 +33,8 @@ module Stryker
       #   no shell reads.
       def self.start: (Array[String] command) -> ParseWorkerProcess
 
-      # Prepares to talk to a process that has started.
+      # Prepares to talk to a process that has started. The limit starts at
+      # `Stryker::Instrumenter::ParseLimit::FLOOR`.
       #
       # - `input`: IO, the pipe to the process's standard input.
       # - `output`: IO, the pipe from its standard output.
@@ -40,6 +42,11 @@ module Stryker
       # - `errors`: Stryker::Instrumenter::ParseWorkerStderr, the file that
       #   the process writes its standard error to.
       def initialize: (IO input, IO output, Process::Waiter waiter, ParseWorkerStderr errors) -> void
+
+      # Changes how long `verdict` waits for a worker to finish a line.
+      #
+      # - `seconds`: Float, the time limit of a read.
+      def wait_at_most: (Float seconds) -> Float
 
       # Gives the worker the source that the plain mutants it is asked about
       # are edits on. The worker doesn't answer, and a worker that has ended
@@ -57,8 +64,9 @@ module Stryker
       def ask: (PlainMutant plain) -> void
 
       # Whether `plain` parses, as the worker says. Waits until the worker
-      # has written a line. Raises `Stryker::Instrumenter::Error` when the
-      # worker ended, or wrote a line that isn't a verdict.
+      # has written a line, for the limit at most. Raises
+      # `Stryker::Instrumenter::Error` when the worker ended, wrote a line
+      # that isn't a verdict, or didn't finish a line in time.
       #
       # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant that
       #   `ask` gave the worker.
@@ -74,8 +82,15 @@ module Stryker
       private
 
       @child: ParseWorkerChild
+      @limit: Float
+
+      def heard: (Mutant mutant) -> bool
 
       def failure: (Mutant mutant, String? reply) -> Error
+
+      def silence: (Mutant mutant) -> Error
+
+      def stopped: () { (String errors) -> Error } -> Error
     end
   end
 end
