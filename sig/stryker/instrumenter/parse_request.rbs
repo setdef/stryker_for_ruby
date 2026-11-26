@@ -1,0 +1,34 @@
+module Stryker
+  class Instrumenter
+    # The lines that the orchestrator writes to a parse worker over a pipe.
+    # Each line is one JSON object, which `Stryker::Instrumenter::ParseRequestReader`
+    # reads with `JSON.parse` and never with `Marshal.load`. A line carries
+    # bytes of the project's files, which JSON can't hold in any encoding, in
+    # Base64.
+    #
+    # There are two kinds of line: one with the source of a file, and one with
+    # the patches that make a plain mutant of the file whose source the worker
+    # has. A worker answers a plain mutant with a line that
+    # `Stryker::Instrumenter::ParseReply` defines, and a source with none.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # line = Stryker::Instrumenter::ParseRequest.plain(plain)
+    # Stryker::Instrumenter::ParseRequestReader.read(line) == plain.patches
+    # # => true
+    # ```
+    module ParseRequest
+      # The line that gives a worker a file's source.
+      #
+      # - `source`: String, the file's source, in any encoding.
+      def self.source: (String source) -> String
+
+      # The line that gives a worker the patches of a plain mutant of the
+      # source it has.
+      #
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant.
+      def self.plain: (PlainMutant plain) -> String
+    end
+  end
+end

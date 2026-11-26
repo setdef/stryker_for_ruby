@@ -89,15 +89,32 @@ module Stryker
     # mutant whose text it puts on one line with refract. A mutant with no
     # such node gets no plain mutant, and no parse.
     #
+    # The parses of the plain mutants are the cost of a large file. A file
+    # whose parses add up to `Stryker::Instrumenter::ParsePool::THRESHOLD`
+    # bytes or more has them done in a pool of fresh `ruby` processes,
+    # `concurrency` at most
+    # (`Stryker::Instrumenter::ParsePool`), and a smaller file has them done
+    # in this process. The result is the same either way. Every process of the
+    # pool ends before `instrument` returns, or raises. It raises
+    # `Stryker::Instrumenter::Error` when a pool process fails, with the ID and file of
+    # the mutant it was parsing.
+    #
     # - `source`: String, the file's source.
     # - `mutants`: Array of Stryker::Mutant, the edits on `source`.
-    def self.instrument: (String source, Array[Mutant] mutants) -> Result
+    # - `concurrency`: Integer, how many pool processes to run at most. With
+    #   1, every parse is in this process. The number of processors by
+    #   default.
+    def self.instrument: (String source, Array[Mutant] mutants, ?concurrency: Integer) -> Result
 
     # Parses `source`, ready to instrument it. Raises
     # `Stryker::Instrumenter::Error` when `source` doesn't parse.
     #
     # - `source`: String, the file's source.
-    def initialize: (String source) -> void
+    # - `pool`: Stryker::Instrumenter::ParsePool, which parses the plain
+    #   mutants. It parses them all in this process by default. A caller
+    #   that instruments many files gives each one the same pool, which keeps
+    #   its processes from one file to the next, and stops the pool itself.
+    def initialize: (String source, ?ParsePool pool) -> void
 
     # Instruments the source with `mutants`, as `Stryker::Instrumenter.instrument`
     # does.
@@ -111,8 +128,6 @@ module Stryker
     @tree: Prism::ProgramNode
     @bodies: Array[[Heredoc::node, Span]]
     @outcomes: Outcomes
-
-    def outcome: (Mutant mutant) -> Outcome
 
     def parsed: (String output) -> String
   end

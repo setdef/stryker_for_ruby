@@ -8,16 +8,32 @@ require_relative "removed_bodies"
 module Stryker
   class Instrumenter
     class Outcomes
-      def initialize(source, heredocs)
+      def initialize(source, heredocs, pool)
         @source = source
         @heredocs = heredocs
+        @pool = pool
       end
 
-      def of(mutant, node)
-        return Outcome.new(mutant:, node:, text: nil, valid: false) unless node
+      def all(mutants, &)
+        held = held_for(mutants, mutants.map(&))
+        verdicts = @pool.valid(@source, held.filter_map { |_mutant, _node, plain| plain }).each
+        held.map { |one| of(one, verdicts) }
+      end
 
-        plain = PlainMutant.of(mutant, RemovedBodies.of(@heredocs, mutant), node.location)
-        valid = plain.valid?(@source)
+      private def held_for(mutants, nodes)
+        placed = mutants.zip(nodes)
+        placed.map { |mutant, node| [mutant, node, (plain_mutant(mutant, node) if node)] }
+      end
+
+      private def plain_mutant(mutant, node)
+        PlainMutant.of(mutant, RemovedBodies.of(@heredocs, mutant), node.location)
+      end
+
+      private def of(held, verdicts)
+        mutant, node, plain = held
+        return Outcome.new(mutant:, node:, text: nil, valid: false) unless node && plain
+
+        valid = verdicts.next
         Outcome.new(mutant:, node:, text: (MutantText.of(@source, plain, node) if valid), valid:)
       end
     end

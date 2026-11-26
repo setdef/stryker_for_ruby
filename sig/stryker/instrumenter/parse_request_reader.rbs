@@ -1,0 +1,23 @@
+module Stryker
+  class Instrumenter
+    # Reads the lines that `Stryker::Instrumenter::ParseRequest` writes, in a
+    # parse worker.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # line = Stryker::Instrumenter::ParseRequest.source("p 1\n")
+    # Stryker::Instrumenter::ParseRequestReader.read(line)
+    # # => "p 1\n"
+    # ```
+    module ParseRequestReader
+      # What a line holds: a source, as a String in the encoding it had, or
+      # the patches of a plain mutant. Raises `NoMethodError` for a line that
+      # is neither, which ends the worker, so that the pool reports it.
+      #
+      # - `line`: String, a line that `ParseRequest.source` or
+      #   `ParseRequest.plain` wrote.
+      def self.read: (String line) -> (String | Array[Patch])
+    end
+  end
+end

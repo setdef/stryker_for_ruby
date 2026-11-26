@@ -1,0 +1,103 @@
+module Stryker
+  class Instrumenter
+    # Tells which plain mutants of a file parse, in a pool of fresh `ruby`
+    # processes, at most as many as the concurrency, or in this process when
+    # the file has too little to parse for a worker to pay.
+    #
+    # Each plain mutant is the whole file with one edit, so a file with many
+    # mutants costs one whole-file parse per mutant, which workers share
+    # among the processors. A worker takes a `ruby` process to start, so the
+    # pool parses in this process unless the work of a file, its size in
+    # bytes times its number of plain mutants, is at least the threshold,
+    # and the pool has more than one worker. Both ways give the same
+    # verdicts, because both parse the same text with the syntax of the
+    # running Ruby.
+    #
+    # A fresh process runs the same on Linux, macOS, and Windows, where a
+    # forked worker would need a second way for Windows, which has no
+    # `fork`. The pool starts a worker with an array of arguments, as the
+    # running Ruby with the bundle environment that this process has, and
+    # talks to it over pipes in JSON lines, as
+    # `Stryker::Instrumenter::ParseRequest` and `ParseReply` define them. It
+    # starts its workers when it first has a file to parse with them, and
+    # keeps them for the next file, which costs one line of source for each.
+    # A pool serves one file at a time, so a caller that shares it among
+    # threads takes turns.
+    #
+    # No process of the pool outlives it. `stop` ends every worker, and so
+    # does `open` when its block ends, however it ends. A call that raises
+    # ends every worker first, and the next call starts new ones.
+    #
+    # A worker that ends, or writes something that isn't its verdict, raises
+    # `Stryker::Instrumenter::Error` with the plain mutant it was parsing.
+    # The pool never gives a verdict that a worker didn't give.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Instrumenter::ParsePool.open(4) do |pool|
+    #   pool.valid(source, plain_mutants)
+    #   # => [true, false, true]
+    # end
+    # ```
+    class ParsePool
+      # The work of a file, in bytes, from which the pool parses its plain
+      # mutants in workers. A worker takes about 0.1 seconds to start on
+      # Linux and 0.5 seconds on Windows, and Prism parses about 50 million
+      # bytes per second in one process.
+      THRESHOLD: Integer
+
+      # Makes a pool, gives it to the block, and stops it when the block ends,
+      # however it ends. Gives the block's value.
+      #
+      # - `concurrency`: Integer, how many workers to run at most. With 1, no
+      #   worker starts.
+      # - `threshold`: Integer, the work of a file, in bytes, from which the
+      #   pool uses workers.
+      # - `command`: Array of String, the program that starts a worker, with
+      #   its arguments. The running Ruby with `ParseWorker` by default.
+      def self.open: [T] (Integer concurrency, ?Integer threshold, ?Array[String] command) { (ParsePool pool) -> T } -> T
+
+      # Makes a pool that has started no worker.
+      #
+      # - `concurrency`: Integer, how many workers to run at most. With 1, no
+      #   worker starts.
+      # - `threshold`: Integer, the work of a file, in bytes, from which the
+      #   pool uses workers.
+      # - `command`: Array of String, the program that starts a worker, with
+      #   its arguments. The running Ruby with `ParseWorker` by default.
+      def initialize: (Integer concurrency, ?Integer threshold, ?Array[String] command) -> void
+
+      # Whether each of `plains` parses, in the order given. Starts the
+      # workers if the file needs them and they aren't running. Raises
+      # `Stryker::Instrumenter::Error` when a worker fails, and
+      # `SystemCallError` when the command can't start, after it has ended
+      # every worker.
+      #
+      # - `source`: String, the file's source, which each plain mutant is
+      #   an edit on.
+      # - `plains`: Array of Stryker::Instrumenter::PlainMutant, the plain
+      #   mutants.
+      def valid: (String source, Array[PlainMutant] plains) -> Array[bool]
+
+      # Ends every worker. The pool may be used again after it.
+      def stop: () -> void
+
+      private
+
+      COMMAND: Array[String]
+      WORKER: String
+
+      @concurrency: Integer
+      @threshold: Integer
+      @command: Array[String]
+      @workers: Array[ParseWorkerProcess]
+
+      def parallel?: (Integer work) -> bool
+
+      def checked: (String source, Array[PlainMutant] plains) -> Array[bool]
+
+      def start: () -> void
+    end
+  end
+end

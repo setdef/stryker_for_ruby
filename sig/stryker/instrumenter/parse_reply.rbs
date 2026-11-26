@@ -1,0 +1,31 @@
+module Stryker
+  class Instrumenter
+    # The line that a parse worker writes to the orchestrator for each plain
+    # mutant: one JSON object that says whether the plain mutant parses. The
+    # worker answers the plain mutants in the order it reads them, and the
+    # orchestrator gives it one at a time, so a reply needs no ID.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Instrumenter::ParseReply.line(true)
+    # # => "{\"valid\":true}"
+    # Stryker::Instrumenter::ParseReply.read("{\"valid\":false}")
+    # # => false
+    # ```
+    module ParseReply
+      # The line that says whether a plain mutant parses.
+      #
+      # - `valid`: bool, whether the plain mutant parses.
+      def self.line: (bool valid) -> String
+
+      # Whether the plain mutant parses, as `line` says. Raises
+      # `ArgumentError` when `line` isn't a reply, as when it isn't JSON.
+      #
+      # - `line`: String, a line that a worker wrote.
+      def self.read: (String line) -> bool
+
+      private def self.verdict: (String line) -> bool?
+    end
+  end
+end

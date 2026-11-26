@@ -9,6 +9,8 @@ target :lib do
   configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
 
   library "json"
+  library "etc"
+  library "open3"
   library "pathname"
   library "fileutils"
   library "minitest"

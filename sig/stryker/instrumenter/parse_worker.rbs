@@ -1,0 +1,28 @@
+module Stryker
+  class Instrumenter
+    # What runs in each process of the parse pool: it reads lines that
+    # `Stryker::Instrumenter::ParseRequest` defines from its input. It holds the
+    # source of one file at a time, and writes one line to its output for
+    # the patches of each plain mutant of it, which says whether the plain
+    # mutant parses, with Prism and the syntax of the running Ruby, as the
+    # instrumenter does in its own process.
+    #
+    # The pool starts a worker with the running Ruby and the bundle
+    # environment of the orchestrator, as an array of arguments:
+    # `ruby -I lib -r stryker/instrumenter/parse_worker -e
+    # Stryker::Instrumenter::ParseWorker.serve`. A worker loads Prism and the
+    # standard library's JSON, and not refract or the project's code. It ends
+    # when its input does.
+    module ParseWorker
+      # Answers each plain mutant that `input` gives with a line of `output`,
+      # until `input` ends.
+      #
+      # - `input`: IO, where the lines come from, standard input by default.
+      # - `output`: IO, where the answers go, standard output by default.
+      #   `serve` makes it write each answer at once.
+      def self.serve: (?IO input, ?IO output) -> void
+
+      private def self.hear: ((String | Array[Patch]) message, String source, IO output) -> String
+    end
+  end
+end

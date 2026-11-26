@@ -22,6 +22,15 @@ module Stryker
       # - `errors`: Array of Prism::ParseError, what Prism found.
       # - `subject`: String, what didn't parse, such as `"source"`.
       def self.unparsable: (Array[Prism::ParseError] errors, String subject) -> Error
+
+      # The error for a parse worker that ended, or answered with anything but
+      # the verdict, with a message that gives the ID and file of the mutant
+      # whose plain mutant it was parsing.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant whose plain mutant the worker
+      #   was parsing.
+      # - `reply`: String, the line the worker wrote, or nil when it ended.
+      def self.parse_worker: (Mutant mutant, String? reply) -> Error
     end
   end
 end

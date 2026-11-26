@@ -1,0 +1,41 @@
+module Stryker
+  class Instrumenter
+    # The conversation of a pool's workers about one file, in one thread. It
+    # gives each worker the source, and then the plain mutants in rounds of
+    # one for each worker. Each worker is asked about its plain mutant of the
+    # next round before the verdicts of this round are read, so that a worker
+    # parses while the verdict of another is read, and a pipe holds at most two
+    # lines for it. It gives the verdicts in the order of the plain mutants.
+    #
+    # A round ends when its slowest worker does, which costs little when every
+    # plain mutant takes about the time that the others do: they are the same
+    # file with one edit each.
+    #
+    # When a worker ends or answers with anything but a verdict, the worker
+    # stops and raises `Stryker::Instrumenter::Error` that gives the
+    # plain mutant's ID and file. The batch leaves the other workers running.
+    class ParseBatch
+      # Prepares the conversation.
+      #
+      # - `source`: String, the file's source.
+      # - `plains`: Array of Stryker::Instrumenter::PlainMutant, the plain
+      #   mutants of the file.
+      # - `workers`: Array of Stryker::Instrumenter::ParseWorkerProcess, the
+      #   workers to talk to, each started and not yet stopped.
+      def initialize: (String source, Array[PlainMutant] plains, Array[ParseWorkerProcess] workers) -> void
+
+      # Has the workers parse the plain mutants, and gives whether each parses.
+      def run: () -> Array[bool]
+
+      private
+
+      @source: String
+      @workers: Array[ParseWorkerProcess]
+      @rounds: Array[Array[[PlainMutant, ParseWorkerProcess]]]
+
+      def ask: (Integer index) -> void
+
+      def answer: (Integer index) -> Array[bool]
+    end
+  end
+end

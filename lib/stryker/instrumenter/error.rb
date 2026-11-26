@@ -13,6 +13,12 @@ module Stryker
         lines = errors.map { |error| "#{error.message}, on line #{error.location.start_line}" }
         new("The #{subject} doesn't parse: #{lines.join('; ')}.")
       end
+
+      def self.parse_worker(mutant, reply)
+        job = "the plain mutant of mutant #{mutant.id} in #{mutant.file}"
+        fault = reply ? "answered #{job} with #{reply.strip.inspect}, not a result" : "ended while it parsed #{job}"
+        new("A parse worker #{fault}.")
+      end
     end
   end
 end

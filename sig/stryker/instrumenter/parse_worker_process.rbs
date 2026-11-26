@@ -1,0 +1,84 @@
+module Stryker
+  class Instrumenter
+    # One process of the parse pool, with the pipes to it: the orchestrator's
+    # side of a `Stryker::Instrumenter::ParseWorker`. It gives the worker a
+    # file's source, asks it whether a plain mutant of that file parses, and
+    # reads its verdict, in the lines that `Stryker::Instrumenter::ParseRequest`
+    # and `ParseReply` define.
+    #
+    # A worker that ends, or writes anything but a verdict, makes `ask` or
+    # `verdict` stop the process and raise `Stryker::Instrumenter::Error`
+    # that gives the ID and file of the plain mutant's mutant. The worker's standard error is this
+    # process's, so what the worker writes there reaches the same place.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # worker = Stryker::Instrumenter::ParseWorkerProcess.start(command)
+    # worker.give(source)
+    # worker.ask(plain)
+    # worker.verdict(plain)
+    # # => true
+    # worker.stop
+    # ```
+    class ParseWorkerProcess
+      # Starts the process, with its pipes. Raises `SystemCallError` when the
+      # command can't start.
+      #
+      # - `command`: Array of String, the program and its arguments, which
+      #   no shell reads.
+      def self.start: (Array[String] command) -> ParseWorkerProcess
+
+      # Prepares to talk to a process that has started.
+      #
+      # - `input`: IO, the pipe to the process's standard input.
+      # - `output`: IO, the pipe from its standard output.
+      # - `waiter`: Process::Waiter, the thread that waits for the process.
+      def initialize: (IO input, IO output, Process::Waiter waiter) -> void
+
+      # Gives the worker the source that the plain mutants it is asked about
+      # are edits on. The worker doesn't answer, and a worker that has ended
+      # is noticed at the next `ask`.
+      #
+      # - `source`: String, the file's source.
+      def give: (String source) -> void
+
+      # Asks the worker whether `plain` parses, and doesn't wait for the
+      # answer. Raises `Stryker::Instrumenter::Error` when the worker has
+      # ended.
+      #
+      # - `plain`: Stryker::Instrumenter::PlainMutant, a plain mutant of the
+      #   source the worker has.
+      def ask: (PlainMutant plain) -> void
+
+      # Whether `plain` parses, as the worker says. Waits until the worker
+      # has written a line. Raises `Stryker::Instrumenter::Error` when the
+      # worker ended, or wrote a line that isn't a verdict.
+      #
+      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant that
+      #   `ask` gave the worker.
+      def verdict: (PlainMutant plain) -> bool
+
+      # Whether the process is running.
+      def running?: () -> bool
+
+      # Ends the process, if it is running, and closes its pipes. It may be
+      # called again.
+      def stop: () -> void
+
+      private
+
+      @input: IO
+      @output: IO
+      @waiter: Process::Waiter
+
+      def tell: (String line) -> bool
+
+      def close_input: () -> void
+
+      def failure: (Mutant mutant, String? reply) -> Error
+
+      def kill: () -> void
+    end
+  end
+end

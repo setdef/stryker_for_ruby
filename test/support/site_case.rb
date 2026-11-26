@@ -7,6 +7,7 @@ require "rbconfig"
 require "stryker/instrumenter"
 require "tmpdir"
 require_relative("plain_mutants")
+require_relative("pooled_instrumenting")
 
 # Runs a kind of site from the placement table in
 # docs/design/mutant-placement.md, as ADR 0001's Confirmation asks: the
@@ -21,6 +22,7 @@ require_relative("plain_mutants")
 # Stryker::Active, which isn't built yet.
 module SiteCase
   include PlainMutants
+  include PooledInstrumenting
 
   # The stand-in for the runtime's Stryker::Active. It reads the active
   # mutant's ID from the environment, and writes the IDs it was given as hits
@@ -69,7 +71,7 @@ module SiteCase
   # branch of the switch, as the placement design's traps say.
   def assert_site(source, *edits, holder:, warnings: true)
     mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
-    result = Stryker::Instrumenter.instrument(source, mutants)
+    result = instrumented(source, mutants)
 
     assert_empty(result.skipped)
     assert_equal(source.count("\n"), result.source.count("\n"), "The instrumented source has other lines.")
@@ -126,7 +128,7 @@ module SiteCase
 
   def instrument(source, *edits)
     mutants = edits.each_with_index.map { |edit, index| site_mutant(source, index + 1, *edit) }
-    Stryker::Instrumenter.instrument(source, mutants)
+    instrumented(source, mutants)
   end
 
   def skips(result)
