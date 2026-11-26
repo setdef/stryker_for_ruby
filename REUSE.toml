@@ -13,26 +13,3 @@ path = "test/fixtures/mutation-testing-report-schema.json"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2018 Stryker Mutator contributors"
 SPDX-License-Identifier = "Apache-2.0"
-
-# These files are copied from setdef/Proof, which is MIT-licensed, and changed
-# to fit this project: the doc-comment checker and its tests, the RubyCritic
-# fault reader and its tests, the shared lint, Steep, and test tasks, the
-# docs:placement task, and bin/setup. This project's copies drop Proof's own
-# gems and its doc-example checks and name this project's paths and gem.
-[[annotations]]
-path = [
-  "bin/setup",
-  "tasks/critic_faults.rb",
-  "tasks/docs.rake",
-  "tasks/ruby_doc_comments.rb",
-  "tasks/shared/lint.rake",
-  "tasks/shared/lint.rb",
-  "tasks/shared/steep.rake",
-  "tasks/shared/test.rake",
-  "tasks/sig/ruby_doc_comments.rbs",
-  "test/critic_faults_test.rb",
-  "test/ruby_doc_comments_test.rb",
-]
-precedence = "aggregate"
-SPDX-FileCopyrightText = "2026 setdef <kerrick@setdef.com>"
-SPDX-License-Identifier = "MIT"
