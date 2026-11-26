@@ -31,8 +31,8 @@ Solid arrows hand values to the next stage. Dotted arrows show the domain events
 1. **Configure.** A config source reads `stryker.config.json` or `stryker.config.yml`, whose options have StrykerJS's camelCase names ([#3](https://github.com/setdef/stryker_for_ruby/issues/3)). Options from the command line override the file's. The result is one `Config` value.
 2. **Find files.** The `mutate` patterns select the files to mutate, relative to the project's root. A path that resolves outside the root is an error.
 3. **Parse and find sites.** Prism parses each file. Each mutator walks the tree and returns a `Mutant` for each change it makes, with the mutator's name in the shared naming scheme and the mutant's location in the original source. Every mutant gets an integer ID that is unique in the run.
-4. **Instrument.** The instrumenter produces instrumented source for each file, holding every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from.
-5. **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
+4. **Instrument.** The instrumenter produces instrumented source for each file, holding every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. [ERB templates](erb.md) specifies how the instrumenter finds the Ruby in an ERB template.
+5. **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook, and [ERB templates](erb.md#loading-the-instrumented-text) specifies how an ERB template's instrumented text loads.
 6. **Dry run.** Every test runs once with no mutant active, and the switches record which tests reach which mutants. The dry run fails when a test fails, or when an instrumented file loaded without going through the hook. [Coverage](coverage.md) specifies the hits and buckets.
 7. **Plan mutant runs.** From the dry run's map, each mutant gets the status `NoCoverage`, a static run, or a runtime run of the tests that reach it, with a time limit taken from the dry-run times of those tests.
 8. **Run each mutant in isolation.** An isolation adapter runs each planned run in a clean process: a forked child, a process from the Windows pool, or a fresh process for a static mutant. [Loading and isolation](loading-and-isolation.md#isolation) specifies each.
@@ -229,6 +229,7 @@ Domain-driven design's tactical patterns, such as repositories, aggregates, and 
 
 - [Loading and isolation](loading-and-isolation.md), for the two kinds of process, the cache, the hook, and the processes each run gets.
 - [Mutant placement](mutant-placement.md), for how the instrumenter places each switch.
+- [ERB templates](erb.md), for how ERB templates get mutants and how their instrumented text loads.
 - [Coverage](coverage.md), for how the dry run maps tests to mutants.
 - [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), for why mutants are compiled into the code once and switched on at run time.
 - [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md), for why every mutant runs in a clean process.

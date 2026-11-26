@@ -54,6 +54,8 @@ The loader installs the hook before any of the project's code loads, in every pr
 
 `load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so **Stryker (for Ruby)** runs on CRuby only.
 
+The hook serves Ruby files. An ERB template reaches Ruby as text through Rails, `ERB`, Erubi, or Tilt, so it loads by another route: see [ERB templates](erb.md#loading-the-instrumented-text).
+
 ### Keeping the hook ahead of Bootsnap
 
 Bootsnap, for its compile cache, prepends a module with a `load_iseq` method to the same singleton class. Of two prepended modules, Ruby calls the one prepended last first, and Bootsnap's `load_iseq` doesn't call `super`. So a Bootsnap module prepended after the hook would serve the original file, and every mutant in it would have no effect, with no error raised.
@@ -67,6 +69,8 @@ Bootsnap prepends its module twice, so two copies of the hook stack in front of 
 ### The loading check
 
 The loading check catches an instrumented file that loaded without going through the hook, whatever the cause. The dry run, the first run of the whole suite with no mutant active, ends with it. For every instrumented file that appears in `$LOADED_FEATURES`, the loader confirms that the hook served it. When any loaded instrumented file didn't come through the hook, the dry run fails, no mutant runs, and the error lists each such file. When a module that defines `load_iseq` sits ahead of the hook in the singleton class's ancestors, the error message gives that module's name, which is Bootsnap's `Bootsnap::CompileCache::ISeq::InstructionSequenceMixin` when Bootsnap is the cause.
+
+The loading check covers Ruby files. For ERB templates, the dry run reports the ones that no hook served: see [What the dry run reports](erb.md#what-the-dry-run-reports).
 
 An instrumented file that no test loaded isn't an error: no test reaches its mutants, and the plan reports them as having no coverage.
 
