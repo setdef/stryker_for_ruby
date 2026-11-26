@@ -59,10 +59,6 @@ class MutantTest < Minitest::Test
     assert_equal("total = a -+ b\n", mutant(end_offset: 10).edit("total = a + b\n"))
   end
 
-  def test_grows_by_the_bytes_it_inserts_less_the_bytes_it_removes
-    assert_equal([0, 2, -1], [mutant.growth, mutant(replacement: "---").growth, mutant(replacement: "").growth])
-  end
-
   def test_lies_inside_a_span_that_holds_the_whole_edit
     assert_equal([true, true, false], [span(8, 13), span(10, 11), span(11, 13)].map { |each| mutant.inside?(each) })
   end

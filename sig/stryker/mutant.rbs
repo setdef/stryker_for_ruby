@@ -97,11 +97,6 @@ module Stryker
     # ```
     def edit: (String text, ?Integer offset) -> String
 
-    # How many bytes longer the file is with the edit applied: the size of
-    # the replacement less the number of bytes it replaces. It is negative
-    # when the edit removes more bytes than it inserts.
-    def growth: () -> Integer
-
     # Whether the whole edit lies inside `span`. An edit that inserts at
     # either end of `span` lies inside it.
     #

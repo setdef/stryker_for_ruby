@@ -11,10 +11,6 @@ module Stryker
       "#{bytes.byteslice(0, start_offset - offset)}#{replacement.b}#{bytes.byteslice((end_offset - offset)..)}".b
     end
 
-    def growth
-      replacement.bytesize - (end_offset - start_offset)
-    end
-
     def inside?(span)
       span.start_offset <= start_offset && end_offset <= span.end_offset
     end
