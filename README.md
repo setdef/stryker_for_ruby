@@ -1,7 +1,7 @@
 # Stryker (for Ruby)
 
 > [!NOTE]  
-> **Stryker (for Ruby)** is a community port that is not affiliated with [Stryker Mutator](https://stryker-mutator.io). We hope to upstream **Stryker (for Ruby)** and become an official project of the [Striker Mutator organization](https://github.com/stryker-mutator) when this library is ready for release.
+> **Stryker (for Ruby)** is a community port that is not affiliated with [Stryker Mutator](https://stryker-mutator.io). We hope to upstream **Stryker (for Ruby)** and become an official project of the [Stryker Mutator organization](https://github.com/stryker-mutator) when this library is ready for release.
 
 
 ## Introduction
@@ -43,6 +43,6 @@ For the full list of all available reporters, see the [reporter docs](./docs/rep
 
 ## Copyright & License
 
-**Stryker (for Ruby)** is copyright 2026, setdef. **Stryker (for Ruby)** is licensed under the <!-- TODO: Whatever Stryker's repos are -->; see [LICENSES/<!-- TODO -->](./LICENSES/<!-- TODO -->) for the full text.
+**Stryker (for Ruby)** is copyright 2026, setdef. **Stryker (for Ruby)** is licensed under the Apache License 2.0; see [LICENSES/Apache-2.0.txt](./LICENSES/Apache-2.0.txt) for the full text.
 
 Some parts of this program are copied from other sources under appropriate reuse licenses, and the copyright belongs to their respective owners. See the [REUSE Specification – Version 3.3](https://reuse.software/spec-3.3/) for information about how we comply with attribution and licensing requirements.
