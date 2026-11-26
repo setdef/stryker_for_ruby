@@ -6,9 +6,7 @@ module Stryker
     #
     # A message from the main Ractor goes to `Stryker::Runtime::RECORDER`. A
     # message from another Ractor goes to the holder's collector, which
-    # `Stryker::Runtime.start_dry_run` gives it on Ruby 4.0 and later. With
-    # no collector, such a message raises `Stryker::UnsupportedError`, so the
-    # test that sent it fails instead of losing the hit.
+    # `Stryker::Runtime.start_dry_run` gives it.
     #
     # Make the holder shareable before a constant holds it, as
     # `Stryker::Runtime.activate` does.
@@ -16,30 +14,24 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # holder = Stryker::Runtime::Recording.new
+    # holder = Stryker::Runtime::Recording.new(collector: Stryker::Runtime::Collector.new)
     # holder.id
     # # => nil
     # holder.hit(7, 8)
     # # => nil
     # Stryker::Runtime::RECORDER.static.include?(8)
     # # => true
-    # Ractor.new { Stryker::Runtime::Recording.new.hit(7) }.value
-    # # => raises Ractor::RemoteError, caused by Stryker::UnsupportedError
     # ```
     class Recording < Data
-      # Where a message from a Ractor other than the main one goes, or nil
-      # when such a message raises.
-      attr_reader collector: Collector?
+      # Where a message from a Ractor other than the main one goes.
+      attr_reader collector: Collector
 
       # Builds the holder.
       #
       # - `collector`: Stryker::Runtime::Collector, where a message from a
-      #   Ractor other than the main one goes, or nil, the default.
-      def self.new: (?collector: Collector?) -> instance
-                  | (Collector? collector) -> instance
-
-      # Builds the holder, as `Stryker::Runtime::Recording.new` does.
-      def initialize: (?collector: Collector?) -> void
+      #   Ractor other than the main one goes.
+      def self.new: (collector: Collector) -> instance
+                  | (Collector collector) -> instance
 
       # Always nil: no mutant is active.
       def id: () -> nil
@@ -58,8 +50,7 @@ module Stryker
 
       # Records `message`, sent from `ractor`. A message from the main
       # Ractor goes to `Stryker::Runtime::RECORDER`. One from any other goes
-      # to the collector, or raises `Stryker::UnsupportedError` when there is
-      # none. Returns nil.
+      # to the collector. Returns nil.
       #
       # `hit` and `load_began` pass the Ractor that runs them. It is internal
       # to the runtime, and public so that a test in the main Ractor can pass
@@ -69,12 +60,6 @@ module Stryker
       # - `message`: Array of Integer, a hit's IDs, or String, a path.
       # - `ractor`: Ractor, where the message comes from.
       def deliver: (message message, Ractor ractor) -> nil
-
-      OUTSIDE_THE_MAIN_RACTOR: String
-
-      private
-
-      def forward: (message message) -> void
     end
   end
 end

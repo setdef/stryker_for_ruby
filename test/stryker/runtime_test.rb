@@ -32,6 +32,12 @@ class RuntimeTest < Minitest::Test
     @recorder ||= Stryker::Runtime::Recorder.new
   end
 
+  # A holder whose collector has no Ractor, for the tests that send no
+  # message from another Ractor.
+  def recording
+    Stryker::Runtime::Recording.new(collector: Stryker::Runtime::Collector.new)
+  end
+
   def test_activate_sets_the_constant_to_a_shareable_holder
     # A holder that isn't frozen, as any object with the holder's methods can
     # be.
@@ -43,7 +49,7 @@ class RuntimeTest < Minitest::Test
   end
 
   def test_activate_replaces_a_holder_already_there
-    Stryker::Runtime.activate(Stryker::Runtime::Recording.new, namespace)
+    Stryker::Runtime.activate(recording, namespace)
     Stryker::Runtime.activate_mutant(9, namespace)
 
     assert_equal(9, namespace::Active.id)
@@ -80,14 +86,14 @@ class RuntimeTest < Minitest::Test
   end
 
   def test_a_hit_with_no_mutant_active_goes_to_the_recorder
-    holder = Stryker::Runtime::Recording.new
+    holder = recording
 
     assert_nil(holder.hit(910_002, 910_003))
     assert_operator(Set[910_002, 910_003], :subset?, Stryker::Runtime::RECORDER.static)
   end
 
   def test_no_mutant_is_active_with_a_holder_that_records
-    assert_nil(Stryker::Runtime::Recording.new.id)
+    assert_nil(recording.id)
   end
 
   # Coverage counts no line that runs outside the main Ractor, so these tests
@@ -99,12 +105,6 @@ class RuntimeTest < Minitest::Test
     assert_nil(Stryker::Runtime::Recording.new(collector:).deliver([910_004], Object.new))
     assert_equal([[910_004]], collector)
     refute_includes(Stryker::Runtime::RECORDER.static, 910_004)
-  end
-
-  def test_a_hit_from_another_ractor_with_no_collector_raises
-    error = assert_raises(Stryker::UnsupportedError) { Stryker::Runtime::Recording.new.deliver([1], Object.new) }
-
-    assert_includes(error.message, "Ruby 4.0")
   end
 
   def test_a_load_with_a_mutant_active_records_nothing
@@ -132,14 +132,6 @@ class RuntimeTest < Minitest::Test
     recorder.test_started(:first)
 
     assert_equal([nil, collector, Set[7]], [namespace::Active.id, namespace::Active.collector, recorder.static])
-  end
-
-  def test_the_dry_run_with_no_collector_drains_nothing
-    recorder = Stryker::Runtime::Recorder.new
-    Stryker::Runtime.start_dry_run(nil, namespace, recorder)
-    recorder.test_started(:first)
-
-    assert_equal([nil, Set.new], [namespace::Active.collector, recorder.static])
   end
 
   def test_a_hit_from_the_main_ractor_skips_the_collector

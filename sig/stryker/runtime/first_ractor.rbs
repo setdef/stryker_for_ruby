@@ -1,8 +1,7 @@
 module Stryker
   module Runtime
     # The module that the runtime prepends to `Ractor`'s singleton class in a
-    # process that records hits, on Ruby 4.0 and later, so that the
-    # process's collector Ractor starts at the project's first `Ractor.new`,
+    # process that records hits, so that the process's collector Ractor starts at the project's first `Ractor.new`,
     # as
     # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
     # specifies. A project that makes no Ractor then gets none from the
@@ -32,13 +31,11 @@ module Stryker
     # # => 2, the collector's Ractor and the main one
     # ```
     module FirstRactor
-      # Builds the process's collector with
-      # `Stryker::Runtime::Collector.build`, and installs this module on
-      # `ractor_class` when there is one. Returns the collector, or nil on
-      # Ruby 3.3 and 3.4, where it installs nothing.
+      # Installs this module on `ractor_class`, and returns the process's
+      # new collector, which has no Ractor yet.
       #
       # - `ractor_class`: Ractor, or a stand-in for it in a test.
-      def self.prepare: (?singleton(Ractor) | Module ractor_class) -> Collector?
+      def self.prepare: (?singleton(Ractor) | Module ractor_class) -> Collector
 
       # Prepends this module to `ractor_class`'s singleton class. Returns
       # nil. Prepending it again changes nothing.

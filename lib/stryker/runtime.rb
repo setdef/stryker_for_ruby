@@ -39,7 +39,7 @@ module Stryker
       activate(ActiveMutant.new(id:), namespace)
     end
 
-    def self.start_dry_run(collector = Collector.build, namespace = Stryker, recorder = RECORDER)
+    def self.start_dry_run(collector = Collector.new, namespace = Stryker, recorder = RECORDER)
       recorder.dry_run_started(collector)
       activate(Recording.new(collector:), namespace)
     end

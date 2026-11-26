@@ -132,11 +132,11 @@ The dry run doesn't guess about this. It reports every file first loaded during 
 
 ## Ractors
 
-A hit made in the main Ractor goes straight to the recorder. A hit made in another Ractor can't: the standard library has no mutable structure that Ractors can share, Ractor-local storage can't be read by another Ractor, and a frozen IO can't be written. How the hit reaches the recorder depends on the Ruby version. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux. [Loading and isolation](loading-and-isolation.md#ractors) says how the switch reads the active mutant's ID in a Ractor, and how the hook, forking, and the lookup tables behave there.
+A hit made in the main Ractor goes straight to the recorder. A hit made in another Ractor can't: the standard library has no mutable structure that Ractors can share, Ractor-local storage can't be read by another Ractor, and a frozen IO can't be written. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux. [Loading and isolation](loading-and-isolation.md#ractors) says how the switch reads the active mutant's ID in a Ractor, and how the hook, forking, and the lookup tables behave there. Ruby 3.3 and 3.4 have no `Ractor::Port`, which this design needs, so they are unsupported: [Ruby 3.3 and 3.4](../older-ruby.md#a-hit-from-a-non-main-ractor-cant-be-recorded) says what happens there.
 
-### Ruby 4.0 and later
+### The collector Ractor
 
-On Ruby 4.0 and later, every process that records hits has a collector, and a switch in another Ractor sends each hit to the collector's Ractor. A process records hits when no mutant is active: the fork parent, and the dry run's forked child. The collector's Ractor starts when the project makes its first Ractor: the runtime prepends a module to `Ractor`'s singleton class whose `new` starts the collector's Ractor and then calls `super`. A project that makes no Ractor gets none from the runtime. A forked child can't use its parent's Ractors, so the dry run's child readies a collector of its own after the fork, and its Ractor starts at the child's first `Ractor.new`. A mutant run has no collector, and its `hit` returns at once. On Ruby 3.3 and 3.4 the runtime prepends nothing to `Ractor`.
+Every process that records hits has a collector, and a switch in another Ractor sends each hit to the collector's Ractor. A process records hits when no mutant is active: the fork parent, and the dry run's forked child. The collector's Ractor starts when the project makes its first Ractor: the runtime prepends a module to `Ractor`'s singleton class whose `new` starts the collector's Ractor and then calls `super`. A project that makes no Ractor gets none from the runtime. A forked child can't use its parent's Ractors, so the dry run's child readies a collector of its own after the fork, and its Ractor starts at the child's first `Ractor.new`. A mutant run has no collector, and its `hit` returns at once.
 
 The fork parent runs no test, so it drains its collector before each fork, and a hit that a Ractor made while the project loaded is in the static bucket that every child inherits. In the dry run, the recorder drains the collector when each test starts and when it ends:
 
@@ -154,10 +154,6 @@ On Ruby 4.0.10, a hit in another Ractor costs 543 to 748 ns, because it sends th
 When `Warning[:experimental]` is on, Ruby 4.0 and later print "Ractor API is experimental and may change in future versions of Ruby." for the first Ractor that a process starts, with the file and line of the code that called `Ractor.new`. `Ractor.new` checks whether the process is still in single-Ractor mode, and starting a Ractor ends that mode for good. A second `Ractor.new` prints nothing, even after the first Ractor has finished, and `Ractor::Port.new` starts no Ractor and prints nothing. A forked child is in single-Ractor mode again, so Ruby warns again for the child's first Ractor.
 
 The collector's Ractor is the process's first, so Ruby warns for it, with the warning as the project set it. Ruby's `Kernel#warn(uplevel: 0)` prints the file and line of the first caller whose path doesn't start with `<internal:`, so the runtime compiles its `new` under such a path, and the warning shows the project's line. The project sees exactly the warning it would see without **Stryker (for Ruby)**, in the parent and in a forked child. A `Ractor.new` without a block raises before Ruby warns, so it starts no collector either.
-
-### Ruby 3.3 and 3.4
-
-On Ruby 3.3 and 3.4, no mechanism that the probes tried records a hit from a non-main Ractor reliably. A send from a thread inside a non-main Ractor hangs. A thread in the main Ractor that reads a port or `Ractor.main` never ran while the test's main thread waited on a Ractor, so no hit arrived. So in a process that records hits, a switch that runs in a non-main Ractor raises `Stryker::UnsupportedError`, and its message mentions Ruby 4.0. The test fails, the dry run fails, and no mutant runs. The run fails loudly instead of losing hits.
 
 ### A Ractor still running when its test ends
 
@@ -191,7 +187,6 @@ Hits avoid both causes, because each switch records the IDs of the mutants it ho
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.
 - It doesn't record hits in a mutant run.
-- It doesn't record a hit from a non-main Ractor on Ruby 3.3 or 3.4. The dry run fails instead.
 - It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
 - It doesn't record a hit from a Ractor that started before the runtime loaded. Such a hit raises `Stryker::UnsupportedError`.
 - It doesn't keep the map between runs. Each run of **Stryker (for Ruby)** starts with a new dry run.

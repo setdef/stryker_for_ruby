@@ -33,14 +33,14 @@ class StartTest < Minitest::Test
   def test_no_id_in_the_environment_starts_recording_with_a_collector_not_yet_started
     Stryker::Runtime.start({}, namespace, recorder)
     collector = namespace::Active.collector
-    expected = Ractor.const_defined?(:Port, false) ? [Stryker::Runtime::Collector, false] : [NilClass, false]
 
-    assert_equal([nil, *expected], [namespace::Active.id, collector.class, collector&.started? || false])
+    assert_equal([nil, Stryker::Runtime::Collector, false], [namespace::Active.id, collector.class, collector.started?])
   end
 
   def test_a_second_dry_run_in_one_process_raises
-    Stryker::Runtime.start_dry_run(nil, namespace, recorder)
-    error = assert_raises(RuntimeError) { Stryker::Runtime.start_dry_run(nil, namespace, recorder) }
+    collector = Stryker::Runtime::Collector.new
+    Stryker::Runtime.start_dry_run(collector, namespace, recorder)
+    error = assert_raises(RuntimeError) { Stryker::Runtime.start_dry_run(collector, namespace, recorder) }
 
     assert_includes(error.message, "twice in one process")
   end

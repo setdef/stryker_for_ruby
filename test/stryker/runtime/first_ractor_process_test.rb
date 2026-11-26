@@ -37,10 +37,6 @@ class FirstRactorProcessTest < Minitest::Test
   RUBY
   private_constant(:FIRST, :FORKED)
 
-  def setup
-    skip("Ruby before 4.0 starts no collector.") unless Ractor.const_defined?(:Port, false)
-  end
-
   # What +program+ printed and wrote to standard error, with the runtime
   # loaded and without it.
   def with_and_without(program, *with)

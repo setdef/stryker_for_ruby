@@ -9,7 +9,6 @@ class ConstantsTest < Minitest::Test
   def test_the_runtimes_messages_and_labels_are_private
     constants = [
       [Stryker::Runtime::Buckets, :NO_TEST_RUNNING],
-      [Stryker::Runtime::Recording, :OUTSIDE_THE_MAIN_RACTOR],
       [Stryker::Runtime::Stack, :TOP_LEVEL_LABELS],
       [Stryker::Runtime::Recorder, :SECOND_DRY_RUN],
     ]

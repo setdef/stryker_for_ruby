@@ -56,9 +56,6 @@ class ForkTest < Minitest::Test
   # bucket that the child inherits, and the child's own collector takes the
   # hit that a Ractor makes during its test.
   def test_a_forked_dry_run_starts_a_collector_of_its_own
-    skip("Ruby before 4.0 has no collector, and a fork with a live Ractor crashes on 3.3.") unless
-      Ractor.const_defined?(:Port, false)
-
     assert_equal("[[1], [2]]\n", run_program(DRY_RUN).first)
   end
 

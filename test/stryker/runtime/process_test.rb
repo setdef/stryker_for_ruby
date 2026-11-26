@@ -18,22 +18,14 @@ class ProcessTest < Minitest::Test
   RUBY
 
   # Makes a hit in another Ractor, and prints what the recorder holds once it
-  # has drained, or the error that the hit raised.
+  # has drained.
   LOADED_HIT = <<~RUBY
     require "stryker/runtime"
-    begin
-      p take_value(Ractor.new { Stryker::Active.hit(7) })
-      Stryker::Runtime::RECORDER.drain
-      p Stryker::Runtime::RECORDER.static.to_a
-    rescue Ractor::RemoteError => error
-      p [error.cause.class, error.cause.message.include?("Ruby 4.0"), Stryker::Runtime::RECORDER.static.to_a]
-    end
+    p take_value(Ractor.new { Stryker::Active.hit(7) })
+    Stryker::Runtime::RECORDER.drain
+    p Stryker::Runtime::RECORDER.static.to_a
   RUBY
   private_constant(:LOADED_HIT, :READ)
-
-  def ports?
-    Ractor.const_defined?(:Port, false)
-  end
 
   # Loads the runtime under a RUBY_VERSION of +version+, and returns what the
   # program wrote to standard error.
@@ -84,12 +76,9 @@ class ProcessTest < Minitest::Test
   end
 
   # A process that records hits starts a collector at its first Ractor.new,
-  # on Ruby 4.0 and later, so a hit from another Ractor reaches the recorder
-  # when it drains. Before 4.0 nothing records such a hit, so the hit raises.
-  def test_a_hit_in_another_ractor_while_the_runtime_loads_reaches_the_recorder_or_raises
-    expected = ports? ? "nil\n[7]\n" : "[Stryker::UnsupportedError, true, []]\n"
-
-    assert_equal(expected, run_program(LOADED_HIT).first)
+  # so a hit from another Ractor reaches the recorder when it drains.
+  def test_a_hit_in_another_ractor_while_the_runtime_loads_reaches_the_recorder
+    assert_equal("nil\n[7]\n", run_program(LOADED_HIT).first)
   end
 
   # The collector starts at the project's first Ractor.new, so a project that
@@ -98,13 +87,12 @@ class ProcessTest < Minitest::Test
     assert_equal(["1\n", []], run_program("require 'stryker/runtime'\np Ractor.count", {}, all: true))
   end
 
-  # Ruby 3.3 and 3.4 can't record a hit from another Ractor, and a mutant run
-  # records none.
+  # A mutant run records no hit, so it has no collector to start.
   def test_the_prepend_on_ractor_is_installed_only_where_a_collector_can_start
     program = "require 'stryker/runtime'\np Ractor.singleton_class.include?(Stryker::Runtime::FirstRactor)"
     outputs = [{}, { STRYKER_ACTIVE_MUTANT: "7" }].map { |environment| run_program(program, environment).first }
 
-    assert_equal(["#{ports?}\n", "false\n"], outputs)
+    assert_equal(%W[true\n false\n], outputs)
   end
 
   def test_a_hit_in_another_ractor_in_a_mutant_run_records_nothing

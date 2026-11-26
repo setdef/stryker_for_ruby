@@ -14,23 +14,18 @@ class DryRunTest < Minitest::Test
   parallelize_me!
 
   # Makes hits from other Ractors before, during, and between two tests, and
-  # prints the buckets, or the class of the error that a hit raised.
+  # prints the buckets.
   RACTORS = <<~RUBY
     require "stryker/runtime"
     recorder = Stryker::Runtime::RECORDER
-    outcome = begin
-      take_value(Ractor.new { Stryker::Active.hit(1) })
-      recorder.test_started(:first)
-      take_value(Ractor.new { Stryker::Active.hit(2); Stryker::Active.load_began("/app/lib/invoice.rb") })
-      recorder.test_finished(:passed)
-      take_value(Ractor.new { Stryker::Active.hit(3) })
-      recorder.test_started(:second)
-      recorder.test_finished(:passed)
-      [recorder.static.to_a.sort, recorder.tests.transform_values(&:to_a), recorder.loaded.to_a]
-    rescue Ractor::RemoteError => error
-      error.cause.class
-    end
-    p outcome
+    take_value(Ractor.new { Stryker::Active.hit(1) })
+    recorder.test_started(:first)
+    take_value(Ractor.new { Stryker::Active.hit(2); Stryker::Active.load_began("/app/lib/invoice.rb") })
+    recorder.test_finished(:passed)
+    take_value(Ractor.new { Stryker::Active.hit(3) })
+    recorder.test_started(:second)
+    recorder.test_finished(:passed)
+    p [recorder.static.to_a.sort, recorder.tests.transform_values(&:to_a), recorder.loaded.to_a]
   RUBY
 
   # Requires two files inside a test: one that a stand-in for the loader's
@@ -64,10 +59,7 @@ class DryRunTest < Minitest::Test
 
   def test_a_hit_from_another_ractor_lands_in_the_bucket_current_when_it_is_drained
     expected = [[1, 3], { first: [2], second: [] }, ["/app/lib/invoice.rb"]].inspect
-    expected = "Stryker::UnsupportedError" unless Ractor.const_defined?(:Port, false)
 
-    # Before Ruby 4.0, the Ractor's thread also reports the error on standard
-    # error.
     assert_equal("#{expected}\n", run_program(RACTORS).first)
   end
 

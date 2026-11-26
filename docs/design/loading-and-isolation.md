@@ -29,7 +29,7 @@ The orchestrator runs inside the project's bundle, with the gem in the project's
 
 ### What runs in a project process
 
-The runtime holds the hook, the switch, and the hit recorder, and on Ruby 4.0 and later the collector Ractor of every process that records hits, which starts when the project makes its first Ractor ([Ractors](coverage.md#ractors)). A project that makes no Ractor gets none from the runtime. It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
+The runtime holds the hook, the switch, and the hit recorder, and the collector Ractor of every process that records hits, which starts when the project makes its first Ractor ([Ractors](coverage.md#ractors)). A project that makes no Ractor gets none from the runtime. It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
 
 ### The cache
 
@@ -112,9 +112,9 @@ The fork parent kills a child that runs past its time limit, and relays the time
 
 ### Forking on Linux and macOS
 
-The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them. On Ruby 4.0 and later, the parent drains its collector before each fork, so the hits that the project's Ractors made while it loaded are in that bucket too. On Ruby 3.3, the parent first checks for live Ractors ([Forking with live Ractors on Ruby 3.3](#forking-with-live-ractors-on-ruby-33)).
+The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them. The parent drains its collector before each fork, so the hits that the project's Ractors made while it loaded are in that bucket too.
 
-The dry run is itself a forked child, with no mutant active. It can't use its parent's collector, so on Ruby 4.0 and later it readies a collector of its own after the fork, whose Ractor starts the same way, at the child's first `Ractor.new`.
+The dry run is itself a forked child, with no mutant active. It can't use its parent's collector, so it readies a collector of its own after the fork, whose Ractor starts the same way, at the child's first `Ractor.new`.
 
 For each runtime mutant run, the parent:
 
@@ -157,7 +157,7 @@ One case isn't handled: a hit made on another thread or a fiber while such a fil
 
 ## Ractors
 
-The switch and the hook can run in a Ractor other than the main one. This section specifies how the active mutant's ID is read there, how the hook behaves there, how forking treats live Ractors on Ruby 3.3, and why every lookup table is shareable. [Coverage](coverage.md#ractors) specifies how a hit made there is recorded. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux.
+The switch and the hook can run in a Ractor other than the main one. This section specifies how the active mutant's ID is read there, how the hook behaves there, and why every lookup table is shareable. [Coverage](coverage.md#ractors) specifies how a hit made there is recorded. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux.
 
 ### The active mutant's holder
 
@@ -167,18 +167,11 @@ A forked child, or a fresh process that reads `STRYKER_ACTIVE_MUTANT`, replaces 
 
 ### The hook in a non-main Ractor
 
-The hook reads the cache through a shareable table, so it works in a non-main Ractor. On Ruby 4.0 and later, it records what it served through the collector Ractor ([Coverage](coverage.md#ractors)). On Ruby 3.3 and 3.4, it raises `Stryker::UnsupportedError` where it would record, as Coverage specifies for a hit.
+The hook reads the cache through a shareable table, so it works in a non-main Ractor. It records what it served through the collector Ractor ([Coverage](coverage.md#ractors)).
 
-Which Ractor the hook runs in depends on the call and on the version:
+`load` in a non-main Ractor calls the hook in that Ractor. `require` there runs in the main Ractor, so the hook serves the instrumented source there. On Ruby 4.1, a non-main Ractor can't prepend to `RubyVM::InstructionSequence`.
 
-- On Ruby 3.4 and later, `require` in a non-main Ractor runs in the main Ractor, so the hook serves the instrumented source there.
-- On Ruby 3.3, `require` in a non-main Ractor raises inside RubyGems, with no involvement from **Stryker (for Ruby)**.
-- `load` in a non-main Ractor calls the hook in that Ractor, on every version.
-- On Ruby 4.1, a non-main Ractor can't prepend to `RubyVM::InstructionSequence`.
-
-### Forking with live Ractors on Ruby 3.3
-
-On Ruby 3.4 and later, a process with live Ractors forks, and the child works. On Ruby 3.3, the child crashed with a segmentation fault whenever the parent had a live Ractor, on macOS and on Linux. So before each fork on Ruby 3.3, the parent checks `Ractor.count > 1`. When any Ractor is live, the run stops with an error, instead of letting every child crash and reporting `RuntimeError` for each mutant.
+Ruby 3.3 and 3.4 are unsupported. [Ruby 3.3 and 3.4](../older-ruby.md) lists what goes wrong in a non-main Ractor there, and when a process forks while a Ractor is running.
 
 ### Lookup tables
 
@@ -191,5 +184,4 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
-- It doesn't fork on Ruby 3.3 while a Ractor is live. The run stops with an error.
 - It doesn't write instrumented source into the project.

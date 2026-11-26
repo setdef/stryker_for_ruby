@@ -1,7 +1,6 @@
 module Stryker
   module Runtime
-    # The collector of a process that records hits, on Ruby 4.0 and later,
-    # as
+    # The collector of a process that records hits, as
     # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
     # specifies. A Ractor other than the main one can't reach the recorder,
     # so a holder there sends each message to the collector, whose Ractor
@@ -17,7 +16,7 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # collector = Stryker::Runtime::Collector.build
+    # collector = Stryker::Runtime::Collector.new
     # Stryker::Runtime::RECORDER.collect_from(collector)
     # collector.started?
     # # => false
@@ -30,14 +29,6 @@ module Stryker
     # # => []
     # ```
     class Collector < Module
-      # Builds a collector with no Ractor, or returns nil on Ruby 3.3 and
-      # 3.4, which have no `Ractor::Port`. It starts no Ractor, and says
-      # nothing.
-      #
-      # - `ractor_class`: Ractor, or a stand-in for it in a test, internal to
-      #   the runtime.
-      def self.build: (?singleton(Ractor) | Module ractor_class) -> Collector?
-
       # What the collector's Ractor runs: it receives each message from
       # `inbox` and keeps it, and on a drain sends what it kept since the
       # last drain to `reply`: each path once, in the order the paths
@@ -55,8 +46,7 @@ module Stryker
 
       private def self.batch: (singleton(Ractor) inbox, Set[Integer] ids, Set[String] paths) -> Array[message]
 
-      # Builds a collector with no Ractor. Use `build`, which returns nil
-      # where no collector can work.
+      # Builds a collector with no Ractor. It starts none, and says nothing.
       def initialize: () -> void
 
       # Gives the collector its Ractor, which runs `serve`, and the port the

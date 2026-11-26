@@ -25,22 +25,11 @@ class FirstRactorTest < Minitest::Test
     assert_nil(recorder.unstarted_collector)
   end
 
-  def ported
-    Class.new { const_set(:Port, Class.new) }
-  end
-
-  def test_it_prepares_a_collector_and_installs_where_ractors_have_ports
-    ractor_class = ported
+  def test_it_prepares_a_collector_and_installs
+    ractor_class = Class.new
     collector = Stryker::Runtime::FirstRactor.prepare(ractor_class)
 
     assert_equal([false, true], [collector.started?, ractor_class.singleton_class.include?(Stryker::Runtime::FirstRactor)])
-  end
-
-  def test_it_prepares_nothing_where_ractors_have_no_ports
-    ractor_class = Class.new
-
-    assert_nil(Stryker::Runtime::FirstRactor.prepare(ractor_class))
-    refute_includes(ractor_class.singleton_class.ancestors, Stryker::Runtime::FirstRactor)
   end
 
   def test_it_installs_on_the_singleton_class_it_is_given

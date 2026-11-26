@@ -24,12 +24,11 @@ module Stryker
   # fresh process of a static mutant's run, that mutant is active from the
   # start, so its switch takes the mutated branch while its file loads.
   # Otherwise no mutant is active, and every hit goes to
-  # `Stryker::Runtime::RECORDER`.
-  # On a Ruby older than 4.0, which the project doesn't support, loading
-  # it also writes one line about that to standard error, with
-  # Stryker::Runtime::OlderRuby.
+  # `Stryker::Runtime::RECORDER`. On a Ruby older than 4.0, which the
+  # project doesn't support, loading it also writes one line about that to
+  # standard error, with Stryker::Runtime::OlderRuby.
   #
-  # With no mutant active, on Ruby 4.0 and later, the runtime also prepends
+  # With no mutant active, the runtime also prepends
   # Stryker::Runtime::FirstRactor to `Ractor`'s singleton class, so the
   # process's collector Ractor starts at the project's first `Ractor.new`,
   # and a hit from another Ractor reaches the recorder in every process that
@@ -163,18 +162,15 @@ module Stryker
     # RuntimeError, because the hits sent to the first collector would be
     # lost: the isolation adapter that calls it twice has a fault.
     #
-    # On Ruby 4.0 and later, the default collector is a new one, built by
-    # `Stryker::Runtime::Collector.build`, whose Ractor starts at the
+    # The default collector is a new one, whose Ractor starts at the
     # process's first `Ractor.new`. In a forked child, that is the child's
     # first, and Ruby warns that Ractors are experimental for it as it would
-    # without the runtime. On Ruby 3.3 and 3.4 there is none, so a hit in
-    # another Ractor raises `Stryker::UnsupportedError`.
+    # without the runtime.
     #
     # Call it with no arguments. The arguments are internal to the runtime,
     # and exist so that a test can pass stand-ins:
     #
-    # - `collector`: Stryker::Runtime::Collector, or nil for none. A new
-    #   collector on Ruby 4.0 and later, and nil before, by default.
+    # - `collector`: Stryker::Runtime::Collector. A new collector by default.
     # - `namespace`: Module, where the constant is. Stryker by default.
     # - `recorder`: Stryker::Runtime::Recorder, the recorder that drains the
     #   collector. `Stryker::Runtime::RECORDER` by default.
@@ -187,6 +183,6 @@ module Stryker
     # Stryker::Runtime::RECORDER.tests[test]
     # # => #<Set: {7}>
     # ```
-    def self.start_dry_run: (?Collector? collector, ?Module namespace, ?Recorder recorder) -> _Holder
+    def self.start_dry_run: (?Collector collector, ?Module namespace, ?Recorder recorder) -> _Holder
   end
 end

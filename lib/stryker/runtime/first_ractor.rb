@@ -6,9 +6,8 @@ module Stryker
   module Runtime
     module FirstRactor
       def self.prepare(ractor_class = Ractor)
-        collector = Collector.build(ractor_class)
-        install(ractor_class) if collector
-        collector
+        install(ractor_class)
+        Collector.new
       end
 
       def self.install(ractor_class = Ractor)

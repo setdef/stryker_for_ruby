@@ -15,9 +15,9 @@ This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn
 
 ## A hit from a non-main Ractor can't be recorded
 
-**Ruby 3.3 and 3.4.** The dry run records a hit from code that runs in a Ractor other than the main one by sending it to a collector Ractor, through a `Ractor::Port`. Ruby 3.3 and 3.4 have no `Ractor::Port`, and a send from a thread inside a non-main Ractor hangs there, so no mechanism records such a hit.
+**Ruby 3.3 and 3.4.** The runtime records a hit from code that runs in a Ractor other than the main one by sending it to a collector Ractor, through a `Ractor::Port`. Ruby 3.3 and 3.4 have no `Ractor::Port`, and a send from a thread inside a non-main Ractor hangs there, so no mechanism records such a hit.
 
-A switch that runs in a non-main Ractor in the dry run raises `Stryker::UnsupportedError`. The test that ran the switch fails, so the dry run fails and no mutant runs. [Coverage](design/coverage.md#ractors) has the design.
+In a process that records hits, which is the dry run and its fork parent, the project's first `Ractor.new` with a block raises `NameError` (`uninitialized constant Ractor::Port`), because the runtime starts the collector's Ractor there. The error stops the code that made the Ractor, so its test fails and the dry run fails. A project that makes no Ractor is not affected. [Coverage](design/coverage.md#ractors) has the design.
 
 ## A fork while a Ractor is running crashes the child
 

@@ -47,22 +47,8 @@ class CollectorTest < Minitest::Test
     assert_equal([["lib/invoice.rb", "lib/tax.rb", [7, 8]]], replies)
   end
 
-  def test_no_collector_is_built_on_a_ruby_without_ractor_ports
-    assert_nil(Stryker::Runtime::Collector.build(Module.new))
-  end
-
-  # Ractor's ancestors include Object, so a top-level Port in the project would
-  # be inherited the same way.
-  def test_an_inherited_port_is_not_a_ractor_port
-    ported = Class.new { const_set(:Port, Class.new) }
-
-    assert_nil(Stryker::Runtime::Collector.build(Class.new(ported)))
-  end
-
   def test_a_collector_is_built_without_starting_a_ractor
-    collector = Stryker::Runtime::Collector.build(Class.new { const_set(:Port, Class.new) })
-
-    assert_equal([Stryker::Runtime::Collector, false], [collector.class, collector.started?])
+    refute_predicate(Stryker::Runtime::Collector.new, :started?)
   end
 
   def test_a_started_collector_says_so

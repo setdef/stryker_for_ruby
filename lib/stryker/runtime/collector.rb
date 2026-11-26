@@ -10,12 +10,6 @@ module Stryker
         "records its hits."
       private_constant(:DRAIN, :NOT_STARTED)
 
-      def self.build(ractor_class = Ractor)
-        # Ruby 3.3 and 3.4 have no Ractor::Port. Without false, a top-level
-        # Port in the project would count.
-        new if ractor_class.const_defined?(:Port, false)
-      end
-
       def self.serve(inbox, reply)
         loop { reply << batch(inbox, Set.new, Set.new) }
       end
