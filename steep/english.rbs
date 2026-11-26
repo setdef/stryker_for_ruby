@@ -1,0 +1,3 @@
+# English.rb gives $! the name $ERROR_INFO. Steep has no declaration for the
+# English names, and RuboCop prefers them to the punctuation names.
+$ERROR_INFO: Exception?

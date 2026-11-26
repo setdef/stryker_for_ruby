@@ -1,0 +1,26 @@
+module Stryker
+  module ConfigSources
+    # Reads a configuration file of YAML, such as `stryker.config.yml`. The
+    # options have the same names and nesting as in the JSON file. It reads
+    # with `Psych.safe_load`, which allows only strings, numbers, booleans,
+    # null, arrays, and hashes: a date, a symbol, an alias, or a tag that
+    # names a Ruby class is an error, because the file comes from the project.
+    # An empty file holds no options.
+    #
+    # ```ruby
+    # Stryker::ConfigSources::YamlFile.new("stryker.config.yml").read
+    # # => { "testRunner" => "minitest", "thresholds" => { "break" => 70 } }
+    # ```
+    class YamlFile < TextFile
+      # The kinds of value that `Psych.safe_load` returns, for the error that
+      # names them.
+      PLAIN_VALUES: String
+
+      private
+
+      # Parses `text` as YAML, and raises `Stryker::ConfigError` for text
+      # that isn't valid YAML or uses more than its plain values.
+      def parse: (String text) -> JsonValue::json_value
+    end
+  end
+end

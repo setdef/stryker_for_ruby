@@ -158,8 +158,10 @@ module Stryker
 
   # Reads options from one kind of configuration file.
   interface _ConfigSource
-    # Returns the file's options, keyed by their camelCase names, or nil when
-    # the file doesn't exist.
+    # Returns the file's options as nested hashes, keyed by the option names
+    # in the file, or nil when the file doesn't exist. Raises ConfigError
+    # when the file can't be read or parsed, or holds something other than an
+    # object.
     def read: () -> Hash[String, json_value]?
   end
 end
@@ -170,7 +172,7 @@ A port says what the core needs, and nothing about how an adapter does it:
 - **`_TestRunner`** has the Minitest and RSpec adapters ([#5](https://github.com/setdef/stryker_for_ruby/issues/5)). RSpec has a built-in way to stop at the first failure (`--fail-fast`); Minitest 6 has none, so the Minitest adapter supplies one.
 - **`_Isolation`** has the fork adapter for Linux and macOS and the fresh-process adapter, which runs the Windows pool and every static run on every system. The orchestrator sends each run to the adapter for its system and its kind of mutant.
 - **`_Reporter`** has one adapter per entry in the `reporters` option. A reporter that needs every result, such as the JSON reporter, builds its output when it receives `RunCompleted`. One that shows progress acts on each `MutantTested`.
-- **`_ConfigSource`** has one adapter per file format. The YAML adapter reads with `Psych.safe_load`, never `YAML.unsafe_load`, because the file comes from the project.
+- **`_ConfigSource`** has one adapter per file format. Both read text with `ConfigSources::TextFile`, which refuses a file that isn't an object of options, and each adds the parser of its format. The YAML adapter reads with `Psych.safe_load`, never `YAML.unsafe_load`, because the file comes from the project. An adapter raises `Stryker::ConfigError` for a file that can't be read or parsed, and names the file in the message. `ConfigSources.locate` chooses the file and its adapter: the file the user names, or else `stryker.config.json` or `stryker.config.yml` in the project's root. It raises `ConfigError` when both default files exist, or when a named file doesn't exist or isn't JSON or YAML.
 
 ### Contract tests
 

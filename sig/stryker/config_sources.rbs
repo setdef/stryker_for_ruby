@@ -1,0 +1,57 @@
+module Stryker
+  # Finds the project's configuration file and builds the adapter that reads
+  # it. The adapters are `Stryker::ConfigSources::JsonFile` and
+  # `Stryker::ConfigSources::YamlFile`.
+  module ConfigSources
+    # The names of the files that Configure looks for in the project's root
+    # when no file is named, in the order it prefers them.
+    FILE_NAMES: Array[String]
+
+    # The adapter for each extension that a configuration file may have.
+    FORMATS: Hash[Symbol, singleton(TextFile)]
+
+    # A configuration file that was found: the name to use for it in error
+    # messages, and the adapter that reads it.
+    class Located < Data
+      # The name to use for the file in error messages: the name the user
+      # gave, or the default file's name.
+      attr_reader label: String
+
+      # The adapter that reads the file.
+      attr_reader source: TextFile
+
+      # Builds the pair.
+      def self.new: (label: String, source: TextFile) -> instance
+    end
+
+    # Finds the configuration file of the project at `root`, and returns it
+    # with an adapter for its format, or nil when the project has none.
+    #
+    # With no file named, it looks for `stryker.config.json` and then
+    # `stryker.config.yml` in `root`. When both exist it raises
+    # `Stryker::ConfigError` that names both, because it can't tell which one
+    # to read. With a file named, it uses that file whatever other files
+    # exist, and raises `Stryker::ConfigError` when the file doesn't exist or
+    # its name doesn't end in `.json`, `.yml`, or `.yaml`. A relative name is
+    # relative to `root`.
+    #
+    # - `root`: String, the project's root.
+    # - `named`: String or nil, the file that the user named.
+    def self.locate: (String root, ?String? named) -> Located?
+
+    # Finds the file that Configure reads when none is named, or nil when
+    # the project has none. Private.
+    def self.default_file: (String root) -> Located?
+
+    # Builds the error message for two files that both exist. Private.
+    def self.both_exist: (Array[String] names) -> String
+
+    # Returns the file the user named, or raises when it doesn't exist.
+    # Private.
+    def self.named_file: (String root, String named) -> Located
+
+    # Builds the adapter for the format that `label`'s extension names.
+    # Private.
+    def self.source_for: (String root, String label) -> Located
+  end
+end

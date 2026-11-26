@@ -1,0 +1,14 @@
+module Stryker
+  # Reads the options of one kind of configuration file. The adapters in the
+  # gem are `Stryker::ConfigSources::JsonFile` and
+  # `Stryker::ConfigSources::YamlFile`. The contract tests in
+  # `Stryker::Testing::ConfigSourceContract` hold every adapter to the same
+  # behavior.
+  interface _ConfigSource
+    # Returns the file's options as nested hashes, keyed by the option names
+    # in the file, or nil when the file doesn't exist. Raises
+    # `Stryker::ConfigError` when the file can't be read or parsed, or holds
+    # something other than an object of options.
+    def read: () -> Hash[String, JsonValue::json_value]?
+  end
+end

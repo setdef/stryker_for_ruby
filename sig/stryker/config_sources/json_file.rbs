@@ -1,0 +1,19 @@
+module Stryker
+  module ConfigSources
+    # Reads a configuration file of JSON, such as `stryker.config.json`. The
+    # options have StrykerJS's names, with nested options in nested objects:
+    # `{ "thresholds": { "break": 70 } }`.
+    #
+    # ```ruby
+    # Stryker::ConfigSources::JsonFile.new("stryker.config.json").read
+    # # => { "testRunner" => "minitest", "thresholds" => { "break" => 70 } }
+    # ```
+    class JsonFile < TextFile
+      private
+
+      # Parses `text` as JSON, and raises `Stryker::ConfigError` for text
+      # that isn't valid JSON.
+      def parse: (String text) -> JsonValue::json_value
+    end
+  end
+end

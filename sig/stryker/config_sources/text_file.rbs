@@ -1,0 +1,44 @@
+module Stryker
+  module ConfigSources
+    # What the adapters for files of text share: the file's path, and the
+    # reading of it, which a subclass finishes by defining how its format
+    # parses text. It isn't an adapter itself, though it has the method of
+    # `Stryker::_ConfigSource`.
+    class TextFile
+      # The path that the adapter reads.
+      attr_reader path: String
+
+      # The name that errors use for the file, which is the path unless the
+      # adapter is built with another name.
+      attr_reader label: String
+
+      # Builds the adapter.
+      #
+      # - `path`: String, the path of the file to read.
+      # - `label`: String, how an error names the file. It defaults to
+      #   `path`. Configure passes the name that the user wrote, so that an
+      #   error says `stryker.config.json` and not a full path.
+      def initialize: (String path, ?label: String) -> void
+
+      # Returns the file's options, or nil when no file is at the path.
+      # Raises `Stryker::ConfigError` when the file can't be read, when the
+      # format can't parse its text, or when the text isn't an object.
+      def read: () -> Hash[String, JsonValue::json_value]?
+
+      private
+
+      # Reads the file's text, and raises `Stryker::ConfigError` when the system
+      # refuses to read the file.
+      def text: () -> String
+
+      # Parses the text of the file with the format's parser. A subclass
+      # defines it, and raises the error of `invalid` for text the parser
+      # refuses.
+      def parse: (String text) -> JsonValue::json_value
+
+      # Builds the error for a problem with the file, with the file's label
+      # at the start of the message.
+      def invalid: (String problem) -> ConfigError
+    end
+  end
+end

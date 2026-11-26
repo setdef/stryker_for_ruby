@@ -1,0 +1,73 @@
+module Stryker
+  # Modules that hold the contract tests of the ports, for adapters inside the
+  # gem and outside it.
+  module Testing
+    # The tests that every adapter of the `Stryker::_ConfigSource` port must
+    # pass. To test an adapter, include this module in a Minitest test class
+    # and define the four methods below. A test case that includes it runs
+    # the tests of the contract against the adapter that `build_source`
+    # returns.
+    #
+    # The contract holds that an adapter reads the options of its file as
+    # nested hashes with the option names as keys, reads nothing from a file
+    # that doesn't exist, and raises `Stryker::ConfigError`, with the file's
+    # path in the message, for text that is malformed or isn't an object.
+    #
+    # ```ruby
+    # class JsonFileTest < Minitest::Test
+    #   include Stryker::Testing::ConfigSourceContract
+    #
+    #   def build_source(path) = Stryker::ConfigSources::JsonFile.new(path)
+    #   def format_text(options) = JSON.generate(options)
+    #   def malformed_text = "{"
+    #   def non_object_text = "[]"
+    # end
+    # ```
+    module ConfigSourceContract : Minitest::Test, _Host
+      # What the test class that includes the contract defines.
+      interface _Host
+        # Returns the adapter that reads the file at `path`.
+        def build_source: (String path) -> _ConfigSource
+
+        # Returns the text, in the adapter's format, of a file that holds
+        # `options`.
+        def format_text: (Hash[String, JsonValue::json_value] options) -> String
+
+        # Returns text that is not valid in the adapter's format.
+        def malformed_text: () -> String
+
+        # Returns text that is valid in the adapter's format but holds a list
+        # or a single value, not an object.
+        def non_object_text: () -> String
+      end
+
+      # The options that the first test writes to a file and reads back.
+      OPTIONS: Hash[String, JsonValue::json_value]
+
+      # Checks that the adapter reads a file that holds every kind of value, and
+      # returns the options with their names and nesting.
+      def test_reads_the_options_of_its_file_keyed_by_their_names: () -> void
+
+      # Checks that the adapter returns nil for a file that doesn't exist.
+      def test_reads_nothing_from_a_file_that_does_not_exist: () -> void
+
+      # Checks that the adapter raises `Stryker::ConfigError` for malformed
+      # text, with the path in the message.
+      def test_refuses_text_that_is_malformed_and_names_its_file: () -> void
+
+      # Checks that the adapter raises `Stryker::ConfigError` for text that
+      # isn't an object, with the path in the message.
+      def test_refuses_text_that_is_not_an_object_and_names_its_file: () -> void
+
+      private
+
+      # Fails unless reading `text` raises `Stryker::ConfigError` with the
+      # file's path in the message.
+      def assert_refused_naming_its_file: (String text) -> void
+
+      # Writes `text` to a file in a temporary folder and yields the adapter
+      # for that file and the file's path.
+      def with_source: (String text) { (_ConfigSource source, String path) -> void } -> void
+    end
+  end
+end

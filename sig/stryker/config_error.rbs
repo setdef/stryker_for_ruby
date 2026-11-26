@@ -1,0 +1,13 @@
+module Stryker
+  # Raised when the run's configuration is wrong: a configuration file that
+  # can't be read or parsed, an option that doesn't exist, a value of the
+  # wrong type, a path outside the project's root, or a choice that Configure
+  # can't make for the project. The message is written for the person who
+  # runs the command: it says what is wrong, which file or flag it came from,
+  # and what would fix it. When several options are wrong, the message has
+  # one line for each.
+  #
+  # The `stryker` command prints the message and ends with exit status 2.
+  class ConfigError < StandardError
+  end
+end

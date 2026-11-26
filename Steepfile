@@ -17,12 +17,14 @@ target :lib do
   library "date"
   library "digest"
   library "timeout"
+  library "tmpdir"
   library "uri"
   library "stringio"
   library "securerandom"
   library "erb"
   library "etc"
   library "prism"
+  library "psych"
 end
 
 target :tasks do
