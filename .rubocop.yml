@@ -20,6 +20,10 @@ AllCops:
   DisabledByDefault: false
   EnabledByDefault: true
   NewCops: enable
+  # The gemspec keeps required_ruby_version at >= 3.3, so Ruby 3.3 and 3.4
+  # aren't blocked, and Gemspec/RequiredRubyVersion requires this setting to
+  # match it. A 3.3 target also keeps RuboCop from accepting syntax that only
+  # Ruby 4.0 parses, so the code still loads on 3.3 and 3.4.
   TargetRubyVersion: "3.3"
   Exclude:
     - "tmp/**/*"
