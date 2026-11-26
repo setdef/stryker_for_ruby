@@ -92,11 +92,11 @@ class ArithmeticOperatorTest < Minitest::Test
   end
 
   def test_makes_no_mutant_when_the_right_operand_is_a_string_literal
-    assert_empty(edits("names * ', '\nx + 'a'\nx + \"a\#{y}\"\nx + <<~TEXT\n  a\nTEXT\nx + `ls`\n"))
+    assert_empty(edits("names * ', '\nx + 'a'\nx + \"a\#{y}\"\nx + <<~TEXT\n  a\nTEXT\nx + `ls`\nx + `ls \#{y}`\n"))
   end
 
   def test_makes_no_mutant_when_the_left_operand_is_a_string_literal
-    assert_empty(edits("'=' * 40\n\"%.2f\" % total\n\"a\#{y}\" + x\n`ls` + x\n"))
+    assert_empty(edits("'=' * 40\n\"%.2f\" % total\n\"a\#{y}\" + x\n`ls` + x\n`ls \#{y}` + x\n"))
   end
 
   def test_makes_no_mutant_when_both_operands_are_string_literals

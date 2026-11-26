@@ -12,9 +12,10 @@ module Stryker
     # ```
     module Strings
       # Whether `node` is a string literal: a `StringNode`, which a heredoc
-      # also makes, an `InterpolatedStringNode`, or an `XStringNode`, a
-      # backtick or `%x` command with no interpolation. A string inside
-      # parentheses is a `ParenthesesNode`, so it isn't one.
+      # also makes, an `InterpolatedStringNode`, an `XStringNode`, a backtick
+      # or `%x` command with no interpolation, or an `InterpolatedXStringNode`,
+      # one with interpolation. A string inside parentheses is a
+      # `ParenthesesNode`, so it isn't one.
       #
       # - `node`: Prism::node, the node.
       def self.literal?: (Prism::node node) -> bool

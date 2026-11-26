@@ -68,7 +68,7 @@ It mutates a binary operator call: a `CallNode` named `+`, `-`, `*`, `/`, or `%`
 | `a / b` | `a * b` | A test that checks the result with operands whose quotient and product differ. |
 | `a % b` | `a * b` | A test that checks the result. |
 
-It makes no mutant when either operand is a string literal (`StringNode`, `InterpolatedStringNode`, or `XStringNode`), as StrykerJS skips string operands. In Ruby, `"=" * 40`, `"%.2f" % total`, and `names * ", "` repeat, format, and join, and their mutants raise `NoMethodError` at the first test that runs them, so each is killed by any test that reaches it and shows nothing that coverage doesn't.
+It makes no mutant when either operand is a string literal (`StringNode`, `InterpolatedStringNode`, `XStringNode`, or `InterpolatedXStringNode`), as StrykerJS skips string operands. In Ruby, `"=" * 40`, `"%.2f" % total`, and `names * ", "` repeat, format, and join, and their mutants raise `NoMethodError` at the first test that runs them, so each is killed by any test that reaches it and shows nothing that coverage doesn't.
 
 Ruby's `**`, `<<`, and `>>` get no mutant, as in StrykerJS. `<<` is mostly append in Ruby, and a mutant that turns an append into a shift raises at once.
 
@@ -104,7 +104,7 @@ Ruby has no `++` or `--`, so `count += 1` is the idiom that StrykerJS's `UpdateO
 
 `||=` becomes `&&=`, as in StrykerJS, and not `=`. The common mistake with `@total ||= compute` is a memoized value that is `nil` or `false`, and `&&=` leaves the target as it started, so a test that reads the value once kills it. The mutant `@total = compute` gives the same value on every call and differs only in how often `compute` runs, so it would survive wherever the value is right, and its reader learns nothing about the value.
 
-It makes no mutant when the right side is a string literal (`StringNode`, `InterpolatedStringNode`, or `XStringNode`), for every operator except `||=` and `&&=`, as StrykerJS skips it. `||=` and `&&=` keep their pairs, which swap one for the other whatever the right side holds.
+It makes no mutant when the right side is a string literal (`StringNode`, `InterpolatedStringNode`, `XStringNode`, or `InterpolatedXStringNode`), for every operator except `||=` and `&&=`, as StrykerJS skips it. `||=` and `&&=` keep their pairs, which swap one for the other whatever the right side holds.
 
 ### `BlockStatement`
 

@@ -108,7 +108,7 @@ class UnaryOperatorTest < Minitest::Test
   end
 
   def test_makes_no_mutant_of_a_minus_or_a_plus_on_a_string_literal
-    sources = ["-'draft'", "+'draft'", "-\"a\#{b}\"", "-<<~TEXT\n  a\nTEXT\n", "-`ls`"]
+    sources = ["-'draft'", "+'draft'", "-\"a\#{b}\"", "-<<~TEXT\n  a\nTEXT\n", "-`ls`", "-`ls \#{b}`"]
 
     assert_empty(sources.flat_map { |source| edits(source) })
   end

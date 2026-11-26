@@ -53,9 +53,10 @@ class PrefixTest < Minitest::Test
   end
 
   def test_a_minus_or_a_plus_before_a_string_literal_is_a_string_sign
-    signs = ["-'a'", "+'a'", "-\"a\#{b}\"", "-`ls`"].map { |source| prefix(source, %i[-@ +@]).string_sign? }
+    sources = ["-'a'", "+'a'", "-\"a\#{b}\"", "-`ls`", "-`ls \#{b}`", "+`ls \#{b}`"]
+    signs = sources.map { |source| prefix(source, %i[-@ +@]).string_sign? }
 
-    assert_equal([true] * 4, signs)
+    assert_equal([true] * 6, signs)
   end
 
   def test_a_minus_before_something_else_or_another_prefix_before_a_string_is_no_string_sign

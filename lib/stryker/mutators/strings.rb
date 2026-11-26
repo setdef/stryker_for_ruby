@@ -5,7 +5,12 @@ require "prism"
 module Stryker
   module Mutators
     module Strings
-      LITERALS = [Prism::StringNode, Prism::InterpolatedStringNode, Prism::XStringNode].freeze
+      LITERALS = [
+        Prism::StringNode,
+        Prism::InterpolatedStringNode,
+        Prism::XStringNode,
+        Prism::InterpolatedXStringNode,
+      ].freeze
       private_constant(:LITERALS)
 
       def self.literal?(node)

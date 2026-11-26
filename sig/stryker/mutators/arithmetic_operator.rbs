@@ -17,8 +17,9 @@ module Stryker
     # as it was.
     #
     # It makes no mutant when either operand is a string literal, a
-    # `StringNode`, an `InterpolatedStringNode`, or an `XStringNode`, because
-    # in `"=" * 40`, `"%.2f" % total`, and `names * ", "`, the operator
+    # `StringNode`, an `InterpolatedStringNode`, an `XStringNode`, or an
+    # `InterpolatedXStringNode`, because in `"=" * 40`, `"%.2f" % total`, and
+    # `names * ", "`, the operator
     # repeats, formats, or joins, and a mutant raises `NoMethodError` at the
     # first test that runs it. Ruby's `**`, `<<`, and `>>` get no mutant.
     # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#arithmeticoperator)
