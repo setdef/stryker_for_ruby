@@ -160,12 +160,11 @@ The lookup took 0.5 to 0.8 ms per 1,000 calls on 1 KB templates, against 150 to 
 
 #### The prepends declare the exact parameter lists
 
-Each prepend declares exactly the parameters of the method it wraps, and is written for the parameter lists that CI tests. The lists of the versions that probes tried:
+Each prepend declares exactly the parameters of the method it wraps, and is written for the parameter lists that CI tests. The lists of the versions that probes tried, on Ruby 4.0 and later:
 
 | Method | Parameters |
 | - | - |
 | `ERB#initialize`, ERB 6.0.0 to 6.1.0 | `str`, `trim_mode: nil`, `eoutvar: "_erbout"` |
-| `ERB#initialize`, ERB 4.0.3 (Ruby 3.3's) | `str`, `safe_level = NOT_GIVEN`, `legacy_trim_mode = NOT_GIVEN`, `legacy_eoutvar = NOT_GIVEN`, `trim_mode: nil`, `eoutvar: "_erbout"` |
 | `Erubi::Engine#initialize`, Erubi 1.13.1 | `input`, `properties = {}` |
 | `Tilt::Template#read_template_file`, Tilt 2.9.0 | none |
 

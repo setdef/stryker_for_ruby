@@ -20,7 +20,7 @@ It is a community port of [Stryker Mutator](https://stryker-mutator.io), with no
 
 In Markdown prose, write the name as `**Stryker (for Ruby)**`. In plain text, write `Stryker (for Ruby)`. The repository and the gem are `stryker_for_ruby`, the constant is `Stryker`, and the require is `require "stryker"`.
 
-The project supports Ruby 3.3 and later only, the versions [Prism](https://github.com/ruby/prism) can parse. The project's owner ruled in [#6](https://github.com/setdef/stryker_for_ruby/issues/6) that version 1.0.0 runs on CRuby (MRI) only. Write code that runs on Ruby 3.3.
+The project supports Ruby 4.0 and later. Ruby 3.3 and 3.4 may work but are unsupported, and their known issues are listed in [`docs/older-ruby.md`](docs/older-ruby.md). The project's owner ruled in [#6](https://github.com/setdef/stryker_for_ruby/issues/6) that version 1.0.0 runs on CRuby (MRI) only. Write code that runs on Ruby 4.0.
 
 ## Committing to the trunk
 

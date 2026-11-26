@@ -39,7 +39,7 @@ Confidence: a probe shows that option 1 works ([#7](https://github.com/setdef/st
 * Good, because the processes that run the project's tests never load Prism, refract, Zeitwerk, or Erubi for **Stryker (for Ruby)**, so the project's code never runs beside a version of them that **Stryker (for Ruby)** needs.
 * Good, because instrumented source never goes into the project's folders.
 * Bad, because the gem still depends on `prism >= 1.7`, `refract ~> 2.0`, and `erubi ~> 1.13`, so a bundle that holds the gem has to resolve them, and a bundle that locks Prism below 1.7 can't hold the gem.
-* Bad, because on Ruby 3.3, whose bundled Prism is 0.19.0, Bundler has to install the Prism gem.
+* Bad, because on a Ruby whose bundled Prism is older than 1.7, Bundler has to install the Prism gem. Ruby 3.3 bundles 0.19.0 and Ruby 3.4 bundles 1.5.3.
 * Bad, because the rule trades against the project's rule to reuse before building ([AGENTS.md](../../AGENTS.md)). Code that a gem would provide in the runtime is written and maintained in this repository, with this ADR as the written reason that rule asks for.
 * Bad for maintainers, because a run has two kinds of process and a cache between them to build, test, and keep working, and the runtime has to work with any version of a default gem, such as `json`, that a project can lock and a supported Ruby can load.
 
