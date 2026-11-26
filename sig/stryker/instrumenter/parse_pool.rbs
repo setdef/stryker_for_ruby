@@ -43,7 +43,7 @@ module Stryker
     # ```
     class ParsePool
       # The bytes of work that a worker needs to pay for its start. A worker
-      # takes about 0.1 seconds to start on Linux, and about 0.3 seconds on
+      # takes about 0.1 seconds to start on Linux, and about 0.25 seconds on
       # Windows, where starting several workers takes the sum of their
       # starts.
       WORK_PER_WORKER: Integer

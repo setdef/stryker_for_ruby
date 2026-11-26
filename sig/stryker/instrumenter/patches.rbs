@@ -2,7 +2,7 @@ module Stryker
   class Instrumenter
     # Changes the bytes of a source with `Stryker::Instrumenter::Patch`es. The
     # offsets are those of the source as it was before any patch: each patch
-    # changes the bytes that it names there, whichever patches come before it
+    # changes the bytes at its offsets there, whichever patches come before it
     # in the source.
     #
     # `Stryker::Instrumenter::PlainMutant` builds its text with patches, in the

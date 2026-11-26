@@ -1,6 +1,6 @@
 # Loading and isolation
 
-This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the bundle they run in, what runs in a project process, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, how results reach the orchestrator, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), and the reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
+This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the bundle they run in, what runs in a project process, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, the pool of workers that parses the plain mutants of a large file, how results reach the orchestrator, forking on Linux and macOS, the process pool on Windows, and static mutants. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), and the reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
 
 ## Terms
 
@@ -11,6 +11,7 @@ This page specifies how instrumented code gets into a Ruby process, and how each
 - **Mutant run:** one run of a chosen set of tests with one mutant active.
 - **Orchestrator:** the process that `stryker run` starts.
 - **Project process:** a process that loads the project's code.
+- **Parse worker:** a fresh `ruby` process that the orchestrator starts to parse plain mutants. It loads Prism and not the project's code, so it is not a project process.
 
 ## Two kinds of process
 
@@ -18,10 +19,10 @@ The orchestrator never loads the project's code, and a project process never ins
 
 | Process | What it does | The code of **Stryker (for Ruby)** that it loads |
 | - | - | - |
-| The orchestrator | Reads the configuration, finds and parses the files, instruments them, writes the cache, starts the project processes, plans the mutant runs, collects the results, and writes the reports. | The code that instruments, plans, and reports, with Prism and refract. |
+| The orchestrator | Reads the configuration, finds and parses the files, instruments them (starting parse workers for a file with many mutants), writes the cache, starts the project processes, plans the mutant runs, collects the results, and writes the reports. | The code that instruments, plans, and reports, with Prism and refract. |
 | A project process: the parent that forks, each child forked from it, each process in the Windows pool, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
 
-Prism and refract load only in the orchestrator. The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
+Prism and refract load in the orchestrator, and never in a project process. A parse worker, which isn't a project process, loads Prism too ([Parsing plain mutants](#parsing-plain-mutants)). The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
 
 ### The bundle
 
@@ -45,6 +46,41 @@ The directory holds two kinds of file:
 No path holds a NUL byte, so the index needs no escaping, and the runtime reads it with `String#split`, so a project process loads no format library, not even the `json` default gem, whose version the project's bundle would choose. Each file's name comes from its place in the index, so no name that the project chose becomes part of a path in the cache.
 
 When the loader is installed, it reads the index into a lookup table from each instrumented file's keys to that file's place in the cache. It reads instrumented source only when it serves a file. Each instrumented file has two keys: one for its path, and one for its real path, with every symbolic link and `..` resolved. In one process, Ruby gives the hook the real path of a file it finds through `$LOAD_PATH` or `require_relative`, and the path as written for a `require` of an absolute path, so a table with one of the two misses some loads of a project under a symbolic link, such as a temporary folder under `/var` on macOS. The table is shareable ([Lookup tables](#lookup-tables)).
+
+## Parsing plain mutants
+
+The instrumenter checks that each mutant is valid Ruby by parsing its [plain mutant](mutant-placement.md#the-plain-mutant), the original file with the mutant's edit made. A file with many mutants costs one whole-file parse for each of them. The orchestrator spreads those parses over a pool of parse workers when a file has enough of them to pay for the workers' start.
+
+A parse worker is a fresh `ruby` process. The pool starts each one from an array of arguments: the running Ruby, `-r` with the path of the worker's file, and `-e Stryker::Instrumenter::ParseWorker.serve`. The worker inherits the orchestrator's environment, so Prism resolves against the project's locked gems, as it does in the orchestrator. A worker loads Prism and the standard library's JSON, and loads neither refract nor the project's code. The pool runs at most `concurrency` workers, and the instrumenter's `concurrency` argument is the number of processors by default.
+
+A fresh process is the one way that runs the same on Linux, macOS, and Windows. A forked worker would need a second way for Windows, which has no `fork`, and forking is no faster than fresh processes at 8 workers. Ractors scale no further than 4 workers and print Ruby's experimental warning ([#16](https://github.com/setdef/stryker_for_ruby/issues/16)).
+
+### What crosses the pipes
+
+Jobs and results cross pipes as JSON lines, as the isolation adapters' results do. The reading side parses each line with `JSON.parse` and never with `Marshal.load`. A line holds the bytes of a file or of a replacement in Base64, because JSON holds only Unicode text and a project's file may be in any encoding.
+
+The orchestrator writes a worker one line with a file's source, and then one line for each plain mutant, which holds its patches: the changes to the original source that make the plain mutant. A patch is the offsets of the bytes it replaces and the text that replaces them, and the offsets are the original source's. The patches of a plain mutant take out the heredoc bodies that it leaves out, make the mutant's edit, and put the parentheses around the wrapped node. A plain mutant's text is as large as the file, so the file goes once to each worker and each plain mutant goes as a few patches. The worker makes the text from the source and the patches with the code that the orchestrator uses for the same job, parses it with Prism with the syntax of the running Ruby, and writes one line, `{"valid":true}` or `{"valid":false}`. A worker writes nothing for a source.
+
+The pool gives each worker one plain mutant in a round, and the plain mutant of the next round before it reads this round's verdicts, so that a worker parses while the pool reads the verdict of another. A pipe holds at most two plain mutants' lines for a worker. A round ends when its slowest worker does, which costs little because every plain mutant of a file takes about as long to parse as the others.
+
+### How many workers
+
+A worker takes about 0.1 seconds to start on Linux ([#16](https://github.com/setdef/stryker_for_ruby/issues/16)) and about 0.25 seconds on Windows, where starting several workers takes the sum of their starts: a pool of 4 workers took 1 to 1.5 seconds to start, and a pool of 32 took 5 to 9 seconds. One process parses 36 million bytes per second on Windows, and 40 to 70 million on Linux. The work of a file is its size in bytes times its number of plain mutants, which is the number of bytes that Prism parses for it.
+
+The pool starts one worker for each 40 million bytes of work, at most `concurrency` of them. The instrumenter parses in its process when that gives fewer than two workers, which includes a `concurrency` of 1, so a file with little to parse starts no process. The workers that the pool has stay for the next file, and a file that needs more starts the others.
+
+A worker pays for its start when it saves more parse time than the start costs. With the Windows figures, two workers break even at 18 million bytes of work for each, and every worker beyond two breaks even at less. At 40 million bytes of work for each worker, the time that the workers save is at least 2.2 times the time that they take to start on Windows, which starts slowest of the three systems.
+
+Both ways give the same verdicts, because both make the text with the same patches and parse it with the same call. The site tests check it on every kind of site: each of them instruments its source once with the parses in the test's process and once with a pool, and the two results must be equal.
+
+### When a worker fails
+
+A worker that ends, or writes a line that is not a verdict, makes the pool raise `Stryker::Instrumenter::Error`. The message gives the ID and file of the mutant whose plain mutant the worker was parsing. No verdict that a worker didn't give reaches the instrumenter: an error is never a mutant that survives.
+
+No worker outlives its pool. The pool ends every worker when it stops, when the block that opened it ends, and when it raises, and the next use of a pool that raised starts new workers. A worker's standard error is the orchestrator's standard error, so what a failing worker writes there appears where the run's own errors do.
+
+> [!WARNING]
+> The pool never times out a worker. A worker that stops answering without ending stops the run.
 
 ## Loading instrumented code
 
@@ -198,5 +234,6 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't run on Ruby implementations other than CRuby.
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
+- It doesn't time out a parse worker, or restart one that failed: a worker's failure raises an error and ends the pool.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
 - It doesn't write instrumented source into the project.

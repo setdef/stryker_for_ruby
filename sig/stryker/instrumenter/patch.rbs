@@ -49,8 +49,8 @@ module Stryker
       # - `span`: Stryker::_Span, a stretch of the source.
       def within?: (_Span span) -> bool
 
-      # `bytes` with the patch made, as binary. `bytes` has the offsets that
-      # the patch names.
+      # `bytes` with the patch made, as binary. `bytes` is the source whose
+      # offsets the patch has.
       #
       # - `bytes`: String, bytes of a source.
       def splice: (String bytes) -> String

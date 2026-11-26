@@ -5,7 +5,7 @@ module Stryker
     # source of one file at a time, and writes one line to its output for
     # the patches of each plain mutant of it, which says whether the plain
     # mutant parses, with Prism and the syntax of the running Ruby, as the
-    # instrumenter does in its own process.
+    # instrumenter does in the orchestrator.
     #
     # The pool starts a worker with the running Ruby and the bundle
     # environment of the orchestrator, as an array of arguments:
