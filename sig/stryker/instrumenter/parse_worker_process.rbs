@@ -73,15 +73,9 @@ module Stryker
 
       private
 
-      @pipes: ParseWorkerPipes
-      @waiter: Process::Waiter
-      @errors: ParseWorkerStderr
+      @child: ParseWorkerChild
 
       def failure: (Mutant mutant, String? reply) -> Error
-
-      def halt: () -> void
-
-      def kill: () -> void
     end
   end
 end

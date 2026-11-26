@@ -107,11 +107,4 @@ class ParseWorkerProcessTest < Minitest::Test
 
     refute_predicate(worker, :running?)
   end
-
-  def test_the_signal_may_find_the_worker_gone
-    worker = start("sleep")
-    Process.stub(:kill, -> (*) { raise(Errno::ESRCH) }) { worker.__send__(:kill) }
-
-    assert_predicate(worker, :running?)
-  end
 end

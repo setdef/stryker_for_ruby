@@ -1,0 +1,50 @@
+module Stryker
+  class Instrumenter
+    # The operating system's side of one parse worker: the process, the pipes
+    # to it, and the file that holds its standard error. It ends the process
+    # for good, and it leaves the talk with the worker to
+    # `Stryker::Instrumenter::ParseWorkerProcess`.
+    class ParseWorkerChild
+      # Prepares to use a process that has started.
+      #
+      # - `input`: IO, the pipe to the process's standard input.
+      # - `output`: IO, the pipe from its standard output.
+      # - `waiter`: Process::Waiter, the thread that waits for the process.
+      # - `errors`: Stryker::Instrumenter::ParseWorkerStderr, the file that
+      #   the process writes its standard error to.
+      def initialize: (IO input, IO output, Process::Waiter waiter, ParseWorkerStderr errors) -> void
+
+      # Writes a line to the process. Gives false when the process has ended.
+      #
+      # - `line`: String, what to write.
+      def write: (String line) -> bool
+
+      # The next line from the process, or nil when it has ended and written
+      # nothing more. Waits until there is a line.
+      def read: () -> String?
+
+      # Whether the process is running.
+      def running?: () -> bool
+
+      # The last lines that the process wrote to its standard error, or an
+      # empty string when it wrote nothing.
+      def last_lines: () -> String
+
+      # Ends the process, if it is running, and waits until it has ended. The
+      # pipes and the file stay open, so that `last_lines` still works.
+      def halt: () -> void
+
+      # Ends the process, closes its pipes, and deletes the file of its
+      # standard error. It may be called again.
+      def stop: () -> void
+
+      private
+
+      @pipes: ParseWorkerPipes
+      @waiter: Process::Waiter
+      @errors: ParseWorkerStderr
+
+      def kill: () -> void
+    end
+  end
+end
