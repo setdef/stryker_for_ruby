@@ -5,7 +5,8 @@ module Stryker
   #
   # A position is a value: two positions with the same line and column are
   # equal. It checks neither number, so a position with a line or a column
-  # below 1 is one the schema rejects.
+  # below 1 is one the schema rejects. It converts to and from JSON, as
+  # `Stryker::JsonValue` says.
   #
   # ## Examples
   #
@@ -16,6 +17,9 @@ module Stryker
   # # => #<data Stryker::Position line=1, column=1>
   # ```
   class Position < Data
+    include JsonValue
+    extend JsonValue::Reading[Position]
+
     # The line, counted from 1.
     attr_reader line: Integer
 

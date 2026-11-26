@@ -1,0 +1,106 @@
+module Stryker
+  # What a run found out about one mutant, in the terms of the report: the
+  # mutant, its status, the reason for the status, the tests that killed it
+  # and the tests that reached it, and how long its run took. The orchestrator
+  # makes one for each mutant that ran, from the lines its project process
+  # wrote, and the plan makes one for each mutant that won't run, with the
+  # status `NoCoverage`, `Ignored`, or `CompileError`. The JSON reporter turns
+  # each into an entry of the report's `files.<path>.mutants`
+  # ([What the report holds](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#what-the-report-holds)).
+  #
+  # A mutant result is a value: two results with equal members are equal. It
+  # refuses a `status` that isn't in `Stryker::MutantResult::STATUSES` with
+  # ArgumentError, and checks no other member. It converts to and from JSON,
+  # as `Stryker::JsonValue` says.
+  #
+  # ## Examples
+  #
+  # A survivor of a runtime run that ran two tests:
+  #
+  # ```ruby
+  # result = Stryker::MutantResult.new(
+  #   mutant:,
+  #   status: "Survived",
+  #   status_reason: nil,
+  #   killed_by: [],
+  #   covered_by: ["Shop::DiscountTest#test_rate", "Shop::DiscountTest#test_bulk"],
+  #   tests_completed: 2,
+  #   duration_ms: 41.5,
+  #   static: false
+  # )
+  # Stryker::MutantResult.from_json(result.to_json) == result
+  # # => true
+  # ```
+  #
+  # A mutant that no test reached, so that nothing ran:
+  #
+  # ```ruby
+  # Stryker::MutantResult.new(
+  #   mutant:, status: "NoCoverage", status_reason: nil, killed_by: [], covered_by: [],
+  #   tests_completed: nil, duration_ms: nil, static: false
+  # )
+  # ```
+  class MutantResult < Data
+    include JsonValue
+    extend JsonValue::Reading[MutantResult]
+
+    # The statuses a result can have, spelled as the report schema spells
+    # them. The schema's `Pending` isn't one: a result exists only once the
+    # mutant has a status.
+    STATUSES: Array[String]
+
+    # The mutant.
+    attr_reader mutant: Mutant
+
+    # One of `STATUSES`.
+    attr_reader status: String
+
+    # The reason for the status, in the words of
+    # [The status reason](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#the-status-reason),
+    # or nil for a status that has none.
+    attr_reader status_reason: String?
+
+    # The IDs of the tests that killed the mutant. A run stops at its first
+    # failing test, so it holds at most one.
+    attr_reader killed_by: Array[String]
+
+    # The IDs of the tests whose bucket held the mutant in the dry run. For a
+    # static mutant, these are the tests that recorded a hit, not the tests
+    # that ran.
+    attr_reader covered_by: Array[String]
+
+    # How many tests finished in the mutant's run, or nil when the mutant
+    # didn't run.
+    attr_reader tests_completed: Integer?
+
+    # The run's time in milliseconds, or nil when the mutant didn't run.
+    attr_reader duration_ms: Float?
+
+    # Whether the mutant was static: its run was a fresh process with the
+    # mutant active before any file loaded. False for a mutant that didn't
+    # run.
+    attr_reader static: bool
+
+    # Builds the result. Raises ArgumentError when `status` isn't in
+    # `STATUSES`.
+    #
+    # - `mutant`: Stryker::Mutant, the mutant.
+    # - `status`: String, one of `STATUSES`.
+    # - `status_reason`: String or nil, the reason for the status.
+    # - `killed_by`: Array of String, the IDs of the tests that killed it.
+    # - `covered_by`: Array of String, the IDs of the tests that reached it.
+    # - `tests_completed`: Integer or nil, how many tests finished.
+    # - `duration_ms`: Float or nil, the run's time in milliseconds.
+    # - `static`: bool, whether the mutant was static.
+    def self.new: (mutant: Mutant, status: String, status_reason: String?, killed_by: Array[String], covered_by: Array[String], tests_completed: Integer?, duration_ms: Float?, static: bool) -> instance
+                | (Mutant mutant, String status, String? status_reason, Array[String] killed_by, Array[String] covered_by, Integer? tests_completed, Float? duration_ms, bool static) -> instance
+
+    # The readers of the members of a mutant result that hold another value, as
+    # `Stryker::JsonValue::Reading#readers` describes: `mutant` reads a Hash into a `Stryker::Mutant`.
+    def self.readers: () -> Hash[Symbol, Proc]
+
+    # Builds the result, and raises ArgumentError when `status` isn't in
+    # `STATUSES`.
+    def initialize: (status: String, **Object) -> void
+  end
+end

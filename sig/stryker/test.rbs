@@ -1,0 +1,64 @@
+module Stryker
+  # One test of the project, as its test framework defines it. A test runner
+  # adapter lists the tests when it loads the project's test files, and the
+  # report's `testFiles` lists each with its name, and its file and location
+  # when the framework gives them.
+  #
+  # A test is a value: two tests with equal members are equal. It checks none
+  # of its members. It converts to and from JSON, as `Stryker::JsonValue`
+  # says.
+  #
+  # ## Examples
+  #
+  # A Minitest test that the framework gives a file and a location for:
+  #
+  # ```ruby
+  # Stryker::Test.new(
+  #   id: "Shop::DiscountTest#test_bulk_order_gets_the_rate",
+  #   name: "test_bulk_order_gets_the_rate",
+  #   file: "test/shop/discount_test.rb",
+  #   location: Stryker::Location.new(
+  #     start: Stryker::Position.new(line: 8, column: 3),
+  #     end: Stryker::Position.new(line: 12, column: 6)
+  #   )
+  # )
+  # ```
+  #
+  # A test that the framework gives no file or location for:
+  #
+  # ```ruby
+  # Stryker::Test.new(id: "Shop::DiscountTest#test_rate", name: "test_rate", file: nil, location: nil)
+  # ```
+  class Test < Data
+    include JsonValue
+    extend JsonValue::Reading[Test]
+
+    # The test's ID in the framework, which a run uses to choose it and the
+    # report uses to refer to it, such as `"Shop::DiscountTest#test_rate"`.
+    attr_reader id: String
+
+    # The test's name, as a reader of the report knows it.
+    attr_reader name: String
+
+    # The path of the file that defines the test, or nil when the framework
+    # doesn't give one.
+    attr_reader file: String?
+
+    # Where in `file` the test is defined, or nil when the framework doesn't
+    # give a location.
+    attr_reader location: Location?
+
+    # Builds the test.
+    #
+    # - `id`: String, the test's ID in the framework.
+    # - `name`: String, the test's name.
+    # - `file`: String or nil, the path of the file that defines the test.
+    # - `location`: Stryker::Location or nil, where the test is defined.
+    def self.new: (id: String, name: String, file: String?, location: Location?) -> instance
+                | (String id, String name, String? file, Location? location) -> instance
+
+    # The readers of the members of a test that hold another value, as
+    # `Stryker::JsonValue::Reading#readers` describes: `location` reads a Hash into a `Stryker::Location`, and nil into nil.
+    def self.readers: () -> Hash[Symbol, Proc]
+  end
+end

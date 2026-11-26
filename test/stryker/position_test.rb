@@ -15,6 +15,12 @@ class PositionTest < Minitest::Test
     assert_equal(Stryker::Position.new(line: 3, column: 11), Stryker::Position.new(3, 11))
   end
 
+  def test_a_round_trip_through_json_gives_an_equal_position
+    position = Stryker::Position.new(line: 3, column: 11)
+
+    assert_equal(position, Stryker::Position.from_json(position.to_json))
+  end
+
   def test_positions_on_different_columns_differ
     refute_equal(Stryker::Position.new(line: 3, column: 11), Stryker::Position.new(line: 3, column: 12))
   end

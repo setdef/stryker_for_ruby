@@ -25,6 +25,12 @@ class MutantTest < Minitest::Test
     assert_equal(Stryker::Mutant.new(**members), Stryker::Mutant.new(*members.values))
   end
 
+  def test_a_round_trip_through_json_gives_an_equal_mutant
+    mutant = Stryker::Mutant.new(**members)
+
+    assert_equal(mutant, Stryker::Mutant.from_json(mutant.to_json))
+  end
+
   def test_mutants_with_different_ids_differ
     refute_equal(Stryker::Mutant.new(**members), Stryker::Mutant.new(**members, id: 8))
   end

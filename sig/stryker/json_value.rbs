@@ -1,0 +1,117 @@
+module Stryker
+  # What a value needs to cross a pipe between two processes of a run: it
+  # converts to a JSON object and back, and a round trip gives an equal value.
+  # [Loading and isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#how-results-reach-the-orchestrator)
+  # says how results travel, one JSON object per line.
+  #
+  # A class that includes it is a `Data` class. Including it also extends the
+  # class with `Stryker::JsonValue::Reading`. The JSON object of a value has
+  # one key for each member of the class, spelled as the member is, such as
+  # `"duration_ms"`. A member that holds another such value, or an array of
+  # them, holds its JSON object, or an array of them.
+  #
+  # A process that loads the project's code loads these values, so this
+  # module and every class that includes it uses nothing outside the
+  # standard library. It calls only `JSON.generate` and `JSON.parse`, with
+  # no options, which every version of the `json` gem that a project can lock
+  # provides. Reading never calls `Marshal.load`, because the process that
+  # wrote the text ran the project's tests.
+  #
+  # `JSON.generate` refuses a String that isn't valid UTF-8, and a test can
+  # fail with such a message, so a refusal would lose the failure. `as_json`
+  # converts each String to UTF-8 and replaces each byte that isn't valid
+  # with U+FFFD, in the members of a value and in the keys and items of a
+  # Hash or Array it holds. A round trip of a String that is valid UTF-8
+  # gives an equal String.
+  #
+  # ## Examples
+  #
+  # Write a value to a pipe, and read it back:
+  #
+  # ```ruby
+  # position = Stryker::Position.new(line: 3, column: 11)
+  # text = position.to_json
+  # # => "{\"line\":3,\"column\":11}"
+  # Stryker::Position.from_json(text) == position
+  # # => true
+  # ```
+  module JsonValue : Data
+    # What a JSON document holds, as `JSON.parse` returns it.
+    type json_value = String | Integer | Float | bool | nil | Array[json_value] | Hash[String, json_value]
+
+    # What a value holds in a member before `as_json` converts it: what a
+    # JSON document holds, another value, a Symbol, or an Array or Hash of
+    # these.
+    type member = JsonValue | Symbol | String | Integer | Float | bool | nil | Array[member] | Hash[member, member]
+
+    # Extends `base` with `Stryker::JsonValue::Reading`.
+    #
+    # - `base`: Class, the class that includes the module.
+    def self.included: (Class base) -> void
+
+    # `value` as JSON holds it: the JSON object of a `Stryker::JsonValue` or
+    # Hash, as `plain_hash` gives it, an Array with each item converted the
+    # same way, a String or Symbol as a String in valid UTF-8, or `value`
+    # itself.
+    #
+    # - `value`: Stryker::JsonValue::member, a member of a value, or a value.
+    def self.plain: (member value) -> json_value
+
+    # The JSON object of a `Stryker::JsonValue` or Hash: a Hash with a String
+    # key in valid UTF-8 for each key, and each item as `plain` gives it.
+    #
+    # - `value`: Stryker::JsonValue or Hash, what to convert.
+    def self.plain_hash: (JsonValue | Hash[member, member] value) -> Hash[String, json_value]
+
+    # `text` as a String in valid UTF-8: converted from its encoding, with
+    # each byte that doesn't convert replaced by U+FFFD. A Symbol gives its
+    # name, and any other object gives its `to_s`.
+    #
+    # - `text`: String, Symbol, or another member, such as a Hash key.
+    def self.clean_text: (member text) -> String
+
+    # The value as a Hash of the kind `JSON.parse` returns: a String key for
+    # each member, and for each member a String, a number, `true`, `false`,
+    # nil, an Array, or a Hash. A member that holds another value holds its
+    # `as_json`, and each String is valid UTF-8, as the module's description
+    # says.
+    def as_json: () -> Hash[String, json_value]
+
+    # The value as one line of JSON, with no line break in it, from
+    # `JSON.generate`. A pipe carries one such line for each value. Raises
+    # `JSON::GeneratorError` for a Float that is NaN or infinite. The
+    # arguments, which `JSON.generate` passes when this value sits in a larger
+    # document, are ignored.
+    def to_json: (*Object) -> String
+
+    # The reading half of the module, for the class `T` that includes it.
+    module Reading[T] : Class
+      AS_IT_IS: Proc
+
+      # The value that the JSON text `text` holds. Raises `JSON::ParserError`
+      # when `text` isn't JSON, and ArgumentError when it holds something
+      # other than an object, when a member is missing, or when the object
+      # has a key that is no member.
+      #
+      # - `text`: String, one value as `to_json` writes it.
+      def from_json: (String text) -> T
+
+      # The value that the Hash `object` holds, as `JSON.parse` returns it:
+      # keys that are Strings, and members that hold what `as_json` gives.
+      # Raises ArgumentError when a member is missing or an extra key is
+      # present.
+      #
+      # - `object`: Hash, one value as `as_json` gives it.
+      def from_h: (Hash[String, json_value] object) -> T
+
+      # The readers of the members of the value that hold another value, or
+      # an array of them, keyed by the member's name. A reader is a Proc that
+      # takes the member's value as `JSON.parse` returns it, and returns the
+      # member as the class holds it: a value built from a Hash, or an array
+      # of them, or nil for a nil. A member that has no reader is read as it
+      # is. A class whose members hold no such value has no readers, and this
+      # gives an empty Hash. A class that has them overrides this method.
+      def readers: () -> Hash[Symbol, Proc]
+    end
+  end
+end

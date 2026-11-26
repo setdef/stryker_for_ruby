@@ -1,0 +1,71 @@
+module Stryker
+  # What the dry run found: each test's result, the mutants each test
+  # reached, the mutants reached outside any test, and the files first loaded
+  # during a test. The dry run runs every test once with no mutant active,
+  # and the plan turns this value into each mutant's status or run
+  # ([Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#how-the-plan-uses-the-map)).
+  #
+  # A dry run result is a value: two results with equal members are equal. It
+  # checks none of its members. It converts to and from JSON, as
+  # `Stryker::JsonValue` says, so the dry run's forked child can write it to a
+  # pipe. Each key of `buckets` is a String, so the Hash survives the round
+  # trip.
+  #
+  # ## Examples
+  #
+  # A dry run of one test that reached mutants 3 and 4, where mutant 1 was
+  # reached while the code loaded, and the test first loaded
+  # `lib/shop/tax.rb`:
+  #
+  # ```ruby
+  # result = Stryker::DryRunResult.new(
+  #   results: [test_result],
+  #   buckets: { "Shop::DiscountTest#test_rate" => [3, 4] },
+  #   static_bucket: [1],
+  #   files_loaded_in_tests: ["lib/shop/tax.rb"]
+  # )
+  # Stryker::DryRunResult.from_json(result.to_json) == result
+  # # => true
+  # ```
+  class DryRunResult < Data
+    include JsonValue
+    extend JsonValue::Reading[DryRunResult]
+
+    # The result of each test, in the order the tests ran.
+    attr_reader results: Array[TestResult]
+
+    # The IDs of the mutants in each test's bucket, keyed by the test's ID.
+    # A test that reached no mutant has an empty array, or no key.
+    attr_reader buckets: Hash[String, Array[Integer]]
+
+    # The IDs of the mutants in the static bucket: the ones whose switch ran
+    # while a file loaded, or outside any test.
+    attr_reader static_bucket: Array[Integer]
+
+    # The path of each file that began to load during a test, as
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-known-gap)
+    # says. The dry run reports them so that a reader can see which results
+    # rest on the rule for such files.
+    attr_reader files_loaded_in_tests: Array[String]
+
+    # Builds the dry run result.
+    #
+    # - `results`: Array of Stryker::TestResult, the result of each test.
+    # - `buckets`: Hash, each test's ID with the IDs of the mutants it reached.
+    # - `static_bucket`: Array of Integer, the IDs of the static mutants.
+    # - `files_loaded_in_tests`: Array of String, the files first loaded
+    #   during a test.
+    def self.new: (results: Array[TestResult], buckets: Hash[String, Array[Integer]], static_bucket: Array[Integer], files_loaded_in_tests: Array[String]) -> instance
+                | (Array[TestResult] results, Hash[String, Array[Integer]] buckets, Array[Integer] static_bucket, Array[String] files_loaded_in_tests) -> instance
+
+    # The readers of the members of a dry run result that hold another value, as
+    # `Stryker::JsonValue::Reading#readers` describes: `results` reads an Array of Hashes into an Array of `Stryker::TestResult`.
+    def self.readers: () -> Hash[Symbol, Proc]
+
+    # The test results that the Array of Hashes `values` holds, in order, as
+    # `from_json` reads the `results` member.
+    #
+    # - `values`: Array of Hash, each a test result as `as_json` gives it.
+    def self.read_results: (Array[Hash[String, JsonValue::json_value]] values) -> Array[TestResult]
+  end
+end

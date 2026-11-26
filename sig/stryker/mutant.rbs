@@ -23,7 +23,8 @@ module Stryker
   # the edit removes the bytes and inserts nothing.
   #
   # A mutant is a value: two mutants with equal members are equal. It checks
-  # none of its members against the file.
+  # none of its members against the file. It converts to and from JSON, as
+  # `Stryker::JsonValue` says.
   #
   # ## Examples
   #
@@ -41,6 +42,9 @@ module Stryker
   # )
   # ```
   class Mutant < Data
+    include JsonValue
+    extend JsonValue::Reading[Mutant]
+
     # The mutant's ID, unique in the run.
     attr_reader id: Integer
 

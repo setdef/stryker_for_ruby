@@ -8,7 +8,7 @@ module Stryker
   # A location is a value: two locations with equal positions are equal. It
   # doesn't check that `start` comes before `end`. When they are equal, the
   # location is empty: a mutant there inserts its replacement text and removes
-  # nothing.
+  # nothing. It converts to and from JSON, as `Stryker::JsonValue` says.
   #
   # ## Examples
   #
@@ -21,6 +21,9 @@ module Stryker
   # )
   # ```
   class Location < Data
+    include JsonValue
+    extend JsonValue::Reading[Location]
+
     # The first position in the stretch.
     attr_reader start: Position
 
@@ -33,5 +36,9 @@ module Stryker
     # - `end`: Position, the position just after the stretch.
     def self.new: (start: Position, end: Position) -> instance
                 | (Position start, Position end_) -> instance
+
+    # The readers of the members of a location that hold another value, as
+    # `Stryker::JsonValue::Reading#readers` describes: `start` and `end` each read a Hash into a `Stryker::Position`.
+    def self.readers: () -> Hash[Symbol, Proc]
   end
 end

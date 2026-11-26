@@ -24,6 +24,16 @@ class LocationTest < Minitest::Test
     assert_equal(Stryker::Location.new(start:, end: finish), Stryker::Location.new(start, finish))
   end
 
+  def test_a_round_trip_through_json_gives_an_equal_location
+    location = Stryker::Location.new(start:, end: finish)
+
+    assert_equal(location, Stryker::Location.from_json(location.to_json))
+  end
+
+  def test_a_location_without_an_end_is_refused
+    assert_raises(ArgumentError) { Stryker::Location.from_h({ start: start.as_json }.transform_keys(&:to_s)) }
+  end
+
   def test_an_empty_location_starts_where_it_ends
     location = Stryker::Location.new(start:, end: start)
 

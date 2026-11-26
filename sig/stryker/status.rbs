@@ -1,0 +1,19 @@
+module Stryker
+  # The check that a status is one of a fixed list of Strings, for the values
+  # that hold a status: `Stryker::TestResult` and `Stryker::MutantResult`.
+  module Status
+    # Raises ArgumentError unless `status` is one of `allowed`. The message
+    # names the kind, the status, and the statuses that are allowed. A status
+    # that isn't a String, such as the Symbol `:failed`, is refused as well.
+    #
+    # - `status`: Object, the status to check.
+    # - `allowed`: Array of String, the statuses that are allowed.
+    # - `kind`: String, what has the status, such as `"test"`.
+    #
+    # ```ruby
+    # Stryker::Status.check("failure", %w[passed failed skipped], "test")
+    # # => ArgumentError: unknown test status "failure", expected one of passed, failed, skipped
+    # ```
+    def self.check: (Object? status, Array[String] allowed, String kind) -> void
+  end
+end

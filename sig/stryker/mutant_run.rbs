@@ -1,0 +1,60 @@
+module Stryker
+  # One run of a chosen set of tests with one mutant active: the plan makes
+  # one for each mutant that a test reaches, and an isolation adapter runs it
+  # in a clean process. A runtime mutant runs only the tests that reached it,
+  # and a static mutant runs every test in a fresh process
+  # ([Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#how-the-plan-uses-the-map)).
+  #
+  # A mutant run is a value: two runs with equal members are equal. It checks
+  # none of its members. It converts to and from JSON, as
+  # `Stryker::JsonValue` says, so the orchestrator can send it to a project
+  # process.
+  #
+  # ## Examples
+  #
+  # A runtime run of two tests, with a time limit of 1,500 milliseconds:
+  #
+  # ```ruby
+  # run = Stryker::MutantRun.new(
+  #   mutant:,
+  #   static: false,
+  #   test_ids: ["Shop::DiscountTest#test_rate", "Shop::DiscountTest#test_bulk"],
+  #   timeout_ms: 1500
+  # )
+  # Stryker::MutantRun.from_json(run.to_json) == run
+  # # => true
+  # ```
+  class MutantRun < Data
+    include JsonValue
+    extend JsonValue::Reading[MutantRun]
+
+    # The mutant to make active.
+    attr_reader mutant: Mutant
+
+    # Whether the mutant is static, so that its run is a fresh process with
+    # the mutant active before any file loads. When false, the mutant is a
+    # runtime mutant.
+    attr_reader static: bool
+
+    # The IDs of the tests to run, in order. For a static mutant, every
+    # test's ID.
+    attr_reader test_ids: Array[String]
+
+    # The run's time limit in milliseconds. A run that passes it has the
+    # status `Timeout`.
+    attr_reader timeout_ms: Integer
+
+    # Builds the run.
+    #
+    # - `mutant`: Stryker::Mutant, the mutant to make active.
+    # - `static`: bool, whether the mutant is static.
+    # - `test_ids`: Array of String, the IDs of the tests to run.
+    # - `timeout_ms`: Integer, the time limit in milliseconds.
+    def self.new: (mutant: Mutant, static: bool, test_ids: Array[String], timeout_ms: Integer) -> instance
+                | (Mutant mutant, bool static, Array[String] test_ids, Integer timeout_ms) -> instance
+
+    # The readers of the members of a mutant run that hold another value, as
+    # `Stryker::JsonValue::Reading#readers` describes: `mutant` reads a Hash into a `Stryker::Mutant`.
+    def self.readers: () -> Hash[Symbol, Proc]
+  end
+end
