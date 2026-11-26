@@ -9,7 +9,10 @@ require "stryker/instrumenter"
 # stops when the installed Prism doesn't know it.
 class SyntaxTest < Minitest::Test
   # A program that runs the instrumenter in a Ruby that reports the version 9.9.9.
+  # Prism loads first because a precompiled Prism picks its native library by RUBY_VERSION. Under 9.9.9 it
+  # finds none and falls back to `require "prism/prism"`, which can find the Ruby's own, older Prism.
   UNKNOWN_RUBY = <<~RUBY
+    require "prism"
     Object.send(:remove_const, :RUBY_VERSION)
     RUBY_VERSION = "9.9.9"
     require "stryker/instrumenter"

@@ -24,7 +24,7 @@ class TrapSitesTest < Minitest::Test
     output, errors, status = plain
 
     assert_equal(["", 1], [output, status], "The plain mutant raises, since x isn't declared.")
-    assert_match(/undefined local variable or method 'x'/, errors)
+    assert_match(/undefined local variable or method [`']x'/, errors)
     assert_equal(["nil\n", "", 0], switched, "The switch declares x, as nil.")
   end
 
