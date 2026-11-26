@@ -1,0 +1,103 @@
+# frozen_string_literal: true
+
+require_relative("../test_helper")
+require "stryker/config"
+
+# Checks that a config holds the options that the stages use, with
+# StrykerJS's defaults, compares by value, and pairs each option's name with a
+# field.
+class ConfigTest < Minitest::Test
+  GIVEN = {
+    mutate: ["app/**/*.rb"],
+    test_runner: "rspec",
+    reporters: ["html"],
+    concurrency: 2,
+    threshold_high: 90,
+    threshold_low: 70,
+    threshold_break: 50,
+    timeout_ms: 1000,
+    timeout_factor: 2.0,
+    excluded_mutations: ["StringLiteral"],
+    incremental: true,
+  }.freeze
+  DEFAULTS = {
+    reporters: %w[clear-text progress html],
+    threshold_high: 80,
+    threshold_low: 60,
+    threshold_break: nil,
+    timeout_ms: 5000,
+    timeout_factor: 1.5,
+    excluded_mutations: [],
+    incremental: false,
+  }.freeze
+  private_constant(:GIVEN, :DEFAULTS)
+
+  def config(**)
+    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", **)
+  end
+
+  def test_holds_the_options_it_is_given
+    assert_equal(GIVEN, Stryker::Config.new(**GIVEN).to_h)
+  end
+
+  def test_the_options_it_is_not_given_have_strykerjss_defaults
+    assert_equal(DEFAULTS, Stryker::Config::DEFAULTS)
+  end
+
+  def test_a_config_takes_the_defaults_of_this_machine
+    assert_equal(DEFAULTS, config.to_h.except(:mutate, :test_runner, :concurrency))
+  end
+
+  def test_a_config_takes_the_options_it_is_given_over_the_defaults
+    assert_equal(3, config(concurrency: 3).concurrency)
+  end
+
+  def test_the_default_concurrency_of_this_machine_is_the_number_of_its_processors_less_one_above_four
+    assert_equal(Stryker::Config.default_concurrency(Etc.nprocessors), config.concurrency)
+  end
+
+  def test_one_to_four_processors_give_that_many_processes
+    assert_equal([1, 2, 3, 4], (1..4).map { |processors| Stryker::Config.default_concurrency(processors) })
+  end
+
+  def test_more_than_four_processors_give_one_process_fewer
+    assert_equal([4, 7, 15], [5, 8, 16].map { |processors| Stryker::Config.default_concurrency(processors) })
+  end
+
+  def test_configs_with_equal_members_are_equal
+    assert_equal(config(concurrency: 2), config(concurrency: 2))
+  end
+
+  def test_configs_with_different_members_differ
+    refute_equal(config(concurrency: 2), config(concurrency: 3))
+  end
+
+  def test_a_config_without_mutate_is_refused
+    assert_raises(ArgumentError) { Stryker::Config.new(test_runner: "minitest") }
+  end
+
+  def test_a_config_without_a_test_runner_is_refused
+    assert_raises(ArgumentError) { Stryker::Config.new(mutate: ["lib/**/*.rb"]) }
+  end
+
+  def test_a_keyword_that_is_no_field_is_refused
+    assert_raises(ArgumentError) { config(timeoutMS: 1000) }
+  end
+
+  def test_the_option_names_are_strykerjss
+    names = %w[mutate testRunner reporters concurrency thresholds.high thresholds.low thresholds.break]
+    names.push("timeoutMS", "timeoutFactor", "mutator.excludedMutations", "incremental")
+
+    assert_equal(names, Stryker::Config::OPTIONS.keys)
+  end
+
+  def test_the_options_pair_with_every_field_once
+    assert_equal(Stryker::Config.members.sort, Stryker::Config::OPTIONS.values.sort)
+  end
+
+  def test_the_arrays_of_the_defaults_are_frozen
+    defaults = Stryker::Config::DEFAULTS.values_at(:reporters, :excluded_mutations)
+
+    assert_equal([true, true], defaults.map(&:frozen?))
+  end
+end

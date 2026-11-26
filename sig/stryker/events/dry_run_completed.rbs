@@ -1,0 +1,23 @@
+module Stryker
+  module Events
+    # Published when the dry run passes. It holds what the dry run found.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # event = Stryker::Events::DryRunCompleted.new(result: dry_run_result)
+    # event.result.static_bucket
+    # # => [1]
+    # ```
+    class DryRunCompleted < Data
+      # What the dry run found.
+      attr_reader result: DryRunResult
+
+      # Builds the event.
+      #
+      # - `result`: Stryker::DryRunResult, what the dry run found.
+      def self.new: (result: DryRunResult) -> instance
+                  | (DryRunResult result) -> instance
+    end
+  end
+end

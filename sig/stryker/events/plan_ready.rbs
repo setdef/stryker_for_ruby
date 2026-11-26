@@ -1,0 +1,31 @@
+module Stryker
+  module Events
+    # Published when every mutant has a status or a run: the runs to make,
+    # and the mutants that won't run, each with its status.
+    #
+    # ## Examples
+    #
+    # How many mutants a run will test, and how many never run:
+    #
+    # ```ruby
+    # event = Stryker::Events::PlanReady.new(runs:, unrun:)
+    # [event.runs.size, event.unrun.size]
+    # # => [41, 3]
+    # ```
+    class PlanReady < Data
+      # The runs to make, one for each mutant that a test reaches.
+      attr_reader runs: Array[MutantRun]
+
+      # A result for each mutant that won't run, with the status `NoCoverage`,
+      # `Ignored`, or `CompileError`.
+      attr_reader unrun: Array[MutantResult]
+
+      # Builds the event.
+      #
+      # - `runs`: Array of Stryker::MutantRun, the runs to make.
+      # - `unrun`: Array of Stryker::MutantResult, the mutants that won't run.
+      def self.new: (runs: Array[MutantRun], unrun: Array[MutantResult]) -> instance
+                  | (Array[MutantRun] runs, Array[MutantResult] unrun) -> instance
+    end
+  end
+end

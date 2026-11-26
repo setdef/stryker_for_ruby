@@ -29,6 +29,8 @@ class StandardLibraryTest < Minitest::Test
     require "stryker/dry_run_result"
     require "stryker/mutant_run"
     require "stryker/mutant_result"
+    require "stryker/config"
+    require "stryker/events"
   RUBY
   private_constant(:REQUIRES)
 

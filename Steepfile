@@ -19,6 +19,7 @@ target :lib do
   library "stringio"
   library "securerandom"
   library "erb"
+  library "etc"
   library "prism"
 end
 

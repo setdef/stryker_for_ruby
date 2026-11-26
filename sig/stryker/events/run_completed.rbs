@@ -1,0 +1,25 @@
+module Stryker
+  module Events
+    # Published when the last result is collected. It holds every mutant's
+    # result: the mutants that ran and the mutants that didn't.
+    #
+    # ## Examples
+    #
+    # The mutants that survived:
+    #
+    # ```ruby
+    # event = Stryker::Events::RunCompleted.new(results:)
+    # event.results.select { |result| result.status == "Survived" }
+    # ```
+    class RunCompleted < Data
+      # The result of every mutant of the run.
+      attr_reader results: Array[MutantResult]
+
+      # Builds the event.
+      #
+      # - `results`: Array of Stryker::MutantResult, the result of every mutant.
+      def self.new: (results: Array[MutantResult]) -> instance
+                  | (Array[MutantResult] results) -> instance
+    end
+  end
+end

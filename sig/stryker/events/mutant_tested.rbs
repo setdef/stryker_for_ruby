@@ -1,0 +1,23 @@
+module Stryker
+  module Events
+    # Published when a run's result is collected. It holds that result.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # event = Stryker::Events::MutantTested.new(result: mutant_result)
+    # event.result.status
+    # # => "Survived"
+    # ```
+    class MutantTested < Data
+      # The result of one mutant's run.
+      attr_reader result: MutantResult
+
+      # Builds the event.
+      #
+      # - `result`: Stryker::MutantResult, the result of one mutant's run.
+      def self.new: (result: MutantResult) -> instance
+                  | (MutantResult result) -> instance
+    end
+  end
+end

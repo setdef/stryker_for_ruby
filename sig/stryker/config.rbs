@@ -1,0 +1,127 @@
+module Stryker
+  # Every option of a run that the stages use, after the
+  # configuration file and the command line are merged: Configure builds one
+  # and hands it to the stages, as
+  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-pipeline)
+  # describes. Its options have StrykerJS's names and defaults, taken from
+  # StrykerJS's `packages/api/schema/stryker-core.json`, and each field has a
+  # Ruby name. `Stryker::Config::OPTIONS` pairs each option's camelCase name
+  # with its field.
+  #
+  # A config is a value: two configs with equal members are equal. It checks
+  # no member's name or type, because Configure does. `mutate` and
+  # `test_runner` have no default, because StrykerJS's defaults for them
+  # name JavaScript files and a JavaScript test runner. A config built
+  # without either raises ArgumentError. It reads no file and no flag, and it
+  # doesn't convert to JSON, because it never leaves the orchestrator.
+  #
+  # ## Examples
+  #
+  # A config with the defaults for every other option:
+  #
+  # ```ruby
+  # config = Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest")
+  # config.timeout_ms
+  # # => 5000
+  # config.threshold_break
+  # # => nil
+  # ```
+  #
+  # A config with a score that breaks the run below 70:
+  #
+  # ```ruby
+  # Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "rspec", threshold_break: 70).threshold_break
+  # # => 70
+  # ```
+  class Config < Data
+    # The default of each field that has one, other than `concurrency`, whose
+    # default depends on the machine. Every field has one except `mutate` and
+    # `test_runner`. Each array is frozen.
+    DEFAULTS: Hash[Symbol, Array[String] | Integer | Float | bool | nil]
+
+    # Each option's name in a configuration file and on the command line,
+    # with the field that holds it. A nested option's name has the names of
+    # its parents before it, joined with `.`, as `thresholds.high` is the
+    # `high` option inside `thresholds`.
+    OPTIONS: Hash[String, Symbol]
+
+    # The patterns that select the files to mutate, relative to the project's
+    # root. A pattern that starts with `!` leaves files out.
+    attr_reader mutate: Array[String]
+
+    # The name of the test runner, such as `"minitest"` or `"rspec"`.
+    attr_reader test_runner: String
+
+    # The names of the reporters to run. By default, `clear-text`, `progress`,
+    # and `html`.
+    attr_reader reporters: Array[String]
+
+    # How many project processes run at once. By default,
+    # `Stryker::Config.default_concurrency`.
+    attr_reader concurrency: Integer
+
+    # The mutation score, as a percentage, at or above which the score is
+    # high. By default, 80.
+    attr_reader threshold_high: Integer
+
+    # The mutation score, as a percentage, below which the score is low. By
+    # default, 60.
+    attr_reader threshold_low: Integer
+
+    # The mutation score, as a percentage, below which the run fails, or nil
+    # for no limit. By default, nil.
+    attr_reader threshold_break: Integer?
+
+    # How many milliseconds a run's limit adds to the dry-run time of its
+    # tests. By default, 5000.
+    attr_reader timeout_ms: Integer
+
+    # How many times the dry-run time of a run's tests a run may take, before
+    # `timeout_ms` is added. By default, 1.5.
+    attr_reader timeout_factor: Float
+
+    # The names of the mutators that make no mutant. By default, none.
+    attr_reader excluded_mutations: Array[String]
+
+    # Whether to store results in a file and use it to speed up the next run.
+    # By default, false.
+    attr_reader incremental: bool
+
+    # The number of project processes to run at once when no option says: the
+    # number of logical processors, less one when there are more than four,
+    # which is StrykerJS's rule. A machine with 1 to 4 processors gets that
+    # many.
+    #
+    # - `processors`: Integer, the number of logical processors, which
+    #   defaults to the number of this machine.
+    #
+    # ```ruby
+    # Stryker::Config.default_concurrency(4)
+    # # => 4
+    # Stryker::Config.default_concurrency(8)
+    # # => 7
+    # ```
+    def self.default_concurrency: (?Integer processors) -> Integer
+
+    # Builds the config. The keywords are the names of the fields. Raises
+    # ArgumentError when `mutate` or `test_runner` is missing, or a keyword
+    # is no field.
+    #
+    # - `mutate`: Array of String, the patterns that select the files.
+    # - `test_runner`: String, the name of the test runner.
+    # - `reporters`: Array of String, the reporters to run.
+    # - `concurrency`: Integer, how many processes run at once.
+    # - `threshold_high`: Integer, the high score.
+    # - `threshold_low`: Integer, the low score.
+    # - `threshold_break`: Integer or nil, the score that breaks the run.
+    # - `timeout_ms`: Integer, the time a run's limit adds.
+    # - `timeout_factor`: Float, the factor on the dry-run time.
+    # - `excluded_mutations`: Array of String, the mutators that make nothing.
+    # - `incremental`: bool, whether to store and reuse results.
+    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Integer, ?threshold_low: Integer, ?threshold_break: Integer?, ?timeout_ms: Integer, ?timeout_factor: Float, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
+
+    # Builds the config, with each default for a field that the keywords leave
+    # out.
+    def initialize: (**Object options) -> void
+  end
+end

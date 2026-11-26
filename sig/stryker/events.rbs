@@ -1,0 +1,15 @@
+module Stryker
+  # The domain events of a run. A stage publishes each one when its work
+  # finishes, and the core hands it to every reporter, so a stage never calls
+  # a reporter and adding a reporter changes no stage. A reporter that needs
+  # every result, such as the JSON reporter, builds its output when it
+  # receives `Stryker::Events::RunCompleted`, and one that shows progress
+  # acts on each `Stryker::Events::MutantTested`.
+  # [The architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#values-and-events)
+  # says when each is published.
+  #
+  # An event is a value: two events with equal members are equal. An event
+  # never crosses a pipe, so none converts to JSON.
+  module Events
+  end
+end
