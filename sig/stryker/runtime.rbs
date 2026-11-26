@@ -1,0 +1,113 @@
+module Stryker
+  # The holder of the active mutant's ID, which every switch in instrumented
+  # source reads. A switch calls `::Stryker::Active.id` to choose its branch,
+  # and `::Stryker::Active.hit` with the IDs of its mutants each time its
+  # original branch runs.
+  #
+  # `require "stryker/runtime"` sets it. In a run of the project's code with
+  # no mutant active, it is a Stryker::Runtime::Recording, which records hits.
+  # With a mutant active, it is a Stryker::Runtime::ActiveMutant, which records
+  # none. It is frozen and shareable, so a Ractor other than the main one can
+  # read it.
+  Active: Runtime::_Holder
+
+  # The part of **Stryker (for Ruby)** that loads in a process that runs the
+  # project's code: the holder of the active mutant's ID, and the hit
+  # recorder, as
+  # [Loading and isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-active-mutants-holder)
+  # and [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md)
+  # specify. It loads nothing outside the standard library.
+  #
+  # `require "stryker/runtime"` sets `Stryker::Active` from the environment,
+  # before any of the project's code loads. When `STRYKER_ACTIVE_MUTANT`
+  # holds a mutant's ID, as it does in the fresh process of a static mutant's
+  # run, that mutant is active from the start, so its switch takes the
+  # mutated branch while its file loads. Otherwise no mutant is active, and
+  # every hit goes to `Stryker::Runtime::RECORDER`.
+  #
+  # ## Examples
+  #
+  # A fresh process for a static run of mutant 7:
+  #
+  # ```console
+  # $ STRYKER_ACTIVE_MUTANT=7 ruby -Ilib -rstryker/runtime -e 'p Stryker::Active.id'
+  # 7
+  # ```
+  #
+  # A forked child that runs mutant 7, after its parent loaded the project's
+  # code with no mutant active:
+  #
+  # ```ruby
+  # Stryker::Active.id
+  # # => nil
+  # Stryker::Runtime.activate_mutant(7)
+  # Stryker::Active.id
+  # # => 7
+  # ```
+  module Runtime
+    # What `Stryker::Active` holds: the active mutant's ID, and the method
+    # that every switch calls to record a hit.
+    interface _Holder
+      # The active mutant's ID, or nil when no mutant is active.
+      def id: () -> Integer?
+
+      # Records that the code at the sites of the mutants with `ids` ran,
+      # or does nothing in a mutant run. Returns nil.
+      #
+      # - `ids`: Integer, each mutant's ID.
+      def hit: (*Integer ids) -> nil
+    end
+
+    # Where `Stryker::Runtime.holder_for` reads the active mutant's ID.
+    # `ENV` is one, and so is a Hash of Strings.
+    interface _Environment
+      # The value of the variable `name`, or `default` when it isn't set.
+      def fetch: (String name, nil default) -> String?
+    end
+
+    # The name of the environment variable that holds the active mutant's
+    # ID, `"STRYKER_ACTIVE_MUTANT"`.
+    VARIABLE: String
+
+    # The hit recorder of this process. Every hit made with no mutant active
+    # goes here.
+    RECORDER: Recorder
+
+    # The holder for the mutant whose ID is in `environment`'s
+    # `STRYKER_ACTIVE_MUTANT`, or a Stryker::Runtime::Recording when that
+    # variable isn't set. Raises ArgumentError when the variable holds
+    # anything other than a decimal integer, an empty string included.
+    #
+    # - `environment`: Stryker::Runtime::_Environment, such as `ENV`.
+    #
+    # ```ruby
+    # Stryker::Runtime.holder_for({ "STRYKER_ACTIVE_MUTANT" => "7" })
+    # # => #<data Stryker::Runtime::ActiveMutant id=7>
+    # Stryker::Runtime.holder_for({})
+    # # => #<data Stryker::Runtime::Recording collector=nil>
+    # ```
+    def self.holder_for: (_Environment environment) -> _Holder
+
+    # Makes `holder` shareable and sets `namespace`'s `Active` constant to
+    # it, replacing the holder there. Ruby removes the old constant first,
+    # so it gives no warning. Code compiled before the replacement, a
+    # forked child's included, reads the new holder, in every Ractor.
+    #
+    # Call it before a run's tests start: a switch that runs on another
+    # thread while the constant is replaced can raise NameError. A static
+    # mutant's switch has already run by then, so only a fresh process with
+    # `STRYKER_ACTIVE_MUTANT` set before load makes a static mutant active.
+    #
+    # - `holder`: Stryker::Runtime::_Holder, the new holder.
+    # - `namespace`: Module, where the constant is. Stryker by default.
+    def self.activate: (_Holder holder, ?Module namespace) -> _Holder
+
+    # Makes the mutant with `id` active, as `Stryker::Runtime.activate`
+    # does with a Stryker::Runtime::ActiveMutant. A forked child or a pool
+    # process calls it before its run.
+    #
+    # - `id`: Integer, the mutant's ID.
+    # - `namespace`: Module, where the constant is. Stryker by default.
+    def self.activate_mutant: (Integer id, ?Module namespace) -> _Holder
+  end
+end

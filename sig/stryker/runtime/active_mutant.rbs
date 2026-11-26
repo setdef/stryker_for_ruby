@@ -1,0 +1,33 @@
+module Stryker
+  module Runtime
+    # The holder for a mutant run: it holds the active mutant's ID, and
+    # records no hit, because a mutant run doesn't use the map from mutants
+    # to tests.
+    #
+    # Make it shareable before a constant holds it, as
+    # `Stryker::Runtime.activate` does.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # holder = Stryker::Runtime::ActiveMutant.new(id: 7)
+    # holder.id
+    # # => 7
+    # holder.hit(7, 8)
+    # # => nil
+    # ```
+    class ActiveMutant < Data
+      # The active mutant's ID.
+      attr_reader id: Integer
+
+      # Builds the holder for the mutant with `id`.
+      #
+      # - `id`: Integer, the active mutant's ID.
+      def self.new: (id: Integer) -> instance
+                  | (Integer id) -> instance
+
+      # Returns nil at once, and records nothing.
+      def hit: (*Integer) -> nil
+    end
+  end
+end

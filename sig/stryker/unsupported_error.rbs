@@ -1,0 +1,13 @@
+module Stryker
+  # Raised when the project's code does something that **Stryker (for Ruby)**
+  # can't record truthfully on the running Ruby, so that a run fails instead
+  # of reporting a result that rests on lost data. The message says what
+  # happened and which Ruby versions support it.
+  #
+  # A switch that runs in a Ractor other than the main one raises it during
+  # the dry run on Ruby 3.3 and 3.4, where no mechanism records such a hit.
+  # The test that ran the switch fails, so the dry run fails and no mutant
+  # runs.
+  class UnsupportedError < StandardError
+  end
+end

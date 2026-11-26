@@ -1,0 +1,33 @@
+module Stryker
+  module Runtime
+    # Records which mutants' sites ran, by mutant ID.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # recorder = Stryker::Runtime::Recorder.new
+    # recorder.record([7, 8])
+    # recorder.static
+    # # => #<Set: {7, 8}>
+    # ```
+    class Recorder
+      # Builds a recorder with no hits.
+      def initialize: () -> void
+
+      # The static bucket: the IDs of the mutants whose sites ran while the
+      # project's code loaded. It is a copy, so changing it changes nothing in
+      # the recorder.
+      def static: () -> Set[Integer]
+
+      # Records a hit for each of `ids`, and returns nil. An ID recorded
+      # before is recorded once.
+      #
+      # - `ids`: Array of Integer, the mutants' IDs.
+      def record: (Array[Integer] ids) -> nil
+
+      private
+
+      @static: Set[Integer]
+    end
+  end
+end
