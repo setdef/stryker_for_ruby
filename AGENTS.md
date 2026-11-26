@@ -39,6 +39,8 @@ Before a push that changes code or tests, also check what the gate on your compu
 - **Check code or tests that behave differently on Windows on Windows.** This covers anything that reads `File::ALT_SEPARATOR` or `Gem.win_platform?`, and anything that depends on paths, line endings, `fork`, or signals. Run the whole test suite there, never one file: a single file always fails the coverage floor, and that failure hides the real one.
 - **Check a change to `.github/workflows/*.yml`** by loading the file with `YAML.safe_load_file` and running each changed `run:` string exactly as YAML parsed it.
 
+These rules cover every push, every branch, and every agent:
+
 - **When the push is refused because `trunk` moved,** rebase, run the gate again, and push again. Rerun it every time, even when the incoming commits look unrelated: two changes can rebase cleanly and still break each other.
 - **Push only after you have read the gate's exit status.** Never chain `git push` onto a gate run, because the push then happens whatever the gate says.
 - **After you push, wait for nothing.** Don't watch a CI run or poll for its result. Check work before the push, not after it.
@@ -126,6 +128,8 @@ Ask the maintainers before you change any of these:
 ### Recording decisions
 
 Record every decision where the next contributor will find it: the issue it settles, a design page, an ADR, or the RBS documentation of the code. A decision that lives only in a chat, or on one machine, is lost.
+
+Design pages describe the system as it is, and issues describe what it will be. A page never says what the code will do. A decision that an issue records reaches its design page in the same commit as the code that carries it out, and a commit that changes behavior changes the page that describes it.
 
 ## Questions for the maintainers
 
