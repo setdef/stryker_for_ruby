@@ -21,4 +21,10 @@ Gem::Specification.new do |spec|
 
   spec.files = Dir["lib/**/*.rb", "sig/**/*.rbs", "README.md", "CHANGELOG.md", "LICENSE"]
   spec.require_paths = ["lib"]
+
+  # Only the orchestrator loads these, never a process that loads the
+  # project's code (docs/decisions/0003). Ruby 3.3 bundles Prism 0.19.0,
+  # which refract can't use, so the gem needs the Prism gem.
+  spec.add_dependency("prism", ">= 1.0")
+  spec.add_dependency("refract", "~> 2.0")
 end
