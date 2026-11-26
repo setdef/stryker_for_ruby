@@ -10,3 +10,4 @@ The keeper of this log writes and numbers the records. [AGENTS.md](../../AGENTS.
 | - | - | - |
 | [0001](0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md) | Mutants are compiled into the code once and switched on at run time. | proposed |
 | [0002](0002-every-mutant-runs-in-a-clean-process.md) | Every mutant runs in a clean process. | proposed |
+| [0003](0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md) | The processes that load the project's code load only **Stryker (for Ruby)**'s runtime, which depends on nothing outside the standard library. | proposed |

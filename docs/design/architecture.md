@@ -232,3 +232,4 @@ Domain-driven design's tactical patterns, such as repositories, aggregates, and 
 - [Coverage](coverage.md), for how the dry run maps tests to mutants.
 - [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), for why mutants are compiled into the code once and switched on at run time.
 - [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md), for why every mutant runs in a clean process.
+- [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md), for why the processes that load the project's code load only the runtime.

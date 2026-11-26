@@ -21,7 +21,7 @@ The orchestrator never loads the project's code, and a project process never ins
 | The orchestrator | Reads the configuration, finds and parses the files, instruments them, writes the cache, starts the project processes, plans the mutant runs, collects the results, and writes the reports. | The code that instruments, plans, and reports, with Prism and refract. |
 | A project process: the parent that forks, each child forked from it, each process in the Windows pool, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which includes the hook, the switch, and the hit recorder, and which uses nothing outside the standard library. |
 
-Prism and refract load only in the orchestrator.
+Prism and refract load only in the orchestrator. The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
 
 ### The cache
 
