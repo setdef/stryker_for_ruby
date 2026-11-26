@@ -8,4 +8,5 @@ The keeper of this log writes and numbers the records. [AGENTS.md](../../AGENTS.
 
 | Number | Decision | Status |
 | - | - | - |
+| [0001](0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md) | Mutants are compiled into the code once and switched on at run time. | proposed |
 | [0002](0002-every-mutant-runs-in-a-clean-process.md) | Every mutant runs in a clean process. | proposed |

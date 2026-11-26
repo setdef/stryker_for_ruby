@@ -1,6 +1,6 @@
 # Mutant placement
 
-This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The reasons for compiling every mutant into the code once and switching it on at run time are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 ## The text edit
 

@@ -230,4 +230,5 @@ Domain-driven design's tactical patterns, such as repositories, aggregates, and 
 - [Loading and isolation](loading-and-isolation.md), for the two kinds of process, the cache, the hook, and the processes each run gets.
 - [Mutant placement](mutant-placement.md), for how the instrumenter places each switch.
 - [Coverage](coverage.md), for how the dry run maps tests to mutants.
+- [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), for why mutants are compiled into the code once and switched on at run time.
 - [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md), for why every mutant runs in a clean process.
