@@ -8,6 +8,15 @@ require "stryker/runtime"
 # Stryker::Active; test/stryker/runtime/process_test.rb replaces the real one,
 # in processes of its own.
 class RuntimeTest < Minitest::Test
+  # A collector that hands over the same messages at each drain. It is frozen,
+  # because the holder that holds it is made shareable.
+  Drained = Data.define(:messages) do
+    def drain
+      messages
+    end
+  end
+  private_constant(:Drained)
+
   def namespace
     @namespace ||= Module.new
   end
@@ -90,6 +99,41 @@ class RuntimeTest < Minitest::Test
     error = assert_raises(Stryker::UnsupportedError) { Stryker::Runtime::Recording.new.deliver([1], Object.new) }
 
     assert_includes(error.message, "Ruby 4.0")
+  end
+
+  def test_a_load_with_a_mutant_active_records_nothing
+    assert_nil(Stryker::Runtime::ActiveMutant.new(id: 7).load_began("lib/invoice.rb"))
+  end
+
+  def test_a_load_from_the_main_ractor_goes_to_the_recorder
+    collector = []
+
+    assert_nil(Stryker::Runtime::Recording.new(collector:).load_began("lib/invoice.rb"))
+    assert_empty(collector)
+  end
+
+  def test_a_load_from_another_ractor_goes_to_the_collector
+    collector = []
+    Stryker::Runtime::Recording.new(collector:).deliver("lib/invoice.rb", Object.new)
+
+    assert_equal(["lib/invoice.rb"], collector)
+  end
+
+  def test_the_dry_run_hands_the_collector_to_the_recorder_and_the_holder
+    collector = Drained.new([[7]])
+    recorder = Stryker::Runtime::Recorder.new
+    Stryker::Runtime.start_dry_run(collector, namespace, recorder)
+    recorder.test_started(:first)
+
+    assert_equal([nil, collector, Set[7]], [namespace::Active.id, namespace::Active.collector, recorder.static])
+  end
+
+  def test_the_dry_run_with_no_collector_drains_nothing
+    recorder = Stryker::Runtime::Recorder.new
+    Stryker::Runtime.start_dry_run(nil, namespace, recorder)
+    recorder.test_started(:first)
+
+    assert_equal([nil, Set.new], [namespace::Active.collector, recorder.static])
   end
 
   def test_a_hit_from_the_main_ractor_skips_the_collector

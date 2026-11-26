@@ -1,33 +1,104 @@
 module Stryker
   module Runtime
-    # Records which mutants' sites ran, by mutant ID.
+    # The hit recorder: it records which mutants' sites ran, by mutant ID,
+    # in the static bucket or in the bucket of the test that ran them, as
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#hits)
+    # specifies. It is the dry run's `_TestObserver`: the test runner
+    # adapter calls `test_started` before each test and `test_finished`
+    # after it.
+    #
+    # - The static bucket is current until the first test starts, and again
+    #   between tests.
+    # - A test's bucket is current while that test runs. A hit made while a
+    #   file loads inside a test, with that file's top-level frame on the
+    #   stack, still lands in the static bucket.
+    #
+    # A recorder takes hits from the main Ractor only. A hit from another
+    # Ractor reaches it through its collector, which it drains when each
+    # test starts and when it ends, so a hit sent between tests lands in the
+    # static bucket, and one sent from a Ractor that finished during a test
+    # lands in that test's. A hit from a Ractor still running when its test
+    # ends lands in whatever bucket is current at the next drain.
+    #
+    # A test's identity is the object passed to `test_started`. A test
+    # started a second time gets a new, empty bucket.
     #
     # ## Examples
     #
     # ```ruby
     # recorder = Stryker::Runtime::Recorder.new
+    # recorder.record([1])
+    # recorder.test_started("InvoiceTest#test_total")
     # recorder.record([7, 8])
+    # recorder.test_finished(:passed)
     # recorder.static
-    # # => #<Set: {7, 8}>
+    # # => #<Set: {1}>
+    # recorder.tests
+    # # => {"InvoiceTest#test_total" => #<Set: {7, 8}>}
     # ```
     class Recorder
-      # Builds a recorder with no hits.
+      # Builds a recorder with no hits, no tests, and no collector.
       def initialize: () -> void
 
-      # The static bucket: the IDs of the mutants whose sites ran while the
-      # project's code loaded. It is a copy, so changing it changes nothing in
-      # the recorder.
+      # The static bucket: the IDs of the mutants with a static hit. It is a
+      # copy, so changing it changes nothing in the recorder.
       def static: () -> Set[Integer]
 
-      # Records a hit for each of `ids`, and returns nil. An ID recorded
-      # before is recorded once.
+      # Each test's bucket, by test, in the order the tests started. A test
+      # that reached no mutant has an empty bucket. It is a copy.
+      def tests: () -> Hash[Object, Set[Integer]]
+
+      # The path of every file whose load began during a test, so that the
+      # dry run can name each file whose results rest on the stack check. It
+      # is a copy.
+      def loaded: () -> Set[String]
+
+      # Makes the recorder drain `collector` when each test starts and when
+      # it ends, or drain nothing when `collector` is nil. Returns nil.
+      #
+      # - `collector`: Stryker::Runtime::Collector, or nil.
+      def collect_from: (Collector? collector) -> nil
+
+      # Drains the collector into the current bucket, then makes `test`'s
+      # bucket current. Returns nil.
+      #
+      # - `test`: Object, the test, as the test runner adapter gives it.
+      def test_started: (Object test) -> nil
+
+      # Drains the collector into the current test's bucket, then makes the
+      # static bucket current. Returns nil.
+      #
+      # - `result`: Object, the test's result, which the recorder doesn't
+      #   read.
+      def test_finished: (Object result) -> nil
+
+      # Records a message from a holder: `record` for an Array of IDs, or
+      # `load_began` for a path. Returns nil.
+      #
+      # - `message`: Array of Integer or String.
+      def receive: (message message) -> nil
+
+      # Records a hit for the mutants with `ids` in the current bucket, or in
+      # the static bucket when it is a static hit. Returns nil.
       #
       # - `ids`: Array of Integer, the mutants' IDs.
       def record: (Array[Integer] ids) -> nil
 
+      # Records that the file at `path` began to load, during the current
+      # test. Between tests it records nothing, because every hit there is
+      # static already. Returns nil.
+      #
+      # - `path`: String, the file's path.
+      def load_began: (String path) -> nil
+
       private
 
       @static: Set[Integer]
+      @runs: Hash[Object, TestRun]
+      @current: TestRun?
+      @collector: Collector?
+
+      def drain: () -> void
     end
   end
 end

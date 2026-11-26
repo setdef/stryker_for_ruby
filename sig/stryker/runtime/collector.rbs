@@ -1,0 +1,71 @@
+module Stryker
+  module Runtime
+    # The collector Ractor of the dry run, on Ruby 4.0 and later, as
+    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+    # specifies. A Ractor other than the main one can't reach the recorder,
+    # so a holder there sends each message to the collector, which keeps it
+    # until the recorder drains it.
+    #
+    # The collector is shareable, so a holder made shareable can hold it.
+    # The recorder drains it in the main Ractor, which owns its reply port.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # collector = Stryker::Runtime::Collector.start
+    # Ractor.new(collector) { |inbox| inbox << [7] }.join
+    # collector.drain
+    # # => [[7]]
+    # collector.drain
+    # # => []
+    # ```
+    class Collector < Data
+      # The Ractor that keeps the messages.
+      attr_reader ractor: Ractor
+
+      # The port that the Ractor answers a drain on.
+      attr_reader reply: Ractor::Port[Array[message]]
+
+      # Builds the collector from its parts. Use `start` to start one.
+      #
+      # - `ractor`: Ractor, the Ractor that keeps the messages.
+      # - `reply`: Ractor::Port, the port that the Ractor answers on.
+      def self.new: (ractor: Ractor, reply: Ractor::Port[Array[message]]) -> instance
+                  | (Ractor ractor, Ractor::Port[Array[message]] reply) -> instance
+
+      # Starts a collector Ractor, with a reply port that the calling Ractor
+      # owns, or returns nil on Ruby 3.3 and 3.4, which have no
+      # `Ractor::Port`. Ruby prints its warning that Ractors are
+      # experimental, unless the process has already started one.
+      #
+      # - `ractor_class`: Ractor, or a stand-in for it in a test.
+      def self.start: (?singleton(Ractor) ractor_class) -> Collector?
+
+      # What the collector Ractor runs: it receives each message from
+      # `inbox` and keeps it, and on a drain sends the messages kept since
+      # the last drain to `reply`, in the order they arrived. It returns
+      # only when `inbox` raises StopIteration, as a stand-in in a test does.
+      #
+      # - `inbox`: Ractor, whose `receive` gives the next message.
+      # - `reply`: Ractor::Port, where a drain's messages go.
+      def self.serve: (singleton(Ractor) inbox, Ractor::Port[Array[message]] reply) -> void
+
+      DRAIN: :drain
+
+      private def self.batch: (singleton(Ractor) inbox, Array[message] messages) -> Array[message]
+
+      # Sends `message` to the collector, from any Ractor, and returns the
+      # collector. Raises Ractor::ClosedError when the collector Ractor has
+      # ended, as one started before a fork has in the child.
+      #
+      # - `message`: Array of Integer or String, a hit's IDs or a path.
+      def <<: (message message) -> self
+
+      # Every message sent to the collector since the last drain, in the
+      # order the collector received them. It waits until the collector
+      # Ractor answers, so every message whose send finished before the call
+      # is in it. Call it only from the Ractor that started the collector.
+      def drain: () -> Array[message]
+    end
+  end
+end

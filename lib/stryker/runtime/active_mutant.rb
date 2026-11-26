@@ -8,6 +8,10 @@ module Stryker
       def hit(*)
         nil
       end
+
+      def load_began(_path)
+        nil
+      end
     end
   end
 end

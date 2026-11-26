@@ -23,18 +23,22 @@ module Stryker
         deliver(ids, Ractor.current)
       end
 
-      def deliver(ids, ractor)
+      def load_began(path)
+        deliver(path, Ractor.current)
+      end
+
+      def deliver(message, ractor)
         # Coverage counts no line that runs outside the main Ractor, so the
         # Ractor comes in as an argument, and the tests take both routes from
         # the main one.
-        ractor.equal?(Ractor.main) ? RECORDER.record(ids) : forward(ids)
+        ractor.equal?(Ractor.main) ? RECORDER.receive(message) : forward(message)
         nil
       end
 
-      private def forward(ids)
+      private def forward(message)
         raise(UnsupportedError, OUTSIDE_THE_MAIN_RACTOR) unless collector
 
-        collector << ids
+        collector << message
       end
     end
   end

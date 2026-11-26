@@ -1,0 +1,58 @@
+module Stryker
+  module Runtime
+    # What the recorder keeps for one test: the test's bucket, and the paths
+    # of the files whose load began while the test ran.
+    #
+    # A hit lands in the test's bucket, unless a file has begun to load
+    # during the test and the stack holds that file's top-level frame. Such
+    # a hit is static, and lands in the static bucket instead, as
+    # [Static hits inside a test](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#static-hits-inside-a-test)
+    # specifies. The stack check runs only after a file has begun to load,
+    # for the next hit of each mutant after each load.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # static = Set.new
+    # run = Stryker::Runtime::TestRun.new
+    # run.record([7], static)
+    # run.hits
+    # # => #<Set: {7}>
+    # ```
+    class TestRun
+      # Builds the record of a test that has just started.
+      def initialize: () -> void
+
+      # The test's bucket: the IDs of the mutants whose sites the test
+      # reached. It is a copy.
+      def hits: () -> Set[Integer]
+
+      # The paths of the files whose load began during the test. It is a
+      # copy.
+      def loads: () -> Set[String]
+
+      # Records that the file at `path` began to load, so the next hit of
+      # each mutant gets a stack check. Returns nil.
+      #
+      # - `path`: String, the file's path.
+      def load_began: (String path) -> nil
+
+      # Records a hit for the mutants with `ids`, in the test's bucket or in
+      # `static`. Returns nil.
+      #
+      # - `ids`: Array of Integer, the mutants' IDs.
+      # - `static`: Set of Integer, the static bucket, which a static hit
+      #   adds to.
+      def record: (Array[Integer] ids, Set[Integer] static) -> nil
+
+      private
+
+      @hits: Set[Integer]
+      @loads: Set[String]
+      @frame_paths: Set[String]
+      @checked: Set[Integer]
+
+      def bucket_for: (Array[Integer] ids, Set[Integer] static) -> Set[Integer]
+    end
+  end
+end

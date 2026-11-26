@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "runtime/active_mutant"
+require_relative "runtime/collector"
 require_relative "runtime/recorder"
 require_relative "runtime/recording"
 
@@ -27,6 +28,11 @@ module Stryker
 
     def self.activate_mutant(id, namespace = Stryker)
       activate(ActiveMutant.new(id:), namespace)
+    end
+
+    def self.start_dry_run(collector = Collector.start, namespace = Stryker, recorder = RECORDER)
+      recorder.collect_from(collector)
+      activate(Recording.new(collector:), namespace)
     end
 
     activate(holder_for(ENV))

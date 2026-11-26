@@ -1,0 +1,58 @@
+module Stryker
+  module Runtime
+    # Tells whether the code that is running runs while a file loads, from
+    # the call stack, as
+    # [The stack check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-stack-check)
+    # specifies.
+    #
+    # The outermost frame of a file's load is its top-level frame. Its
+    # `absolute_path` is the file's path, and its label says how Ruby
+    # compiled the file: `<compiled>` for a file the loader's hook compiled
+    # with `RubyVM::InstructionSequence.compile`, `<top (required)>` for a
+    # file Ruby compiled itself, and `<main>` for one Bootsnap compiled. A
+    # class body, a module body, and a block that runs while the file loads
+    # all have that frame beneath them. A method that the file defines, run
+    # after the load, doesn't.
+    #
+    # ## Examples
+    #
+    # With `lib/invoice.rb` holding `TOTAL = Stryker::Runtime::Stack.loading?(Set[__FILE__])`:
+    #
+    # ```ruby
+    # require_relative "lib/invoice"
+    # TOTAL
+    # # => true
+    # Stryker::Runtime::Stack.loading?(Set[File.expand_path("lib/invoice.rb")])
+    # # => false
+    # ```
+    module Stack
+      # The labels of a file's top-level frame.
+      TOP_LEVEL_LABELS: Set[String]
+
+      # Whether the stack holds the top-level frame of a file at one of
+      # `paths`. It reads the whole stack, however deep, and stops at the
+      # first such frame. With no paths, it is false.
+      #
+      # Each check costs about 2 µs at a test body's usual depth of 20
+      # frames, and about 20 µs at 300 frames.
+      #
+      # - `paths`: Set of String, the files' absolute paths, as Ruby gives
+      #   them to the loader's hook.
+      def self.loading?: (Set[String] paths) -> bool
+
+      # The paths that the frames of the file at `path` can show: `path`
+      # itself, which a file that the loader's hook compiles shows, and its
+      # real path, with every symbolic link and `..` resolved, which a file
+      # that Ruby or Bootsnap compiles shows. Ruby gives the hook a path
+      # that can hold either. When no file is at `path`, it is `path` alone.
+      #
+      # - `path`: String, the path that Ruby gave the loader's hook.
+      #
+      # ```ruby
+      # Stryker::Runtime::Stack.frame_paths("/var/app/lib/invoice.rb")
+      # # => ["/var/app/lib/invoice.rb", "/private/var/app/lib/invoice.rb"], on macOS
+      # ```
+      def self.frame_paths: (String path) -> Array[String]
+    end
+  end
+end

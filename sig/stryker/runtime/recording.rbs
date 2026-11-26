@@ -2,13 +2,13 @@ module Stryker
   module Runtime
     # The holder for a run with no mutant active, such as the dry run, or
     # the fork parent while it loads the project's code: it holds no ID, and
-    # records each hit.
+    # records each hit, and each file whose load began.
     #
-    # A hit in the main Ractor goes to `Stryker::Runtime::RECORDER`. A hit
-    # in another Ractor goes to the holder's collector, which has to be
-    # shareable for that Ractor to reach it. With no collector, such a hit
-    # raises `Stryker::UnsupportedError`, so the test that made it fails
-    # instead of losing the hit.
+    # A message from the main Ractor goes to `Stryker::Runtime::RECORDER`. A
+    # message from another Ractor goes to the holder's collector, which
+    # `Stryker::Runtime.start_dry_run` gives it on Ruby 4.0 and later. With
+    # no collector, such a message raises `Stryker::UnsupportedError`, so the
+    # test that sent it fails instead of losing the hit.
     #
     # Make the holder shareable before a constant holds it, as
     # `Stryker::Runtime.activate` does.
@@ -27,31 +27,24 @@ module Stryker
     # # => raises Ractor::RemoteError, caused by Stryker::UnsupportedError
     # ```
     class Recording < Data
-      # Where a hit in a Ractor other than the main one goes, such as a
-      # Ractor that collects hits.
-      interface _Inbox
-        # Takes one hit: the IDs of the mutants at one switch.
-        def <<: (Array[Integer] ids) -> void
-      end
-
       # The message of the `Stryker::UnsupportedError` that a hit in a
       # Ractor other than the main one raises when the holder has no
       # collector.
       OUTSIDE_THE_MAIN_RACTOR: String
 
-      # Where a hit in a Ractor other than the main one goes, or nil when
-      # such a hit raises.
-      attr_reader collector: _Inbox?
+      # Where a message from a Ractor other than the main one goes, or nil
+      # when such a message raises.
+      attr_reader collector: Collector?
 
       # Builds the holder.
       #
-      # - `collector`: Stryker::Runtime::Recording::_Inbox, where a hit in a
+      # - `collector`: Stryker::Runtime::Collector, where a message from a
       #   Ractor other than the main one goes, or nil, the default.
-      def self.new: (?collector: _Inbox?) -> instance
-                  | (_Inbox? collector) -> instance
+      def self.new: (?collector: Collector?) -> instance
+                  | (Collector? collector) -> instance
 
       # Builds the holder, as `Stryker::Runtime::Recording.new` does.
-      def initialize: (?collector: _Inbox?) -> void
+      def initialize: (?collector: Collector?) -> void
 
       # Always nil: no mutant is active.
       def id: () -> nil
@@ -62,21 +55,27 @@ module Stryker
       # - `ids`: Integer, each mutant's ID.
       def hit: (*Integer ids) -> nil
 
-      # Records a hit for the mutants with `ids`, made in `ractor`. A hit
-      # in the main Ractor goes to `Stryker::Runtime::RECORDER`. A hit in
-      # any other goes to the collector, or raises
-      # `Stryker::UnsupportedError` when there is none. Returns nil.
+      # Records that the file at `path` began to load, from the Ractor that
+      # runs it, as `deliver` does. Returns nil.
       #
-      # `hit` passes the Ractor that runs it. Pass another only to test the
-      # route a hit takes.
+      # - `path`: String, the file's path.
+      def load_began: (String path) -> nil
+
+      # Records `message`, sent from `ractor`. A message from the main
+      # Ractor goes to `Stryker::Runtime::RECORDER`. One from any other goes
+      # to the collector, or raises `Stryker::UnsupportedError` when there is
+      # none. Returns nil.
       #
-      # - `ids`: Array of Integer, the mutants' IDs.
-      # - `ractor`: Ractor, where the hit was made.
-      def deliver: (Array[Integer] ids, Ractor ractor) -> nil
+      # `hit` and `load_began` pass the Ractor that runs them. Pass another
+      # only to test the route a message takes.
+      #
+      # - `message`: Array of Integer, a hit's IDs, or String, a path.
+      # - `ractor`: Ractor, where the message comes from.
+      def deliver: (message message, Ractor ractor) -> nil
 
       private
 
-      def forward: (Array[Integer] ids) -> void
+      def forward: (message message) -> void
     end
   end
 end

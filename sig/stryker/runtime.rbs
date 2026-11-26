@@ -45,8 +45,13 @@ module Stryker
   # # => 7
   # ```
   module Runtime
-    # What `Stryker::Active` holds: the active mutant's ID, and the method
-    # that every switch calls to record a hit.
+    # What reaches the recorder from a holder: the IDs of the mutants at one
+    # switch, for a hit, or the path of a file whose load began.
+    type message = Array[Integer] | String
+
+    # What `Stryker::Active` holds: the active mutant's ID, the method that
+    # every switch calls to record a hit, and the method that the loader's
+    # hook calls when a file begins to load.
     interface _Holder
       # The active mutant's ID, or nil when no mutant is active.
       def id: () -> Integer?
@@ -56,6 +61,14 @@ module Stryker
       #
       # - `ids`: Integer, each mutant's ID.
       def hit: (*Integer ids) -> nil
+
+      # Records that the file at `path` began to load, or does nothing in a
+      # mutant run. Returns nil. The loader's hook calls it for every file
+      # that Ruby compiles from disk, before the file's code runs, with the
+      # path that Ruby gave the hook.
+      #
+      # - `path`: String, the file's path.
+      def load_began: (String path) -> nil
     end
 
     # Where `Stryker::Runtime.holder_for` reads the active mutant's ID.
@@ -89,8 +102,8 @@ module Stryker
     def self.holder_for: (_Environment environment) -> _Holder
 
     # Makes `holder` shareable and sets `namespace`'s `Active` constant to
-    # it, replacing the holder there. Ruby removes the old constant first,
-    # so it gives no warning. Code compiled before the replacement, a
+    # it, replacing the holder there. It removes the old constant first, so
+    # Ruby gives no warning. Code compiled before the replacement, a
     # forked child's included, reads the new holder, in every Ractor.
     #
     # Call it before a run's tests start: a switch that runs on another
@@ -109,5 +122,35 @@ module Stryker
     # - `id`: Integer, the mutant's ID.
     # - `namespace`: Module, where the constant is. Stryker by default.
     def self.activate_mutant: (Integer id, ?Module namespace) -> _Holder
+
+    # Readies the process for the dry run: it hands `collector` to
+    # `recorder`, which drains it when each test starts and ends, and makes
+    # `namespace`'s `Active` a Stryker::Runtime::Recording that sends to
+    # `collector` each hit made in a Ractor other than the main one. The
+    # dry run's forked child calls it before its first test, after the
+    # fork: in a forked child, a send to a Ractor that the parent started
+    # raises Ractor::ClosedError.
+    #
+    # On Ruby 4.0 and later, the default collector is a new collector
+    # Ractor, and Ruby prints its warning that Ractors are experimental
+    # unless the process has already started a Ractor. On Ruby 3.3 and 3.4
+    # there is none, so a hit in another Ractor raises
+    # `Stryker::UnsupportedError`.
+    #
+    # - `collector`: Stryker::Runtime::Collector, or nil for none. A new
+    #   collector Ractor on Ruby 4.0 and later, and nil before, by default.
+    # - `namespace`: Module, where the constant is. Stryker by default.
+    # - `recorder`: Stryker::Runtime::Recorder, the recorder that drains the
+    #   collector. `Stryker::Runtime::RECORDER` by default.
+    #
+    # ```ruby
+    # Stryker::Runtime.start_dry_run
+    # Stryker::Runtime::RECORDER.test_started(test)
+    # Ractor.new { Stryker::Active.hit(7) }.join
+    # Stryker::Runtime::RECORDER.test_finished(result)
+    # Stryker::Runtime::RECORDER.tests[test]
+    # # => #<Set: {7}>
+    # ```
+    def self.start_dry_run: (?Collector? collector, ?Module namespace, ?Recorder recorder) -> _Holder
   end
 end

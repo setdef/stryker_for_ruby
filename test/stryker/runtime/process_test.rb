@@ -67,6 +67,17 @@ class ProcessTest < Minitest::Test
     assert_equal("nil\n", run_program(program, { STRYKER_ACTIVE_MUTANT: "7" }).first)
   end
 
+  def test_a_mutant_run_records_no_load
+    program = <<~RUBY
+      require "stryker/runtime"
+      Stryker::Runtime::RECORDER.test_started(:first)
+      p Stryker::Active.load_began("/app/lib/invoice.rb")
+      p Stryker::Runtime::RECORDER.loaded.to_a
+    RUBY
+
+    assert_equal("nil\n[]\n", run_program(program, { STRYKER_ACTIVE_MUTANT: "7" }).first)
+  end
+
   def test_code_compiled_before_the_replacement_reads_the_new_holder_in_every_ractor
     program = <<~RUBY
       require "stryker/runtime"

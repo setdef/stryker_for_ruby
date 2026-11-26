@@ -1,8 +1,8 @@
 module Stryker
   module Runtime
     # The holder for a mutant run: it holds the active mutant's ID, and
-    # records no hit, because a mutant run doesn't use the map from mutants
-    # to tests.
+    # records neither hits nor loads, because a mutant run doesn't use the
+    # map from mutants to tests.
     #
     # Make it shareable before a constant holds it, as
     # `Stryker::Runtime.activate` does.
@@ -28,6 +28,9 @@ module Stryker
 
       # Returns nil at once, and records nothing.
       def hit: (*Integer) -> nil
+
+      # Returns nil at once, and records nothing.
+      def load_began: (String path) -> nil
     end
   end
 end
