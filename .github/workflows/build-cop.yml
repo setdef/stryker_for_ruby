@@ -1,0 +1,151 @@
+# The build cop. A full run of ci.yml on trunk covers a batch of pushes (see
+# the comment on ci.yml's concurrency), so when one goes red after a green one,
+# any commit of the batch may be at fault. fast.yml gives each push a verdict
+# of its own, but only on one system and one Ruby; this finds what the full
+# run alone caught.
+#
+# What it does. It bisects the batch with full runs of single commits,
+# started on branches bisect/SHA, which only it writes. It runs the failed
+# jobs of the first bad commit's run again, so that a flaky job blames nobody.
+# When they fail again and the commit's parent, run on a bisect branch of its
+# own since trunk went red, passed them, it reverts that commit on trunk and
+# starts a full run there to judge the revert. When the parent fails them
+# too, the cause is outside the batch, and it reverts nothing.
+#
+# How it is built. This file starts .github/scripts/build-cop.sh, which asks
+# tasks/build_cop.rb for the next step and takes it. The task keeps no state:
+# it reads the runs of ci.yml of the last three days from GitHub's API and
+# trunk's first-parent commits from git, and works on the oldest red run on
+# trunk after its newest green one, a run that passed every job. The jobs that
+# failed in that run are the failure. Each commit between the green run's head
+# and the red run's head is judged by its newest run that was not cancelled,
+# on any branch, by those jobs alone: bad when one of them failed, good when
+# all passed, and not known otherwise. Each step is one of:
+#
+#   bisect  The commit halfway between the last good commit and the first bad
+#           one, which has no run yet, is pushed to bisect/SHA, and ci.yml is
+#           started there with workflow_dispatch. The branch says the run was
+#           asked for: GitHub may list the run only minutes later, so the
+#           script starts none while the branch exists and no run is listed on
+#           it. A commit whose own ci.yml has no workflow_dispatch can't be
+#           run on a branch; the script warns and leaves it to a person.
+#   wait    A run it needs has not finished.
+#   rerun   The first bad commit's parent is good, and the jobs that failed in
+#           the bad commit's run have not failed twice, so they run again. A
+#           run that finished without passing or failing those jobs has them
+#           run again once, then is left for a person.
+#   revert  Described above. The revert is made by github-actions[bot], with a
+#           message that says why. It fails the cop's run when the commit
+#           does not revert cleanly, which calls a person. It never reverts a
+#           revert; it names that commit in a warning.
+#   none    Nothing on trunk is red after its newest green run: the
+#           bisect/* branches are deleted.
+#   stuck   It says why, for a person.
+#
+# When it runs. It runs when a run of CI ends on trunk or on a bisect branch,
+# and every half hour, since GitHub does not say whether the end of a run that
+# this workflow's token started, or ran again, starts a workflow_run. Its runs
+# wait for one another, a waiting one is replaced by the next, and every call
+# reads the same runs, so a call more or fewer changes nothing. Because a
+# rerun on trunk has a concurrency group of its own (ci.yml), the pushes that
+# come meanwhile don't replace the bad commit's rerun.
+#
+# Its push token. The run's own token has no workflows permission, so GitHub
+# refuses to push a branch whose tree holds a workflow file that no branch
+# holds, and a push made with it starts no workflow. The job therefore names
+# the environment build-cop, which only trunk may use. The environment holds
+# the secrets BUILD_COP_APP_ID and BUILD_COP_APP_PRIVATE_KEY of a GitHub App
+# that is installed on this repository only, with the repository permissions
+# Contents and Workflows, both read and write. The job mints an installation
+# token with actions/create-github-app-token, which asks for those two
+# permissions and no more. The script pushes bisect branches, the revert, and
+# the branches' deletion with that token, and the checkout keeps no
+# credentials. The run's own token only reads runs, starts ci.yml, and runs
+# failed jobs again. A push made with the App's token starts the workflows a
+# push starts: fast.yml on each bisect branch, and ci.yml on trunk after a
+# revert, beside the run the script starts by hand.
+#
+# Reverting is off until the repository variable BUILD_COP_REVERT is true.
+# While it isn't, the cop bisects and reports each revert it would make, and
+# pushes no revert.
+#
+# Run it by hand to see what it would do: it is a dry run by default, which
+# mints no token, pushes nothing, and starts and reruns nothing.
+#
+#   gh workflow run build-cop.yml --ref trunk
+#
+# and -f dry-run=false takes the step.
+#
+# It does not cover: a run that ci.yml's concurrency replaced while waiting
+# has no run of its own, and the cop judges that commit by a run on a bisect
+# branch; a run red only for cancelled jobs, which no commit failed; and a
+# failure that passes on every second attempt, which reverts nothing and ends
+# when a later run on trunk passes.
+name: Build cop
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [trunk, "bisect/**"]
+  schedule:
+    - cron: "11,41 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Say what it would do, and do nothing
+        type: boolean
+        default: true
+
+permissions: {}
+
+concurrency:
+  group: build-cop
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  cop:
+    name: Find and revert the commit that turned trunk red
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.event != 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: build-cop
+    permissions:
+      contents: read
+      # Reading runs and jobs, starting ci.yml, and running jobs again.
+      actions: write
+    steps:
+      # Every commit, for the revert. No credentials kept: the pushes name
+      # their own token, and the repository is public to fetch from.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: trunk
+          fetch-depth: 0
+          persist-credentials: false
+
+      # A dry run pushes nothing. The App's ID is a number, which this
+      # release of the action still takes as app-id and calls deprecated in
+      # favor of client-id.
+      - name: Mint a token for the pushes
+        if: github.event_name != 'workflow_dispatch' || !inputs.dry-run
+        id: push-token
+        uses: actions/create-github-app-token@f418cff399f7aef4c2f0ad47e25ca7a6abbdd6fc # v3.4.0
+        with:
+          app-id: ${{ secrets.BUILD_COP_APP_ID }}
+          private-key: ${{ secrets.BUILD_COP_APP_PRIVATE_KEY }}
+          permission-contents: write
+          permission-workflows: write
+
+      # The runner's own Ruby, which every GitHub-hosted Ubuntu image has: the
+      # task needs only Ruby's standard library.
+      - name: Take the next step
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_COP_PUSH_TOKEN: ${{ steps.push-token.outputs.token }}
+          BUILD_COP_REVERT: ${{ vars.BUILD_COP_REVERT }}
+          BUILD_COP_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+        run: .github/scripts/build-cop.sh
