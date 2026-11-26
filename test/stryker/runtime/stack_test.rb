@@ -66,6 +66,10 @@ class StackTest < Minitest::Test
   end
 
   def test_a_path_that_differs_in_separator_is_not_found_outside_windows
+    # On Windows, File.realpath accepts a backslash path and returns its
+    # forward-slash form, so the realpath form matches whatever the separator.
+    skip("Windows resolves a backslash path to its real path") if File::ALT_SEPARATOR
+
     found = loading_during_load(nil) do |path|
       Stryker::Runtime::Stack.frame_paths(File.realpath(path).tr("/", WINDOWS), nil)
     end
