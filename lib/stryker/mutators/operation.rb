@@ -3,15 +3,15 @@
 require "prism"
 require_relative "../edit"
 require_relative "node_text"
+require_relative "operator_call"
 require_relative "strings"
 
 module Stryker
   module Mutators
     class Operation < Data.define(:call, :receiver, :argument, :operator_loc)
       def self.of(node, names)
-        return unless node.is_a?(Prism::CallNode) && names.include?(node.name) && !node.call_operator_loc
-
-        written(node)
+        call = OperatorCall.of(node, names)
+        written(call) if call
       end
 
       def self.edits(node, pairs, &)

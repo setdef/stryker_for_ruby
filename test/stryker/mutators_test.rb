@@ -8,7 +8,7 @@ require "stryker/mutators/walk"
 # catalog's table, and that a walk uses it when it is given no other.
 class MutatorsTest < Minitest::Test
   def test_lists_the_mutators_in_the_order_of_the_catalogs_table
-    assert_equal(%w[ArithmeticOperator EqualityOperator LogicalOperator], Stryker::Mutators::ALL.map(&:name))
+    assert_equal(%w[ArithmeticOperator BooleanLiteral EqualityOperator LogicalOperator], Stryker::Mutators::ALL.map(&:name))
   end
 
   def test_a_walk_asks_every_mutator_in_the_list_when_given_none

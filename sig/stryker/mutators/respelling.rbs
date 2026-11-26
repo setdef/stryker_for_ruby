@@ -1,0 +1,27 @@
+module Stryker
+  module Mutators
+    # Makes the edit of a node that a mutator replaces with a fixed text, such
+    # as `true` with `false`. The edit covers the whole node, except for a node
+    # that spans its whole body, an `unless` or an `until`, where it covers
+    # only the keyword.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("run unless done").value.statements.body.first
+    # Stryker::Mutators::Respelling.edits(node, { Prism::UnlessNode => "if" })
+    # # => [#<data Stryker::Edit start_offset=4, end_offset=10, replacement="if">]
+    # ```
+    module Respelling
+      # The edit for `node`, or none when `replacements` doesn't list its
+      # class.
+      #
+      # - `node`: Prism::node, the node.
+      # - `replacements`: Hash of Class to String, the class of each node to
+      #   respell and the text that replaces it.
+      def self.edits: (Prism::node node, Hash[Class, String] replacements) -> Array[Edit]
+
+      private def self.span: (Prism::node node) -> Prism::Location
+    end
+  end
+end

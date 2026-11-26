@@ -1,0 +1,50 @@
+module Stryker
+  module Mutators
+    # Changes a boolean to the one a programmer could have written by mistake.
+    # It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `true` | `false` |
+    # | `false` | `true` |
+    # | `!x`, `not x` | `x` |
+    # | `unless c` | `if c` |
+    # | `until c` | `while c` |
+    #
+    # The edit of a literal or a negation covers the whole node. The edit of an
+    # `unless` or an `until` covers only the keyword, because the node spans
+    # its whole body, so the report's replacement is `if` or `while`. A `!`
+    # written as a method call, `x.!`, gets no mutant. `nil` isn't a boolean
+    # literal, and no mutator makes `nil` from `false`.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#booleanliteral)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("!ready").value.statements.body.first
+    # Stryker::Mutators::BooleanLiteral.new.edits(node, []).map(&:replacement)
+    # # => ["ready"]
+    # ```
+    class BooleanLiteral
+      # The mutator's name in the report: `"BooleanLiteral"`.
+      def name: () -> String
+
+      # The edits at `node`: one for a `true`, a `false`, a negation, an
+      # `unless`, or an `until`, and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      RESPELLINGS: Hash[Class, String]
+
+      NEGATIONS: Hash[Symbol, Array[String?]]
+
+      private def respellings: () -> Hash[Class, String]
+
+      private def negations: () -> Hash[Symbol, Array[String?]]
+    end
+  end
+end

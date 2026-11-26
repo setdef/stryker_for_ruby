@@ -1,0 +1,24 @@
+module Stryker
+  module Mutators
+    # Tells a call written as an operator from a call written as a method call:
+    # `a + b` and `!a` are operators, and `a.+(b)` and `a.!` are not. Prism
+    # makes both a `CallNode` with the operator's method name, and only the
+    # dot, the call operator, sets them apart.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("a.+(b)").value.statements.body.first
+    # Stryker::Mutators::OperatorCall.of(node, [:+])
+    # # => nil
+    # ```
+    module OperatorCall
+      # `node` when it is a call named one of `names` and written with no
+      # dot, such as `a + b` or `!a`, and nil for any other node.
+      #
+      # - `node`: Prism::node, the node.
+      # - `names`: Array of Symbol, the method names to accept.
+      def self.of: (Prism::node node, Array[Symbol] names) -> Prism::CallNode?
+    end
+  end
+end

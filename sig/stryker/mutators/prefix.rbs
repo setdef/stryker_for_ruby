@@ -1,0 +1,75 @@
+module Stryker
+  module Mutators
+    # A call written as a prefix operator before its receiver, such as `!x`,
+    # `not x`, or `-x`, and not as a method call, such as `x.!` or `x.-@`.
+    #
+    # ## Examples
+    #
+    # The edits that a table makes of `!x`, which drops the operator:
+    #
+    # ```ruby
+    # call = Prism.parse("!x").value.statements.body.first
+    # Stryker::Mutators::Prefix.edits(call, { "!": [nil] }) { false }
+    # # => [#<data Stryker::Edit start_offset=0, end_offset=2, replacement="x">]
+    # ```
+    class Prefix < Data
+      # The call.
+      attr_reader call: Prism::CallNode
+
+      # The call's receiver: the operand.
+      attr_reader receiver: Prism::node
+
+      # Where the operator is written.
+      attr_reader operator_loc: Prism::Location
+
+      # Builds the prefix.
+      #
+      # - `call`: Prism::CallNode, the call.
+      # - `receiver`: Prism::node, its receiver.
+      # - `operator_loc`: Prism::Location, where the operator is written.
+      def self.new: (call: Prism::CallNode, receiver: Prism::node, operator_loc: Prism::Location) -> instance
+                  | (Prism::CallNode call, Prism::node receiver, Prism::Location operator_loc) -> instance
+
+      # The prefix that `node` is, or nil when it isn't a call named one of
+      # `names` and written as a prefix operator. A call with a dot, such as
+      # `a.!` or `a&.!`, is one written as a method call. A call built by hand
+      # without its receiver or operator isn't one either. The names are those
+      # of the methods: `:-@` for `-a`, `:+@` for `+a`, `:!` for `!a` and
+      # `not a`.
+      #
+      # - `node`: Prism::node, the node.
+      # - `names`: Array of Symbol, the method names to accept.
+      def self.of: (Prism::node node, Array[Symbol] names) -> Prefix?
+
+      # The edits of the mutants that `replacements` lists for `node`: none
+      # when `node` isn't a prefix named by one of its keys, or when the block
+      # is true of the prefix.
+      #
+      # - `node`: Prism::node, the node.
+      # - `replacements`: Hash of Symbol to Array of String or nil, the
+      #   method names and, for each, what each mutant does, in the order of
+      #   the mutator's table: nil drops the operator, which makes the whole
+      #   call the receiver's source, and a string replaces the operator.
+      # - `block`: called with the prefix, and true when it makes no mutant.
+      def self.edits: (Prism::node node, Hash[Symbol, Array[String?]] replacements) { (Prefix) -> boolish } -> Array[Edit]
+
+      # The edits of the mutants that `replacements` lists for this prefix,
+      # each covering the whole call, in the order of the table. None when
+      # the block is true of the prefix.
+      #
+      # - `replacements`: Hash of Symbol to Array of String or nil, as for
+      #   `edits`.
+      # - `block`: called with this prefix, and true when it makes no mutant.
+      def edits: (Hash[Symbol, Array[String?]] replacements) { (Prefix) -> boolish } -> Array[Edit]
+
+      # The operator's method name, such as `:-@`.
+      def operator: () -> Symbol
+
+      private def self.written: (Prism::CallNode call) -> Prefix?
+
+      private def dropped: () -> Edit
+
+      private def with_operator: (String replacement) -> Edit
+    end
+  end
+end
