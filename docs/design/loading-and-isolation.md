@@ -46,6 +46,8 @@ The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` th
 - When `path` is an instrumented file's path, it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served `path`, and returns the result.
 - For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
 
+In both cases, when a test is running, the module records `path` as a file whose load began during that test. [Coverage](coverage.md#static-hits-inside-a-test) says what the recorder does with it.
+
 Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: in a probe project that Zeitwerk loads, every instrumented file came through the hook.
 
 The loader installs the hook before any of the project's code loads, in every project process: the parent that forks, each fresh process, and each process in the Windows pool.
@@ -143,9 +145,11 @@ So every static mutant run gets a fresh process, on every system, with the mutan
 
 ### A file first loaded inside a test
 
-A file that the project first requires inside a test, rather than from the test helper or another file loaded before the tests, loads during that test. Its load-time code then runs during that test, so its switches record their hits under that test instead of in the static bucket. A probe that required such a file in one test and used its constant in a second test recorded the constant's mutant as reached by the first test only.
+A file that the project first requires inside a test, rather than from the test helper or another file loaded before the tests, loads during that test. Its load-time code runs during that test, so its switches would record their hits in that test's bucket instead of the static bucket. A probe that required such a file in one test and used its constant in a second test recorded the constant's mutant as reached by the first test only.
 
-Such a mutant is planned as a runtime mutant, and its run includes only the test that loaded the file. Other tests that depend on what the file set at load time aren't in the run, so a mutant that one of them would have killed can be reported as surviving.
+The hook records the path of each file whose load begins during a test. A hit that lands inside a test counts as static when the stack holds the top-level frame of one of those files, so the mutant is planned as a static mutant and its run includes every test. [Static hits inside a test](coverage.md#static-hits-inside-a-test) specifies the rule.
+
+One case isn't handled: a hit made on another thread or a fiber while such a file loads. Its stack has no top-level frame, so the hit stays in the test's bucket, and the mutant is planned as a runtime mutant that runs only the tests that recorded it. A test that depends on the file's load-time values but didn't record the hit isn't in the run, so a mutant that this test would have killed can be reported as surviving. The dry run reports every file first loaded during a test, so you can see where this applies.
 
 ## What this design doesn't do
 
@@ -153,4 +157,5 @@ Such a mutant is planned as a runtime mutant, and its run includes only the test
 - It doesn't run on Ruby implementations other than CRuby.
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
+- It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
 - It doesn't write instrumented source into the project.
