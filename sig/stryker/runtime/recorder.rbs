@@ -70,6 +70,11 @@ module Stryker
       # - `collector`: Stryker::Runtime::Collector, or nil.
       def collect_from: (Collector? collector) -> nil
 
+      # The recorder's collector when its Ractor hasn't started, so that
+      # Stryker::Runtime::FirstRactor starts it, or nil when the recorder has
+      # no collector or its collector has started.
+      def unstarted_collector: () -> Collector?
+
       # Moves every message that the collector holds into the current bucket,
       # and returns nil. It does nothing when the recorder has no collector.
       # The process that forks calls it before each fork, so the hits that

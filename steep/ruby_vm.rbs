@@ -1,0 +1,5 @@
+# RBS's core signatures leave out RubyVM::InstructionSequence.compile. This
+# covers the call the runtime makes.
+class RubyVM::InstructionSequence
+  def self.compile: (String source, ?String file, ?String path) -> instance
+end

@@ -28,6 +28,13 @@ module Stryker
         nil
       end
 
+      def unstarted_collector
+        collector = @collector
+        return unless collector
+
+        collector.unstarted
+      end
+
       def drain
         @lock.synchronize { drain_held }
       end

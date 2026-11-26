@@ -2,6 +2,7 @@
 
 require_relative "runtime/active_mutant"
 require_relative "runtime/collector"
+require_relative "runtime/first_ractor"
 require_relative "runtime/recorder"
 require_relative "runtime/recording"
 
@@ -13,7 +14,11 @@ module Stryker
 
     def self.start(environment = ENV, namespace = Stryker, recorder = RECORDER)
       id = environment.fetch(VARIABLE, nil)
-      id ? activate_mutant(Integer(id, 10), namespace, recorder) : start_dry_run(Collector.start, namespace, recorder)
+      if id
+        activate_mutant(Integer(id, 10), namespace, recorder)
+      else
+        start_dry_run(FirstRactor.prepare, namespace, recorder)
+      end
     end
 
     def self.activate(holder, namespace = Stryker)
@@ -33,7 +38,7 @@ module Stryker
       activate(ActiveMutant.new(id:), namespace)
     end
 
-    def self.start_dry_run(collector = Collector.start, namespace = Stryker, recorder = RECORDER)
+    def self.start_dry_run(collector = Collector.build, namespace = Stryker, recorder = RECORDER)
       recorder.collect_from(collector)
       activate(Recording.new(collector:), namespace)
     end

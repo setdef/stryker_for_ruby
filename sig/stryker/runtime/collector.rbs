@@ -1,110 +1,99 @@
 module Stryker
   module Runtime
-    # The collector Ractor of the dry run, on Ruby 4.0 and later, as
+    # The collector of a process that records hits, on Ruby 4.0 and later,
+    # as
     # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
     # specifies. A Ractor other than the main one can't reach the recorder,
-    # so a holder there sends each message to the collector, which keeps it
-    # until the recorder drains it.
+    # so a holder there sends each message to the collector, whose Ractor
+    # keeps it until the recorder drains it.
     #
-    # The collector is shareable, so a holder made shareable can hold it.
-    # The recorder drains it in the main Ractor, which owns its reply port.
+    # A collector is built with no Ractor. Its Ractor starts at the project's
+    # first `Ractor.new`, which Stryker::Runtime::FirstRactor catches, so a
+    # project that makes no Ractor gets none from the runtime. The collector
+    # is a Module, so it is shareable and a frozen holder can hold it, and
+    # it still takes its Ractor once that starts. The recorder drains it in
+    # the main Ractor, which owns its reply port.
     #
     # ## Examples
     #
     # ```ruby
-    # collector = Stryker::Runtime::Collector.start
+    # collector = Stryker::Runtime::Collector.build
+    # Stryker::Runtime::RECORDER.collect_from(collector)
+    # collector.started?
+    # # => false
     # Ractor.new(collector) { |inbox| inbox << [7] }.join
+    # collector.started?
+    # # => true
     # collector.drain
     # # => [[7]]
     # collector.drain
     # # => []
     # ```
-    class Collector < Data
-      # The Ractor that keeps the messages.
-      attr_reader ractor: Ractor
-
-      # The port that the Ractor answers a drain on.
-      attr_reader reply: Ractor::Port[Array[message]]
-
-      # Builds the collector from its parts. Use `start` to start one.
+    class Collector < Module
+      # Builds a collector with no Ractor, or returns nil on Ruby 3.3 and
+      # 3.4, which have no `Ractor::Port`. It starts no Ractor, and says
+      # nothing.
       #
-      # - `ractor`: Ractor, the Ractor that keeps the messages.
-      # - `reply`: Ractor::Port, the port that the Ractor answers on.
-      def self.new: (ractor: Ractor, reply: Ractor::Port[Array[message]]) -> instance
-                  | (Ractor ractor, Ractor::Port[Array[message]] reply) -> instance
+      # - `ractor_class`: Ractor, or a stand-in for it in a test, internal to
+      #   the runtime.
+      def self.build: (?singleton(Ractor) | Module ractor_class) -> Collector?
 
-      # Starts a collector Ractor, with a reply port that the calling Ractor
-      # owns, or returns nil on Ruby 3.3 and 3.4, which have no
-      # `Ractor::Port`. It starts nothing there, and says nothing.
-      #
-      # Ruby warns that Ractors are experimental for the first Ractor that a
-      # process starts, and never again in that process. A forked child
-      # starts over, and Ruby warns again for its first. The runtime must
-      # not print that warning in the project's place, so it starts the
-      # collector with `warning[:experimental]` off and puts it back as it
-      # was, even when the start fails. The project's first Ractor then gets
-      # no warning from Ruby, so when the warning was on, the runtime writes
-      # `NOTICE` and a newline to `stderr`, before the project's code runs.
-      # When the warning was off, it writes nothing.
-      #
-      # - `ractor_class`: Ractor, or a stand-in for it in a test.
-      # - `warning`: Warning, or a stand-in whose `[]` and `[]=` take
-      #   `:experimental`.
-      # - `stderr`: IO, where the notice goes.
-      def self.start: (?singleton(Ractor) ractor_class, ?_Warning warning, ?_Stderr stderr) -> Collector?
-
-      # Starts a Ractor that runs `serve`, with `reply` as its port.
-      private def self.launch: (singleton(Ractor) ractor_class, Ractor::Port[Array[message]] reply) -> Ractor
-
-      # Runs the block with `warning[:experimental]` off, as `start`
-      # describes, and returns the block's value.
-      private def self.quietly: (_Warning warning, _Stderr stderr) { () -> Ractor } -> Ractor
-
-      # What the collector Ractor runs: it receives each message from
+      # What the collector's Ractor runs: it receives each message from
       # `inbox` and keeps it, and on a drain sends the messages kept since
       # the last drain to `reply`, in the order they arrived. It returns
       # only when `inbox` raises StopIteration, as a stand-in in a test does.
+      # It is internal to the runtime, and public so that a test in the main
+      # Ractor can run it, because coverage counts no line that another
+      # Ractor runs.
       #
       # - `inbox`: Ractor, whose `receive` gives the next message.
       # - `reply`: Ractor::Port, where a drain's messages go.
       def self.serve: (singleton(Ractor) inbox, Ractor::Port[Array[message]] reply) -> void
 
-      DRAIN: :drain
-
-      # The line that `start` writes to standard error when Ruby's warning
-      # that Ractors are experimental was on.
-      NOTICE: String
-
-      # The category of Ruby's warnings that `start` turns off, as `Warning`
-      # has it.
-      interface _Warning
-        # Whether Ruby prints the warnings of `category`.
-        def []: (:experimental category) -> bool
-
-        # Turns the warnings of `category` on or off, and returns `enabled`.
-        def []=: (:experimental category, bool enabled) -> bool
-      end
-
-      # Where `start` writes its notice.
-      interface _Stderr
-        # Writes `line` and a newline.
-        def puts: (String line) -> nil
-      end
-
       private def self.batch: (singleton(Ractor) inbox, Array[message] messages) -> Array[message]
 
-      # Sends `message` to the collector, from any Ractor, and returns the
-      # collector. Raises Ractor::ClosedError when the collector Ractor has
-      # ended, as one started before a fork has in the child.
+      # Builds a collector with no Ractor. Use `build`, which returns nil
+      # where no collector can work.
+      def initialize: () -> void
+
+      # Gives the collector its Ractor, which runs `serve`, and the port the
+      # Ractor answers on. Stryker::Runtime::FirstRactor calls it at the
+      # project's first `Ractor.new`. Returns the collector.
+      #
+      # - `ractor`: Ractor, the collector's Ractor.
+      # - `reply`: Ractor::Port, owned by the main Ractor.
+      def started: (Ractor ractor, Ractor::Port[Array[message]]? reply) -> self
+
+      # Whether the collector has its Ractor.
+      def started?: () -> bool
+
+      # The collector, when it has no Ractor yet, or nil.
+      def unstarted: () -> self?
+
+      # Sends `message` to the collector's Ractor, from any Ractor, and
+      # returns the collector. Raises Ractor::ClosedError when that Ractor
+      # has ended, as one started before a fork has in the child. Raises
+      # `Stryker::UnsupportedError` when the collector has no Ractor, which
+      # happens only for a Ractor that started before the runtime loaded.
       #
       # - `message`: Array of Integer or String, a hit's IDs or a path.
       def <<: (message message) -> self
 
       # Every message sent to the collector since the last drain, in the
-      # order the collector received them. It waits until the collector
-      # Ractor answers, so every message whose send finished before the call
-      # is in it. Call it only from the Ractor that started the collector.
+      # order its Ractor received them, or an empty Array when it has no
+      # Ractor. It waits until the Ractor answers, so every message whose
+      # send finished before the call is in it. Call it only from the main
+      # Ractor.
       def drain: () -> Array[message]
+
+      DRAIN: :drain
+
+      NOT_STARTED: String
+
+      private
+
+      @ractor: Ractor?
+      @reply: Ractor::Port[Array[message]]?
     end
   end
 end

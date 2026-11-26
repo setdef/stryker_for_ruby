@@ -12,16 +12,15 @@ module RuntimeProcess
   # Defines take_value, which waits for a Ractor and returns its value: Ruby
   # 4.0 replaced Ractor#take with Ractor#value.
   TAKE = "def take_value(ractor) = ractor.respond_to?(:value) ? ractor.value : ractor.take\n"
-  # Ruby warns when a program starts its first Ractor, and the runtime says
-  # why it starts the first one without that warning.
-  EXPERIMENTAL = /warning: Ractor( API)? is experimental|\AStryker \(for Ruby\) started a Ractor/
+  # Ruby warns when a program starts its first Ractor.
+  EXPERIMENTAL = /warning: Ractor( API)? is experimental/
   # A program that waits for a Ractor that never answers would stop the
   # suite, so it gets this many seconds before it is killed.
   SECONDS = 60
   private_constant(:EXPERIMENTAL, :LIB, :SECONDS, :TAKE)
 
   # What +program+ printed, and each line it wrote to standard error other
-  # than Ruby's warning about Ractors and the runtime's line about it, run
+  # than Ruby's warning about Ractors, run
   # with +environment+ added to a copy of this process's, without Bundler.
   # With +all+ set, every line it wrote to standard error.
   def run_program(program, environment = {}, all: false)

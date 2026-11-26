@@ -11,7 +11,7 @@ The recorder has two kinds of bucket:
 - **The static bucket** is current from the moment the runtime loads until the first test starts, and again between tests. Hits recorded while the project's code and tests load land here. A hit made while a file loads inside a test lands here too, as [Static hits inside a test](#static-hits-inside-a-test) specifies.
 - **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's. A test that starts again, as a retry through `minitest-retry` or `rspec-retry` starts it, adds to the bucket it already has, because every attempt reached those mutants.
 
-The recorder takes a lock around every change to its buckets and every read of them, so a test's own threads can record hits while the test runner adapter starts and ends tests.
+The recorder takes a lock around every change to its buckets and every read of them, so a test's threads can record hits while the test runner adapter starts and ends tests.
 
 [What a hit costs](#what-a-hit-costs) gives the cost of a hit and of reading the active mutant's ID.
 
@@ -89,7 +89,7 @@ A class or module body, and a block that runs while the file loads, have the top
 
 The check runs only after a file has begun to load during the current test. A test that loads no file makes no stack check, so the cost falls only on projects that load files lazily.
 
-After each such load, the next hit of each mutant on each thread is checked again, even when the mutant is already in the test's bucket. Without that, a mutant that the test itself reached first, and that a file reached later in the same test while it loaded, would stay out of the static bucket. Each thread keeps its own record of the mutants it has checked since the last load, because only the thread that loads the file has its top-level frame: a hit on a server thread, checked and found to be the test's, doesn't spare the loading file's own hit of that mutant its check.
+After each such load, the next hit of each mutant on each thread is checked again, even when the mutant is already in the test's bucket. Without that, a mutant that the test itself reached first, and that a file reached later in the same test while it loaded, would stay out of the static bucket. The recorder keeps a separate record for each thread of the mutants checked on it since the last load, because only the thread that loads the file has its top-level frame: a hit on a server thread, checked and found to be the test's, doesn't spare the loading file's own hit of that mutant its check.
 
 A mutant that a file's load reaches twice is checked once, so the second hit lands in the test's bucket as well as the first in the static bucket. The plan gives a mutant with a static hit a static run whatever its tests' buckets hold, so the result is the same.
 
@@ -136,7 +136,7 @@ A hit made in the main Ractor goes straight to the recorder. A hit made in anoth
 
 ### Ruby 4.0 and later
 
-On Ruby 4.0 and later, the runtime starts a collector Ractor in every process that records hits, and a switch in another Ractor sends each hit to it. A process records hits when no mutant is active: the fork parent, which starts its collector as the runtime loads, before the project's code, and the dry run's forked child. A forked child can't use its parent's Ractors, so the dry run's child starts a collector of its own after the fork. A mutant run starts none, and its `hit` returns at once.
+On Ruby 4.0 and later, every process that records hits has a collector, and a switch in another Ractor sends each hit to the collector's Ractor. A process records hits when no mutant is active: the fork parent, and the dry run's forked child. The collector's Ractor starts when the project makes its first Ractor: the runtime prepends a module to `Ractor`'s singleton class whose `new` starts the collector's Ractor and then calls `super`. A project that makes no Ractor gets none from the runtime. A forked child can't use its parent's Ractors, so the dry run's child readies a collector of its own after the fork, and its Ractor starts at the child's first `Ractor.new`. A mutant run has no collector, and its `hit` returns at once. On Ruby 3.3 and 3.4 the runtime prepends nothing to `Ractor`.
 
 The fork parent runs no test, so it drains its collector before each fork, and a hit that a Ractor made while the project loaded is in the static bucket that every child inherits. In the dry run, the recorder drains the collector when each test starts and when it ends:
 
@@ -151,13 +151,9 @@ On Ruby 4.0.10, a hit in another Ractor costs 682 to 934 ns, because it sends th
 
 #### Ruby's warning that Ractors are experimental
 
-When `Warning[:experimental]` is on, Ruby 4.0 and later print "Ractor API is experimental and may change in future versions of Ruby." for the first Ractor that a process starts. `Ractor.new` checks whether the process is still in single-Ractor mode, and starting a Ractor ends that mode for good. A second `Ractor.new` prints nothing, even after the first Ractor has finished, and `Ractor::Port.new` starts no Ractor and prints nothing. A forked child is in single-Ractor mode again, so Ruby warns again for the child's first Ractor.
+When `Warning[:experimental]` is on, Ruby 4.0 and later print "Ractor API is experimental and may change in future versions of Ruby." for the first Ractor that a process starts, with the file and line of the code that called `Ractor.new`. `Ractor.new` checks whether the process is still in single-Ractor mode, and starting a Ractor ends that mode for good. A second `Ractor.new` prints nothing, even after the first Ractor has finished, and `Ractor::Port.new` starts no Ractor and prints nothing. A forked child is in single-Ractor mode again, so Ruby warns again for the child's first Ractor.
 
-So the collector, which starts before the project's code does, takes the warning that the project's first Ractor would have had. The runtime can't keep it for the project, and it must not print Ruby's warning in the project's place. It starts the collector with `Warning[:experimental]` turned off, puts the setting back, and writes one line to standard error, before the project's code runs:
-
-> Stryker (for Ruby) started a Ractor to record hits from your Ractors. Ruby warns that Ractors are experimental only for the first Ractor a process starts, so it won't print that warning for yours.
-
-The runtime writes the line only when the warning was on. Every process that starts a collector writes it, so the dry run's forked child writes it again. On Ruby 3.3 and 3.4 the runtime starts no Ractor, so it writes nothing and the project's first Ractor gets Ruby's warning.
+The collector's Ractor is the process's first, so Ruby warns for it, with the warning as the project set it. Ruby's `Kernel#warn(uplevel: 0)` prints the file and line of the first caller whose path doesn't start with `<internal:`, so the runtime compiles its `new` under such a path, and the warning shows the project's line. The project sees exactly the warning it would see without **Stryker (for Ruby)**, in the parent and in a forked child. A `Ractor.new` without a block raises before Ruby warns, so it starts no collector either.
 
 ### Ruby 3.3 and 3.4
 
@@ -197,4 +193,5 @@ Hits avoid both causes, because each switch records the IDs of the mutants it ho
 - It doesn't record hits in a mutant run.
 - It doesn't record a hit from a non-main Ractor on Ruby 3.3 or 3.4. The dry run fails instead.
 - It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
+- It doesn't record a hit from a Ractor that started before the runtime loaded. Such a hit raises `Stryker::UnsupportedError`.
 - It doesn't keep the map between runs. Each run of **Stryker (for Ruby)** starts with a new dry run.

@@ -29,7 +29,7 @@ The orchestrator runs inside the project's bundle, with the gem in the project's
 
 ### What runs in a project process
 
-The runtime holds the hook, the switch, and the hit recorder, and on Ruby 4.0 and later the collector Ractor that the dry run uses ([Ractors](coverage.md#ractors)). It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
+The runtime holds the hook, the switch, and the hit recorder, and on Ruby 4.0 and later the collector Ractor of every process that records hits, which starts when the project makes its first Ractor ([Ractors](coverage.md#ractors)). A project that makes no Ractor gets none from the runtime. It also holds the test runner adapters, the code that writes results to a pipe, and the part of each isolation adapter that runs in a project process: the fork parent's loop, and a pool process's wait for its run. All of it uses nothing outside the standard library. The rest of each isolation adapter runs in the orchestrator, which starts the project processes, reads their results, and enforces the time limits that [How results reach the orchestrator](#how-results-reach-the-orchestrator) assigns to it.
 
 ### The cache
 
@@ -112,9 +112,9 @@ The fork parent kills a child that runs past its time limit, and relays the time
 
 ### Forking on Linux and macOS
 
-The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them. On Ruby 3.3, the parent first checks for live Ractors ([Forking with live Ractors on Ruby 3.3](#forking-with-live-ractors-on-ruby-33)).
+The parent process installs the hook, and then the test runner adapter loads the project's test helper and test files, which load the instrumented code. The parent runs no test, so every child starts from the same untouched state. Hits recorded while the parent loads are in its static bucket (see [Coverage](coverage.md)), and every child inherits them. On Ruby 4.0 and later, the parent drains its collector before each fork, so the hits that the project's Ractors made while it loaded are in that bucket too. On Ruby 3.3, the parent first checks for live Ractors ([Forking with live Ractors on Ruby 3.3](#forking-with-live-ractors-on-ruby-33)).
 
-The dry run is itself a forked child, with no mutant active.
+The dry run is itself a forked child, with no mutant active. It can't use its parent's collector, so on Ruby 4.0 and later it readies a collector of its own after the fork, whose Ractor starts the same way, at the child's first `Ractor.new`.
 
 For each runtime mutant run, the parent:
 

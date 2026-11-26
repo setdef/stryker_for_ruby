@@ -26,15 +26,19 @@ module Stryker
   # Otherwise no mutant is active, and every hit goes to
   # `Stryker::Runtime::RECORDER`.
   #
-  # With no mutant active, on Ruby 4.0 and later, the runtime also starts a
-  # collector Ractor as it loads, so a hit from another Ractor reaches the
-  # recorder in every process that records hits, as
+  # With no mutant active, on Ruby 4.0 and later, the runtime also prepends
+  # Stryker::Runtime::FirstRactor to `Ractor`'s singleton class, so the
+  # process's collector Ractor starts at the project's first `Ractor.new`,
+  # and a hit from another Ractor reaches the recorder in every process that
+  # records hits, as
   # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
-  # specifies. A process that forks calls `Stryker::Runtime::RECORDER.drain`
-  # before each fork, so the hits that Ractors made while it loaded are in
-  # the static bucket that its children inherit. A forked child can't use the
+  # specifies. A project that makes no Ractor gets none from the runtime.
+  # A process that forks calls `Stryker::Runtime::RECORDER.drain` before
+  # each fork, so the hits that Ractors made while it loaded are in the
+  # static bucket that its children inherit. A forked child can't use the
   # collector that its parent started: the dry run's child calls
-  # `Stryker::Runtime.start_dry_run`, and a mutant run's child calls
+  # `Stryker::Runtime.start_dry_run`, whose collector starts at the child's
+  # first `Ractor.new`, and a mutant run's child calls
   # `Stryker::Runtime.activate_mutant`.
   #
   # ## Examples
@@ -102,9 +106,10 @@ module Stryker
     # does with `ENV`. When its `STRYKER_ACTIVE_MUTANT` holds a mutant's ID,
     # that mutant becomes active, as `Stryker::Runtime.activate_mutant` does
     # it. Otherwise no mutant is active, and the process records hits, as
-    # `Stryker::Runtime.start_dry_run` does it, with a new collector. Raises
-    # ArgumentError when the variable holds anything other than a decimal
-    # integer, an empty string included.
+    # `Stryker::Runtime.start_dry_run` does it, with the collector that
+    # `Stryker::Runtime::FirstRactor.prepare` builds. Raises ArgumentError
+    # when the variable holds anything other than a decimal integer, an
+    # empty string included.
     #
     # - `environment`: Stryker::Runtime::_Environment, such as `ENV`.
     # - `namespace`: Module, where the constant is. Stryker by default.
@@ -151,17 +156,17 @@ module Stryker
     # `Stryker::Runtime.start` calls it when no mutant is active. The dry
     # run's forked child calls it again before its first test, after the
     # fork: in a forked child, a send to a Ractor that the parent started
-    # raises Ractor::ClosedError. Each call starts a new collector Ractor.
+    # raises Ractor::ClosedError.
     #
-    # On Ruby 4.0 and later, the default collector is a new collector
-    # Ractor, started as `Stryker::Runtime::Collector.start` describes: Ruby
-    # doesn't print its warning that Ractors are experimental, and the
-    # runtime writes a line to standard error that says why the project's
-    # first Ractor gets none. On Ruby 3.3 and 3.4 there is none, so a hit in
+    # On Ruby 4.0 and later, the default collector is a new one, built by
+    # `Stryker::Runtime::Collector.build`, whose Ractor starts at the
+    # process's first `Ractor.new`. In a forked child, that is the child's
+    # first, and Ruby warns that Ractors are experimental for it as it would
+    # without the runtime. On Ruby 3.3 and 3.4 there is none, so a hit in
     # another Ractor raises `Stryker::UnsupportedError`.
     #
     # - `collector`: Stryker::Runtime::Collector, or nil for none. A new
-    #   collector Ractor on Ruby 4.0 and later, and nil before, by default.
+    #   collector on Ruby 4.0 and later, and nil before, by default.
     # - `namespace`: Module, where the constant is. Stryker by default.
     # - `recorder`: Stryker::Runtime::Recorder, the recorder that drains the
     #   collector. `Stryker::Runtime::RECORDER` by default.

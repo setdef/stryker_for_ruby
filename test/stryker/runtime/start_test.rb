@@ -28,12 +28,14 @@ class StartTest < Minitest::Test
     assert_equal(Stryker::Runtime::ActiveMutant.new(id: 7), namespace::Active)
   end
 
-  # Starts a real collector Ractor on Ruby 4.0 and later, and none before.
-  def test_no_id_in_the_environment_starts_recording_with_a_new_collector
+  # The collector's Ractor starts at the project's first Ractor.new, not
+  # here: the test process has none.
+  def test_no_id_in_the_environment_starts_recording_with_a_collector_not_yet_started
     Stryker::Runtime.start({}, namespace, recorder)
-    started = namespace::Active.collector.is_a?(Stryker::Runtime::Collector)
+    collector = namespace::Active.collector
+    expected = Ractor.const_defined?(:Port, false) ? [Stryker::Runtime::Collector, false] : [NilClass, false]
 
-    assert_equal([nil, Ractor.const_defined?(:Port, false)], [namespace::Active.id, started])
+    assert_equal([nil, *expected], [namespace::Active.id, collector.class, collector&.started? || false])
   end
 
   def test_an_id_that_is_not_a_decimal_integer_raises

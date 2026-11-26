@@ -1,12 +1,12 @@
 # frozen_string_literal: true
 
 require_relative("../../test_helper")
-require "stringio"
 require "stryker/runtime"
 
 # Checks the collector with stand-ins for Ractor, because Coverage counts no
 # line that runs outside the main Ractor, and a real collector would start a
-# Ractor in the test process. process_test.rb starts real ones.
+# Ractor in the test process. first_ractor_process_test.rb and
+# process_test.rb start real ones.
 class CollectorTest < Minitest::Test
   # An inbox that hands out its messages in order, and then raises
   # StopIteration, which ends the collector's loop.
@@ -24,36 +24,10 @@ class CollectorTest < Minitest::Test
       answer
     end
   end
+  private_constant(:Inbox, :Reply)
 
-  # A stand-in for Ractor on Ruby 4.0 and later. Its new returns the
-  # arguments it got, and the block, which it doesn't run.
-  module PortedRactor
-    Port = Class.new
-    public_constant(:Port)
-
-    def self.new(*arguments, &block)
-      [arguments, block]
-    end
-  end
-  private_constant(:Inbox, :PortedRactor, :Reply)
-
-  # A stand-in for Ractor with a Port, whose new notes the category of Ruby's
-  # warnings in +warning+ that is on when it runs, and then returns a
-  # stand-in for the Ractor, or raises when +failure+ is set.
-  def noting(warning, seen, failure: nil)
-    Class.new do
-      const_set(:Port, Class.new)
-      define_singleton_method(:new) do |*, &_block|
-        seen << warning[:experimental]
-        raise(failure) if failure
-
-        :ractor
-      end
-    end
-  end
-
-  def start(ractor_class, warning = { experimental: false }, stderr = StringIO.new)
-    Stryker::Runtime::Collector.start(ractor_class, warning, stderr)
+  def started(ractor, reply = nil)
+    Stryker::Runtime::Collector.new.started(ractor, reply)
   end
 
   def test_it_answers_each_drain_with_the_messages_since_the_last_one
@@ -63,8 +37,8 @@ class CollectorTest < Minitest::Test
     assert_equal([[[7], "lib/invoice.rb"], [], [[8]]], replies)
   end
 
-  def test_no_collector_starts_on_a_ruby_without_ractor_ports
-    assert_nil(start(Module.new))
+  def test_no_collector_is_built_on_a_ruby_without_ractor_ports
+    assert_nil(Stryker::Runtime::Collector.build(Module.new))
   end
 
   # Ractor's ancestors include Object, so a top-level Port in the project would
@@ -72,74 +46,50 @@ class CollectorTest < Minitest::Test
   def test_an_inherited_port_is_not_a_ractor_port
     ported = Class.new { const_set(:Port, Class.new) }
 
-    assert_nil(start(Class.new(ported)))
+    assert_nil(Stryker::Runtime::Collector.build(Class.new(ported)))
   end
 
-  def test_a_collector_starts_with_a_reply_port_of_its_own
-    collector = start(PortedRactor)
-    arguments, block = collector.ractor
+  def test_a_collector_is_built_without_starting_a_ractor
+    collector = Stryker::Runtime::Collector.build(Class.new { const_set(:Port, Class.new) })
 
-    assert_instance_of(PortedRactor::Port, collector.reply)
-    assert_equal([collector.reply], arguments)
-    assert_kind_of(Proc, block)
+    assert_equal([Stryker::Runtime::Collector, false], [collector.class, collector.started?])
   end
 
-  def test_the_ractor_starts_with_ruby_s_warning_that_ractors_are_experimental_off
-    seen = []
-    warning = { experimental: true }
-    start(noting(warning, seen), warning)
-
-    assert_equal([false], seen)
-  end
-
-  def test_the_warning_is_on_again_after_the_ractor_starts
-    warning = { experimental: true }
-    start(noting(warning, []), warning)
-
-    assert(warning[:experimental])
-  end
-
-  def test_the_warning_is_on_again_when_the_ractor_fails_to_start
-    warning = { experimental: true }
-    assert_raises(RuntimeError) { start(noting(warning, [], failure: "no Ractor"), warning) }
-
-    assert(warning[:experimental])
-  end
-
-  def test_it_says_on_standard_error_that_ruby_will_not_warn_when_the_warning_was_on
-    stderr = StringIO.new
-    start(noting({ experimental: true }, []), { experimental: true }, stderr)
-
-    assert_equal("#{Stryker::Runtime::Collector::NOTICE}\n", stderr.string)
-  end
-
-  def test_it_says_nothing_when_the_warning_was_off
-    stderr = StringIO.new
-    warning = { experimental: false }
-    start(noting(warning, []), warning, stderr)
-
-    assert_equal(["", false], [stderr.string, warning[:experimental]])
-  end
-
-  def test_it_says_nothing_on_a_ruby_without_ractor_ports
-    stderr = StringIO.new
-    start(Module.new, { experimental: true }, stderr)
-
-    assert_empty(stderr.string)
+  def test_a_started_collector_says_so
+    assert_predicate(started([]), :started?)
   end
 
   def test_a_message_goes_to_the_collector_ractor
     sent = []
-    collector = Stryker::Runtime::Collector.new(ractor: sent, reply: nil)
+    collector = started(sent)
 
     assert_same(collector, collector << [7])
     assert_equal([[7]], sent)
   end
 
+  def test_a_message_to_a_collector_that_has_not_started_raises
+    error = assert_raises(Stryker::UnsupportedError) { Stryker::Runtime::Collector.new << [7] }
+
+    assert_includes(error.message, "started before Stryker (for Ruby) loaded")
+  end
+
   def test_a_drain_asks_the_collector_ractor_and_returns_its_answer
     sent = []
-    collector = Stryker::Runtime::Collector.new(ractor: sent, reply: Reply.new([[7]]))
+    collector = started(sent, Reply.new([[7]]))
 
     assert_equal([[[7]], [:drain]], [collector.drain, sent])
+  end
+
+  def test_a_collector_that_has_not_started_drains_nothing
+    assert_empty(Stryker::Runtime::Collector.new.drain)
+  end
+
+  # A holder made shareable holds the collector, which must still start
+  # afterwards.
+  def test_a_collector_stays_writable_in_a_shareable_holder
+    collector = Stryker::Runtime::Collector.new
+    Ractor.make_shareable(Stryker::Runtime::Recording.new(collector:))
+
+    assert_predicate(collector.started([], nil), :started?)
   end
 end

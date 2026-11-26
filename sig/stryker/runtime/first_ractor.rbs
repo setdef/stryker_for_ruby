@@ -1,0 +1,58 @@
+module Stryker
+  module Runtime
+    # The module that the runtime prepends to `Ractor`'s singleton class in a
+    # process that records hits, on Ruby 4.0 and later, so that the
+    # process's collector Ractor starts at the project's first `Ractor.new`,
+    # as
+    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+    # specifies. A project that makes no Ractor then gets none from the
+    # runtime.
+    #
+    # Ruby warns that Ractors are experimental for the first Ractor that a
+    # process makes, and for no other; a forked child starts over. The
+    # collector's Ractor is that first one, and Ruby's warning for it names
+    # the project's line, so the project sees exactly the warning it would
+    # see without the runtime, under the project's `Warning[:experimental]`.
+    #
+    # Its `new` starts the collector's Ractor first, when the call has a
+    # block and `unstarted` gives a collector, and then makes the Ractor that
+    # the caller asked for, as `Ractor.new` does, with the same arguments.
+    # It is compiled under a path that starts with `<internal:`, because
+    # Ruby's warning skips such frames to name the caller's line.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # require "stryker/runtime"
+    # Ractor.count
+    # # => 1
+    # Ractor.new { Stryker::Active.hit(7) }.join
+    # # prints "-e:3: warning: Ractor API is experimental and may change in future versions of Ruby."
+    # Ractor.count
+    # # => 2, the collector's Ractor and the main one
+    # ```
+    module FirstRactor
+      # Builds the process's collector with
+      # `Stryker::Runtime::Collector.build`, and installs this module on
+      # `ractor_class` when there is one. Returns the collector, or nil on
+      # Ruby 3.3 and 3.4, where it installs nothing.
+      #
+      # - `ractor_class`: Ractor, or a stand-in for it in a test.
+      def self.prepare: (?singleton(Ractor) | Module ractor_class) -> Collector?
+
+      # Prepends this module to `ractor_class`'s singleton class. Returns
+      # nil. Prepending it again changes nothing.
+      #
+      # - `ractor_class`: Ractor, or a stand-in for it in a test.
+      def self.install: (?singleton(Ractor) | Module ractor_class) -> nil
+
+      # The collector that `new` starts before the Ractor asked for:
+      # `Stryker::Runtime::RECORDER`'s, when it hasn't started and `ractor`
+      # is the main Ractor, or nil. Internal to the runtime: `ractor` exists
+      # so that a test can pass a stand-in.
+      #
+      # - `ractor`: Ractor, the calling Ractor by default.
+      def self.unstarted: (?Ractor | Object ractor) -> Collector?
+    end
+  end
+end
