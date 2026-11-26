@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "prism"
 require_relative "removed_bodies"
+require_relative "syntax"
 
 module Stryker
   class Instrumenter
@@ -13,7 +13,7 @@ module Stryker
         withheld = bodies.reverse.reduce(source.b) do |text, body|
           "#{text.byteslice(0, body.start_offset)}#{text.byteslice((body.end_offset)..)}".b
         end
-        new(mutant:, bodies:, result: Prism.parse(mutant.edit(withheld).force_encoding(source.encoding)))
+        new(mutant:, bodies:, result: Syntax.parse(mutant.edit(withheld).force_encoding(source.encoding)))
       end
 
       def growth_within(node)

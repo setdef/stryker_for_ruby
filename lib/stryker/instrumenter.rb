@@ -9,6 +9,7 @@ require_relative "instrumenter/placement"
 require_relative "instrumenter/plain_mutant"
 require_relative "instrumenter/result"
 require_relative "instrumenter/splice"
+require_relative "instrumenter/syntax"
 require_relative "mutant"
 
 module Stryker
@@ -18,7 +19,7 @@ module Stryker
     end
 
     def initialize(source)
-      result = Prism.parse(source)
+      result = Syntax.parse(source)
       raise(Error.unparsable(result.errors, "source")) unless result.success?
 
       @source = source
@@ -42,7 +43,7 @@ module Stryker
 
     private def parsed(output)
       instrumented = output.force_encoding(@source.encoding)
-      errors = Prism.parse(instrumented).errors
+      errors = Syntax.parse(instrumented).errors
       return instrumented if errors.empty?
 
       raise(Error.unparsable(errors, "instrumented source"))

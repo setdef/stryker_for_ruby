@@ -1,0 +1,43 @@
+module Stryker
+  class Instrumenter
+    # Parses and lexes with Prism using the syntax of the running Ruby, which
+    # is the Ruby that runs the project's code. Prism 1.0 knows the syntax of
+    # Ruby 3.3 and 3.4, and Prism 1.7 adds 4.0 and 4.1. A Prism that doesn't
+    # know the running Ruby's syntax can't tell what that Ruby parses, so
+    # `Stryker::Instrumenter::Syntax` raises `Stryker::Instrumenter::Error`
+    # instead of parsing with another version's syntax.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Instrumenter::Syntax.parse("[1].each { it }\n", "3.3.0").success?
+    # # => true
+    # Stryker::Instrumenter::Syntax.parse("p 1\n", "9.9.9")
+    # # => raises Stryker::Instrumenter::Error: Prism 2.1.0 doesn't know the
+    # #    syntax of Ruby 9.9.9. Install a newer prism gem.
+    # ```
+    module Syntax
+      # What Prism makes of `source`, as `Prism.parse` gives it, with the
+      # syntax of `ruby_version`. Raises `Stryker::Instrumenter::Error` when
+      # the installed Prism doesn't know that Ruby's syntax.
+      #
+      # - `source`: String, Ruby source.
+      # - `ruby_version`: String, a Ruby version such as `"3.4.1"`. Only its
+      #   major and minor numbers count. It is the running Ruby's version by
+      #   default.
+      def self.parse: (String source, ?String ruby_version) -> Prism::ParseResult
+
+      # The tokens of `source`, as `Prism.lex` gives them, with the syntax of
+      # `ruby_version`. Raises `Stryker::Instrumenter::Error` when the
+      # installed Prism doesn't know that Ruby's syntax.
+      #
+      # - `source`: String, Ruby source.
+      # - `ruby_version`: String, a Ruby version such as `"3.4.1"`. Only its
+      #   major and minor numbers count. It is the running Ruby's version by
+      #   default.
+      def self.lex: (String source, ?String ruby_version) -> Prism::LexResult
+
+      def self.version: (String ruby_version) -> String
+    end
+  end
+end

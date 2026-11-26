@@ -6,9 +6,16 @@ module Stryker
     # its site. A mutant whose plain mutant doesn't parse raises none of
     # these: it gets no switch. The last two mean that a switch can't hold a
     # mutant that is valid Ruby, which is a fault in the instrumenter, or in
-    # the mutator that made the mutant. The message gives each line, or the
-    # mutant's ID.
+    # the mutator that made the mutant. It is also raised when the installed
+    # Prism doesn't know the syntax of the running Ruby. The message gives
+    # each line, the mutant's ID, or both versions.
     class Error < StandardError
+      # The error for a Ruby whose syntax the installed Prism doesn't know,
+      # with a message that names both versions.
+      #
+      # - `ruby_version`: String, the Ruby's version.
+      def self.unknown_syntax: (String ruby_version) -> Error
+
       # The error for source that doesn't parse, with a message that gives
       # each of Prism's `errors` and its line.
       #

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "prism"
+require_relative "syntax"
 
 module Stryker
   class Instrumenter
@@ -10,7 +10,7 @@ module Stryker
       private_constant(:CLOSERS, :LINE_BREAKS)
 
       def self.of(text)
-        tokens = Prism.lex(text).value.map(&:first)
+        tokens = Syntax.lex(text).value.map(&:first)
         (tokens.any? { |token| inner_line_break?(token) }) ? nil : joined(text, tokens)
       end
 

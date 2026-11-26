@@ -3,6 +3,7 @@
 require "prism"
 require "refract"
 require_relative "line_join"
+require_relative "syntax"
 
 module Stryker
   class Instrumenter
@@ -19,7 +20,7 @@ module Stryker
       private_class_method(:format)
 
       def self.same?(joined, formatted)
-        result = Prism.parse(joined)
+        result = Syntax.parse(joined)
         statements = result.value.statements.body
         result.success? && statements.one? && statements.all? { |statement| format(statement) == formatted }
       end

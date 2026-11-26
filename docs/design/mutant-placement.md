@@ -123,7 +123,9 @@ A site whose mutant's text has no one-line form gets no mutant either, as [The m
 
 ## Mutants that aren't valid Ruby
 
-A mutator's replacement can make a file that doesn't parse. The instrumenter parses each mutant's plain mutant, and a mutant whose plain mutant doesn't parse gets no switch. The result lists it as skipped, with the reason `:does_not_parse`, and the run reports it with the [report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)'s status `CompileError`, for a mutant that is invalid.
+A mutator's replacement can make a file that doesn't parse. The instrumenter parses each mutant's plain mutant, with the syntax of the running Ruby, and a mutant whose plain mutant doesn't parse gets no switch. The result lists it as skipped, with the reason `:does_not_parse`, and the run reports it with the [report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)'s status `CompileError`, for a mutant that is invalid.
+
+Every parse on this page uses the syntax of the running Ruby, the Ruby that runs the project's code. When the installed Prism doesn't know that Ruby's syntax, the instrumenter raises `Stryker::Instrumenter::Error` with a message that names both versions. Prism 1.7 is the first release that knows Ruby 4.0 and 4.1.
 
 A fault in the instrumenter is a different case. When every plain mutant parses and the instrumented file doesn't, the instrumenter raises `Stryker::Instrumenter::Error` and the run stops. A replacement that ends with a comment is such a case: `1 # why` makes a plain mutant that parses, and a switch that doesn't, because the comment swallows the rest of the line.
 
