@@ -46,7 +46,9 @@ Keep the pre-push gate to about a minute. It runs the linters, the type checker,
 
 ## Spikes
 
-A spike, prototype, or probe is throwaway code. It never reaches `trunk`, and nobody pushes it anywhere else either. When it's done, only its findings land: as a design note, as a fact in a guide, or as a decision reported for an ADR. Then delete the spike.
+A spike, prototype, or probe is throwaway code. It never reaches `trunk`, and nobody pushes it anywhere else either, except a probe that needs CI's runners, which may go on a throwaway branch with a maintainer's permission. When it's done, only its findings land: as a design note, as a fact in a guide, or as a decision reported for an ADR. Then delete the spike.
+
+Decide the structure before you build it. Never build a slice of production code to find out what the structure should be. Write production code afresh after the decision, and never grow it from a spike.
 
 ## Commit messages
 
@@ -62,8 +64,8 @@ For example: `feat(mutators): add a string literal mutator`, or `docs: describe 
 
 ## Writing code
 
-- **Reuse before you build.** Before you write a parser, protocol, server, format reader, or anything else of that kind, look for reliable code that already exists: the Ruby standard library first, then gems that are maintained, documented, and tested. Code written for this repository in place of a library needs the same written reason that a new dependency does.
-- **Check facts that depend on a version** against the current documentation or source, not memory: a gem's API, Prism's node types, or how Ruby behaves in a given version.
+- **Reuse before you build.** The project carries as little code as it can. Before you write a parser, protocol, server, format reader, cryptographic primitive, or anything else of that kind, look for reliable code that already exists: the Ruby standard library first, then gems that are maintained, documented, and tested. Code written for this repository in place of a library needs the same written reason that a new dependency does.
+- **Get each fact from its source.** Run the tool, read the current documentation or source, or read CI's result. This matters most for facts that depend on a version, such as a gem's API, Prism's node types, or how Ruby behaves in a given version, because memory about a dependency goes stale, especially for projects that change often. Never pass on another agent's or a tool's claim as fact without checking it, and say which facts you checked and which you didn't.
 - **Keep each change to what its task needs,** and match the style of the code around it. Put a refactor in a separate commit.
 - **Test every change in behavior.** Confirm that each new test fails without the change: a test that passes either way proves nothing.
 - **Update the user documentation** in the same commit as a change to anything users see.
@@ -77,6 +79,13 @@ For example: `feat(mutators): add a string literal mutator`, or `docs: describe 
 - Build file paths from parts with `File.join` or `Pathname`, and check that a path built from outside input stays inside the directory you meant it for.
 - Never hardcode a secret, such as an API key. Read it from an environment variable.
 - Never call `Marshal.load` or `YAML.unsafe_load` on data from outside the process.
+- Commits, issues, comments, docs, and code hold only what anyone could find in public sources. Never put in them your machine's names, paths, or hardware, or anything said in a private conversation, and never quote a person from one. An ADR lists its deciders by role, with links to the public issues.
+
+## Running the tools
+
+- Run the repository's tools as `MISE_TRUSTED_CONFIG_PATHS=$PWD mise exec -- <command>`.
+- Install gems with `BUNDLE_PATH` pointing outside the repository, and set it again for every `bundle exec`. RuboCop and `reuse lint` read gems installed in any folder inside the repository except `vendor/bundle`, which both skip.
+- Don't run `bin/setup` in a git worktree. It installs a pre-commit hook, and every worktree of a clone shares the clone's hooks. Run `mise install` and `bundle install` instead.
 
 ## Quality gates
 
@@ -88,7 +97,32 @@ The project records its architecture decisions as Architecture Decision Records 
 
 One keeper writes the ADRs: the keeper decides which decisions earn a record, writes each one, and numbers them. Everyone else, people and agents, writes no ADR. Instead, report to the keeper each decision your work needs, with the options you weighed and the evidence for each, and each line of an existing ADR that your change makes untrue.
 
-When your change departs from an ADR, push it anyway, and report the departure to the keeper. The keeper then records the changed decision, or the change is reverted.
+When your change departs from an ADR in a technical way, push it anyway, and report the departure to the keeper. The keeper then records the changed decision, or the change is reverted. The decisions in [What the maintainers decide](#what-the-maintainers-decide) are the exception.
+
+### Weighing options
+
+Judge each option for a decision against what it must serve: the requirements in the design documents, the drivers in the ADRs, and the Tao above. Report which options you weighed and why each lost, and check each reason against the requirement it cites. Popularity counts for less than quality, what an option can do, and performance, such as speed and memory. When an option is popular, ask what its popularity stands for and what choosing it trades away.
+
+### What the maintainers decide
+
+Ask the maintainers before you change any of these:
+
+- the public interface: commands, flags, exit statuses, environment variables, file formats, and output fields and their format
+- product scope
+- licensing
+- anything that changes the Stryker Mutator organization's projects or communicates with that organization
+
+### Recording decisions
+
+Record every decision where the next contributor will find it: the issue it settles, a design page, an ADR, or the RBS documentation of the code. A decision that lives only in a chat, or on one machine, is lost.
+
+## Questions for the maintainers
+
+Put a question for the maintainers in a GitHub issue labeled `question`, assigned to the maintainer it's for. A backlog item that the question blocks links to it with a `#` reference, and is never labeled `question` itself. When the answer is no longer needed, unassign the maintainer and close the issue.
+
+## Agents that delegate
+
+An AI agent that hands work to other agents passes these rules on to them, and answers for their work: for each judgment call they make, each change they make to a Markdown file in the repository, and each recommendation they propose. When any of these is wrong, the agent fixes the work or reverts it.
 
 ## Copyright and licenses
 
