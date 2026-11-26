@@ -70,6 +70,19 @@ class PathKeyTest < Minitest::Test
     assert_nil(Stryker::Runtime::PathKey.real("thread.rb"))
   end
 
+  # A load that Ruby finds in the working directory gives the hook a relative
+  # path, which Ruby resolves against the working directory.
+  def test_a_relative_path_is_located_in_the_current_directory
+    assert_equal(File.absolute_path("line.rb"), Stryker::Runtime::PathKey.located("line.rb"))
+  end
+
+  def test_an_absolute_path_is_located_as_it_is_with_its_dots_in_place
+    path = file
+    dotted = File.join(File.dirname(path), "..", File.basename(File.dirname(path)), "Invoice.rb")
+
+    assert_equal(dotted, Stryker::Runtime::PathKey.located(dotted))
+  end
+
   def test_an_absolute_path_has_its_real_path
     path = file
 

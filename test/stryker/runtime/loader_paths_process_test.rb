@@ -69,6 +69,26 @@ class LoaderPathsProcessTest < Minitest::Test
     assert_equal(":instrumented\nchecked\n", run_program(program).first)
   end
 
+  # Ruby gives the hook a path that a load finds in the working directory as
+  # it was written, relative, and a load adds nothing to $LOADED_FEATURES, so
+  # the loading check can't see that the hook missed it.
+  def test_a_file_loaded_by_a_path_relative_to_the_working_directory_is_instrumented
+    lib, cache = project(FILES, INSTRUMENTED)
+    program = "require 'stryker/runtime'\nStryker::Runtime::Loader.install(#{cache.inspect})\n" \
+      "Dir.chdir(#{lib.inspect})\nload 'line.rb'\np LINE\n#{CHECK}"
+
+    assert_equal(":instrumented\nchecked\n", run_program(program).first)
+  end
+
+  def test_a_file_loaded_by_a_path_relative_to_the_working_directory_has_the_dir_that_plain_ruby_gives
+    lib, cache = project({ "folder.rb": "DIR = :original\n", "plain.rb": "PLAIN = __dir__\n" }, {})
+    Stryker::Runtime::Cache.write(cache, { File.join(lib, "folder.rb") => "DIR = __dir__\n" })
+    program = "require 'stryker/runtime'\nStryker::Runtime::Loader.install(#{cache.inspect})\n" \
+      "Dir.chdir(#{lib.inspect})\nload 'folder.rb'\nload 'plain.rb'\np DIR == PLAIN"
+
+    assert_equal("true\n", run_program(program).first)
+  end
+
   # A program that Ruby starts with the C locale reads each path from the file
   # system as bytes tagged US-ASCII, where the cache holds the same bytes
   # tagged UTF-8, so a project in a folder with a letter outside ASCII, such

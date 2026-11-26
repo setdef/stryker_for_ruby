@@ -52,7 +52,9 @@ module Stryker
       #
       # When the table has no such key, but the key's base name, with letter
       # case folded, is in `names`, it resolves the real path
-      # (`Stryker::Runtime::PathKey.real`) and compares that key. A `load`
+      # (`Stryker::Runtime::PathKey.real`, of the path that
+      # `Stryker::Runtime::PathKey.located` gives, so a path relative to the
+      # working directory is resolved against it) and compares that key. A `load`
       # through a second symbolic link, or in another letter case on a file
       # system that folds it, gives a path that the table doesn't have, and
       # nothing in `$LOADED_FEATURES` shows the miss. The resolution costs a
@@ -62,6 +64,8 @@ module Stryker
       #
       # - `path`: String, a file's path, as Ruby gives it to the hook.
       def file: (String path) -> String?
+
+      private def resolved: (String path, String key) -> String?
     end
   end
 end

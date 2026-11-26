@@ -51,6 +51,18 @@ module Stryker
       # ```
       def self.of_file: (String path, ?String? separator) -> Array[String]
 
+      # The absolute form of `path`, a path that Ruby gave the loader's hook.
+      # A load that Ruby finds relative to the working directory gives the
+      # hook the path as it was written, such as `line.rb`, and Ruby resolves
+      # it against the working directory when it opens the file. An absolute
+      # path is returned as it is, with its symbolic links and `..` in place,
+      # so that `real` resolves them. The loading check doesn't use this,
+      # because a built-in feature such as `thread.rb` is a name and no path.
+      # It reads the working directory's name from the system, and no file.
+      #
+      # - `path`: String, a path as Ruby gave it to the hook.
+      def self.located: (String path) -> String
+
       # The base name of `key`, a key that `of` made, with letter case folded
       # on every system, because a file system can fold it whatever the
       # platform's convention: the default macOS file system does. `key` has

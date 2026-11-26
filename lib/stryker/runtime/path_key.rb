@@ -24,6 +24,15 @@ module Stryker
         (real ? [path, real] : [path]).map { |form| of(form, separator) }
       end
 
+      def self.located(path)
+        # A load that Ruby finds relative to the working directory gives the
+        # hook the path as it was written, and Ruby resolves it against the
+        # working directory when it opens the file. The loading check never
+        # calls this, because a built-in feature such as thread.rb is a name
+        # and no path.
+        File.absolute_path?(path) ? path : File.absolute_path(path)
+      end
+
       def self.name(key)
         # Letter case is folded on every system, because a file system can
         # fold it whatever the platform's convention: the default macOS file
