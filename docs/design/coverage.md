@@ -11,9 +11,26 @@ The recorder has two kinds of bucket:
 - **The static bucket** is current from the moment the runtime loads until the first test starts, and again between tests. Hits recorded while the project's code and tests load land here. A hit made while a file loads inside a test lands here too, as [Static hits inside a test](#static-hits-inside-a-test) specifies.
 - **A test's bucket** is current while that test runs. The test runner adapter tells the recorder when each test starts and when it finishes, so each test's hits land in that test's bucket, apart from every other test's.
 
-A hit costs about 17 to 66 ns, depending on the Ruby version, on whether YJIT is on, and on the machine. The probes timed Ruby 3.3, 3.4, and 4.0 on Linux and macOS.
+[What a hit costs](#what-a-hit-costs) gives the cost of a hit and of reading the active mutant's ID.
 
 A switch can also run in a Ractor other than the main one. [Ractors](#ractors) says how a hit from there is recorded.
+
+## What a hit costs
+
+Each figure is the cost of one call in nanoseconds, from `Stryker::Active.hit` and `Stryker::Active.id` as the runtime ships them. It is the median of 9 rounds of 3,000,000 calls, less the cost of an empty loop, on Linux, on a machine that other work shared. A figure under 10 ns is within the noise of the measurement.
+
+| One call | 3.3.14 | 3.3.14 YJIT | 3.4.13 | 3.4.13 YJIT | 4.0.10 | 4.0.10 YJIT |
+| - | - | - | - | - | - | - |
+| `id`, in the main Ractor | 14 | 13 | 19 | 13 | 12 | 11 |
+| `id`, in another Ractor | 7 | 7 | 10 | 4 | 10 | 9 |
+| `hit`, no test running (the static bucket) | 365 | 173 | 515 | 263 | 148 | 69 |
+| `hit` with two mutants at the site, no test running | 425 | 211 | 643 | 304 | 154 | 74 |
+| `hit`, a test running | 434 | 191 | 598 | 287 | 183 | 75 |
+| `hit`, a test running, after a file began to load, for a mutant already checked | 492 | 226 | 709 | 297 | 256 | 104 |
+| `hit`, a mutant active | 44 | under 10 | 52 | under 10 | 45 | under 10 |
+| `hit`, in another Ractor | not recorded | not recorded | not recorded | not recorded | 934 | 682 |
+
+A mutant run pays only the `id` read and the `hit` that returns at once, because it records nothing. The first `hit` of a mutant after a file begins to load also pays for one stack check, which [When the check runs](#when-the-check-runs) prices.
 
 ## The dry run
 
@@ -72,13 +89,13 @@ The check runs only after a file has begun to load during the current test. A te
 
 After each such load, the next hit of each mutant is checked again, even when the mutant is already in the test's bucket. Without that, a mutant that the test itself reached first, and that a file reached later in the same test while it loaded, would stay out of the static bucket. Checking whether a mutant is already in the current bucket adds no measurable cost per hit.
 
-One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3 to 4.0 with YJIT off or on:
+One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3.14, 3.4.13, and 4.0.10 with YJIT off or on, measured as in [What a hit costs](#what-a-hit-costs):
 
 | Frames on the stack | One check |
 | - | - |
-| 20 | 1.7 to 2.4 µs |
-| 100 | 5.5 to 7.6 µs |
-| 300 | 16 to 21 µs |
+| 23 | 1.4 to 3.0 µs |
+| 103 | 5.9 to 10.8 µs |
+| 303 | 17.5 to 30.6 µs |
 
 A test body has 18 to 25 frames under Minitest, RSpec, and Rails.
 
@@ -124,7 +141,9 @@ The fork parent runs no test, so it drains its collector before each fork, and a
 
 A collector that was drained only when each test ends put a hit sent between tests in the next test's bucket, which is why the recorder drains at the start as well. In the probe, every hit arrived, including the hits from Ractors that finished during the test.
 
-Sending a hit to the collector costs about 115 to 200 ns. A hit in the main Ractor costs about 30 ns, or 11 ns with YJIT.
+A file whose load begins in another Ractor reaches the recorder the same way.
+
+On Ruby 4.0.10, a hit in another Ractor costs 682 to 934 ns, because it sends the hit to the collector, against 69 to 148 ns for a hit in the main Ractor outside a test. [What a hit costs](#what-a-hit-costs) has the figures.
 
 #### Ruby's warning that Ractors are experimental
 

@@ -34,8 +34,8 @@ module Stryker
       # first such frame. With no paths, it is false. A frame that has no
       # path, such as one of an `eval`, never matches.
       #
-      # Each check costs about 2 µs at a test body's usual depth of 20
-      # frames, and about 20 µs at 300 frames.
+      # Each check costs 1.4 to 3.0 µs at 23 frames, a test body's usual
+      # depth, and 17.5 to 30.6 µs at 303 frames.
       #
       # - `paths`: Set of String, the files' paths as `frame_paths` gives
       #   them, called with the same `separator`.
