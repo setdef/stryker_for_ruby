@@ -1,0 +1,62 @@
+module Stryker
+  # The text of a source file, which turns a mutant's byte offsets into the
+  # positions the
+  # [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)
+  # wants: lines and columns each counted from 1, with columns counted in
+  # UTF-16 code units. The HTML report places a mutant's replacement text by
+  # JavaScript string index, and JavaScript counts UTF-16 code units, so a
+  # character outside the Basic Multilingual Plane, such as an emoji, takes
+  # two columns.
+  #
+  # A line ends at `"\n"`, so the `"\r"` of a CRLF line ending counts as a
+  # column on its line. An offset just after a `"\n"` is column 1 of the next
+  # line, and an offset at the end of the text is the position after its last
+  # character. An offset that falls inside a multibyte character, or beyond
+  # the end of the text, gives a position with no error and no meaning.
+  #
+  # Building a source text parses all of the text with Prism, which takes time
+  # in proportion to its length. Building one source text for a file and
+  # asking it for each of the file's mutants costs one parse.
+  #
+  # ## Examples
+  #
+  # The `+` of `total = a + b`, on line 3 of a file:
+  #
+  # ```ruby
+  # text = Stryker::SourceText.new("# Totals\n\ntotal = a + b\n")
+  # text.location(20, 21)
+  # # => #<data Stryker::Location
+  # #      start=#<data Stryker::Position line=3, column=11>,
+  # #      end=#<data Stryker::Position line=3, column=12>>
+  # ```
+  class SourceText
+    @prism_source: Prism::Source
+
+    # Builds the source text of a file whose text is `text`.
+    #
+    # - `text`: String, the whole text of the file, which Prism reads as
+    #   UTF-8 unless a magic comment gives another encoding.
+    def initialize: (String text) -> void
+
+    # The location of the stretch of the file from byte offset `start_offset`
+    # up to, and not including, byte offset `end_offset`. Equal offsets give
+    # an empty location.
+    #
+    # - `start_offset`: Integer, the offset in bytes of the first byte in the
+    #   stretch.
+    # - `end_offset`: Integer, the offset in bytes of the byte just after the
+    #   stretch.
+    #
+    # ```ruby
+    # text = Stryker::SourceText.new("a = \"\u{1F600}\" + b")
+    # text.location(11, 12).start
+    # # => #<data Stryker::Position line=1, column=10>
+    # ```
+    def location: (Integer start_offset, Integer end_offset) -> Location
+
+    private
+
+    # The position at byte `offset`.
+    def position: (Integer offset) -> Position
+  end
+end
