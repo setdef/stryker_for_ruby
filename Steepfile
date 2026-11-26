@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 target :lib do
-  signature "sig"
+  # steep/ holds signatures for the parts of gems that ship none, which the
+  # gem doesn't publish.
+  signature "sig", "steep"
   check "lib"
 
   configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
@@ -16,6 +18,7 @@ target :lib do
   library "stringio"
   library "securerandom"
   library "erb"
+  library "prism"
 end
 
 target :tasks do

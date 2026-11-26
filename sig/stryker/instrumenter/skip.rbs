@@ -1,0 +1,41 @@
+module Stryker
+  class Instrumenter
+    # A mutant that got no switch, and the reason, so that a run can report
+    # how many sites it skipped and why.
+    #
+    # The reason is one of these:
+    #
+    # - `:no_switch_site`: no node around the mutant's site can hold a
+    #   switch, as inside `BEGIN { }`, which Ruby allows only at the top level
+    #   of a file.
+    # - `:no_one_line_form`: the mutant's text spans several lines, and
+    #   refract's formatting of it has no form on one line, as a regexp with
+    #   a line break inside it. A switch on several lines would move every
+    #   line after it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # skip = result.skipped.first
+    # [skip.mutant.id, skip.reason]
+    # # => [1, :no_switch_site]
+    # ```
+    class Skip < Data
+      # Why a mutant got no switch.
+      type reason = :no_switch_site | :no_one_line_form
+
+      # The mutant that got no switch.
+      attr_reader mutant: Mutant
+
+      # Why it got none.
+      attr_reader reason: reason
+
+      # Builds the skip.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant that got no switch.
+      # - `reason`: Symbol, why it got none.
+      def self.new: (mutant: Mutant, reason: reason) -> instance
+                  | (Mutant mutant, reason reason) -> instance
+    end
+  end
+end

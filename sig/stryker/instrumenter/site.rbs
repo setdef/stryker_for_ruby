@@ -1,0 +1,29 @@
+module Stryker
+  class Instrumenter
+    # A node that a switch wraps, given by its byte range in the original
+    # source, and the mutant branches of that switch.
+    class Site < Data
+      # The offset, in bytes, of the node's first byte.
+      attr_reader start_offset: Integer
+
+      # The offset, in bytes, of the byte just after the node.
+      attr_reader end_offset: Integer
+
+      # The switch's mutant branches, in the order the switch tries them.
+      attr_reader branches: Array[Branch]
+
+      # Builds the site.
+      #
+      # - `start_offset`: Integer, the offset of the node's first byte.
+      # - `end_offset`: Integer, the offset of the byte just after the node.
+      # - `branches`: Array of Stryker::Instrumenter::Branch, the mutant
+      #   branches.
+      def self.new: (start_offset: Integer, end_offset: Integer, branches: Array[Branch]) -> instance
+                  | (Integer start_offset, Integer end_offset, Array[Branch] branches) -> instance
+
+      # The opening of the site's switch, before the node, and its closing,
+      # after it.
+      def insertions: () -> [Insertion, Insertion]
+    end
+  end
+end

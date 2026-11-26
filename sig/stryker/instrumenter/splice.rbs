@@ -1,0 +1,33 @@
+module Stryker
+  class Instrumenter
+    # Splices switches into the original bytes of a file, around the nodes
+    # they wrap, and leaves every other byte as it was.
+    #
+    # Each switch is an opening before its node and a closing after it. A
+    # site inside another site's node gets its opening and closing inside
+    # the outer ones, so it lands in the original branch of the outer
+    # switch, and the mutant branches hold no switch.
+    class Splice
+      # `sites` with the sites at the same node merged into one, whose
+      # branches go in the order of their mutants' IDs.
+      #
+      # - `sites`: Array of Stryker::Instrumenter::Site, the sites.
+      def self.merged: (Array[Site] sites) -> Array[Site]
+
+      # Prepares to splice `sites` into `source`.
+      #
+      # - `source`: String, the file's source.
+      # - `sites`: Array of Stryker::Instrumenter::Site, the nodes to wrap,
+      #   each with its branches.
+      def initialize: (String source, Array[Site] sites) -> void
+
+      # The source with every switch spliced in, as binary.
+      def output: () -> String
+
+      private
+
+      @bytes: String
+      @insertions: Array[Insertion]
+    end
+  end
+end

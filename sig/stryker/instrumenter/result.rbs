@@ -1,0 +1,35 @@
+module Stryker
+  class Instrumenter
+    # What `Stryker::Instrumenter.instrument` returns: the instrumented source,
+    # and each mutant that got no switch, with the reason.
+    #
+    # The source holds a switch for every mutant that isn't in `skipped`. A
+    # mutant in `skipped` is in no switch, so no run can make it active, and
+    # nothing in the source refers to its ID.
+    #
+    # ## Examples
+    #
+    # Count the skipped mutants by reason:
+    #
+    # ```ruby
+    # result.skipped.count { |skip| skip.reason == :no_switch_site }
+    # # => 1
+    # ```
+    class Result < Data
+      # The instrumented source, in the original source's encoding.
+      attr_reader source: String
+
+      # The mutants that got no switch, each with the reason, in the order
+      # the instrumenter received them.
+      attr_reader skipped: Array[Skip]
+
+      # Builds the result.
+      #
+      # - `source`: String, the instrumented source.
+      # - `skipped`: Array of Stryker::Instrumenter::Skip, the mutants that got
+      #   no switch.
+      def self.new: (source: String, skipped: Array[Skip]) -> instance
+                  | (String source, Array[Skip] skipped) -> instance
+    end
+  end
+end

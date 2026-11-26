@@ -1,0 +1,55 @@
+module Stryker
+  class Instrumenter
+    # Writes the text of a switch. Every switch in instrumented source comes
+    # from here, so the API that switches call on the runtime is named in
+    # this module only.
+    #
+    # A switch is an opening, the original code, and a closing. A switch for
+    # one mutant is a ternary. A switch for several is an `if`/`elsif` chain,
+    # which tries them in the order given. Either way, the switch is on one
+    # line, every branch is in parentheses, and so is the whole switch, so the
+    # switch reads as one expression wherever the original did. The original
+    # branch records a hit for every mutant in the switch before it runs the
+    # original code.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # branches = [Stryker::Instrumenter::Branch.new(id: 7, text: "a - b")]
+    # "#{Stryker::Instrumenter::Switch.opening(branches)}a + b#{Stryker::Instrumenter::Switch.closing(branches)}"
+    # # => "(::Stryker::Active.id == 7 ? (a - b) : (::Stryker::Active.hit(7); (a + b)))"
+    #
+    # branches = [
+    #   Stryker::Instrumenter::Branch.new(id: 7, text: "a - b"),
+    #   Stryker::Instrumenter::Branch.new(id: 8, text: "a * b"),
+    # ]
+    # "#{Stryker::Instrumenter::Switch.opening(branches)}a + b#{Stryker::Instrumenter::Switch.closing(branches)}"
+    # # => "(if ::Stryker::Active.id == 7 then (a - b) elsif ::Stryker::Active.id == 8 then (a * b) else (::Stryker::Active.hit(7, 8); (a + b)) end)"
+    # ```
+    module Switch
+      # The path of the constant that holds the active mutant's ID and
+      # records hits. It starts with `::`, so it resolves from the top level
+      # wherever the switch is.
+      ACTIVE: String
+
+      # The part of the switch before the original code. With no branches,
+      # it is text that doesn't parse.
+      #
+      # - `branches`: Array of Stryker::Instrumenter::Branch, the mutant
+      #   branches, in the order to try them.
+      def self.opening: (Array[Branch] branches) -> String
+
+      # The part of the switch after the original code.
+      #
+      # - `branches`: Array of Stryker::Instrumenter::Branch, the mutant
+      #   branches.
+      def self.closing: (Array[Branch] branches) -> String
+
+      def self.ternary: (Array[Branch] branches) -> String
+
+      def self.chain: (Array[Branch] branches) -> String
+
+      def self.condition: (Branch branch) -> String
+    end
+  end
+end

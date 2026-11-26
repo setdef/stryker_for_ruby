@@ -1,0 +1,27 @@
+module Stryker
+  class Instrumenter
+    # Works out what the nodes above a node allow, for
+    # `Stryker::Instrumenter::Lineage`. The nodes further up rule out every
+    # node below them in three places:
+    #
+    # - inside a pattern of `case`/`in`, `in`, or `=>`, except inside a
+    #   pinned expression or a guard;
+    # - inside `defined?`, which gives `"expression"` for any switch;
+    # - inside `BEGIN { }`, which Ruby allows only at the top level, so no
+    #   node around it can hold a switch either.
+    module Context
+      # What the nodes above `child` allow, where `child` is a child of
+      # `lineage`'s node.
+      #
+      # - `lineage`: Stryker::Instrumenter::Lineage, the parent's lineage.
+      # - `child`: Prism::node, one of the parent's children.
+      def self.of_child: (Lineage lineage, Prism::node child) -> Lineage::context
+
+      def self.free: (Prism::node node, Prism::node child) -> Lineage::context
+
+      def self.leaves_pattern?: (Lineage lineage, Prism::node child) -> bool
+
+      def self.guard?: (Prism::node condition, Prism::node? parent) -> bool
+    end
+  end
+end

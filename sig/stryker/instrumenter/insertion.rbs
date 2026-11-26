@@ -1,0 +1,27 @@
+module Stryker
+  class Instrumenter
+    # Text that the splice inserts into the original bytes: the opening or
+    # the closing of a switch.
+    class Insertion < Data
+      # The offset, in the original bytes, where the text goes.
+      attr_reader offset: Integer
+
+      # The key that orders insertions: the offset, then 0 for a closing and
+      # 1 for an opening, then a number that puts an outer switch's opening
+      # before an inner one's, and an inner switch's closing before an outer
+      # one's.
+      attr_reader order: [Integer, Integer, Integer]
+
+      # The text to insert.
+      attr_reader text: String
+
+      # Builds the insertion.
+      #
+      # - `offset`: Integer, where the text goes.
+      # - `order`: Array of three Integers, the key that orders insertions.
+      # - `text`: String, the text to insert.
+      def self.new: (offset: Integer, order: [Integer, Integer, Integer], text: String) -> instance
+                  | (Integer offset, [Integer, Integer, Integer] order, String text) -> instance
+    end
+  end
+end

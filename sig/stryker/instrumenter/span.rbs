@@ -1,0 +1,38 @@
+module Stryker
+  class Instrumenter
+    # A stretch of a source file, given by byte offsets.
+    class Span < Data
+      # The offset of the first byte in the stretch.
+      attr_reader start_offset: Integer
+
+      # The offset of the byte just after the stretch.
+      attr_reader end_offset: Integer
+
+      # Builds the span.
+      #
+      # - `start_offset`: Integer, the offset of the first byte.
+      # - `end_offset`: Integer, the offset of the byte just after the last.
+      def self.new: (start_offset: Integer, end_offset: Integer) -> instance
+                  | (Integer start_offset, Integer end_offset) -> instance
+
+      # The stretch that starts where `span` does, and ends `growth` bytes
+      # after it, or before it when `growth` is negative.
+      #
+      # - `span`: Stryker::_Span, the stretch to grow.
+      # - `growth`: Integer, how many bytes to add at its end.
+      def self.grown: (_Span span, Integer growth) -> Span
+
+      # The stretch that `node` and every node inside it take up. It is
+      # longer than the node's location when the node holds a heredoc
+      # opener, whose body lies on the lines below.
+      #
+      # - `node`: Prism::node, the node.
+      def self.extent: (Prism::node node) -> Span
+
+      # Whether `other` starts and ends where this span does.
+      #
+      # - `other`: Stryker::_Span, another stretch.
+      def same?: (_Span other) -> bool
+    end
+  end
+end

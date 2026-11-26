@@ -1,0 +1,32 @@
+module Stryker
+  class Instrumenter
+    # What the instrumenter found for one mutant: the node its switch wraps,
+    # and the text of its branch, either of which can be missing.
+    class Outcome < Data
+      # The mutant.
+      %a{pure} attr_reader mutant: Mutant
+
+      # The node the mutant's switch wraps, or nil when no node around its
+      # site can hold a switch.
+      %a{pure} attr_reader node: Prism::node?
+
+      # The text of the mutant's branch, or nil when it has none on one line.
+      %a{pure} attr_reader text: String?
+
+      # Builds the outcome.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant.
+      # - `node`: Prism::node, the node its switch wraps, or nil.
+      # - `text`: String, the text of its branch, or nil.
+      def self.new: (mutant: Mutant, node: Prism::node?, text: String?) -> instance
+                  | (Mutant mutant, Prism::node? node, String? text) -> instance
+
+      # The site of the mutant's switch, with its one branch, or nil when the
+      # mutant got no switch.
+      def site: () -> Site?
+
+      # The mutant with the reason it got no switch, or nil when it got one.
+      def skip: () -> Skip?
+    end
+  end
+end

@@ -1,0 +1,47 @@
+module Stryker
+  class Instrumenter
+    # Makes the text that a mutant's branch runs: the wrapped node's original
+    # source with the mutant's edit applied, on one line.
+    #
+    # When that text is on one line and leaves no heredoc in it, it goes
+    # into the branch as it is. Otherwise, the instrumenter applies the edit
+    # to the whole file, parses the result with Prism, and puts the node at
+    # the edited range, which `Stryker::Instrumenter::MutatedNode` finds, on
+    # one line with `Stryker::Instrumenter::OneLine`. A
+    # heredoc left in the text would read its body from the lines below the
+    # switch, which the original branch's heredoc reads, so such a text takes
+    # the second path too: refract writes the heredoc as a string literal.
+    class MutantText
+      # The text of `mutant`'s branch in the switch that wraps `node`, as
+      # binary, or nil when the text has no form on one line. Raises
+      # `Stryker::Instrumenter::Error` when the text spans several lines and
+      # the file with the edit applied doesn't parse, or has no node at the
+      # edited range.
+      #
+      # - `source`: String, the file's source.
+      # - `mutant`: Stryker::Mutant, an edit inside `node`.
+      # - `node`: Prism::node, the node the switch wraps.
+      def self.of: (String source, Mutant mutant, Prism::node node) -> String?
+
+      # Prepares to make the text of `mutant`'s branch.
+      #
+      # - `source`: String, the file's source.
+      # - `mutant`: Stryker::Mutant, an edit inside `node`.
+      # - `node`: Prism::node, the node the switch wraps.
+      def initialize: (String source, Mutant mutant, Prism::node node) -> void
+
+      # The text, as `Stryker::Instrumenter::MutantText.of` gives it.
+      def text: () -> String?
+
+      private
+
+      @source: String
+      @mutant: Mutant
+      @node: Prism::node
+
+      def on_one_line?: (String plain) -> bool
+
+      def heredoc_kept?: () -> bool
+    end
+  end
+end

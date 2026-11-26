@@ -1,0 +1,47 @@
+module Stryker
+  class Instrumenter
+    # Finds the node that a mutant's switch wraps: the innermost node whose
+    # source range holds the mutant's whole edit, and that can hold a switch
+    # where it stands. When the site, the innermost node around the edit,
+    # can't hold one, the switch moves out to the nearest enclosing node that
+    # can. `Stryker::Instrumenter::Lineage` decides which nodes can.
+    #
+    # An edit inside a heredoc's body lies outside the range of the heredoc's
+    # opener, and of every node around the opener. The search still finds the
+    # nodes inside the body, but a node holds the mutant only when its
+    # location, which leaves out the bodies of the heredocs it opens, holds
+    # the edit.
+    class Placement
+      # The node whose source range the switch for `mutant` wraps, in `tree`,
+      # or nil when no node around the mutant's site can hold a switch.
+      #
+      # - `tree`: Prism::ProgramNode, the parsed file.
+      # - `mutant`: Stryker::Mutant, an edit on that file.
+      def self.node_for: (Prism::ProgramNode tree, Mutant mutant) -> Prism::node?
+
+      # Prepares to search for `mutant`'s edit.
+      #
+      # - `mutant`: Stryker::Mutant, the edit.
+      def initialize: (Mutant mutant) -> void
+
+      # The innermost node in `tree` that holds the edit and can hold a
+      # switch, or nil when there is none.
+      #
+      # - `tree`: Prism::node, the node to search from, usually the parsed
+      #   file.
+      def holder_in: (Prism::node tree) -> Prism::node?
+
+      private
+
+      @mutant: Mutant
+
+      def holder_below: (Lineage lineage, Prism::node? holder) -> Prism::node?
+
+      def child_covering: (Prism::node node) -> Prism::node?
+
+      def child_with_heredoc_body_covering: (Array[Prism::node] children) -> Prism::node?
+
+      def covers?: (Prism::node node) -> bool
+    end
+  end
+end

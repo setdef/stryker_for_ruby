@@ -1,0 +1,35 @@
+module Stryker
+  class Instrumenter
+    # Joins the lines of refract's output onto one line.
+    #
+    # Each line break that ends a statement becomes `; `, and each other line
+    # break, with the tabs that indent the next line, becomes a space. A line
+    # break before a closing bracket becomes a space too.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Instrumenter::LineJoin.of("def total(a, b)\n\ta.+(b)\nend")
+    # # => "def total(a, b) a.+(b); end"
+    # Stryker::Instrumenter::LineJoin.of("/a\nb/x")
+    # # => nil
+    # ```
+    module LineJoin
+      # `text` on one line, or nil when a line break is inside a token, such
+      # as a regexp written over several lines. It doesn't check that the
+      # joined line means what `text` means.
+      #
+      # - `text`: String, code that refract wrote.
+      def self.of: (String text) -> String?
+
+      LINE_BREAKS: Array[Symbol]
+      CLOSERS: Array[Symbol]
+
+      def self.inner_line_break?: (Prism::Token token) -> bool
+
+      def self.joined: (String text, Array[Prism::Token] tokens) -> String
+
+      def self.separator: (Prism::Token line_break, Prism::Token following) -> String
+    end
+  end
+end

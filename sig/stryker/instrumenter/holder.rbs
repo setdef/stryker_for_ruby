@@ -1,0 +1,45 @@
+module Stryker
+  class Instrumenter
+    # Decides whether a node can hold a switch where it stands, from the node,
+    # its parent, and its grandparent. `Stryker::Instrumenter::Lineage` adds
+    # what the nodes further up allow.
+    #
+    # A node can't hold a switch when parentheses around it either don't
+    # parse or change what the code means. From the placement table in
+    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
+    # that is true of:
+    #
+    # - a node that isn't an expression, such as a hash pair, a call's
+    #   keyword arguments, a splat, a parameter, a block, or a list of
+    #   statements;
+    # - a flip-flop, which Ruby reads as a `Range` inside parentheses;
+    # - a label key in a hash, such as `a:`;
+    # - a part of an interpolated or adjacent string, symbol, or regexp,
+    #   such as `"a"` in `"a" "b"`;
+    # - a regexp with named captures on the left of `=~`, and that `=~`
+    #   call, so the switch goes on the whole match;
+    # - the body of a `begin ... end while` loop, which Ruby runs once before
+    #   it tests the condition only while the body is a bare `begin`;
+    # - the bare right side of an assignment, such as `1, 2` in
+    #   `a, b = 1, 2`.
+    module Holder
+      # Whether `node` can hold a switch, given where it stands.
+      #
+      # - `node`: Prism::node, the node.
+      # - `parent`: Prism::node, its parent, or nil at the root.
+      # - `grandparent`: Prism::node, its grandparent, or nil.
+      def self.holds?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+
+      NOT_EXPRESSIONS: Array[singleton(Prism::Node)]
+      INTERPOLATED: Array[singleton(Prism::Node)]
+
+      def self.label?: (Prism::node node) -> bool
+
+      def self.matched_with_captures?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+
+      def self.body_run_before_test?: (Prism::node node, Prism::node? grandparent) -> bool
+
+      def self.bare_array?: (Prism::node node) -> bool
+    end
+  end
+end

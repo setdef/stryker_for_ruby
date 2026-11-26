@@ -1,0 +1,17 @@
+module Stryker
+  class Instrumenter
+    # Raised when the instrumenter can't make valid Ruby: when the file's
+    # source doesn't parse, when the instrumented source doesn't parse, or
+    # when a mutant whose text spans several lines doesn't make one node at
+    # its site. The last two mean that a mutant's replacement makes invalid
+    # code. The message gives each line, or the mutant's ID.
+    class Error < StandardError
+      # The error for source that doesn't parse, with a message that gives
+      # each of Prism's `errors` and its line.
+      #
+      # - `errors`: Array of Prism::ParseError, what Prism found.
+      # - `subject`: String, what didn't parse, such as `"source"`.
+      def self.unparsable: (Array[Prism::ParseError] errors, String subject) -> Error
+    end
+  end
+end

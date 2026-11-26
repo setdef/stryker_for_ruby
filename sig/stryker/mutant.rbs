@@ -1,4 +1,15 @@
 module Stryker
+  # A stretch of a source file, given by byte offsets from the start of the
+  # file: the first byte in it, and the byte just after it. Prism's
+  # `Prism::Location` is one.
+  interface _Span
+    # The offset of the first byte in the stretch.
+    def start_offset: () -> Integer
+
+    # The offset of the byte just after the stretch.
+    def end_offset: () -> Integer
+  end
+
   # One change to a source file, of the kind a programmer could make by
   # mistake. A run inserts each mutant into the code and runs the tests that
   # reach it, to learn whether any of them fails.
@@ -63,5 +74,39 @@ module Stryker
     # - `replacement`: String, the text that takes the place of those bytes.
     def self.new: (id: Integer, file: String, mutator_name: String, start_offset: Integer, end_offset: Integer, replacement: String) -> instance
                 | (Integer id, String file, String mutator_name, Integer start_offset, Integer end_offset, String replacement) -> instance
+
+    # `text` with the edit applied, as binary. `text` is a stretch of the
+    # file that starts at byte `offset` and holds the whole edit, or the
+    # whole file when `offset` is 0. The result is wrong, with no error, when
+    # the edit lies outside `text`.
+    #
+    # - `text`: String, a stretch of the file.
+    # - `offset`: Integer, the offset in the file of the first byte of `text`.
+    #
+    # ```ruby
+    # mutant = Stryker::Mutant.new(id: 7, file: "lib/invoice.rb", mutator_name: "ArithmeticOperator",
+    #                              start_offset: 10, end_offset: 11, replacement: "-")
+    # mutant.edit("total = a + b\n")
+    # # => "total = a - b\n"
+    # mutant.edit("a + b", 8)
+    # # => "a - b"
+    # ```
+    def edit: (String text, ?Integer offset) -> String
+
+    # How many bytes longer the file is with the edit applied: the size of
+    # the replacement less the number of bytes it replaces. It is negative
+    # when the edit removes more bytes than it inserts.
+    def growth: () -> Integer
+
+    # Whether the whole edit lies inside `span`. An edit that inserts at
+    # either end of `span` lies inside it.
+    #
+    # - `span`: Stryker::_Span, a stretch of the file.
+    def inside?: (_Span span) -> bool
+
+    # Whether the edit replaces all of `span`.
+    #
+    # - `span`: Stryker::_Span, a stretch of the file.
+    def covers?: (_Span span) -> bool
   end
 end

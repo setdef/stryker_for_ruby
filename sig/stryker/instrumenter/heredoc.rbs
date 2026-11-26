@@ -1,0 +1,14 @@
+module Stryker
+  class Instrumenter
+    # Tells the heredocs that a mutant's text keeps.
+    module Heredoc
+      # Whether `node` is a heredoc whose opener `mutant`'s edit leaves in
+      # place. Such a heredoc in a mutant's text would read its body from the
+      # lines below the switch, which the original branch's opener reads.
+      #
+      # - `node`: Prism::node, any node.
+      # - `mutant`: Stryker::Mutant, the edit.
+      def self.kept?: (Prism::node node, Mutant mutant) -> bool
+    end
+  end
+end

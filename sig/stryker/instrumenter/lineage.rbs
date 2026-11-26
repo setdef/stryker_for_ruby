@@ -1,0 +1,50 @@
+module Stryker
+  class Instrumenter
+    # A node, with its parent, its grandparent, and what the nodes above it
+    # allow, on the way down from the root of a file to a mutant's site.
+    # `Stryker::Instrumenter::Placement` asks each one whether its node can
+    # hold a switch. `Stryker::Instrumenter::Holder` answers for the node and
+    # the two above it, and `Stryker::Instrumenter::Context` for the nodes
+    # further up.
+    class Lineage < Data
+      # What the nodes above a node allow: `:free` when a switch may go
+      # there, `:pattern` inside a pattern, and `:closed` when no node below
+      # can hold a switch.
+      type context = :free | :pattern | :closed
+
+      # The node.
+      %a{pure} attr_reader node: Prism::node
+
+      # The node's parent, or nil at the root.
+      %a{pure} attr_reader parent: Prism::node?
+
+      # The node's grandparent, or nil at the root and its children.
+      %a{pure} attr_reader grandparent: Prism::node?
+
+      # What the nodes above the node allow.
+      %a{pure} attr_reader context: context
+
+      # Builds the lineage of `node`.
+      #
+      # - `node`: Prism::node, the node.
+      # - `parent`: Prism::node, its parent, or nil.
+      # - `grandparent`: Prism::node, its grandparent, or nil.
+      # - `context`: Symbol, what the nodes above it allow.
+      def self.new: (node: Prism::node, parent: Prism::node?, grandparent: Prism::node?, context: context) -> instance
+                  | (Prism::node node, Prism::node? parent, Prism::node? grandparent, context context) -> instance
+
+      # The lineage of the root of `tree`, where a switch may go.
+      #
+      # - `tree`: Prism::node, the root.
+      def self.root: (Prism::node tree) -> Lineage
+
+      # The lineage of `child`, a child of this lineage's node.
+      #
+      # - `child`: Prism::node, one of the node's children.
+      def descend: (Prism::node child) -> Lineage
+
+      # Whether the node can hold a switch where it stands.
+      def holds?: () -> bool
+    end
+  end
+end

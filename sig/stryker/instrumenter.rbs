@@ -1,0 +1,103 @@
+module Stryker
+  # Turns a project file into instrumented source: the original source with
+  # every mutant in it behind a switch, as
+  # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md)
+  # specifies.
+  #
+  # With no mutant active, the instrumented source runs the original code.
+  # With one of its mutants active, it runs that mutant's text instead. Each
+  # switch reads `::Stryker::Active.id` to choose, and calls
+  # `::Stryker::Active.hit` with the IDs of its mutants each time its original
+  # branch runs. The instrumenter doesn't define `::Stryker::Active`: the
+  # runtime of the process that loads the instrumented source does.
+  #
+  # The instrumenter splices each switch into the original bytes, around the
+  # node it wraps, so everything outside the switches stays as it was:
+  # comments, heredocs, magic comments, and the data after `__END__`. Every
+  # line of the original stays on the line where it was, so `__LINE__` and
+  # the line numbers in backtraces are unchanged.
+  #
+  # Some mutants get no switch. The result lists each of them with the
+  # reason, so that a run can report how many sites it skipped and why:
+  #
+  # - `:no_switch_site`: no node around the mutant's site can hold a switch,
+  #   as inside `BEGIN { }`.
+  # - `:no_one_line_form`: the mutant's text spans several lines, and has no
+  #   form on one line, as a regexp with a line break inside it.
+  #
+  # The instrumenter loads Prism and refract. Load it only in the
+  # orchestrator, never in a process that loads the project's code.
+  #
+  # ## Examples
+  #
+  # Two mutants in one expression, where the switch of the mutant at the
+  # inner site sits in the original branch of the outer one:
+  #
+  # ```ruby
+  # require "stryker/instrumenter"
+  #
+  # source = "total = a + b * c\n"
+  # mutants = [
+  #   Stryker::Mutant.new(id: 7, file: "lib/invoice.rb", mutator_name: "ArithmeticOperator",
+  #                       start_offset: 8, end_offset: 17, replacement: "a - b * c"),
+  #   Stryker::Mutant.new(id: 8, file: "lib/invoice.rb", mutator_name: "ArithmeticOperator",
+  #                       start_offset: 12, end_offset: 17, replacement: "b / c"),
+  # ]
+  # result = Stryker::Instrumenter.instrument(source, mutants)
+  # result.source
+  # # => "total = (::Stryker::Active.id == 7 ? (a - b * c) : (::Stryker::Active.hit(7); (a + (::Stryker::Active.id == 8 ? (b / c) : (::Stryker::Active.hit(8); (b * c))))))\n"
+  # result.skipped
+  # # => []
+  # ```
+  #
+  # A mutant inside `BEGIN { }` gets no switch, and the source comes back
+  # unchanged:
+  #
+  # ```ruby
+  # source = "BEGIN { puts 1 }\n"
+  # mutant = Stryker::Mutant.new(id: 1, file: "lib/boot.rb", mutator_name: "NumberLiteral",
+  #                              start_offset: 13, end_offset: 14, replacement: "2")
+  # result = Stryker::Instrumenter.instrument(source, [mutant])
+  # result.source == source
+  # # => true
+  # result.skipped.map(&:reason)
+  # # => [:no_switch_site]
+  # ```
+  class Instrumenter
+    # Instruments `source` with `mutants`, and returns the instrumented
+    # source with the mutants that got no switch. Raises
+    # `Stryker::Instrumenter::Error` when `source` doesn't parse, or when a
+    # mutant's replacement makes code that isn't valid Ruby.
+    #
+    # Every mutant must be an edit on `source`. Mutants at the same site
+    # share one switch, which tries them in the order of their IDs. With no
+    # mutants, the result's source equals `source`. The instrumenter parses
+    # the whole file with Prism once, and once more for each mutant whose
+    # text spans several lines.
+    #
+    # - `source`: String, the file's source.
+    # - `mutants`: Array of Stryker::Mutant, the edits on `source`.
+    def self.instrument: (String source, Array[Mutant] mutants) -> Result
+
+    # Parses `source`, ready to instrument it. Raises
+    # `Stryker::Instrumenter::Error` when `source` doesn't parse.
+    #
+    # - `source`: String, the file's source.
+    def initialize: (String source) -> void
+
+    # Instruments the source with `mutants`, as `Stryker::Instrumenter.instrument`
+    # does.
+    #
+    # - `mutants`: Array of Stryker::Mutant, the edits on the source.
+    def instrument: (Array[Mutant] mutants) -> Result
+
+    private
+
+    @source: String
+    @tree: Prism::ProgramNode
+
+    def outcome: (Mutant mutant) -> Outcome
+
+    def parsed: (String output) -> String
+  end
+end

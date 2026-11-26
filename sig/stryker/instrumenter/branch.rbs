@@ -1,0 +1,22 @@
+module Stryker
+  class Instrumenter
+    # One mutant branch of a switch: the mutant's ID, and the text the
+    # branch runs when that mutant is active. The text is on one line, and
+    # holds no switch.
+    class Branch < Data
+      # The mutant's ID.
+      attr_reader id: Integer
+
+      # The mutant's text: the wrapped node's source with the mutant's edit
+      # applied, on one line.
+      attr_reader text: String
+
+      # Builds the branch.
+      #
+      # - `id`: Integer, the mutant's ID.
+      # - `text`: String, the mutant's text, on one line.
+      def self.new: (id: Integer, text: String) -> instance
+                  | (Integer id, String text) -> instance
+    end
+  end
+end

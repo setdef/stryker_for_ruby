@@ -1,0 +1,33 @@
+module Stryker
+  class Instrumenter
+    # Writes a node's code on one line, for a mutant whose text spans several.
+    #
+    # refract's converter and formatter write the node as valid Ruby that
+    # means what the node means, without comments and with heredocs as string
+    # literals. `Stryker::Instrumenter::LineJoin` then joins the lines. The
+    # result counts only when Prism
+    # parses it as one statement that refract writes exactly as it wrote the
+    # node, so a join that changed the code's meaning gives nil.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("def total(a, b)\n  a + b\nend\n").value.statements.body.first
+    # Stryker::Instrumenter::OneLine.of(node)
+    # # => "def total(a, b) a.+(b); end"
+    # ```
+    module OneLine
+      # The code of `node` on one line, as binary, or nil when it has none:
+      # when a line
+      # break is inside a token, such as a regexp written over several lines,
+      # or when the joined line doesn't parse back to the same code.
+      #
+      # - `node`: Prism::node, the node to write.
+      def self.of: (Prism::node node) -> String?
+
+      def self.format: (Prism::node node) -> String
+
+      def self.same?: (String joined, String formatted) -> bool
+    end
+  end
+end

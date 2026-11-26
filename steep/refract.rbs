@@ -1,0 +1,20 @@
+# refract 2.0 ships no signatures. These cover the part of its API that the
+# instrumenter calls.
+module Refract
+  class Node
+  end
+
+  class Converter
+    def initialize: () -> void
+    def visit: (Prism::node node) -> Node
+  end
+
+  class Formatter
+    class Result
+      attr_reader source: String
+    end
+
+    def initialize: (?starting_line: Integer) -> void
+    def format_node: (Node node) -> Result
+  end
+end

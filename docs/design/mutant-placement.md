@@ -73,8 +73,8 @@ A mutant's text goes into its branch on one line. A node that spans several line
 
 The instrumenter puts each mutant's text on one line:
 
-- When the wrapped node fits on one line, the mutant's text goes into the switch as it is.
-- When the wrapped node spans several lines, the instrumenter applies the edit to the whole file, parses the result with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line.
+- When the mutant's text fits on one line, it goes into the switch as it is, unless it holds a heredoc opener. A heredoc opener in a mutant branch would read the body on the lines below the switch, which the original branch's opener reads. So when the edit leaves a heredoc opener of the wrapped node in place, or its replacement holds `<<`, the mutant's text takes the next path, where refract writes each heredoc as a string literal.
+- Otherwise, the instrumenter applies the edit to the whole file, parses the result with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses it as one statement that refract formats exactly as it formatted the node.
 - When the mutant's text has no one-line form, the site gets no mutant. The run reports how many sites it skipped this way, and why.
 
 Prism and refract load only in the process that instruments, never in a process that loads the project's code ([Loading and isolation](loading-and-isolation.md#two-kinds-of-process)).

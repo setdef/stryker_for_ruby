@@ -1,0 +1,23 @@
+module Stryker
+  class Instrumenter
+    # Finds a node in the file with a mutant's edit applied, for a mutant
+    # whose text spans several lines. Parsing the whole file, and not only
+    # the node's text, keeps what the code around the node means, such as
+    # which names are local variables.
+    module MutatedNode
+      # The node that takes up `node`'s range in the file with `mutant`'s
+      # edit applied, as Prism parses that file. The range ends as many bytes
+      # later as the edit adds. Raises `Stryker::Instrumenter::Error` when the
+      # file doesn't parse, or has no node at that range.
+      #
+      # - `source`: String, the file's source.
+      # - `mutant`: Stryker::Mutant, an edit inside `node`.
+      # - `node`: Prism::node, the node in the original file.
+      def self.of: (String source, Mutant mutant, Prism::node node) -> Prism::node
+
+      CONTAINERS: Array[singleton(Prism::Node)]
+
+      def self.at: (Prism::node tree, Span span) -> Prism::node?
+    end
+  end
+end
