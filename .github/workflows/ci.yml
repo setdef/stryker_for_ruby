@@ -41,7 +41,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest]
         # head is the development version of Ruby, the version that mise.toml
-        # calls 4.1-dev.
+        # lists as 4.1-dev.
         ruby: ["3.3", "3.4", "4.0", head]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
