@@ -37,7 +37,7 @@ module Stryker
       #   default.
       def self.lex: (String source, ?String ruby_version) -> Prism::LexResult
 
-      def self.version: (String ruby_version) -> String
+      private def self.version: (String ruby_version) -> String
     end
   end
 end

@@ -17,7 +17,7 @@ module Stryker
 
       CONTAINERS: Array[singleton(Prism::Node)]
 
-      def self.at: (Prism::node tree, Span span) -> Prism::node?
+      private def self.at: (Prism::node tree, Span span) -> Prism::node?
     end
   end
 end

@@ -25,11 +25,11 @@ module Stryker
       LINE_BREAKS: Array[Symbol]
       CLOSERS: Array[Symbol]
 
-      def self.inner_line_break?: (Prism::Token token) -> bool
+      private def self.inner_line_break?: (Prism::Token token) -> bool
 
-      def self.joined: (String text, Array[Prism::Token] tokens) -> String
+      private def self.joined: (String text, Array[Prism::Token] tokens) -> String
 
-      def self.separator: (Prism::Token line_break, Prism::Token following) -> String
+      private def self.separator: (Prism::Token line_break, Prism::Token following) -> String
     end
   end
 end

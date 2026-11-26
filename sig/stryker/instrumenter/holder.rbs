@@ -39,13 +39,13 @@ module Stryker
       KINDS: Array[singleton(Prism::Node)]
       COMPOUNDS: Array[singleton(Prism::Node)]
 
-      def self.part?: (Prism::node node, Prism::node? parent) -> bool
+      private def self.part?: (Prism::node node, Prism::node? parent) -> bool
 
-      def self.label?: (Prism::node node) -> bool
+      private def self.label?: (Prism::node node) -> bool
 
-      def self.matched_with_captures?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
+      private def self.matched_with_captures?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
 
-      def self.bare_array?: (Prism::node node) -> bool
+      private def self.bare_array?: (Prism::node node) -> bool
     end
   end
 end

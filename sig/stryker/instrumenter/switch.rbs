@@ -45,11 +45,11 @@ module Stryker
       #   branches.
       def self.closing: (Array[Branch] branches) -> String
 
-      def self.ternary: (Array[Branch] branches) -> String
+      private def self.ternary: (Array[Branch] branches) -> String
 
-      def self.chain: (Array[Branch] branches) -> String
+      private def self.chain: (Array[Branch] branches) -> String
 
-      def self.condition: (Branch branch) -> String
+      private def self.condition: (Branch branch) -> String
     end
   end
 end

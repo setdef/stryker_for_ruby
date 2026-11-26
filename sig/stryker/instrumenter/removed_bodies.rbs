@@ -15,7 +15,7 @@ module Stryker
       # - `mutant`: Stryker::Mutant, the edit.
       def self.of: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
 
-      def self.bodies_of_covered: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
+      private def self.bodies_of_covered: (Array[Heredoc::node] heredocs, Mutant mutant) -> Array[Span]
     end
   end
 end

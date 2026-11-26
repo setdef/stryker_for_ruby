@@ -17,11 +17,11 @@ module Stryker
       # - `child`: Prism::node, one of the parent's children.
       def self.of_child: (Lineage lineage, Prism::node child) -> Lineage::context
 
-      def self.free: (Prism::node node, Prism::node child) -> Lineage::context
+      private def self.free: (Prism::node node, Prism::node child) -> Lineage::context
 
-      def self.leaves_pattern?: (Lineage lineage, Prism::node child) -> bool
+      private def self.leaves_pattern?: (Lineage lineage, Prism::node child) -> bool
 
-      def self.guard?: (Prism::node condition, Prism::node? parent) -> bool
+      private def self.guard?: (Prism::node condition, Prism::node? parent) -> bool
     end
   end
 end

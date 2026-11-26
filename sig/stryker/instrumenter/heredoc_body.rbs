@@ -16,13 +16,13 @@ module Stryker
       #   heredoc in the file.
       def self.of: (Heredoc::node node, Array[Heredoc::node] heredocs) -> Span
 
-      def self.start_offset: (Heredoc::node node, Array[Heredoc::node] heredocs) -> Integer
+      private def self.start_offset: (Heredoc::node node, Array[Heredoc::node] heredocs) -> Integer
 
-      def self.closings_before: (Prism::Location opener, Array[Heredoc::node] heredocs) -> Array[Integer]
+      private def self.closings_before: (Prism::Location opener, Array[Heredoc::node] heredocs) -> Array[Integer]
 
-      def self.opens_before?: (Prism::Location other, Prism::Location opener) -> bool
+      private def self.opens_before?: (Prism::Location other, Prism::Location opener) -> bool
 
-      def self.closing: (Heredoc::node node) -> Prism::Location
+      private def self.closing: (Heredoc::node node) -> Prism::Location
     end
   end
 end

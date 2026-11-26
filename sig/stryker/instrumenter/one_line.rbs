@@ -25,9 +25,9 @@ module Stryker
       # - `node`: Prism::node, the node to write.
       def self.of: (Prism::node node) -> String?
 
-      def self.format: (Prism::node node) -> String
+      private def self.format: (Prism::node node) -> String
 
-      def self.same?: (String joined, String formatted) -> bool
+      private def self.same?: (String joined, String formatted) -> bool
     end
   end
 end
