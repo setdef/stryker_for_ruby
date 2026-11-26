@@ -40,13 +40,15 @@ class LoaderPathsProcessTest < Minitest::Test
     File.join(spelling(lib), file)
   end
 
-  # Plain Ruby gives __dir__ the real path of a file, and a file that the
-  # loader serves is compiled with it.
-  def test_a_file_required_through_another_spelling_of_its_folder_has_the_real_folder_as_its_dir
-    lib, cache = project({ "folder.rb": "DIR = :original\n" }, {})
+  # A file that the loader serves shows the same __dir__ as a file that plain
+  # Ruby loads through the same spelling of its folder. The file that isn't
+  # instrumented stands for plain Ruby.
+  def test_a_file_required_through_another_spelling_of_its_folder_has_the_dir_that_plain_ruby_gives
+    lib, cache = project({ "folder.rb": "DIR = :original\n", "plain.rb": "PLAIN = __dir__\n" }, {})
     file = aliased(lib, "folder.rb")
     Stryker::Runtime::Cache.write(cache, { file => "DIR = __dir__\n" })
-    program = "#{installed(lib, cache)}require #{file.inspect}\np DIR == #{File.realpath(lib).inspect}"
+    program = "#{installed(lib, cache)}require #{file.inspect}\nrequire #{aliased(lib, 'plain.rb').inspect}\n" \
+      "p DIR == PLAIN"
 
     assert_equal("true\n", run_program(program).first)
   end
