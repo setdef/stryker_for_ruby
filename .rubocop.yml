@@ -36,7 +36,7 @@ Style/EndlessMethod:
   EnforcedStyle: disallow
 
 Style/Copyright:
-  # REUSE.toml gives every file its copyright and license, so no Ruby file
+  # REUSE.toml lists the copyright and license of every file, so no Ruby file
   # has a notice for this cop to find.
   Enabled: false
 
