@@ -50,7 +50,13 @@ module SampleValues
   end
 
   def mutant_run
-    Stryker::MutantRun.new(mutant:, static: false, test_ids: ["Shop::DiscountTest#test_rate"], timeout_ms: 1500)
+    Stryker::MutantRun.new(
+      mutant:,
+      static: false,
+      test_ids: ["Shop::DiscountTest#test_rate"],
+      covered_by: ["Shop::DiscountTest#test_rate"],
+      timeout_ms: 1500
+    )
   end
 
   def mutant_result(status: "Killed")

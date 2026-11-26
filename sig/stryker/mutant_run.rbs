@@ -19,6 +19,7 @@ module Stryker
   #   mutant:,
   #   static: false,
   #   test_ids: ["Shop::DiscountTest#test_rate", "Shop::DiscountTest#test_bulk"],
+  #   covered_by: ["Shop::DiscountTest#test_rate", "Shop::DiscountTest#test_bulk"],
   #   timeout_ms: 1500
   # )
   # Stryker::MutantRun.from_json(run.to_json) == run
@@ -40,6 +41,12 @@ module Stryker
     # test's ID.
     attr_reader test_ids: Array[String]
 
+    # The IDs of the tests whose bucket held the mutant in the dry run. For a
+    # runtime mutant, they are its `test_ids`. A static mutant's run holds
+    # every test, and this lists only the tests that recorded a hit
+    # ([What the report holds](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#what-the-report-holds)).
+    attr_reader covered_by: Array[String]
+
     # The run's time limit in milliseconds. A run that passes it has the
     # status `Timeout`.
     attr_reader timeout_ms: Integer
@@ -49,9 +56,11 @@ module Stryker
     # - `mutant`: Stryker::Mutant, the mutant to make active.
     # - `static`: bool, whether the mutant is static.
     # - `test_ids`: Array of String, the IDs of the tests to run.
+    # - `covered_by`: Array of String, the IDs of the tests that reached the
+    #   mutant in the dry run.
     # - `timeout_ms`: Integer, the time limit in milliseconds.
-    def self.new: (mutant: Mutant, static: bool, test_ids: Array[String], timeout_ms: Integer) -> instance
-                | (Mutant mutant, bool static, Array[String] test_ids, Integer timeout_ms) -> instance
+    def self.new: (mutant: Mutant, static: bool, test_ids: Array[String], covered_by: Array[String], timeout_ms: Integer) -> instance
+                | (Mutant mutant, bool static, Array[String] test_ids, Array[String] covered_by, Integer timeout_ms) -> instance
 
     # The readers of the members of a mutant run that hold another value, as
     # `Stryker::JsonValue::Reading#readers` describes: `mutant` reads a Hash into a `Stryker::Mutant`.

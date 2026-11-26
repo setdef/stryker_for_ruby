@@ -3,14 +3,20 @@
 require_relative("../support/sample_values")
 require_relative("../test_helper")
 
-# Checks that a mutant run holds its mutant, kind, tests, and time limit,
-# compares by value, and survives a round trip through JSON.
+# Checks that a mutant run holds its mutant, kind, tests, covering tests, and
+# time limit, compares by value, and survives a round trip through JSON.
 class MutantRunTest < Minitest::Test
   include SampleValues
 
   def test_holds_its_members
     assert_equal(
-      { mutant:, static: false, test_ids: ["Shop::DiscountTest#test_rate"], timeout_ms: 1500 },
+      {
+        mutant:,
+        static: false,
+        test_ids: ["Shop::DiscountTest#test_rate"],
+        covered_by: ["Shop::DiscountTest#test_rate"],
+        timeout_ms: 1500,
+      },
       mutant_run.to_h
     )
   end
@@ -33,8 +39,15 @@ class MutantRunTest < Minitest::Test
     assert_equal(run, Stryker::MutantRun.from_json(run.to_json))
   end
 
+  def test_a_static_run_can_cover_fewer_tests_than_it_runs
+    tests = { static: true, test_ids: %w[A#test_a B#test_b], covered_by: %w[B#test_b] }
+    run = Stryker::MutantRun.new(**mutant_run.to_h, **tests)
+
+    assert_equal(run, Stryker::MutantRun.from_json(run.to_json))
+  end
+
   def test_a_missing_mutant_is_refused
-    object = { static: false, test_ids: [], timeout_ms: 1500 }.transform_keys(&:to_s)
+    object = { static: false, test_ids: [], covered_by: [], timeout_ms: 1500 }.transform_keys(&:to_s)
 
     assert_raises(ArgumentError) { Stryker::MutantRun.from_h(object) }
   end
