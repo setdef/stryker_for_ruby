@@ -87,6 +87,19 @@ class CacheTest < Minitest::Test
     assert(written("/app/lib/café.rb": "1\n").file("/app/lib/café.rb"))
   end
 
+  # A path from the file system carries an encoding that depends on the
+  # locale, and a path from elsewhere can carry another, so one run can hold
+  # paths in several encodings. Joining two of them raises when each has a
+  # letter outside ASCII.
+  def test_paths_in_different_encodings_are_found
+    utf8 = "/app/lib/café.rb"
+    binary = "/app/lib/caf\xC3\xA9s.rb".b
+    Stryker::Runtime::Cache.write(directory, { utf8 => "1\n", binary => "2\n" })
+    cache = Stryker::Runtime::Cache.read(directory, nil)
+
+    assert_equal(%w[1 2], [utf8, binary].map { |path| text(cache, path).chomp })
+  end
+
   def test_no_sources_make_an_empty_cache
     assert_empty([written.files, written.names].flat_map(&:to_a))
   end

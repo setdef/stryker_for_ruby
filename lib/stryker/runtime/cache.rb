@@ -40,7 +40,11 @@ module Stryker
         # bundle the project controls.
         raise(ArgumentError, NUL_IN_PATH) if paths.any? { |path| path.include?(SEPARATOR) }
 
-        paths.join(SEPARATOR)
+        # Each path goes in as its bytes, because Ruby tags a path from the
+        # file system with the file system's encoding and a path from the
+        # configuration with UTF-8, and a join of two strings in encodings
+        # that don't match, each with a letter outside ASCII, raises.
+        paths.map(&:b).join(SEPARATOR)
       end
 
       def self.keyed(path, file, separator)
