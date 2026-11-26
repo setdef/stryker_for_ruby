@@ -6,20 +6,12 @@ require "stryker/instrumenter"
 # Checks that a node's code goes on one line only when the joined line, in
 # place of the node in its file, means what the node means.
 class OneLineTest < Minitest::Test
-  # The plain mutant of a mutant that changes nothing in +source+, which is
-  # +source+ parsed.
-  def plain(source)
-    unchanged = { id: 1, file: "a.rb", mutator_name: "None", start_offset: 0, end_offset: 0, replacement: "" }
-    heredocs = Stryker::Instrumenter::Heredoc.in(Prism.parse(source).value)
-    Stryker::Instrumenter::PlainMutant.of(source, heredocs, Stryker::Mutant.new(**unchanged))
-  end
-
   # The code on one line of the first statement in +source+, or of the node
   # that the block picks from it.
   def one_line(source)
-    file = plain(source)
-    statement = file.result.value.statements.body.first
-    Stryker::Instrumenter::OneLine.of(block_given? ? yield(statement) : statement, file)
+    parsed = Prism.parse(source)
+    statement = parsed.value.statements.body.first
+    Stryker::Instrumenter::OneLine.of(block_given? ? yield(statement) : statement, parsed)
   end
 
   def test_a_definition_goes_on_one_line

@@ -7,8 +7,7 @@ require_relative "removed_bodies"
 module Stryker
   class Instrumenter
     module InPlace
-      def self.of(node, plain, text)
-        parsed = plain.result
+      def self.of(node, parsed, text)
         source = parsed.source.source
         location = node.location
         # The bodies of the node's heredocs lie below it, where text with no

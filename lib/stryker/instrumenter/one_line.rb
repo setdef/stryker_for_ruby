@@ -11,10 +11,10 @@ require_relative "syntax"
 module Stryker
   class Instrumenter
     module OneLine
-      def self.of(node, plain)
+      def self.of(node, parsed)
         formatted = format(node)
         joined = LineJoin.of(formatted)
-        joined.b if joined && same?(found_in_place(node, plain, joined), formatted)
+        joined.b if joined && same?(found_in_place(node, parsed, joined), formatted)
       end
 
       def self.format(node)
@@ -27,11 +27,11 @@ module Stryker
       end
       private_class_method(:same?)
 
-      def self.found_in_place(node, plain, joined)
-        # The joined line parses in the plain mutant, in place of the node,
+      def self.found_in_place(node, parsed, joined)
+        # The joined line parses in the file, in place of the node,
         # so that code that needs what is around it, such as yield in a
         # method or retry in a rescue, parses as it does there.
-        result = Syntax.parse(InPlace.of(node, plain, joined))
+        result = Syntax.parse(InPlace.of(node, parsed, joined))
         start_offset = node.location.start_offset
         found = MutatedNode.at(result.value, Span.new(start_offset:, end_offset: start_offset + joined.bytesize))
         found if result.success?
