@@ -73,4 +73,38 @@ class SourceTextTest < Minitest::Test
 
     assert_equal([position(1, 1), position(2, 1)], [text.location(0, 1).start, text.location(2, 3).start])
   end
+
+  def test_refuses_an_offset_inside_a_multibyte_character
+    error = assert_raises(ArgumentError) { Stryker::SourceText.new("a = \"€\"\n").location(6, 8) }
+
+    assert_equal("byte offset 6 is not on a character boundary, in a text of 10 bytes", error.message)
+  end
+
+  def test_refuses_an_end_offset_inside_a_multibyte_character
+    error = assert_raises(ArgumentError) { Stryker::SourceText.new("a = \"€\"\n").location(5, 6) }
+
+    assert_equal("byte offset 6 is not on a character boundary, in a text of 10 bytes", error.message)
+  end
+
+  def test_refuses_an_offset_past_the_end_of_the_text
+    error = assert_raises(ArgumentError) { Stryker::SourceText.new("a + b").location(4, 6) }
+
+    assert_equal("byte offset 6 is not on a character boundary, in a text of 5 bytes", error.message)
+  end
+
+  def test_refuses_a_negative_offset
+    error = assert_raises(ArgumentError) { Stryker::SourceText.new("a + b").location(-1, 2) }
+
+    assert_equal("byte offset -1 is not on a character boundary, in a text of 5 bytes", error.message)
+  end
+
+  def test_refuses_a_start_after_its_end
+    error = assert_raises(ArgumentError) { Stryker::SourceText.new("a + b").location(3, 2) }
+
+    assert_equal("start offset 3 is after end offset 2, in a text of 5 bytes", error.message)
+  end
+
+  def test_accepts_an_offset_at_the_end_of_the_text
+    assert_equal(position(1, 6), Stryker::SourceText.new("a + b").location(5, 5).end)
+  end
 end

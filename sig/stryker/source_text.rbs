@@ -11,8 +11,10 @@ module Stryker
   # A line ends at `"\n"`, so the `"\r"` of a CRLF line ending counts as a
   # column on its line. An offset just after a `"\n"` is column 1 of the next
   # line, and an offset at the end of the text is the position after its last
-  # character. An offset that falls inside a multibyte character, or beyond
-  # the end of the text, gives a position with no error and no meaning.
+  # character. An offset that falls inside a multibyte character, is beyond
+  # the end of the text, or is negative raises ArgumentError, as does a start
+  # offset after its end offset. The message names the offset and the size of
+  # the text in bytes. ByteOffsets makes the check.
   #
   # Building a source text parses all of the text with Prism, which takes time
   # in proportion to its length. Building one source text for a file and
@@ -30,6 +32,8 @@ module Stryker
   # #      end=#<data Stryker::Position line=3, column=12>>
   # ```
   class SourceText
+    @text: String
+
     @prism_source: Prism::Source
 
     # Builds the source text of a file whose text is `text`.
@@ -40,7 +44,9 @@ module Stryker
 
     # The location of the stretch of the file from byte offset `start_offset`
     # up to, and not including, byte offset `end_offset`. Equal offsets give
-    # an empty location.
+    # an empty location. Raises ArgumentError for an offset that is negative,
+    # beyond the end of the text, or inside a multibyte character, and for a
+    # start offset after the end offset.
     #
     # - `start_offset`: Integer, the offset in bytes of the first byte in the
     #   stretch.

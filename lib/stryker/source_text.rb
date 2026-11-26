@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
 require "prism"
+require_relative "byte_offsets"
 require_relative "location"
 require_relative "position"
 
 module Stryker
   class SourceText
     def initialize(text)
+      @text = text
       @prism_source = Prism.parse(text).source
     end
 
     def location(start_offset, end_offset)
+      ByteOffsets.check(@text, start_offset, end_offset)
       Location.new(position(start_offset), position(end_offset))
     end
 
