@@ -9,6 +9,8 @@ module Stryker
   #   `Stryker::_TestRunner` port.
   # - `Stryker::Testing::ConfigSourceContract` checks an adapter of the
   #   `Stryker::_ConfigSource` port.
+  # - `Stryker::Testing::IsolationContract` checks an adapter of the
+  #   `Stryker::_Isolation` port.
   module Testing
     # What a test class that includes `Stryker::Testing::ConfigSourceContract`
     # defines.
@@ -25,6 +27,22 @@ module Stryker
       # Text that is valid in the adapter's format but holds a list or a
       # single value, not an object.
       def non_object_text: () -> String
+    end
+
+    # What a test class that includes `Stryker::Testing::IsolationContract`
+    # defines.
+    interface _IsolationHost
+      # A new adapter under test, not yet started, for the sample project in
+      # `root`, whose instrumented source is in the cache at `directory`.
+      # The contract starts and stops it.
+      #
+      # - `directory`: String, the cache's directory.
+      # - `root`: String, the sample project's root.
+      def isolation_under_test: (String directory, String root) -> _Isolation
+
+      # Whether the adapter runs static mutants, so that the contract gives
+      # it static runs. Otherwise it gives it runtime runs.
+      def runs_static_mutants?: () -> bool
     end
 
     # What a test class that includes `Stryker::Testing::TestRunnerContract`

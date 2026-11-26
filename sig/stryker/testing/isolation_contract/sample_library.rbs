@@ -1,0 +1,29 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # The library of the contract's sample project: one method and a few
+      # kinds of state, and its instrumented source.
+      module SampleLibrary
+        # The library's path in the project, `"lib/isolation_sample.rb"`.
+        PATH: String
+
+        # The ID of the mutant whose switch makes the library's method
+        # return `:mutated`, so that `test_value` fails: 1.
+        KILLING: Integer
+
+        # The ID of the mutant whose switch is in a constant's value, which
+        # runs only while the file loads, so that `test_loaded_value` fails
+        # only when the mutant was active before the file loaded: 3.
+        STATIC: Integer
+
+        # The library's source.
+        SOURCE: String
+
+        # The library's instrumented source, with the switches of `KILLING`
+        # and `STATIC`: one in the method, which runs while a test runs, and
+        # one in a constant's value, which runs only while the file loads.
+        INSTRUMENTED: String
+      end
+    end
+  end
+end

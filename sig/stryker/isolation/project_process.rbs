@@ -1,0 +1,47 @@
+module Stryker
+  module Isolation
+    # The entry point of every project process that an isolation adapter
+    # starts, as
+    # [The entry point](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-entry-point)
+    # specifies. The orchestrator starts the process with an array of
+    # arguments: the running Ruby, `-r` with the path of this file, `-e`
+    # with `Stryker::Isolation::ProjectProcess.main`, `--`, and then the
+    # arguments for the process itself: its mode, the cache's directory, the
+    # test runner's name, and what the mode needs.
+    #
+    # Requiring this file starts the runtime first, so the mutant whose ID
+    # `STRYKER_ACTIVE_MUTANT` holds is active before any of the project's
+    # code loads. It loads nothing outside the standard library.
+    #
+    # ## Examples
+    #
+    # The arguments of a fresh process for a static mutant's run:
+    #
+    # ```ruby
+    # Stryker::Isolation::Command.for("static", cache_directory, "minitest", "7.run", "7.results")
+    # # => [RbConfig.ruby, "-r", ".../stryker/isolation/project_process.rb",
+    # #     "-e", "Stryker::Isolation::ProjectProcess.main", "--",
+    # #     "static", cache_directory, "minitest", "7.run", "7.results"]
+    # ```
+    module ProjectProcess
+      # What a project process does, by the name of its mode: `"static"`,
+      # the fresh process of a static mutant's run.
+      MODES: Hash[String, singleton(StaticRun)]
+
+      # The test runner adapters, by the name in the `testRunner` option.
+      RUNNERS: Hash[String, singleton(TestRunners::MinitestRunner)]
+
+      # Runs the process from `argv`. It takes every argument out of
+      # `argv` before the project's code loads, so Minitest, which parses
+      # `ARGV` as its options, sees none. It installs the loader from the
+      # cache, builds the test runner adapter for the project in the
+      # current folder, and runs the mode, which ends the process. Raises
+      # ArgumentError for a mode or a test runner it doesn't know.
+      #
+      # - `argv`: Array of String, `ARGV` by default.
+      # - `loader`: `Stryker::Runtime::Loader`, or a stand-in in a test.
+      # - `modes`: Hash, `MODES` unless a test passes others.
+      def self.main: (?Array[String] argv, ?singleton(Runtime::Loader) loader, ?Hash[String, singleton(StaticRun)] modes) -> void
+    end
+  end
+end

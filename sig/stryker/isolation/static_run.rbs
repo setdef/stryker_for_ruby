@@ -1,0 +1,63 @@
+module Stryker
+  module Isolation
+    # What the fresh process of a static mutant's run does, in its project
+    # process: it reads its run from a file, checks that the run's mutant
+    # is the one that `STRYKER_ACTIVE_MUTANT` made active before anything
+    # loaded, loads the project's tests, and runs the run's tests, stopping
+    # at the first that fails. It writes each test's start and result to
+    # another file as it happens, and then ends the process.
+    #
+    # The run comes in a file, and the results go to one, because Ruby on
+    # Windows hands a new process no pipe beyond its standard input,
+    # output, and error, and the project writes to standard output.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::StaticRun.build(runner, ["7.run", "7.results"]).call
+    # # the process ends here
+    # ```
+    class StaticRun
+      # The text of the error for a run of another mutant than the active
+      # one.
+      OTHER_MUTANT: String
+
+      # The test runner adapter.
+      @runner: _TestRunner
+
+      # The path of the file that holds the run.
+      @run_path: String
+
+      # The path of the file the results go to.
+      @results_path: String
+
+      # The run with the paths in `details`: the run's file, and the
+      # results' file.
+      #
+      # - `runner`: Stryker::_TestRunner, the test runner adapter.
+      # - `details`: Array of String, the two paths.
+      def self.build: (_TestRunner runner, Array[String] details) -> StaticRun
+
+      # Builds the run.
+      #
+      # - `runner`: Stryker::_TestRunner, the test runner adapter.
+      # - `run_path`: String, the path of the run's file.
+      # - `results_path`: String, the path of the results' file.
+      def initialize: (_TestRunner runner, String run_path, String results_path) -> void
+
+      # Runs the run in this process, and ends it. When the run's mutant
+      # isn't the active one, its results hold that error, and no test
+      # runs.
+      #
+      # - `finisher`: Stryker::Isolation::Finisher, what ends the process.
+      # - `holder`: Stryker::Runtime::_Holder, what holds the active
+      #   mutant's ID, `Stryker::Active` by default.
+      def call: (?Finisher finisher, ?Runtime::_Holder holder) -> void
+
+      private
+
+      # Reads the run, checks its mutant, loads the tests, and runs them.
+      def run_tests: (RunReport report, Integer? active) -> Array[TestResult]
+    end
+  end
+end

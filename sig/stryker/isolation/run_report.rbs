@@ -1,0 +1,32 @@
+module Stryker
+  module Isolation
+    # Writes what happens in one mutant run, in the run's own process: a
+    # line when each test starts, a line with its result when it finishes,
+    # and a last line when the run ends. It is the run's test observer, so
+    # each result crosses to the orchestrator as soon as its test finishes,
+    # and a failure reaches the orchestrator even when the process dies
+    # right after it ([#20](https://github.com/setdef/stryker_for_ruby/issues/20)).
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # report = Stryker::Isolation::RunReport.new(pipe)
+    # report.conclude { runner.run(run.test_ids, bail: true, observer: report) }
+    # # pipe: {"started":{"id":"Shop::DiscountTest#test_rate",...}}
+    # #       {"finished":{"test":{...},"status":"failed",...}}
+    # #       {"ended":true}
+    # ```
+    class RunReport < LineWriter
+      # Writes `{"started":...}` with `test`.
+      #
+      # - `test`: Stryker::Test, the test about to start.
+      def test_started: (Test test) -> nil
+
+      # Writes `{"finished":...}` with `result`.
+      #
+      # - `result`: Stryker::TestResult, the result of the test that
+      #   finished.
+      def test_finished: (TestResult result) -> nil
+    end
+  end
+end

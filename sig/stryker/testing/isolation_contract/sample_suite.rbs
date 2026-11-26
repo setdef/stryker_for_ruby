@@ -1,0 +1,38 @@
+module Stryker
+  module Testing
+    module IsolationContract
+      # The test helper and the tests of the contract's sample project. Each
+      # test does one thing that a mutant run can meet: it passes, fails
+      # unless the library is as written, hangs, exits, calls `exit`, fails
+      # and then ends its process, changes the process's state or checks
+      # that nothing changed it, or records its process ID.
+      module SampleSuite
+        # The name of the sample tests' class, `"IsolationSampleTest"`.
+        CLASS: String
+
+        # The mutant ID of the run that changes the process's state.
+        CHANGER: Integer
+
+        # The sample tests that each check that the run before them changed
+        # nothing, by the mutant ID of each one's run: that a global, a
+        # constant's contents, a class variable, and an environment variable
+        # are as they were, and that a constant is still undefined.
+        CHECKS: Hash[Symbol, Integer]
+
+        # The test helper, which requires Minitest and the library, and
+        # records the process ID of each process that loads it, in a file
+        # that the process holds a lock on for as long as it lives. The lock
+        # shows whether every process the adapter started has ended. Signal 0
+        # can't show it on Windows, where it finds a process that ended while
+        # anything still holds a handle to it.
+        HELPER: String
+
+        # The sample tests, in `test/sample_test.rb`. Two of them fail and
+        # then end their process once the failure is written: a TracePoint
+        # ends it when the observer's `test_finished` returns, which is after
+        # the adapter wrote the failure and before it wrote anything else.
+        TESTS: String
+      end
+    end
+  end
+end

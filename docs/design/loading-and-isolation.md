@@ -1,6 +1,6 @@
 # Loading and isolation
 
-This page specifies how instrumented code gets into a Ruby process. It covers the two kinds of process in a run, the bundle they run in, what runs in a project process, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, the pool of workers that parses the plain mutants of a large file, and how the active mutant, the hook, and the lookup tables work in a Ractor. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). Where loading fits in the whole run is in [the architecture](architecture.md).
+This page specifies how instrumented code gets into a Ruby process, and how each mutant run gets a clean process to run in. It covers the two kinds of process in a run, the bundle they run in, what runs in a project process, the cache that holds instrumented source, the loader's hook, how the hook stays ahead of Bootsnap, the check that the hook saw every instrumented file, the pool of workers that parses the plain mutants of a large file, the entry point of a project process, the messages that cross each pipe, how a run's outcome becomes a status, time limits and kills, static mutants, and how the active mutant, the hook, and the lookup tables work in a Ractor. The reasons for loading through the hook are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md), and the reasons for running every mutant in a clean process are in [ADR 0002](../decisions/0002-every-mutant-runs-in-a-clean-process.md). Where loading fits in the whole run is in [the architecture](architecture.md).
 
 ## Terms
 
@@ -19,18 +19,18 @@ The orchestrator never loads the project's code, and a project process never ins
 
 | Process | What it does | The code of **Stryker (for Ruby)** that it loads |
 | - | - | - |
-| The orchestrator | Reads the configuration, parses the files, instruments them (starting parse workers for a file with many mutants), and writes the cache. | The code that instruments, with Prism and refract. |
-| A project process | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
+| The orchestrator | Reads the configuration, parses the files, instruments them (starting parse workers for a file with many mutants), writes the cache, starts the project processes, and judges each run from what they write. | The code that instruments, with Prism and refract, and the part of each isolation adapter that starts and judges the runs. |
+| A project process: each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
 
 Prism and refract load in the orchestrator, and never in a project process. A parse worker, which isn't a project process, loads Prism too ([Parsing plain mutants](#parsing-plain-mutants)). The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
 
 ### The bundle
 
-The orchestrator runs inside the project's bundle, with the gem in the project's Gemfile, so Prism and refract resolve against the project's locked gems.
+The orchestrator runs inside the project's bundle, with the gem in the project's Gemfile, so Prism and refract resolve against the project's locked gems. The orchestrator starts every project process with the same bundle environment.
 
 ### What runs in a project process
 
-The runtime holds the hook, the switch, and the hit recorder, and the collector Ractor of every process that records hits, which starts when the project makes its first Ractor ([Ractors](coverage.md#ractors)). A project that makes no Ractor gets none from the runtime. It also holds the test runner adapters. All of it uses nothing outside the standard library.
+The runtime holds the hook, the switch, and the hit recorder, and the collector Ractor of every process that records hits, which starts when the project makes its first Ractor ([Ractors](coverage.md#ractors)). A project that makes no Ractor gets none from the runtime. It also holds the test runner adapters, the entry point of a project process ([The entry point](#the-entry-point)), the code that writes each test's result as the test finishes, and the part of the isolation adapter that runs in a project process: a fresh process's run. All of it uses nothing outside the standard library. The rest of the isolation adapter runs in the orchestrator, which starts the project processes, reads their messages, judges each run, and enforces the time limits that [Time limits and kills](#time-limits-and-kills) assigns to it.
 
 ### The cache
 
@@ -57,7 +57,7 @@ A fresh process is the one way that runs the same on Linux, macOS, and Windows. 
 
 ### What crosses the pipes
 
-Jobs and results cross pipes as JSON lines. The reading side parses each line with `JSON.parse` and never with `Marshal.load`. A line holds the bytes of a file or of a replacement in Base64, because JSON holds only Unicode text and a project's file may be in any encoding.
+Jobs and results cross pipes as JSON lines, as the isolation adapters' messages do ([The protocol](#the-protocol)). The reading side parses each line with `JSON.parse` and never with `Marshal.load`. A line holds the bytes of a file or of a replacement in Base64, because JSON holds only Unicode text and a project's file may be in any encoding.
 
 The orchestrator writes a worker one line with a file's source, and then one line for each plain mutant, which holds its patches: the changes to the original source that make the plain mutant. A patch is the offsets of the bytes it replaces and the text that replaces them, and the offsets are the original source's. The patches of a plain mutant take out the heredoc bodies that it leaves out, make the mutant's edit, and put the parentheses around the wrapped node. A plain mutant's text is as large as the file, so the file goes once to each worker and each plain mutant goes as a few patches. The worker makes the text from the source and the patches with the code that the orchestrator uses for the same job, parses it with Prism with the syntax of the running Ruby, and writes one line, `{"valid":true}` or `{"valid":false}`. A worker writes nothing for a source.
 
@@ -171,6 +171,74 @@ Two other ways to load instrumented code look simpler. Probes on Ruby 3.3, 3.4, 
 
 **Hooks on `require`, `require_relative`, and `load`.** Prepending to `Kernel` needs all three hooks; with `require` alone, files loaded by `require_relative` stay uninstrumented. On Ruby 3.4 and later, in a project that Zeitwerk loads, hooks installed before Bootsnap fail with `NoMethodError: super: no superclass method 'require'`. On Windows, a file required by two spellings of its path loads twice.
 
+## Isolation
+
+Every mutant run happens in a process that has run no test before it, and that process ends when the run does. Nothing is reused for a second run. `Isolation::FreshProcesses` gives each static mutant's run a fresh process with the mutant ID in its environment, on every system ([Static mutants on every system](#static-mutants-on-every-system)).
+
+### The entry point
+
+The orchestrator starts every project process with an array of arguments, never a string that a shell would parse: the running Ruby, `-r` with the path of `stryker/isolation/project_process.rb`, `-e Stryker::Isolation::ProjectProcess.main`, `--`, and then the arguments for the process itself: its mode, the cache's directory, the name of the test runner from the `testRunner` option, and what the mode needs:
+
+| Mode | What it needs | Standard input | Standard output and standard error |
+| - | - | - | - |
+| `static` | The path of the file that holds its run, and the path of the file for its results | The null device | Files in the run's temporary folder |
+
+Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set to the run's mutant, whatever the orchestrator's environment holds.
+
+A project process ends with `exit!`, whatever its mode, once its work is done or has raised. `exit` would run every `at_exit` block, the project's included: `minitest/autorun`'s, and SimpleCov's, which writes its results into the project.
+
+No result travels on standard output, on any system. Each project process's standard output and standard error go to files of its own, which `Isolation::OutputFiles` names, in the run's folder. A `RuntimeError`'s reason ends with the last 20 lines of the run's standard error.
+
+### The protocol
+
+Every message is one JSON object on a line of its own. Each process that reads one parses it with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests. Each line goes in one write, in sync mode, so a write survives the writer's `exit!`, and the lines of two threads never mix.
+
+A process that runs a mutant run writes, as it happens:
+
+| Message | When |
+| - | - |
+| `{"started": <the test>}` | Just before each test starts |
+| `{"finished": <the test's result>}` | As soon as each test finishes, through the test runner adapter's `test_finished` |
+| `{"ended": true}` | When the run's last test has finished |
+| `{"error": "<class>: <message>"}` | When the run raised instead, such as `SystemExit` from a test that calls `exit` |
+
+A test's result crosses as soon as the test finishes ([#20](https://github.com/setdef/stryker_for_ruby/issues/20)), so a failure reaches the orchestrator even when the process dies right after it.
+
+A fresh process reads its run from a file, as JSON, and writes its messages to another file, because Ruby on Windows hands a new process no descriptor beyond its standard input, output, and error: `Process.spawn` there refuses a descriptor of 3 or more. Both files are in a temporary folder for the run, which the orchestrator makes with `Dir.mktmpdir` and deletes once it has judged the run. Each line reaches the file when its test finishes, so a failure written before a crash is still there.
+
+A stream that stops partway is read up to the last whole line. A last line with no line break is one the writer didn't finish, and is left out. The orchestrator trusts a run's messages up to the first line that is no message, such as a line that isn't JSON, an object with a key it doesn't know, and reads nothing after it.
+
+### How a run's outcome becomes a status
+
+The orchestrator judges each run from its messages and from how its process ended: its exit status or the signal that ended it, and whether it ran past its time limit. The first row that holds gives the status:
+
+| What happened | Status | Reason |
+| - | - | - |
+| A test's result is `failed` | `Killed`, by that test | The test's failure message |
+| The process ran past its time limit | `Timeout` | `Timeout of <N> ms exceeded.` |
+| The run ended, every one of its tests finished without failing, and the process exited with status 0 | `Survived` | none |
+| Anything else | `RuntimeError` | The error the process wrote, or how it ended, such as `The run's process exited with status 3 after 1 of its 2 tests finished, while Shop::CartTest#test_total ran.`, and then the last 20 lines of its standard error |
+
+So a failed test kills the mutant whatever the process did after it said so: crashed, exited with an error, raised a signal at itself, or ran on until its time limit. A process that ends before its last test finished, crashes, or runs past its limit before any failure is never `Survived`. `tests_completed` counts the tests that finished. `covered_by` is the run's `covered_by`, for both kinds of mutant: the tests whose bucket held the mutant in the dry run. For a runtime mutant, those are the tests its run ran. A static mutant's run holds every test, and its `covered_by` lists only the tests that recorded a hit.
+
+### Time limits and kills
+
+A fresh process writes its messages to a file of its run's, and the orchestrator reads them once the process ended and enforces the run's time limit.
+
+A run's time limit counts from the start of its process. Past it, the orchestrator sends KILL, and nothing gentler first: Ruby turns TERM into an exception that runs every `ensure` clause and `at_exit` block, the project's included, with the mutant still active. Where `setpgid` exists, as on Linux and macOS, every process that an adapter starts leads a process group of its own, so the KILL goes to the whole group, and the processes that the run's tests started die with it. The same KILL goes to the group of a process that ended by itself, for what its tests left running. The process itself is killed only while it hasn't been reaped. Windows has no process groups, so there the KILL ends the process alone, and nothing is killed once a process has ended, because Windows can give its ID to another process. A process that KILL ends on Windows exits with status 0, so only the record of its time limit marks the run `Timeout`, and the missing `ended` message keeps it from counting as `Survived`. The lines that a killed process wrote before the KILL count: a failure among them is still `Killed`.
+
+`Isolation::FreshProcesses` learns that a fresh process ended from its waiter: it takes each process that has ended, and when none has, waits on the waiter of the process whose time ends first, until that process ends or its time does. A thread of `Process.detach` reaps each process, so none lingers as a zombie.
+
+When the orchestrator stops an adapter, or a block given to `run_all` raises, the adapter ends every process it started before `stop` or `run_all` returns.
+
+### Static mutants on every system
+
+A static mutant's switch runs once, while its file loads. Setting the mutant active afterwards changes nothing, because the switch never runs again. A probe set a static mutant in a constant's value active after load, and the constant kept its original value.
+
+So every static mutant run gets a fresh process, on every system, from `Isolation::FreshProcesses`, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The runtime reads that variable when it loads, before any of the project's code, and makes the active mutant's holder from it ([The active mutant's holder](#the-active-mutants-holder)), so the switch takes the mutated branch while the file loads. The process reads its run from a file, checks that the run's mutant is the active one, loads the project's tests, runs the run's tests, stopping at the first failure, and writes each test's start and result to its results' file as it happens. The run includes every test, because a value set at load time can reach any test.
+
+The adapter keeps up to `concurrency` processes running at once, and enforces each run's time limit itself. It judges a run from its results' file once its process ended, and then deletes the run's folder. A runtime mutant's run works in a fresh process too, at the cost of a process for each run.
+
 ## Ractors
 
 The switch and the hook can run in a Ractor other than the main one. This section specifies how the active mutant's ID is read there, how the hook behaves there, and why every lookup table is shareable. [Coverage](coverage.md#ractors) specifies how a hit made there is recorded. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux.
@@ -197,6 +265,7 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 
 ## What this design doesn't do
 
+- It doesn't reuse a process for a second run, on any system.
 - It doesn't run on Ruby implementations other than CRuby.
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
 - It doesn't load Prism or refract in a project process.
@@ -204,3 +273,6 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
 - It doesn't find an instrumented file that a `load` reaches through a symbolic link with a base name that no instrumented file has. A `load` adds nothing to `$LOADED_FEATURES`, so nothing reports it.
 - It doesn't write instrumented source into the project.
+- It doesn't end a process that a test started and that left the run's process group. On Windows, which has no process groups, it doesn't end a process that a fresh process started and that outlives the run.
+- It doesn't run the project's `at_exit` blocks in a project process, or the `ensure` clauses of a run that it kills for its time.
+- It doesn't read a static mutant's results before the run's process ends.
