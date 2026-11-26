@@ -3,8 +3,8 @@ module Stryker
     # Raised when the instrumenter can't make valid Ruby: when the file's
     # source doesn't parse, or when every plain mutant parses and the
     # instrumented source doesn't. A mutant whose plain mutant doesn't
-    # parse, or that makes no one node where its switch goes, raises
-    # neither: it gets no switch. An instrumented source that doesn't parse
+    # parse, or that makes no one node in its parentheses, raises neither:
+    # it gets no switch. An instrumented source that doesn't parse
     # means that a switch can't hold a mutant that is valid Ruby, which is a
     # fault in the instrumenter, or in the mutator that made the mutant. It
     # is also raised when the installed Prism doesn't know the syntax of the

@@ -17,6 +17,10 @@ module Stryker
         end_offset - start_offset
       end
 
+      def shifted(bytes)
+        Span.new(start_offset: start_offset + bytes, end_offset: end_offset + bytes)
+      end
+
       def same?(other)
         other.start_offset == start_offset && other.end_offset == end_offset
       end

@@ -1,25 +1,18 @@
 module Stryker
   class Instrumenter
-    # Finds a node in the file with a mutant's edit applied, for a mutant
-    # whose text spans several lines. Parsing the whole file, and not only
-    # the node's text, keeps what the code around the node means, such as
-    # which names are local variables.
+    # Finds a node by its range in a parsed file, such as the node of a
+    # mutant's text in the plain mutant, for a mutant whose text spans
+    # several lines. Parsing the whole file, and not only the node's text,
+    # keeps what the code around the node means, such as which names are
+    # local variables.
     module MutatedNode
-      # The node that takes up `node`'s range in the plain mutant, as Prism
-      # parses it, or nil when no one node does, as when `x = if c` becomes
-      # `x = if c then 5 end; if c`. When the edit makes several statements
-      # where a body held only `node`, it is the body's `StatementsNode`. The
-      # range ends as many bytes later as the plain mutant adds inside
-      # `node`. The plain mutant must parse.
-      #
-      # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant.
-      # - `node`: Prism::node, the node in the original file, which holds the
-      #   mutant's edit.
-      def self.of: (PlainMutant plain, Prism::node node) -> Prism::node?
-
       # The node in `tree` whose range is `span`, the outermost one when
       # several have it, or nil when none does. A `ProgramNode` with that
-      # range doesn't count, so the result is the statements it holds.
+      # range doesn't count, so the result is the statements it holds. When
+      # `span` is a mutant's text that makes several statements, as when
+      # `if c` becomes `if c then 5 end; if !c`, it is their
+      # `StatementsNode`. Text that starts or ends with a line break has no
+      # node.
       #
       # - `tree`: Prism::node, the node to search, usually a parsed file.
       # - `span`: Stryker::Instrumenter::Span, the range to find.

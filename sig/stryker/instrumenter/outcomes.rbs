@@ -1,0 +1,56 @@
+module Stryker
+  class Instrumenter
+    # Works out what the instrumenter does with each mutant of one file, from
+    # the node that its switch wraps: whether the mutant is valid Ruby, and
+    # the text of its branch. Both come from the mutant's plain mutant, as
+    # `Stryker::Instrumenter::PlainMutant` defines it, and each plain mutant
+    # is one parse of the whole file.
+    #
+    # ## Examples
+    #
+    # A void value doesn't parse in its parentheses, so the mutant isn't
+    # valid:
+    #
+    # ```ruby
+    # source = "x = f\n"
+    # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "Case",
+    #                              start_offset: 4, end_offset: 5, replacement: "return")
+    # node = Prism.parse(source).value.statements.body.first.value
+    # outcomes = Stryker::Instrumenter::Outcomes.new(source, [])
+    # outcomes.plain_mutant(mutant, node).result.source.source
+    # # => "x = (return)\n"
+    # outcomes.of(mutant, node).skip.reason
+    # # => :does_not_parse
+    # ```
+    class Outcomes
+      # Prepares to work out the outcomes of the mutants of `source`.
+      #
+      # - `source`: String, the file's source.
+      # - `heredocs`: Array of Stryker::Instrumenter::Heredoc::node, every
+      #   heredoc in the file.
+      def initialize: (String source, Array[Heredoc::node] heredocs) -> void
+
+      # The outcome of `mutant`, whose switch wraps `node`. With no `node`,
+      # the mutant has no plain mutant, so nothing parses, and the outcome
+      # is neither valid nor has a text.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant.
+      # - `node`: Prism::node, the node of the original file that the
+      #   mutant's switch wraps, or nil when no node can hold it.
+      def of: (Mutant mutant, Prism::node? node) -> Outcome
+
+      # The plain mutant of `mutant`, whose switch wraps `node`, parsed.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant, an edit inside `node`, or
+      #   inside the body of a heredoc whose opener `node` holds.
+      # - `node`: Prism::node, the node of the original file that the
+      #   mutant's switch wraps.
+      def plain_mutant: (Mutant mutant, Prism::node node) -> PlainMutant
+
+      private
+
+      @source: String
+      @heredocs: Array[Heredoc::node]
+    end
+  end
+end

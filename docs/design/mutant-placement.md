@@ -1,6 +1,6 @@
 # Mutant placement
 
-This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, the mutants that aren't valid Ruby, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The reasons for compiling every mutant into the code once and switching it on at run time are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
+This page specifies how the instrumenter turns a project file into instrumented source: where it puts each mutant's switch, what form the switch takes, and where the text of each mutant comes from. It covers the text edit a mutator returns, splicing into the original bytes, the switch, the plain mutant, the rule that keeps every line where it was, the rule that moves a switch out of a site that can't hold one, the sites that get no mutant, the mutants that aren't valid Ruby, and the kinds of site that a probe tried on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The reasons for compiling every mutant into the code once and switching it on at run time are in [ADR 0001](../decisions/0001-mutants-are-compiled-into-the-code-once-and-switched-on-at-run-time.md). The terms are defined in [Loading and isolation](loading-and-isolation.md#terms).
 
 ## The text edit
 
@@ -12,7 +12,7 @@ A switch wraps one node's source range. That node is usually the mutant's site, 
 
 A heredoc's body lies on the lines below its opener, outside the range of the opener and of every node around it. A mutant that replaces a heredoc opener, or removes a statement that holds one, is the opener's edit plus the removal of the heredoc's body. The body would stay in the file as code, where the plain mutant has no opener to read it. The report shows only the opener's edit, as the mutant's `location` and `replacement`.
 
-With the edit `<<EOS` to `'z'` on this file, the plain mutant is the second one, and the first is not:
+With the edit `<<EOS` to `'z'` on this file, the [plain mutant](#the-plain-mutant) is the second one, and the first is not:
 
 ```text
 # Original:
@@ -21,18 +21,18 @@ hi
 EOS
 p s
 # Not the plain mutant: the body, `hi` and `EOS`, is code.
-s = 'z'
+s = ('z')
 hi
 EOS
 p s
 # The plain mutant:
-s = 'z'
+s = ('z')
 p s
 ```
 
 Two cases leave the body in place. A body that the edit's range already holds goes with the edit. A replacement that holds `<<` writes an opener of its own, and that opener reads the body, as when `f(<<~A, 2)` becomes `f(<<~A, 3)`. When several heredocs open on one line, their bodies follow one after the other, and the edit removes only the bodies of the openers it replaces.
 
-The plain mutant that this page names is always the original file with the mutant's edit made and these bodies removed. The instrumented file keeps every body, under the original branch of the switch.
+The plain mutant leaves these bodies out. The instrumented file keeps every body, under the original branch of the switch.
 
 ### An edit inside a heredoc's body
 
@@ -88,6 +88,25 @@ total = (if ::Stryker::Active.id == 7 then (a - b) elsif ::Stryker::Active.id ==
 
 Every branch is in parentheses, and so is the whole switch, so the switch reads as one expression wherever the original did.
 
+## The plain mutant
+
+The plain mutant is the original file with the wrapped node's source replaced by the mutant's text in parentheses, and with the bodies of the heredoc openers that the edit replaces left out (see [A heredoc opener's edit](#a-heredoc-openers-edit)). That is exactly what the mutant's branch of the switch runs, so with the mutant active, the instrumented file has to run as the plain mutant runs. The instrumenter parses the plain mutant to check that the mutant is valid Ruby (see [Mutants that aren't valid Ruby](#mutants-that-arent-valid-ruby)), and to find the node that refract puts on one line (see [The mutant adds no line break](#the-mutant-adds-no-line-break)). The site tests compare what the switch prints with what the plain mutant prints (see [Kinds of site](#kinds-of-site)).
+
+The parentheses can change what a mutant means, compared with the file with only the edit made. With mutant 8 replacing `b * c` by `b - c`:
+
+```text
+# Original:
+total = a + b * c
+# The plain mutant, which the switch runs:
+total = a + (b - c)
+# Not the plain mutant: Ruby adds first.
+total = a + b - c
+```
+
+A replacement that doesn't parse alone can parse in its parentheses. Replacing `a + b` by `a) + (b` gives the plain mutant `(a) + (b)`, which parses, so the mutant gets a switch. Its text means what the original means, which is the mutator's concern. A replacement that leaves a void value doesn't parse there: replacing `f` in `x = f` by `return` gives the plain mutant `x = (return)`, so the mutant gets no switch, although the switch itself, whose other branch is a value, would parse.
+
+A mutant whose site has no node around it that can hold a switch has no plain mutant (see [Sites that can't hold a switch](#sites-that-cant-hold-a-switch)).
+
 ## Every line stays where it was
 
 Instrumented source keeps every line of the original on the line where it was. That keeps `__LINE__`, `caller_locations`, `Method#source_location`, the line numbers in backtraces, and heredocs working. Two rules keep the lines in place.
@@ -115,8 +134,8 @@ A mutant's text goes into its branch on one line. A node that spans several line
 The instrumenter puts each mutant's text on one line:
 
 - When the mutant's text fits on one line, it goes into the switch as it is, unless it holds a heredoc opener. A heredoc opener in a mutant branch would read the body on the lines below the switch, which the original branch's opener reads. So when the edit leaves a heredoc opener of the wrapped node in place, or its replacement holds `<<`, the mutant's text takes the next path, where refract writes each heredoc as a string literal. So does the text of an edit inside a heredoc's body, which lies outside the wrapped node's range (see [An edit inside a heredoc's body](#an-edit-inside-a-heredocs-body)).
-- Otherwise, the instrumenter makes the plain mutant, which is the whole file with the edit applied and the bodies of any replaced heredoc openers removed (see [A heredoc opener's edit](#a-heredoc-openers-edit)), parses it with Prism, converts the node at the edited range with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses the plain mutant with the joined line in place of the node, and the bodies of the node's heredocs removed, and finds there one node that refract formats exactly as it formatted the node. Parsing the joined line in its file keeps what the code around it allows, such as `yield` in a method, `break` and `next` in a block, and `retry` in a `rescue`, none of which parses on a line of its own.
-- When the mutant's text has no one-line form, the site gets no mutant. The run reports how many sites it skipped this way, and why. The same holds when the plain mutant parses but has no one node at the edited range, so that there is no text to put on one line, as when `x = if c` becomes `x = if c then 5 end; if c`, where the edit splits the assignment. A replacement that makes several statements where a body held only the node, as when the `if` is a method's whole body, leaves the body's statements at the edited range, and its text is those statements on one line, which run in the switch as they run in the body. Such a mutant is a shape the instrumenter can't place, not a fault in **Stryker (for Ruby)**, so it gets no switch and raises nothing.
+- Otherwise, the instrumenter makes the [plain mutant](#the-plain-mutant) with the wrapped node's source, with the edit made, as the text in its parentheses, keeping the bodies of the heredocs that the edit leaves in place. It parses it with Prism, converts the node that the parentheses hold, the one whose range is the text's, with `Refract::Converter` from the [refract](https://github.com/yippee-fun/refract) gem, formats it with `Refract::Formatter`, and joins the formatted text onto one line. Each line break that ends a statement becomes `; `, and every other line break, and one before a closing bracket, becomes a space. The joined line counts only when Prism parses the plain mutant with the joined line in place of that node, and the bodies of the node's heredocs removed, and finds there one node that refract formats exactly as it formatted the node. Parsing the joined line in its file keeps what the code around it allows, such as `yield` in a method, `break` and `next` in a block, and `retry` in a `rescue`, none of which parses on a line of its own.
+- When the mutant's text has no one-line form, the site gets no mutant. The run reports how many sites it skipped this way, and why. The same holds when the plain mutant parses but its parentheses hold no one node whose range is the text's, so that there is no text to put on one line, as when the text starts with a line break. A replacement that makes several statements, as when `x = if c` becomes `x = if c then 5 end; if !c`, puts the statements in the parentheses, and its text is those statements on one line, which run in the switch as they run in the parentheses: `x` gets the value of the last one. A mutant with no one node there is a shape the instrumenter can't place, not a fault in **Stryker (for Ruby)**, so it gets no switch and raises nothing.
 
 Prism and refract load only in the process that instruments, never in a process that loads the project's code ([Loading and isolation](loading-and-isolation.md#two-kinds-of-process)).
 
@@ -142,15 +161,15 @@ A site whose mutant's text has no one-line form gets no mutant either, as [The m
 
 ## Mutants that aren't valid Ruby
 
-A mutator's replacement can make a file that doesn't parse. The instrumenter parses each mutant's plain mutant, with the syntax of the running Ruby, and a mutant whose plain mutant doesn't parse gets no switch. The result lists it as skipped, with the reason `:does_not_parse`, and the run reports it with the [report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)'s status `CompileError`, for a mutant that is invalid.
+A mutator's replacement can make a file that doesn't parse. The instrumenter parses each mutant's [plain mutant](#the-plain-mutant), with the syntax of the running Ruby, and a mutant whose plain mutant doesn't parse gets no switch. The result lists it as skipped, with the reason `:does_not_parse`, and the run reports it with the [report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema)'s status `CompileError`, for a mutant that is invalid. A mutant with no node to hold its switch has no plain mutant, so the instrumenter doesn't parse one for it: it lists it with the reason `:no_switch_site`, whether or not its edit makes valid Ruby.
 
 Every parse on this page uses the syntax of the running Ruby, the Ruby that runs the project's code. When the installed Prism doesn't know that Ruby's syntax, the instrumenter raises `Stryker::Instrumenter::Error` with a message that names both versions. Prism 1.7 is the first release that knows Ruby 4.0 and 4.1.
 
-A fault in the instrumenter is a different case. When every plain mutant parses and the instrumented file doesn't, the instrumenter raises `Stryker::Instrumenter::Error` and the run stops. A replacement that ends with a comment is such a case: `1 # why` makes a plain mutant that parses, and a switch that doesn't, because the comment swallows the rest of the line.
+A fault in the instrumenter is a different case. When every plain mutant parses and the instrumented file doesn't, the instrumenter raises `Stryker::Instrumenter::Error` and the run stops. A replacement that ends with a comment usually makes a plain mutant that doesn't parse, since the comment hides the closing parenthesis, as in `total = (1 # why)`. It is such a fault when the line goes on with a bracket that a later line closes. In `x = [1, (`, with `2)]` on the next line, replacing `1` by `1 # why` gives the plain mutant `x = [(1 # why), (`, which the next line closes. In the switch, the comment hides the rest of the ternary as well, and the instrumented file doesn't parse.
 
 ## Kinds of site
 
-The probe in [#7](https://github.com/setdef/stryker_for_ruby/issues/7), and the instrumenter's site tests after it, wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the plain mutant's: the original file with only that change made, and the bodies of replaced heredoc openers removed. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped, and each site test checks that its switch wraps a node of that kind.
+The probe in [#7](https://github.com/setdef/stryker_for_ruby/issues/7) wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the original file with only that change made, and the bodies of replaced heredoc openers removed. The instrumenter's site tests do the same, and compare the output of each mutant with the [plain mutant](#the-plain-mutant)'s, whose text keeps the wrapped node's lines, in parentheses. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped, and each site test checks that its switch wraps a node of that kind.
 
 Only the node kinds that the rows with "yes" name, and the kinds that the rows with "no" name as where the switch goes, hold a switch (see [Sites that can't hold a switch](#sites-that-cant-hold-a-switch)).
 

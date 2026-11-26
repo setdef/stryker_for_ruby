@@ -1,36 +1,44 @@
 module Stryker
   class Instrumenter
-    # The plain mutant: the original file with only one mutant's change made.
-    # With the mutant active, the instrumented file has to run as this file
-    # runs.
+    # The plain mutant: the original file with the source of the node that a
+    # mutant's switch wraps replaced by the mutant's text in parentheses.
+    # That is exactly what the switch's branch runs, so with the mutant
+    # active, the instrumented file has to run as this file runs. When the
+    # plain mutant doesn't parse, the mutant isn't valid Ruby.
     #
-    # The change is the mutant's edit, and the removal of the body of every
-    # heredoc whose opener the edit replaces, unless the replacement holds
-    # `<<`. An opener that the edit replaced would leave its body in the file
-    # as code. The switch's original branch keeps the heredoc, and its body,
-    # in the instrumented file.
+    # The text is the node's source with the mutant's edit made. The plain
+    # mutant also leaves out the body of every heredoc whose opener the edit
+    # replaces, unless the replacement holds `<<`. An opener that the edit
+    # replaced would leave its body in the file as code. The switch's
+    # original branch keeps the heredoc, and its body, in the instrumented
+    # file.
+    #
+    # The parentheses keep the text's meaning apart from the code around
+    # it: in `a + b * c`, the mutant that makes `b * c` into `b - c` has the
+    # plain mutant `a + (b - c)`, as the switch runs it, and not
+    # `a + b - c`, which adds first.
     #
     # ## Examples
     #
-    # Removing the statement `puts <<EOS` leaves a file that parses, because
-    # the plain mutant removes the body as well:
+    # The text `a) + (b` doesn't parse alone, but its plain mutant,
+    # `(a) + (b)`, does:
     #
     # ```ruby
-    # source = "puts <<EOS\nhi there )\nEOS\np 1\n"
-    # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "Statement",
-    #                              start_offset: 0, end_offset: 10, replacement: "")
-    # heredocs = Stryker::Instrumenter::Heredoc.in(Prism.parse(source).value)
-    # Stryker::Instrumenter::PlainMutant.of(source, heredocs, mutant).result.success?
-    # # => true
+    # source = "total = a + b\n"
+    # mutant = Stryker::Mutant.new(id: 1, file: "a.rb", mutator_name: "Case",
+    #                              start_offset: 8, end_offset: 13, replacement: "a) + (b")
+    # node = Prism.parse(source).value.statements.body.first.value
+    # plain = Stryker::Instrumenter::Outcomes.new(source, []).plain_mutant(mutant, node)
+    # [plain.result.source.source, plain.result.success?]
+    # # => ["total = (a) + (b)\n", true]
     # ```
     class PlainMutant < Data
       # The mutant.
       %a{pure} attr_reader mutant: Mutant
 
-      # The stretches of the original file that the plain mutant removes
-      # besides the mutant's edit: the heredoc bodies, in the order of the
-      # file.
-      %a{pure} attr_reader bodies: Array[Span]
+      # Where the mutant's text lies in the plain mutant, inside the
+      # parentheses.
+      %a{pure} attr_reader span: Span
 
       # What Prism makes of the plain mutant.
       %a{pure} attr_reader result: Prism::ParseResult
@@ -38,18 +46,10 @@ module Stryker
       # Builds the plain mutant from its parts.
       #
       # - `mutant`: Stryker::Mutant, the mutant.
-      # - `bodies`: Array of Stryker::Instrumenter::Span, the bodies removed.
+      # - `span`: Stryker::Instrumenter::Span, where its text lies.
       # - `result`: Prism::ParseResult, what Prism makes of the file.
-      def self.new: (mutant: Mutant, bodies: Array[Span], result: Prism::ParseResult) -> instance
-                  | (Mutant mutant, Array[Span] bodies, Prism::ParseResult result) -> instance
-
-      # The plain mutant of `mutant`, parsed.
-      #
-      # - `source`: String, the file's source.
-      # - `heredocs`: Array of Stryker::Instrumenter::Heredoc::node, every
-      #   heredoc in the file.
-      # - `mutant`: Stryker::Mutant, the mutant.
-      def self.of: (String source, Array[Heredoc::node] heredocs, Mutant mutant) -> PlainMutant
+      def self.new: (mutant: Mutant, span: Span, result: Prism::ParseResult) -> instance
+                  | (Mutant mutant, Span span, Prism::ParseResult result) -> instance
 
       # `source` without `bodies`, as binary.
       #
@@ -58,17 +58,25 @@ module Stryker
       #   `source` that don't overlap, in the order of the file.
       def self.without: (String source, Array[Span] bodies) -> String
 
-      # How many bytes longer the plain mutant makes the range of `node`, a
-      # node of the original file that holds the mutant's edit: the bytes
-      # that the edit adds, less the bodies that lie inside the node. An edit
-      # inside a heredoc's body that lies after the node's range adds none.
+      # `text` with the stretch at `span` in parentheses, as binary.
       #
-      # - `node`: Prism::node, the node in the original file.
-      def growth_within: (Prism::node node) -> Integer
+      # - `text`: String, a file's source.
+      # - `span`: Stryker::Instrumenter::Span, a stretch of `text`.
+      def self.wrapped: (String text, Span span) -> String
 
-      private
+      # How many bytes longer `mutant`'s edit, with `bodies` removed, makes
+      # the range of the node at `location`, a node of the original file
+      # that holds the edit: the bytes that the edit adds, less the bodies
+      # that lie inside the node. An edit inside a heredoc's body that lies
+      # after the node's range adds none.
+      #
+      # - `mutant`: Stryker::Mutant, the mutant.
+      # - `bodies`: Array of Stryker::Instrumenter::Span, the heredoc bodies
+      #   that the plain mutant leaves out, in the order of the file.
+      # - `location`: Prism::Location, the node's range.
+      def self.growth: (Mutant mutant, Array[Span] bodies, Prism::Location location) -> Integer
 
-      def edit_growth_within: (Prism::Location location) -> Integer
+      private def self.edit_growth: (Mutant mutant, Prism::Location location) -> Integer
     end
   end
 end

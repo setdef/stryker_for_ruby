@@ -1,34 +1,32 @@
 # frozen_string_literal: true
 
-require_relative "removed_bodies"
-require_relative "syntax"
-
 module Stryker
   class Instrumenter
     # steep:ignore:start
-    class PlainMutant < Data.define(:mutant, :bodies, :result)
+    class PlainMutant < Data.define(:mutant, :span, :result)
       # steep:ignore:end
-      def self.of(source, heredocs, mutant)
-        bodies = RemovedBodies.of(heredocs, mutant)
-        edited = mutant.edit(without(source, bodies)).force_encoding(source.encoding)
-        new(mutant:, bodies:, result: Syntax.parse(edited))
-      end
-
       def self.without(source, bodies)
         bodies.reverse.reduce(source.b) do |text, body|
           "#{text.byteslice(0, body.start_offset)}#{text.byteslice((body.end_offset)..)}".b
         end
       end
 
-      def growth_within(node)
-        location = node.location
-        end_offset = location.end_offset
-        edit_growth_within(location) - bodies.sum { |body| (body.end_offset <= end_offset) ? body.length : 0 }
+      def self.wrapped(text, span)
+        start_offset = span.start_offset
+        end_offset = span.end_offset
+        "#{text.byteslice(0, start_offset)}(#{text.byteslice(start_offset...end_offset)})" \
+          "#{text.byteslice(end_offset..)}".b
       end
 
-      private def edit_growth_within(location)
+      def self.growth(mutant, bodies, location)
+        end_offset = location.end_offset
+        edit_growth(mutant, location) - bodies.sum { |body| (body.end_offset <= end_offset) ? body.length : 0 }
+      end
+
+      def self.edit_growth(mutant, location)
         mutant.inside?(location) ? mutant.growth : 0
       end
+      private_class_method(:edit_growth)
     end
   end
 end

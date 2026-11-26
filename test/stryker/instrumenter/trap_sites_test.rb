@@ -18,10 +18,10 @@ class TrapSitesTest < Minitest::Test
     source = "x = 1\np x\n"
     mutant = site_mutant(source, 1, "x = 1", "nil")
     instrumented = Stryker::Instrumenter.instrument(source, [mutant]).source
-    plain, switched = Dir.mktmpdir do |folder|
-      [run_ruby(folder, plain_mutant(source, mutant)), run_ruby(folder, instrumented, mutant.id)]
+    plain_source = plain_mutant(source, mutant, Prism::LocalVariableWriteNode)
+    (output, errors, status), switched = Dir.mktmpdir do |folder|
+      [run_ruby(folder, plain_source), run_ruby(folder, instrumented, mutant.id)]
     end
-    output, errors, status = plain
 
     assert_equal(["", 1], [output, status], "The plain mutant raises, since x isn't declared.")
     assert_match(/undefined local variable or method [`']x'/, errors)
@@ -34,7 +34,9 @@ class TrapSitesTest < Minitest::Test
     assert_instance_of(Prism::IfNode, switched_node(instrumented, 1))
     Dir.mktmpdir do |folder|
       assert_equal(printed(folder, REGEXP_CONDITION), printed(folder, instrumented), "With no mutant active.")
-      assert_equal(printed(folder, plain_mutant(REGEXP_CONDITION, regexp_mutant)), printed(folder, instrumented, 1))
+      plain = plain_mutant(REGEXP_CONDITION, regexp_mutant, Prism::IfNode)
+
+      assert_equal(printed(folder, plain), printed(folder, instrumented, 1))
     end
   end
 

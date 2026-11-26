@@ -4,11 +4,10 @@ module Stryker
     # source with the mutant's edit applied, on one line.
     #
     # When that text is on one line and leaves no heredoc in it, it goes
-    # into the branch as it is. Otherwise, the instrumenter applies the edit
-    # to the whole file, as `Stryker::Instrumenter::PlainMutant` does, and
-    # puts the node at the edited range of the plain mutant, which
-    # `Stryker::Instrumenter::MutatedNode` finds, on
-    # one line with `Stryker::Instrumenter::OneLine`. A
+    # into the branch as it is. Otherwise, the instrumenter puts the node in
+    # the parentheses of the plain mutant, which
+    # `Stryker::Instrumenter::MutatedNode` finds, on one line with
+    # `Stryker::Instrumenter::OneLine`. A
     # heredoc left in the text would read its body from the lines below the
     # switch, which the original branch's heredoc reads, so such a text takes
     # the second path too: refract writes the heredoc as a string literal. So
@@ -16,9 +15,10 @@ module Stryker
     # switch wraps the heredoc's opener.
     class MutantText
       # The text of `mutant`'s branch in the switch that wraps `node`, as
-      # binary, or nil when the text has no form on one line. The text has
-      # none when refract's formatting of it doesn't join onto one line, and
-      # when the plain mutant has no one node at the edited range.
+      # binary, or nil when the plain mutant doesn't parse or the text has
+      # no form on one line. The text has none when refract's formatting of
+      # it doesn't join onto one line, and when the plain mutant has no one
+      # node in its parentheses.
       #
       # - `source`: String, the file's source.
       # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant, which

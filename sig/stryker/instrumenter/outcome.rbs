@@ -15,7 +15,8 @@ module Stryker
       %a{pure} attr_reader text: String?
 
       # Whether the plain mutant of the mutant parses. A mutant that is not
-      # valid has no text.
+      # valid has no text. It is false for a mutant with no node to hold its
+      # switch, which has no plain mutant.
       %a{pure} attr_reader valid: bool
 
       # Builds the outcome.
@@ -23,7 +24,8 @@ module Stryker
       # - `mutant`: Stryker::Mutant, the mutant.
       # - `node`: Prism::node, the node its switch wraps, or nil.
       # - `text`: String, the text of its branch, or nil.
-      # - `valid`: bool, whether the plain mutant parses.
+      # - `valid`: bool, whether the plain mutant parses, false when there
+      #   is none.
       def self.new: (mutant: Mutant, node: Prism::node?, text: String?, valid: bool) -> instance
                   | (Mutant mutant, Prism::node? node, String? text, bool valid) -> instance
 

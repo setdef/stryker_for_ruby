@@ -27,9 +27,9 @@ module Stryker
       end
 
       private def reason
-        return :does_not_parse unless valid
+        return :no_switch_site unless node
 
-        node ? :no_one_line_form : :no_switch_site
+        valid ? :no_one_line_form : :does_not_parse
       end
     end
   end

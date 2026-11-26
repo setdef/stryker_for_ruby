@@ -89,7 +89,7 @@ class SelfReceiverSitesTest < Minitest::Test
     assert_switch_wraps(Prism::MultiWriteNode, instrumented, mutant)
     Dir.mktmpdir do |folder|
       assert_equal(run_ruby(folder, source), run_ruby(folder, instrumented), "With no mutant active.")
-      plain = run_ruby(folder, plain_mutant(source, mutant))
+      plain = run_ruby(folder, plain_mutant(source, mutant, Prism::MultiWriteNode))
 
       assert_equal(plain, run_ruby(folder, instrumented, 1), "With mutant 1 active.")
     end

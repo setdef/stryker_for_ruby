@@ -22,6 +22,12 @@ class OperatorSitesTest < Minitest::Test
     assert_site("s = 'ab'\np(s !~ /a/)\n", ["s !~ /a/", "s =~ /a/"], holder: Prism::CallNode)
   end
 
+  def test_an_operator_inside_one_of_lower_precedence_runs_in_its_parentheses
+    # The plain mutant is a + (b - c), as the switch runs it, and not
+    # a + b - c, which adds first. With floats, the two print different sums.
+    assert_site("a = 0.1\nb = 0.2\nc = 0.3\np(a + b * c)\n", ["b * c", "b - c"], holder: Prism::CallNode)
+  end
+
   def test_a_binary_operator_as_a_command_argument_with_an_operator_after_it
     assert_site("a = 6\nb = 2\nputs a * b + 1\n", ["a * b", "a / b"], holder: Prism::CallNode)
   end

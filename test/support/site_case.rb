@@ -6,19 +6,21 @@ require "prism"
 require "rbconfig"
 require "stryker/instrumenter"
 require "tmpdir"
-require_relative("heredoc_bodies")
+require_relative("plain_mutants")
 
 # Runs a kind of site from the placement table in
 # docs/design/mutant-placement.md, as ADR 0001's Confirmation asks: the
 # instrumented file with no mutant active must print what the original
 # prints, and with each mutant active, what the plain mutant prints. The plain
-# mutant is the original file with only that mutant's edit made.
+# mutant is the original file with the source of the node that the switch
+# wraps replaced by the mutant's text in parentheses, which is what the
+# switch runs.
 #
 # Each program runs in a separate Ruby process, with RubyGems off so that it
 # starts in milliseconds, and with a stand-in for the runtime's
 # Stryker::Active, which isn't built yet.
 module SiteCase
-  include HeredocBodies
+  include PlainMutants
 
   # The stand-in for the runtime's Stryker::Active. It reads the active
   # mutant's ID from the environment, and writes the IDs it was given as hits
@@ -72,7 +74,7 @@ module SiteCase
     assert_empty(result.skipped)
     assert_equal(source.count("\n"), result.source.count("\n"), "The instrumented source has other lines.")
     mutants.each { |mutant| assert_switch_wraps(holder, result.source, mutant) }
-    assert_runs_like_its_mutants(source, result.source, mutants, warnings:)
+    assert_runs_like_its_mutants(source, result.source, mutants, holder:, warnings:)
   end
 
   def assert_switch_wraps(holder, instrumented, mutant)
@@ -97,18 +99,25 @@ module SiteCase
     tail.is_a?(Prism::IfNode) ? last_branch(tail) : tail
   end
 
-  def assert_runs_like_its_mutants(source, instrumented, mutants, warnings: true)
+  def assert_runs_like_its_mutants(source, instrumented, mutants, holder:, warnings: true)
     Dir.mktmpdir do |folder|
       original = run_ruby(folder, source, warnings:)
 
       assert_equal(original, run_ruby(folder, instrumented, warnings:), "With no mutant active:\n#{instrumented}")
-      mutants.each { |mutant| assert_runs_like_its_mutant(folder, [source, instrumented], original, mutant, warnings) }
+      mutants.each do |mutant|
+        programs = [plain_mutant(source, mutant, holder), instrumented]
+
+        assert_runs_like_its_mutant(folder, programs, original, mutant, warnings)
+      end
     end
   end
 
+  # Checks that +programs+, the plain mutant of +mutant+ and the instrumented
+  # file, print the same with the mutant active, and something other than
+  # +original+.
   def assert_runs_like_its_mutant(folder, programs, original, mutant, warnings)
-    source, instrumented = programs
-    plain = run_ruby(folder, plain_mutant(source, mutant), warnings:)
+    plain_source, instrumented = programs
+    plain = run_ruby(folder, plain_source, warnings:)
     switched = run_ruby(folder, instrumented, mutant.id, warnings:)
 
     refute_equal(original, plain, "Mutant #{mutant.id} changes nothing that the program shows.")
@@ -135,16 +144,6 @@ module SiteCase
       end_offset: start_offset + needle.bytesize,
       replacement:
     )
-  end
-
-  # The original file with only +mutant+'s edit made. An edit that replaces a
-  # heredoc's opener, and not its body, also removes the body, which would
-  # otherwise be left in the file as code, unless its replacement holds an
-  # opener that reads the body.
-  def plain_mutant(source, mutant)
-    bodies = mutant.replacement.include?("<<") ? [] : heredoc_bodies(source, mutant)
-    edited = bodies.reverse.reduce(source.b) { |acc, elem| acc.byteslice(0, elem.begin) + acc.byteslice((elem.end)..) }
-    mutant.edit(edited).force_encoding(source.encoding)
   end
 
   # The output of +source+ run as a program, with the mutant +active+ if one

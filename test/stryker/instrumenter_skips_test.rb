@@ -64,6 +64,15 @@ class InstrumenterSkipsTest < Minitest::Test
     assert_equal([source, [[1, :does_not_parse]]], [result.source, skips(result)])
   end
 
+  def test_a_mutant_that_leaves_a_void_value_gets_no_switch
+    # The plain mutant, x = (return), doesn't parse. The switch would parse,
+    # since its other branch is a value.
+    source = "def f\n  x = g\n  x\nend\n"
+    result = instrument(source, %w[g return])
+
+    assert_equal([source, [[1, :does_not_parse]]], [result.source, skips(result)])
+  end
+
   def test_a_mutant_that_makes_invalid_code_leaves_the_others_their_switches
     result = instrument("total = a + b\np total\n", ["a + b", "a +"], ["a + b", "a - b"])
 
@@ -71,17 +80,37 @@ class InstrumenterSkipsTest < Minitest::Test
     assert_includes(result.source, "::Stryker::Active.id == 2")
   end
 
-  def test_a_replacement_that_ends_with_a_comment_raises
-    error = assert_raises(Stryker::Instrumenter::Error) { instrument("total = a + b\n", ["a + b", "1 # why"]) }
+  def test_a_replacement_that_ends_with_a_comment_gets_no_switch
+    # The comment hides the closing parenthesis of the plain mutant,
+    # total = (1 # why).
+    source = "total = a + b\n"
+    result = instrument(source, ["a + b", "1 # why"])
+
+    assert_equal([source, [[1, :does_not_parse]]], [result.source, skips(result)])
+  end
+
+  def test_a_comment_that_hides_more_of_the_switch_than_of_the_plain_mutant_raises
+    # In the plain mutant, x = [(1 # why), (, the comment hides a pair of
+    # brackets, and the next line closes the one left open. In the switch,
+    # it hides the rest of the ternary as well.
+    error = assert_raises(Stryker::Instrumenter::Error) { instrument("x = [1, (\n  2)]\np x\n", ["1", "1 # why"]) }
 
     assert_match(/\AThe instrumented source doesn't parse: .+, on line \d+\.\z/, error.message)
   end
 
   def test_a_multi_line_replacement_that_makes_no_one_node_gets_no_switch
+    # In the plain mutant, x = (\nif c ... end), no node starts where the
+    # text starts, with its line break.
     source = "c = true\nx = if c\n  1\nend\np x\n"
-    result = instrument(source, ["if c", "if c then 5 end; if c"], %w[1 2])
+    result = instrument(source, ["if c", "\nif c"], %w[1 2])
 
     assert_equal([[1, :no_one_line_form]], skips(result))
     assert_includes(result.source, "::Stryker::Active.id == 2")
+  end
+
+  def test_a_replacement_that_splits_an_assignment_runs_as_its_parentheses
+    # The plain mutant, x = (if c then 5 end; if !c ... end), assigns the
+    # value of the second if.
+    assert_site("c = true\nx = if c\n  1\nend\np x\n", ["if c", "if c then 5 end; if !c"], holder: Prism::IfNode)
   end
 end

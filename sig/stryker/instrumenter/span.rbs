@@ -30,6 +30,12 @@ module Stryker
       # How many bytes the stretch has.
       def length: () -> Integer
 
+      # The stretch as long as this one that starts `bytes` bytes later, or
+      # earlier when `bytes` is negative.
+      #
+      # - `bytes`: Integer, how many bytes to move it by.
+      def shifted: (Integer bytes) -> Span
+
       # Whether `other` starts and ends where this span does.
       #
       # - `other`: Stryker::_Span, another stretch.

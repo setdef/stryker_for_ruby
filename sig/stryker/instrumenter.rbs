@@ -27,11 +27,13 @@ module Stryker
   #   module body.
   # - `:no_one_line_form`: the mutant's text spans several lines, and has no
   #   form on one line, as a regexp with a line break inside it, or its plain
-  #   mutant parses but has no one node where its switch goes, as when
-  #   `x = if c` becomes `x = if c then 5 end; if c`.
-  # - `:does_not_parse`: the plain mutant, the original file with only the
-  #   mutant's edit made, doesn't parse. A run reports such a mutant with the
-  #   status `CompileError`.
+  #   mutant parses but has no one node in the parentheses where its text
+  #   goes, as when the text starts with a line break.
+  # - `:does_not_parse`: the plain mutant, the original file with the
+  #   source of the node that the switch wraps replaced by the mutant's text
+  #   in parentheses, doesn't parse, as when `x = f` becomes `x = return`,
+  #   whose plain mutant `x = (return)` is a void value. A run reports such a
+  #   mutant with the status `CompileError`.
   #
   # The instrumenter loads Prism and refract. Load it only in the
   # orchestrator, never in a process that loads the project's code.
@@ -77,13 +79,15 @@ module Stryker
     # `Stryker::Instrumenter::Error` when `source` doesn't parse, or when
     # every plain mutant parses and the instrumented source doesn't. That is
     # a fault in the instrumenter or in a mutator, as when a replacement ends
-    # with a comment, which a switch can't hold on one line.
+    # with a comment that hides less of the plain mutant than of the switch.
     #
     # Every mutant must be an edit on `source`. Mutants at the same site
     # share one switch, which tries them in the order of their IDs. With no
     # mutants, the result's source equals `source`. The instrumenter parses
-    # the whole file with Prism once, and once more for each mutant, as the
-    # plain mutant.
+    # the whole file with Prism once, once more for each mutant that has a
+    # node to hold its switch, as the plain mutant, and once more for each
+    # mutant whose text it puts on one line with refract. A mutant with no
+    # such node gets no plain mutant, and no parse.
     #
     # - `source`: String, the file's source.
     # - `mutants`: Array of Stryker::Mutant, the edits on `source`.
@@ -105,8 +109,8 @@ module Stryker
 
     @source: String
     @tree: Prism::ProgramNode
-    @heredocs: Array[Heredoc::node]
     @bodies: Array[[Heredoc::node, Span]]
+    @outcomes: Outcomes
 
     def outcome: (Mutant mutant) -> Outcome
 

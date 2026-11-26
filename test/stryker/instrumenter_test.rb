@@ -57,6 +57,15 @@ class InstrumenterTest < Minitest::Test
     assert_equal(expected, result.source)
   end
 
+  def test_a_mutant_whose_text_parses_only_in_its_parentheses_gets_a_switch
+    # The plain mutant is (a) + (b), which parses, though the text a) + (b
+    # doesn't parse alone.
+    result = instrument("total = a + b\n", ["a + b", "a) + (b"])
+    expected = "total = (::Stryker::Active.id == 1 ? (a) + (b) : (::Stryker::Active.hit(1); (a + b)))\n"
+
+    assert_equal([expected, []], [result.source, skips(result)])
+  end
+
   def test_a_guard_holds_its_own_switch_inside_a_pattern
     result = instrument("case 5\nin Integer => y if y > 1\n  p y\nend\n", ["y > 1", "y > 9"])
 
