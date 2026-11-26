@@ -96,4 +96,41 @@ class RecorderTest < Minitest::Test
 
     assert_equal([Set.new, { first: Set[8] }, Set["lib/invoice.rb"]], everything)
   end
+
+  # A runner adapter that reports out of order has a fault, and the recorder
+  # can't tell which bucket a hit belongs to, so it raises and keeps its state.
+  def test_a_test_that_starts_while_another_is_running_raises_naming_both
+    recorder.test_started(:first)
+    error = assert_raises(RuntimeError) { recorder.test_started(:second) }
+
+    assert_equal([true, true], [error.message.include?(":first"), error.message.include?(":second")])
+  end
+
+  def test_a_test_that_starts_while_another_is_running_changes_nothing
+    recorder.test_started(:first)
+    assert_raises(RuntimeError) { recorder.test_started(:second) }
+    recorder.record([7])
+    recorder.test_finished(:passed)
+
+    assert_equal([Set.new, { first: Set[7] }], buckets)
+  end
+
+  def test_a_test_that_finishes_with_none_running_raises
+    error = assert_raises(RuntimeError) { recorder.test_finished(:passed) }
+
+    assert_includes(error.message, "no test was running")
+  end
+
+  def test_a_test_that_finishes_twice_raises
+    during(:first) { nil }
+
+    assert_raises(RuntimeError) { recorder.test_finished(:passed) }
+  end
+
+  def test_a_test_may_start_again_after_it_finished
+    during(:first) { recorder.record([7]) }
+    during(:first) { recorder.record([8]) }
+
+    assert_equal([Set.new, { first: Set[8] }], buckets)
+  end
 end

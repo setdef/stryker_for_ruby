@@ -21,7 +21,12 @@ module Stryker
     # ends lands in whatever bucket is current at the next drain.
     #
     # A test's identity is the object passed to `test_started`. A test
-    # started a second time gets a new, empty bucket.
+    # started a second time, after it finished, gets a new, empty bucket.
+    #
+    # The test runner adapter reports tests one at a time. A `test_started`
+    # while a test is running, and a `test_finished` while none is, raise
+    # RuntimeError and change nothing: the adapter has a fault, and the
+    # recorder can't tell which bucket a hit belongs to.
     #
     # ## Examples
     #
@@ -37,6 +42,10 @@ module Stryker
     # # => {"InvoiceTest#test_total" => #<Set: {7, 8}>}
     # ```
     class Recorder
+      # The message of the RuntimeError that `test_finished` raises when no
+      # test is running.
+      NO_TEST_RUNNING: String
+
       # Builds a recorder with no hits, no tests, and no collector.
       def initialize: () -> void
 
@@ -60,13 +69,15 @@ module Stryker
       def collect_from: (Collector? collector) -> nil
 
       # Drains the collector into the current bucket, then makes `test`'s
-      # bucket current. Returns nil.
+      # bucket current. Returns nil. Raises RuntimeError, naming both tests,
+      # when another test is running.
       #
       # - `test`: Object, the test, as the test runner adapter gives it.
       def test_started: (Object test) -> nil
 
       # Drains the collector into the current test's bucket, then makes the
-      # static bucket current. Returns nil.
+      # static bucket current. Returns nil. Raises RuntimeError when no test
+      # is running.
       #
       # - `result`: Object, the test's result, which the recorder doesn't
       #   read.
@@ -97,6 +108,8 @@ module Stryker
       @runs: Hash[Object, TestRun]
       @current: TestRun?
       @collector: Collector?
+
+      def overlap: (Object test) -> String
 
       def drain: () -> void
     end

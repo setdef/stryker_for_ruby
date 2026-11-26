@@ -5,6 +5,10 @@ require_relative "test_run"
 module Stryker
   module Runtime
     class Recorder
+      NO_TEST_RUNNING = "The test runner adapter reported that a test finished while no test was running, " \
+        "so Stryker (for Ruby) can't tell which test a hit belongs to."
+      public_constant(:NO_TEST_RUNNING)
+
       def initialize
         @static = Set.new
         @runs = {}
@@ -30,6 +34,11 @@ module Stryker
       end
 
       def test_started(test)
+        # A runner adapter that reports out of order has a fault, and a hit
+        # then has no bucket that is certainly its own, so the recorder
+        # raises instead of guessing.
+        raise(overlap(test)) if @current
+
         # A hit sent from another Ractor before this test started lands in
         # the static bucket, not in this test's.
         drain
@@ -38,6 +47,8 @@ module Stryker
       end
 
       def test_finished(_result)
+        raise(NO_TEST_RUNNING) unless @current
+
         drain
         @current = nil
       end
@@ -55,6 +66,11 @@ module Stryker
       def load_began(path)
         @current&.load_began(path)
         nil
+      end
+
+      private def overlap(test)
+        "The test runner adapter reported that #{test.inspect} started while #{@runs.key(@current).inspect} " \
+          "was still running, so Stryker (for Ruby) can't tell which test a hit belongs to."
       end
 
       private def drain
