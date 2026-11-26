@@ -3,6 +3,7 @@
 require_relative "runtime/active_mutant"
 require_relative "runtime/collector"
 require_relative "runtime/first_ractor"
+require_relative "runtime/older_ruby"
 require_relative "runtime/recorder"
 require_relative "runtime/recording"
 
@@ -43,6 +44,7 @@ module Stryker
       activate(Recording.new(collector:), namespace)
     end
 
+    OlderRuby.notify
     start
   end
 end

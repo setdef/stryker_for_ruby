@@ -35,6 +35,24 @@ class ProcessTest < Minitest::Test
     Ractor.const_defined?(:Port, false)
   end
 
+  # Loads the runtime under a RUBY_VERSION of +version+, and returns what the
+  # program wrote to standard error.
+  def errors_loading_under(version)
+    program = "Object.send(:remove_const, :RUBY_VERSION)\nRUBY_VERSION = #{version.inspect}\nrequire 'stryker/runtime'"
+    run_program(program, {}, all: true).last
+  end
+
+  def test_loading_the_runtime_on_a_ruby_older_than_4_0_writes_one_line_to_standard_error
+    errors = errors_loading_under("3.3.9")
+
+    assert_equal(1, errors.size)
+    assert_match(%r{\AStryker \(for Ruby\) doesn't support Ruby 3\.3\.9.*docs/older-ruby\.md$}, errors.first)
+  end
+
+  def test_loading_the_runtime_on_ruby_4_0_writes_nothing_to_standard_error
+    assert_empty(errors_loading_under("4.0.0"))
+  end
+
   def test_an_id_in_the_environment_is_active_from_the_start
     output, = run_program("require 'stryker/runtime'\n#{READ}", { STRYKER_ACTIVE_MUTANT: "7" })
 

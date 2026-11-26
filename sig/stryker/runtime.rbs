@@ -25,6 +25,9 @@ module Stryker
   # start, so its switch takes the mutated branch while its file loads.
   # Otherwise no mutant is active, and every hit goes to
   # `Stryker::Runtime::RECORDER`.
+  # On a Ruby older than 4.0, which the project doesn't support, loading
+  # it also writes one line about that to standard error, with
+  # Stryker::Runtime::OlderRuby.
   #
   # With no mutant active, on Ruby 4.0 and later, the runtime also prepends
   # Stryker::Runtime::FirstRactor to `Ractor`'s singleton class, so the

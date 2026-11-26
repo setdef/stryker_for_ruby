@@ -1,0 +1,49 @@
+module Stryker
+  module Runtime
+    # Tells the person who runs **Stryker (for Ruby)** that the Ruby is older
+    # than 4.0, which the project doesn't support. Nothing blocks such a Ruby,
+    # so a problem that a run meets there would otherwise pass without a
+    # word. `require "stryker/runtime"` calls it as it loads.
+    #
+    # ## Examples
+    #
+    # On Ruby 3.3.11:
+    #
+    # ```console
+    # $ ruby -Ilib -rstryker/runtime -e '1'
+    # Stryker (for Ruby) doesn't support Ruby 3.3.11, which is older than 4.0. Problems found on Ruby 3.3 and 3.4 are listed at https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/older-ruby.md
+    # ```
+    module OlderRuby
+      FIRST_SUPPORTED_MAJOR: Integer
+
+      PAGE: String
+
+      # Writes one line to `stream` when `version` is older than 4.0: it
+      # names `version`, says the project doesn't support it, and gives the
+      # URL of the page that lists the problems found on Ruby 3.3 and 3.4.
+      # Writes nothing for Ruby 4.0 and later. Returns nil.
+      #
+      # - `version`: String, a Ruby version such as `"3.3.11"`. Only its
+      #   first number counts. `RUBY_VERSION` by default.
+      # - `stream`: IO, or any object with `puts`. `$stderr` by default.
+      #
+      # ```ruby
+      # Stryker::Runtime::OlderRuby.notify("3.4.1", $stdout)
+      # # prints "Stryker (for Ruby) doesn't support Ruby 3.4.1, which is older than 4.0. ..."
+      # Stryker::Runtime::OlderRuby.notify("4.0.0", $stdout)
+      # # prints nothing
+      # ```
+      def self.notify: (?String version, ?_Puts stream) -> nil
+
+      # The line that `notify` writes for `version`.
+      private def self.message: (String version) -> String
+    end
+
+    # What `Stryker::Runtime::OlderRuby.notify` writes its line to: `$stderr`
+    # is one, and so is a StringIO.
+    interface _Puts
+      # Writes `line` and a newline.
+      def puts: (String line) -> nil
+    end
+  end
+end
