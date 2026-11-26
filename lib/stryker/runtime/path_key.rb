@@ -20,9 +20,14 @@ module Stryker
         # Ruby gives the hook the path it resolved, which can hold a symbolic
         # link or "..", and gives a file it compiles itself the real path, in
         # its frames and in $LOADED_FEATURES.
-        [path, File.realpath(path)].map { |form| of(form, separator) }
+        real = real(path)
+        (real ? [path, real] : [path]).map { |form| of(form, separator) }
+      end
+
+      def self.real(path)
+        File.realpath(path)
       rescue SystemCallError
-        [of(path, separator)]
+        nil
       end
     end
   end

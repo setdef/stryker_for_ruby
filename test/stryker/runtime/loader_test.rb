@@ -25,6 +25,16 @@ class LoaderTest < Minitest::Test
     assert_equal([INSTRUMENTED, INSTRUMENTED], [iseq.path, iseq.absolute_path])
   end
 
+  # Ruby shows a file's real path as its absolute path, and as __dir__, when
+  # it loads the file without the loader.
+  def test_the_instrumented_source_is_compiled_with_the_files_real_path_as_its_absolute_path
+    real, other = two_spellings
+    install([other])
+    iseq = iseq_class.load_iseq(other)
+
+    assert_equal([other, real], [iseq.path, iseq.absolute_path])
+  end
+
   def test_a_file_that_is_not_instrumented_is_left_to_ruby
     install
 

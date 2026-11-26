@@ -62,13 +62,16 @@ module Stryker
       def self.install: (String directory, ?Class iseq_class, ?String? separator) -> nil
 
       # The instrumented source of the file at `path`, compiled with
-      # `RubyVM::InstructionSequence.compile` under `path` as both its file
-      # name and its path, or nil when that file isn't instrumented. It
+      # `RubyVM::InstructionSequence.compile` under `path` as its file name
+      # and the file's real path (`Stryker::Runtime::PathKey.real`) as its
+      # path, so `__dir__` and `absolute_path` show what Ruby shows for a
+      # file it compiles itself, or nil when that file isn't instrumented. It
       # compares `path`'s key (`Stryker::Runtime::PathKey.of`) with the
       # cache's. In the main Ractor, it also records in `SERVED` the key of
       # `path`, as Ruby gave it, because that is the path that Ruby records
-      # the file under in `$LOADED_FEATURES`. Raises SyntaxError when the instrumented source
-      # doesn't parse, so the load fails as it would for the file itself.
+      # the file under in `$LOADED_FEATURES`. It resolves the real path once.
+      # Raises SyntaxError when the instrumented source doesn't parse, so the
+      # load fails as it would for the file itself.
       #
       # The hook calls it for every file Ruby loads, in whichever Ractor
       # loads it. In a Ractor other than the main one it records nothing:

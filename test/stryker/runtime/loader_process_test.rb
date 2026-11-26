@@ -12,18 +12,6 @@ class LoaderProcessTest < Minitest::Test
 
   parallelize_me!
 
-  # The project's files, as written, and as instrumented.
-  FILES = {
-    "invoice.rb": "TOTAL = :original\nFILE = __FILE__\nrequire_relative \"line\"\n",
-    "line.rb": "LINE = :original\n",
-    "receipt.rb": "RECEIPT = :original\n",
-    "tally.rb": "Thread.current[:tally] = :original\n",
-  }.freeze
-  INSTRUMENTED = {
-    "invoice.rb": "TOTAL = :instrumented\nFILE = __FILE__\nrequire_relative \"line\"\n",
-    "line.rb": "LINE = :instrumented\n",
-    "tally.rb": "Thread.current[:tally] = :instrumented\n",
-  }.freeze
   # Records the files whose load began during a test.
   LOADS = <<~RUBY
     Stryker::Runtime::RECORDER.test_started(:first)
@@ -68,7 +56,7 @@ class LoaderProcessTest < Minitest::Test
     path = $LOAD_PATH.first + "/tally.rb"
     p Ractor.new(path) { |tally| load(tally) && Thread.current[:tally] }.value
   RUBY
-  private_constant(:AHEAD, :FILES, :INSTRUMENTED, :LOADS, :RIVAL, :TALLY)
+  private_constant(:AHEAD, :LOADS, :RIVAL, :TALLY)
 
   # What +program+ prints after the loader is installed for the project.
   def run_installed(program)
@@ -110,31 +98,5 @@ class LoaderProcessTest < Minitest::Test
 
   def test_a_file_required_in_another_ractor_runs_its_instrumented_source
     assert_equal(":instrumented\nchecked\n", run_installed("Ractor.new { require 'line' }.join\np LINE\n#{CHECK}"))
-  end
-
-  # On Windows, Ruby gives the hook a path spelled as the load path spells
-  # it, so the load path swaps its letters' case there. Elsewhere a file
-  # system can tell case apart, and the load path stays as it is.
-  def test_a_file_found_through_another_spelling_of_its_folder_is_instrumented
-    lib, cache = project(FILES, INSTRUMENTED)
-    spelled = File::ALT_SEPARATOR ? lib.swapcase.tr("/", File::ALT_SEPARATOR) : lib
-    program = "#{installed(spelled, cache)}require 'invoice'\np TOTAL\n#{CHECK}"
-
-    assert_equal(":instrumented\nchecked\n", run_program(program).first)
-  end
-
-  # A program that Ruby starts with the C locale reads each path from the file
-  # system as bytes tagged US-ASCII, where the cache holds the same bytes
-  # tagged UTF-8, so a project in a folder with a letter outside ASCII, such
-  # as a user's name, is the case. Nothing in the program's text is outside
-  # ASCII.
-  def test_a_file_in_a_folder_with_a_letter_outside_ascii_is_instrumented_under_the_c_locale
-    lib, cache = project({}, { "café/line.rb": "LINE = :instrumented\n" })
-    FileUtils.mkdir_p(File.join(lib, "caf\u00e9"))
-    File.write(File.join(lib, "caf\u00e9", "line.rb"), "LINE = :original\n")
-    program = "#{installed(lib, cache)}folder = File.join(#{lib.inspect}, Dir.children(#{lib.inspect}).first)\n" \
-      "require File.join(folder, 'line.rb')\np LINE\n#{CHECK}"
-
-    assert_equal(":instrumented\nchecked\n", run_program(program, { LC_ALL: "C", LANG: "C" }).first)
   end
 end

@@ -26,7 +26,9 @@ module Stryker
         file = CACHE.file(path)
         return unless file
 
-        iseq = RubyVM::InstructionSequence.compile(Cache.text(file), path, path)
+        # The real path is the absolute path, as Ruby shows it for a file it
+        # compiles itself, so __dir__ and each frame's absolute_path match.
+        iseq = RubyVM::InstructionSequence.compile(Cache.text(file), path, PathKey.real(path) || path)
         # A Ractor other than the main one can't reach SERVED. Its load
         # adds nothing to $LOADED_FEATURES, which is all the loading check
         # reads, and a require there runs in the main Ractor. What it records

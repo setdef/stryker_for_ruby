@@ -26,6 +26,20 @@ module LoaderProject
   RUBY
   public_constant(:CHECK)
 
+  # The project's files, as written, and as instrumented.
+  FILES = {
+    "invoice.rb": "TOTAL = :original\nFILE = __FILE__\nrequire_relative \"line\"\n",
+    "line.rb": "LINE = :original\n",
+    "receipt.rb": "RECEIPT = :original\n",
+    "tally.rb": "Thread.current[:tally] = :original\n",
+  }.freeze
+  INSTRUMENTED = {
+    "invoice.rb": "TOTAL = :instrumented\nFILE = __FILE__\nrequire_relative \"line\"\n",
+    "line.rb": "LINE = :instrumented\n",
+    "tally.rb": "Thread.current[:tally] = :instrumented\n",
+  }.freeze
+  public_constant(:FILES, :INSTRUMENTED)
+
   def folders
     @folders ||= []
   end

@@ -90,14 +90,14 @@ Ruby compiles every file it loads from disk, whether through `require`, `require
 
 The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
 
-- When `path` has one of an instrumented file's keys ([The cache](#the-cache), [Paths on Windows](#paths-on-windows)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as both the file name and the path, records that it served that file, and returns the result.
+- When `path` has one of an instrumented file's keys ([The cache](#the-cache), [Paths on Windows](#paths-on-windows)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as the file name and the file's real path as the path, records that it served that file, and returns the result.
 - For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
 
 In both cases, when a test is running, the module records `path` as a file whose load began during that test. [Coverage](coverage.md#static-hits-inside-a-test) says what the recorder does with it.
 
-Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `__dir__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the original file's path. Zeitwerk works unchanged: every instrumented file of a project that Zeitwerk autoloads or eager-loads comes through the hook.
+Because Ruby still resolves the file and still compiles the code under its original path, `__FILE__`, `require_relative`, `$LOADED_FEATURES`, and the file names in backtraces all show the path that Ruby gave. `__dir__` and each frame's `absolute_path` show the file's real path, as they do for a file that Ruby compiles itself. The two differ when Ruby gives the hook a path that isn't the file's real path, as it does for a `require` of an absolute path through a symbolic link. Zeitwerk works unchanged: every instrumented file of a project that Zeitwerk autoloads or eager-loads comes through the hook.
 
-One difference remains. When Ruby gives the hook a path that isn't the file's real path, as it does for a `require` of an absolute path through a symbolic link, `__dir__` and each frame's `absolute_path` show that path, where Ruby itself would show the real path. `__FILE__` and `$LOADED_FEATURES` show the path that Ruby gave in both cases.
+The hook resolves the real path once for each file it serves.
 
 The loader installs the hook before any of the project's code loads, in every project process: the parent that forks, each fresh process, and each process in the Windows pool.
 
