@@ -35,7 +35,8 @@ module Stryker
       end
 
       private def formatted
-        OneLine.of(MutatedNode.of(@plain, @node))
+        found = MutatedNode.of(@plain, @node)
+        found && OneLine.of(found)
       end
 
       private def on_one_line?(edited)

@@ -26,7 +26,9 @@ module Stryker
   #   an `unless`, at the top level of a file or directly in a class or
   #   module body.
   # - `:no_one_line_form`: the mutant's text spans several lines, and has no
-  #   form on one line, as a regexp with a line break inside it.
+  #   form on one line, as a regexp with a line break inside it, or its plain
+  #   mutant parses but has no one node where its switch goes, as when
+  #   `if c` becomes `if c then 5 end; if c`.
   # - `:does_not_parse`: the plain mutant, the original file with only the
   #   mutant's edit made, doesn't parse. A run reports such a mutant with the
   #   status `CompileError`.
@@ -72,10 +74,9 @@ module Stryker
   class Instrumenter
     # Instruments `source` with `mutants`, and returns the instrumented
     # source with the mutants that got no switch. Raises
-    # `Stryker::Instrumenter::Error` when `source` doesn't parse, when a
-    # mutant whose plain mutant parses doesn't make one node where its
-    # switch goes, or when the instrumented source doesn't parse. That is a
-    # fault in the instrumenter or in a mutator, as when a replacement ends
+    # `Stryker::Instrumenter::Error` when `source` doesn't parse, or when
+    # every plain mutant parses and the instrumented source doesn't. That is
+    # a fault in the instrumenter or in a mutator, as when a replacement ends
     # with a comment, which a switch can't hold on one line.
     #
     # Every mutant must be an edit on `source`. Mutants at the same site

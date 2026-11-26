@@ -77,11 +77,11 @@ class InstrumenterSkipsTest < Minitest::Test
     assert_match(/\AThe instrumented source doesn't parse: .+, on line \d+\.\z/, error.message)
   end
 
-  def test_a_multi_line_replacement_that_makes_no_one_node_raises
-    error = assert_raises(Stryker::Instrumenter::Error) do
-      instrument("if c\n  1\nend\n", ["if c", "if c then 5 end; if c"])
-    end
+  def test_a_multi_line_replacement_that_makes_no_one_node_gets_no_switch
+    source = "if c\n  1\nend\n"
+    result = instrument(source, ["if c", "if c then 5 end; if c"], %w[1 2])
 
-    assert_equal("Mutant 1 doesn't parse as one node where its switch goes.", error.message)
+    assert_equal([[1, :no_one_line_form]], skips(result))
+    assert_includes(result.source, "::Stryker::Active.id == 2")
   end
 end

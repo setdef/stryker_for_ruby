@@ -1,14 +1,14 @@
 module Stryker
   class Instrumenter
     # Raised when the instrumenter can't make valid Ruby: when the file's
-    # source doesn't parse, when the instrumented source doesn't parse, or
-    # when a mutant whose text spans several lines doesn't make one node at
-    # its site. A mutant whose plain mutant doesn't parse raises none of
-    # these: it gets no switch. The last two mean that a switch can't hold a
-    # mutant that is valid Ruby, which is a fault in the instrumenter, or in
-    # the mutator that made the mutant. It is also raised when the installed
-    # Prism doesn't know the syntax of the running Ruby. The message gives
-    # each line, the mutant's ID, or both versions.
+    # source doesn't parse, or when every plain mutant parses and the
+    # instrumented source doesn't. A mutant whose plain mutant doesn't
+    # parse, or that makes no one node where its switch goes, raises
+    # neither: it gets no switch. An instrumented source that doesn't parse
+    # means that a switch can't hold a mutant that is valid Ruby, which is a
+    # fault in the instrumenter, or in the mutator that made the mutant. It
+    # is also raised when the installed Prism doesn't know the syntax of the
+    # running Ruby. The message gives each line, or both versions.
     class Error < StandardError
       # The error for a Ruby whose syntax the installed Prism doesn't know,
       # with a message that names both versions.

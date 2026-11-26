@@ -6,14 +6,14 @@ module Stryker
     # which names are local variables.
     module MutatedNode
       # The node that takes up `node`'s range in the plain mutant, as Prism
-      # parses it. The range ends as many bytes later as the plain mutant
-      # adds inside `node`. Raises `Stryker::Instrumenter::Error` when the
-      # plain mutant doesn't parse, or has no node at that range.
+      # parses it, or nil when no one node does, as when `if c` becomes
+      # `if c then 5 end; if c`. The range ends as many bytes later as the
+      # plain mutant adds inside `node`. The plain mutant must parse.
       #
       # - `plain`: Stryker::Instrumenter::PlainMutant, the plain mutant.
       # - `node`: Prism::node, the node in the original file, which holds the
       #   mutant's edit.
-      def self.of: (PlainMutant plain, Prism::node node) -> Prism::node
+      def self.of: (PlainMutant plain, Prism::node node) -> Prism::node?
 
       CONTAINERS: Array[singleton(Prism::Node)]
 
