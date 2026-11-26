@@ -101,7 +101,7 @@ When your change departs from an ADR in a technical way, push it anyway, and rep
 
 ### Weighing options
 
-Judge each option for a decision against what it must serve: the requirements in the design documents, the drivers in the ADRs, and the Tao above. Report which options you weighed and why each lost, and check each reason against the requirement it cites. Popularity counts for less than quality, what an option can do, and performance, such as speed and memory. When an option is popular, ask what its popularity stands for and what choosing it trades away.
+Judge each option for a decision against what it must serve: the requirements in the design documents, the drivers in the ADRs, and [the Tao](#the-tao-of-stryker-for-ruby). Report which options you weighed and why each lost, and check each reason against the requirement it cites. Popularity counts for less than quality, what an option can do, and performance, such as speed and memory. When an option is popular, ask what its popularity stands for and what choosing it trades away.
 
 ### What the maintainers decide
 
