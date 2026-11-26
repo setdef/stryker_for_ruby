@@ -122,4 +122,19 @@ class LoaderProcessTest < Minitest::Test
 
     assert_equal(":instrumented\nchecked\n", run_program(program).first)
   end
+
+  # A program that Ruby starts with the C locale reads each path from the file
+  # system as bytes tagged US-ASCII, where the cache holds the same bytes
+  # tagged UTF-8, so a project in a folder with a letter outside ASCII, such
+  # as a user's name, is the case. Nothing in the program's text is outside
+  # ASCII.
+  def test_a_file_in_a_folder_with_a_letter_outside_ascii_is_instrumented_under_the_c_locale
+    lib, cache = project({}, { "café/line.rb": "LINE = :instrumented\n" })
+    FileUtils.mkdir_p(File.join(lib, "caf\u00e9"))
+    File.write(File.join(lib, "caf\u00e9", "line.rb"), "LINE = :original\n")
+    program = "#{installed(lib, cache)}folder = File.join(#{lib.inspect}, Dir.children(#{lib.inspect}).first)\n" \
+      "require File.join(folder, 'line.rb')\np LINE\n#{CHECK}"
+
+    assert_equal(":instrumented\nchecked\n", run_program(program, { LC_ALL: "C", LANG: "C" }).first)
+  end
 end

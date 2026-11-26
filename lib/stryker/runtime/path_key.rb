@@ -8,7 +8,12 @@ module Stryker
         # letter, letter case, or separator. Elsewhere a path is compared as
         # it is, because a case-sensitive file system has files that differ
         # only in case.
-        separator ? path.tr(separator, "/").downcase : path
+        # The bytes are tagged UTF-8 whatever Ruby tagged them, because a
+        # Hash finds a key only in the same encoding. Under the C locale Ruby
+        # tags a path from the file system US-ASCII, and the cache's index
+        # reads as UTF-8.
+        key = path.dup.force_encoding(Encoding::UTF_8)
+        separator ? key.tr(separator, "/").downcase : key
       end
 
       def self.of_file(path, separator = File::ALT_SEPARATOR)

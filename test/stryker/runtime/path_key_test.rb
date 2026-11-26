@@ -28,6 +28,14 @@ class PathKeyTest < Minitest::Test
     assert_equal("/app/lib/Invoice.rb", Stryker::Runtime::PathKey.of("/app/lib/Invoice.rb", nil))
   end
 
+  def test_a_path_tagged_with_another_encoding_has_the_key_of_the_same_bytes_tagged_utf8
+    tagged = "/app/lib/caf\xC3\xA9.rb".dup.force_encoding(Encoding::US_ASCII)
+
+    key = Stryker::Runtime::PathKey.of(tagged, nil)
+
+    assert_equal([Encoding::UTF_8, "/app/lib/caf\u00e9.rb"], [key.encoding, key])
+  end
+
   def test_a_path_on_windows_has_its_backslashes_turned_and_its_letters_folded
     assert_equal("c:/app/lib/invoice.rb", Stryker::Runtime::PathKey.of("C:\\App\\Lib\\Invoice.rb", WINDOWS))
   end

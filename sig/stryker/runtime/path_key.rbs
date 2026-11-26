@@ -18,9 +18,12 @@ module Stryker
       # The key of `path`. With a `separator`, each `separator` in it becomes
       # `/`, and every letter is lowercased, as on Windows, where Ruby can
       # give one file with another drive letter, letter case, or separator.
-      # With none, it is `path` itself, because a case-sensitive file system
-      # has files that differ only in case. It resolves no symbolic link and
-      # no `..`, and reads nothing from disk.
+      # With none, the letters keep their case, because a case-sensitive file
+      # system has files that differ only in case. The key has the bytes of
+      # `path`, tagged UTF-8 whatever encoding Ruby tagged `path` with: under
+      # the C locale Ruby tags a path from the file system US-ASCII, and a
+      # Hash finds a key only in the same encoding. It resolves no symbolic
+      # link and no `..`, and reads nothing from disk.
       #
       # - `path`: String, a file's path.
       # - `separator`: String or nil, the system's alternative path
