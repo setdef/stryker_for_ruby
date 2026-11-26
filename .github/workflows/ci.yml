@@ -90,7 +90,8 @@ jobs:
         run: bundle install
 
       - name: Check the Prism version
-        run: bundle exec ruby -rprism -e 'abort("Prism #{Prism::VERSION}, not 1.7.0") unless Prism::VERSION == "1.7.0"'
+        run: |
+          bundle exec ruby -rprism -e 'abort("Prism #{Prism::VERSION}, not 1.7.0") unless Prism::VERSION == "1.7.0"'
 
       - name: Run the tests
         run: bundle exec rake test:ruby
