@@ -89,7 +89,7 @@ With no value, the project's folders choose it: `minitest` when the project has 
 
 ### `reporters`
 
-The reporters to run, in a list of names. The default is `clear-text`, `progress`, and `html`. The `json` reporter writes the report that validates against the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema).
+A list of reporter names. The default is `clear-text`, `progress`, and `html`.
 
 ### `concurrency`
 
@@ -129,7 +129,7 @@ A name matches a mutator's name exactly, with its letter case: `Equality` is the
 
 ### `incremental`
 
-Whether to store the results in a file and use it to speed up the next run. The default is `false`.
+A boolean. The default is `false`.
 
 ## Example files
 
