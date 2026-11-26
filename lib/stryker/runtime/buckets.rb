@@ -45,6 +45,11 @@ module Stryker
         @current = nil
       end
 
+      def recorded?(ids)
+        run = @current
+        run ? run.recorded?(ids) : ids.all? { |id| @static.include?(id) }
+      end
+
       def receive(message)
         message.is_a?(String) ? load_began(message) : record(message)
       end

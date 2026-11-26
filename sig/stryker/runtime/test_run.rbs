@@ -39,6 +39,12 @@ module Stryker
       # - `path`: String, the file's path.
       def load_began: (String path) -> nil
 
+      # Whether every mutant with `ids` is in the test's bucket, with no
+      # stack check due for it on the calling thread. Changes nothing.
+      #
+      # - `ids`: Array of Integer, the mutants' IDs.
+      def recorded?: (Array[Integer] ids) -> bool
+
       # Records a hit for the mutants with `ids`, in the test's bucket or in
       # `static`. Returns nil.
       #
@@ -56,7 +62,7 @@ module Stryker
 
       def bucket_for: (Array[Integer] ids, Set[Integer] static) -> Set[Integer]
 
-      def check_due?: (Array[Integer] ids) -> bool
+      def settled?: (Array[Integer] ids) -> bool
     end
   end
 end

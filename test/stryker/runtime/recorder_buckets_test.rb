@@ -50,4 +50,47 @@ class RecorderBucketsTest < Minitest::Test
 
     assert_raises(ThreadError) { recorder.test_started(key) }
   end
+
+  # Records +ids+ while this thread holds the recorder's lock, which raises
+  # ThreadError unless the hit returns before it takes the lock.
+  def record_under_the_lock(ids)
+    recorder.instance_variable_get(:@lock).synchronize { recorder.record(ids) }
+  end
+
+  def test_a_hit_already_in_the_static_bucket_takes_no_lock
+    recorder.record([7, 8])
+
+    assert_nil(record_under_the_lock([8, 7]))
+  end
+
+  def test_a_hit_already_in_the_tests_bucket_takes_no_lock
+    recorder.test_started(:first)
+    recorder.record([7])
+
+    assert_nil(record_under_the_lock([7]))
+  end
+
+  def test_a_hit_already_checked_since_a_load_takes_no_lock
+    recorder.test_started(:first)
+    recorder.load_began("/app/lib/invoice.rb")
+    recorder.record([7])
+
+    assert_nil(record_under_the_lock([7]))
+  end
+
+  def test_a_hit_with_a_mutant_not_yet_in_the_bucket_takes_the_lock
+    recorder.record([7])
+
+    assert_raises(ThreadError) { record_under_the_lock([7, 8]) }
+  end
+
+  # After a load, the next hit of each mutant gets a stack check, so it needs
+  # the lock even when the mutant is in the bucket already.
+  def test_a_hit_due_a_stack_check_takes_the_lock
+    recorder.test_started(:first)
+    recorder.record([7])
+    recorder.load_began("/app/lib/invoice.rb")
+
+    assert_raises(ThreadError) { record_under_the_lock([7]) }
+  end
 end

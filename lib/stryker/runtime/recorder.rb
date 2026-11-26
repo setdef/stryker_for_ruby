@@ -63,10 +63,16 @@ module Stryker
       end
 
       def receive(message)
-        @lock.synchronize { @buckets.receive(message) }
+        message.is_a?(String) ? load_began(message) : record(message)
       end
 
       def record(ids)
+        # A hit whose mutants are all in the current bucket, with no stack
+        # check due, would change nothing, so it returns before the lock.
+        # Under the GVL, Set#include? never sees another thread's change half
+        # made.
+        return if @buckets.recorded?(ids)
+
         @lock.synchronize { @buckets.record(ids) }
       end
 

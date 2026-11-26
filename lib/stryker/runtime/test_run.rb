@@ -27,28 +27,32 @@ module Stryker
         nil
       end
 
+      def recorded?(ids)
+        ids.all? { |id| @hits.include?(id) } && settled?(ids)
+      end
+
       def record(ids, static)
         bucket_for(ids, static).merge(ids)
         nil
       end
 
-      private def bucket_for(ids, static)
-        return @hits unless check_due?(ids)
-
-        Stack.loading?(@frame_paths) ? static : @hits
-      end
-
-      private def check_due?(ids)
+      private def settled?(ids)
         # A mutant that this test reached first, and that a file reached
         # later while it loaded, is static, so each load clears the IDs
         # already checked. Each thread has its own, because another thread's
         # stack never holds the loading file's top-level frame. The map
         # holds its threads weakly, so a finished test keeps none alive.
-        return false if @loads.empty?
+        return true if @loads.empty?
 
-        checked = (@checked[Thread.current] ||= Set.new)
-        before = checked.size
-        checked.merge(ids).size > before
+        checked = @checked[Thread.current]
+        checked ? ids.all? { |id| checked.include?(id) } : false
+      end
+
+      private def bucket_for(ids, static)
+        return @hits if settled?(ids)
+
+        (@checked[Thread.current] ||= Set.new).merge(ids)
+        Stack.loading?(@frame_paths) ? static : @hits
       end
     end
   end

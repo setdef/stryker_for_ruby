@@ -42,6 +42,13 @@ module Stryker
       # running.
       def finish: () { () -> nil } -> nil
 
+      # Whether a hit for the mutants with `ids` would change nothing: every
+      # one is in the current bucket, and no stack check is due for it.
+      # Takes no lock, and changes nothing.
+      #
+      # - `ids`: Array of Integer, the mutants' IDs.
+      def recorded?: (Array[Integer] ids) -> bool
+
       # Records a message from a holder: `record` for an Array of IDs, or
       # `load_began` for a path. Returns nil.
       #

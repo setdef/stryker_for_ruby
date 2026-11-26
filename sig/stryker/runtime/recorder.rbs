@@ -120,7 +120,9 @@ module Stryker
       def receive: (message message) -> nil
 
       # Records a hit for the mutants with `ids` in the current bucket, or in
-      # the static bucket when it is a static hit. Returns nil.
+      # the static bucket when it is a static hit. Returns nil. A hit whose
+      # mutants are all in the current bucket already, with no stack check
+      # due, returns after that membership check, without the lock.
       #
       # - `ids`: Array of Integer, the mutants' IDs.
       def record: (Array[Integer] ids) -> nil
