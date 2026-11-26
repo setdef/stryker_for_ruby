@@ -1,12 +1,10 @@
 module Stryker
-  # Modules that hold the contract tests of the ports, for adapters inside the
-  # gem and outside it.
   module Testing
     # The tests that every adapter of the `Stryker::_ConfigSource` port must
     # pass. To test an adapter, include this module in a Minitest test class
-    # and define the four methods below. A test case that includes it runs
-    # the tests of the contract against the adapter that `build_source`
-    # returns.
+    # and define the four methods of `Stryker::Testing::_ConfigSourceHost`.
+    # The test class then runs the contract's tests against the adapter that
+    # `source_under_test` returns.
     #
     # The contract holds that an adapter reads the options of its file as
     # nested hashes with the option names as keys, reads nothing from a file
@@ -17,30 +15,13 @@ module Stryker
     # class JsonFileTest < Minitest::Test
     #   include Stryker::Testing::ConfigSourceContract
     #
-    #   def build_source(path) = Stryker::ConfigSources::JsonFile.new(path)
+    #   def source_under_test(path) = Stryker::ConfigSources::JsonFile.new(path)
     #   def format_text(options) = JSON.generate(options)
     #   def malformed_text = "{"
     #   def non_object_text = "[]"
     # end
     # ```
-    module ConfigSourceContract : Minitest::Test, _Host
-      # What the test class that includes the contract defines.
-      interface _Host
-        # Returns the adapter that reads the file at `path`.
-        def build_source: (String path) -> _ConfigSource
-
-        # Returns the text, in the adapter's format, of a file that holds
-        # `options`.
-        def format_text: (Hash[String, JsonValue::json_value] options) -> String
-
-        # Returns text that is not valid in the adapter's format.
-        def malformed_text: () -> String
-
-        # Returns text that is valid in the adapter's format but holds a list
-        # or a single value, not an object.
-        def non_object_text: () -> String
-      end
-
+    module ConfigSourceContract : Minitest::Test, _ConfigSourceHost
       # The options that the first test writes to a file and reads back.
       OPTIONS: Hash[String, JsonValue::json_value]
 

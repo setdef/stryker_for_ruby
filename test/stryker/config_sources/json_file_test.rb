@@ -12,7 +12,7 @@ class JsonFileTest < Minitest::Test
   include Stryker::Testing::ConfigSourceContract
   include ConfigFiles
 
-  def build_source(path)
+  def source_under_test(path)
     Stryker::ConfigSources::JsonFile.new(path)
   end
 
@@ -30,7 +30,7 @@ class JsonFileTest < Minitest::Test
 
   def test_says_that_the_text_is_not_valid_json_and_what_is_wrong_with_it
     in_file("{ \"mutate\": }") do |path|
-      error = assert_raises(Stryker::ConfigError) { build_source(path).read }
+      error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }
       assert_match(/\A#{Regexp.escape(path)} isn't valid JSON: .*unexpected/, error.message)
     end
   end
@@ -45,7 +45,7 @@ class JsonFileTest < Minitest::Test
   def test_says_what_it_could_not_read_when_the_system_refuses_the_file
     in_file("{}") do |path|
       error = File.stub(:read, -> (*) { raise(Errno::EACCES, path) }) do
-        assert_raises(Stryker::ConfigError) { build_source(path).read }
+        assert_raises(Stryker::ConfigError) { source_under_test(path).read }
       end
 
       assert_match(/\ACan't read #{Regexp.escape(path)}: Permission denied/, error.message)

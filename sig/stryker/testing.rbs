@@ -7,7 +7,26 @@ module Stryker
   #
   # - `Stryker::Testing::TestRunnerContract` checks an adapter of the
   #   `Stryker::_TestRunner` port.
+  # - `Stryker::Testing::ConfigSourceContract` checks an adapter of the
+  #   `Stryker::_ConfigSource` port.
   module Testing
+    # What a test class that includes `Stryker::Testing::ConfigSourceContract`
+    # defines.
+    interface _ConfigSourceHost
+      # The adapter under test, built to read the file at `path`.
+      def source_under_test: (String path) -> _ConfigSource
+
+      # The text, in the adapter's format, of a file that holds `options`.
+      def format_text: (Hash[String, JsonValue::json_value] options) -> String
+
+      # Text that is not valid in the adapter's format.
+      def malformed_text: () -> String
+
+      # Text that is valid in the adapter's format but holds a list or a
+      # single value, not an object.
+      def non_object_text: () -> String
+    end
+
     # What a test class that includes `Stryker::Testing::TestRunnerContract`
     # defines.
     interface _TestRunnerHost

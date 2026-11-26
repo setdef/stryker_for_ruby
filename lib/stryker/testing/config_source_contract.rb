@@ -24,7 +24,7 @@ module Stryker
       end
 
       def test_reads_nothing_from_a_file_that_does_not_exist
-        Dir.mktmpdir { |dir| assert_nil(build_source(File.join(dir, "missing")).read) }
+        Dir.mktmpdir { |dir| assert_nil(source_under_test(File.join(dir, "missing")).read) }
       end
 
       def test_refuses_text_that_is_malformed_and_names_its_file
@@ -46,7 +46,7 @@ module Stryker
         Dir.mktmpdir do |dir|
           path = File.join(dir, "stryker.config")
           File.write(path, text)
-          yield(build_source(path), path)
+          yield(source_under_test(path), path)
         end
       end
     end
