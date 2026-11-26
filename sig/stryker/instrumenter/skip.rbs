@@ -6,8 +6,12 @@ module Stryker
     # The reason is one of these:
     #
     # - `:no_switch_site`: no node around the mutant's site can hold a
-    #   switch, as inside `BEGIN { }`, which Ruby allows only at the top level
-    #   of a file.
+    #   switch. That is the case inside `BEGIN { }`, which Ruby allows only at
+    #   the top level of a file. It is also the case for a class or module
+    #   name, and for a statement of a kind that no row of the placement
+    #   table names, such as `@count = 0` or an `unless`, at the top level of
+    #   a file or directly in a class or module body, since neither a class
+    #   nor a module holds a switch.
     # - `:no_one_line_form`: the mutant's text spans several lines, and
     #   refract's formatting of it has no form on one line, as a regexp with
     #   a line break inside it. A switch on several lines would move every

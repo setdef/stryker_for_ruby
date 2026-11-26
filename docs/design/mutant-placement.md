@@ -109,11 +109,13 @@ Prism and refract load only in the process that instruments, never in a process 
 
 Some nodes can't be wrapped in parentheses where they stand, or change meaning when they are. When a mutant's site is one of them, the instrumenter puts the switch on the nearest enclosing node that can hold one, as StrykerJS's mutant placers do, and the mutant's text there is the enclosing node's source with the mutant's edit applied.
 
-A switch that moves out to a `def`, a class body, or a constant's assignment runs while the file loads, so its mutants become static mutants (see [Loading and isolation](loading-and-isolation.md#static-mutants-on-every-system)).
+Only a node of a kind that a row of [Kinds of site](#kinds-of-site) names as holding a switch can hold one, and only where no row says it can't. The switch moves outward from a node of any other kind. A row whose node is "the expression's node" or "the statement's node" holds a switch only when that node is of a kind some row names. Allowing a kind by mistake gives code that parses and means something else, with no error, where leaving a kind out only gives a coarser switch, further out. So the instrumenter allows only the kinds the tables name, and the switch moves outward from a kind that a later Prism adds until a row names it.
+
+A switch that moves out to a `def`, to a statement in a class body, or to a constant's assignment runs while the file loads, so its mutants become static mutants (see [Loading and isolation](loading-and-isolation.md#static-mutants-on-every-system)).
 
 Adjacent string literals joined by a backslash at the end of a line, such as `"a" \` with `"b"` on the next line, can't hold a switch around one part: a switch there gives text that doesn't parse. Prism parses them as one `InterpolatedStringNode` whose parts are `StringNode`s, and a mutant of either part takes its switch on that enclosing `InterpolatedStringNode`. The standard library's `unicode_normalize/tables.rb` has strings written this way.
 
-When no enclosing node can hold a switch, the site gets no mutant. That is the case for code inside `BEGIN { }`, which Ruby allows only at the top level of a file.
+When no enclosing node can hold a switch, the site gets no mutant. That is the case for code inside `BEGIN { }`, which Ruby allows only at the top level of a file. It is also the case for a class or module name, and for a statement of a kind the tables don't name, such as `@count = 0` or an `unless`, at the top level of a file or directly in a class or module body, since neither a `ClassNode` nor a `ModuleNode` holds a switch.
 
 ## Sites that get no mutant
 
@@ -131,7 +133,9 @@ A fault in the instrumenter is a different case. When every plain mutant parses 
 
 ## Kinds of site
 
-The probe wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the plain mutant's: the original file with only that change made, and the bodies of replaced heredoc openers removed. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped.
+The probe in [#7](https://github.com/setdef/stryker_for_ruby/issues/7), and the instrumenter's site tests after it, wrapped each kind of site below in a single-line switch, ran it with no mutant active and compared the output with the original's, and then ran it with each mutant active and compared the output with the plain mutant's: the original file with only that change made, and the bodies of replaced heredoc openers removed. "Holds a switch" means both matched on Ruby 3.3, 3.4, 4.0, and 4.1-dev. The results were the same on all four versions. The Prism node is the node whose source range the switch wrapped, and each site test checks that its switch wraps a node of that kind.
+
+Only the node kinds that the rows with "yes" name, and the kinds that the rows with "no" name as where the switch goes, hold a switch (see [Sites that can't hold a switch](#sites-that-cant-hold-a-switch)).
 
 ### Operators
 
@@ -151,9 +155,11 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 | String, with `frozen_string_literal: true`, `false`, or no magic comment | `'a'` to `'b'` | `StringNode` | yes; frozenness and deduplication are unchanged |
 | String as a hash key | `{ 'a' => 1 }` | `StringNode` | yes |
 | Interpolated string, adjacent literals, `?a` | `"a#{x}b"` to `'c'` | `InterpolatedStringNode`, `StringNode` | yes |
+| Variable interpolated without braces, as in `"#@x"` or `"#$x"` | `@x` to `@y` | `InstanceVariableReadNode`, `GlobalVariableReadNode` | no: the switch goes on the string |
 | Expression inside an interpolation | `"a#{x + 1}b"` | the expression's node | yes |
 | `%w[]` array | `%w[a b]` to `%w[c]` | `ArrayNode` | yes |
-| Heredoc opener: `<<EOS`, `<<~EOS`, `<<~'EOS'`, with a method call after it, or as an argument with more arguments after it | `<<~EOS` to `'z'` | `StringNode`, `InterpolatedStringNode`, `CallNode` | yes, on one line only |
+| A word of `%w[]` or `%i[]` | `%w[a b]`, `a` to `c` | `StringNode`, `SymbolNode` | no: the switch goes on the array |
+| Heredoc opener: `<<EOS`, `<<~EOS`, `<<~'EOS'`, with a method call after it, or as an argument with more arguments after it | `<<~EOS` to `'z'` | `StringNode`, `InterpolatedStringNode`, `XStringNode`, `CallNode` | yes, on one line only |
 | A node whose range spans a heredoc's body | `f(<<~A, 2)` to `nil` | `CallNode` | yes |
 | Expression inside a heredoc's interpolation | `#{x + 1}` | the expression's node | yes |
 | Symbol, interpolated symbol, `&:sym` | `:a` to `:b` | `SymbolNode`, `InterpolatedSymbolNode` | yes |
@@ -161,29 +167,31 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 | Integer, float, rational, imaginary | `1` to `2` | `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | yes |
 | Integer as a receiver | `3.times` | `IntegerNode` | yes |
 | Array, hash | `[1, 2]` to `[]` | `ArrayNode`, `HashNode` | yes |
-| Expression under a splat | `[*a, 3]`, `a` to `[]` | the expression's node | yes |
+| Expression under a splat | `[*a, 3]`, `a` to `[]` | the expression's node, such as `LocalVariableReadNode` | yes |
 | The splat itself | `[*a, 3]`, `*a` to `0` | `SplatNode` | no: the switch goes on the array |
 | Hash value, keyword-argument value | `{ a: 1 }`, `1` to `2` | the value's node | yes |
 | A hash pair, or a call's keyword arguments | `a: 1` to `b: 2` | `AssocNode` | no: the switch goes on the hash or the call |
 | Range, endless range | `1..3` to `1...3` | `RangeNode` | yes |
 | Regexp, interpolated regexp, `/o` regexp | `/a/` to `/b/` | `RegularExpressionNode`, `InterpolatedRegularExpressionNode` | yes |
 | Regexp with a capture read through `$1` | `/(b)/` to `/(c)/` | `RegularExpressionNode` | yes |
-| Regexp with named captures, on the left of `=~` | `/(?<x>\d+)/` to `/(?<y>\d+)/` | `RegularExpressionNode` | no: the switch goes on the whole `=~` |
+| Regexp with named captures, on the left of `=~` | `/(?<x>\d+)/` to `/(?<y>\d+)/` | `RegularExpressionNode` | no: the switch goes on the whole `=~`, a `MatchWriteNode` |
 
 ### Conditions and loops
 
 | Site | Example mutant | Prism node | Holds a switch |
 | - | - | - | - |
 | Condition of `if`, `unless`, `elsif`, `while`, `until`, a ternary, or a modifier | `a > 1` to `a <= 1` | the condition's node | yes |
+| Regexp literal as a bare condition, as in `if /foo/` | `/foo/` to `/bar/` | `MatchLastLineNode`, `InterpolatedMatchLastLineNode` | no: inside a switch, Ruby reads it as a `Regexp`, which is always true, and not as a match against `$_`, so the switch goes on the `if` |
 | Whole ternary | `a > 1 ? :y : :n` to `:z` | `IfNode` | yes |
-| Body of a `begin ... end while` loop | `begin ... end` to `nil` | `BeginNode` | no: Ruby runs the body of `begin ... end while` once before it tests the condition, but a wrapped `begin ... end` makes an ordinary modifier loop, which tests first |
+| Whole `elsif` | `elsif a > 1 ... end` to `elsif a > 0 ... end` | `IfNode` | no: an `elsif` in parentheses doesn't parse, so the switch goes on the whole `if` |
+| Body of a `begin ... end while` or `begin ... end until` loop | `begin ... end` to `nil` | `BeginNode` | no: Ruby runs the body of `begin ... end while` once before it tests the condition, but a wrapped `begin ... end` makes an ordinary modifier loop, which tests first, so the switch goes on the whole loop, a `WhileNode` or `UntilNode` |
 | A statement inside a `begin ... end while` loop | `i += 1` to `nil` | the statement's node | yes |
 | `case`/`when`: value, subject, splat's expression, condition without a subject, body statement | `when 1` to `when 2` | the node | yes |
 | `case`/`in` pattern | `in Integer` to `in String` | the pattern's node | no: the switch goes on the whole `case`/`in` |
 | Whole `case`/`in` | the `case` with another pattern | `CaseMatchNode` | yes |
 | `case`/`in`: pinned expression, guard, body statement | `^(2 + 3)` to `^(9)` | the node | yes |
 | `x in pattern`, `x => pattern` | `x in Integer` to `x in String` | `MatchPredicateNode`, `MatchRequiredNode` | yes |
-| Flip-flop, whole | `(i == 2)..(i == 4)` to `false` | `FlipFlopNode` | no: inside a switch, Ruby reads it as a `Range` and raises `ArgumentError` |
+| Flip-flop, whole | `(i == 2)..(i == 4)` to `false` | `FlipFlopNode` | no: inside a switch, Ruby reads it as a `Range` and raises `ArgumentError`, so the switch goes on the nearest enclosing node that holds one, such as the `if` |
 | Flip-flop endpoint | `i == 2` to `i == 3` | the endpoint's node | yes |
 
 ### Calls
@@ -207,7 +215,7 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 
 | Site | Example mutant | Prism node | Holds a switch |
 | - | - | - | - |
-| A statement removed, in a method or a block, including the last one | `puts 'b'` to `nil` | the statement's node | yes |
+| A statement removed, in a method or a block, including the last one | `puts 'b'` to `nil` | the statement's node, such as `CallNode` or `LocalVariableWriteNode` | yes |
 | `return`, `next`, `break`, `redo`, `retry`, as a statement, as an operand, or as the last statement | `return 1` to `return 2` | `ReturnNode`, `NextNode`, `BreakNode`, `RedoNode`, `RetryNode` | yes |
 | A returned value | `return 1` to `return 2`, on `1` | the value's node | yes |
 | Expression inside `defined?` | `defined?(foo)` to `defined?(bar)` | the expression's node | no: `defined?` of a switch always gives `"expression"`, so the switch goes on the whole `defined?` |
@@ -215,6 +223,8 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 | `BEGIN { }` | removed | `PreExecutionNode` | no: Ruby allows `BEGIN` only at the top level, so no switch can hold it, and the site gets no mutant |
 | `END { }` | removed | `PostExecutionNode` | yes |
 | `alias`, `alias` of a global, `undef` | removed | `AliasMethodNode`, `AliasGlobalVariableNode`, `UndefNode` | yes |
+| A name in `alias` or `undef` | `alias z x`, `x` to `y` | `SymbolNode` | no: the switch goes on the `alias` or `undef` |
+| Class or module name | `class Foo` to `class Bar` | `ConstantReadNode`, `ConstantPathNode` | no: neither the name nor the `ClassNode` or `ModuleNode` holds a switch, so the switch goes on the nearest enclosing node that holds one, and the site gets no mutant when no node around it holds one, as at the top level of a file or inside a module |
 | Method name in a `def` | `def foo` to `def bar` | none: the name is a location, not a node | no: the switch goes on the whole `def` |
 | Whole `def`, endless or not: renamed, removed, or changed | `def foo = 1` to `def bar = 1` | `DefNode` | yes; the mutant is static |
 | Endless method body, a value or a command | `def f(x) = x + 1`, `x + 1` to `x - 1` | the body's node | yes |
@@ -253,13 +263,14 @@ The probe wrapped each kind of site below in a single-line switch, ran it with n
 
 - **Named captures stay declared.** A match such as `/(?<x>\d+)/ =~ s` declares the local `x` when Ruby parses it. With the switch on the whole match and its mutant active, the match doesn't run, but `x` is still declared, as `nil`. The plain mutant has no `x` at all, so `defined?(x)` gives `"local-variable"` under the switch and `nil` in the plain mutant, and a later read of `x` gives `nil` where the plain mutant raises `NameError`.
 - **A local declared under a switch stays declared.** Removing a statement such as `x = 1` leaves `x` declared under the switch, as a named capture does: Ruby declares a local when it parses the assignment, and the mutant's branch has no assignment, so `x` is `nil`. With `x = 1` followed by `p x`, and the statement removed, the switched form prints `nil`, where the plain mutant raises `NameError`. A later read of `x` gives `nil` and not an error.
+- **A regexp literal in a condition warns twice.** Ruby warns `regex literal in condition` for each regexp literal it finds in a condition, and a switch on `p :y if /foo/` holds two of them, one in each branch. The switched form writes the warning twice to standard error, where the original and the plain mutant write it once. What the program prints to standard output is the same.
 - **A mutant that is invalid without a switch stays invalid.** Removing a default from `def f(a = 1)` makes every call `f()` raise `ArgumentError`, and so does the switched form. The switch reproduces the plain mutant; it doesn't make a broken mutant work.
 
 ## What this design doesn't do
 
 - It doesn't place a mutant inside `BEGIN { }`.
 - It doesn't mutate the path given to `require`, `require_relative`, or `load`.
-- It doesn't keep a site's mutant runtime when its switch has to move out to a definition or a class body: such a mutant is static.
+- It doesn't keep a site's mutant runtime when its switch has to move out to a definition or to a statement in a class body: such a mutant is static.
 - It doesn't make a mutant whose text has no one-line form. The run counts such sites instead.
 - It doesn't make a mutant whose plain mutant doesn't parse. The run reports such a mutant as `CompileError`.
 - It doesn't keep the original layout inside a mutant's text when the wrapped node spans several lines: the instrumenter formats that text with refract.

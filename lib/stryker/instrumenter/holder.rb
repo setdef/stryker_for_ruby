@@ -5,65 +5,86 @@ require "prism"
 module Stryker
   class Instrumenter
     module Holder
-      NOT_EXPRESSIONS = [
-        Prism::ArgumentsNode,
-        Prism::AssocNode,
-        Prism::AssocSplatNode,
-        Prism::BlockArgumentNode,
-        Prism::BlockLocalVariableNode,
-        Prism::BlockNode,
-        Prism::BlockParameterNode,
-        Prism::BlockParametersNode,
-        Prism::CallTargetNode,
-        Prism::ClassVariableTargetNode,
-        Prism::ConstantPathTargetNode,
-        Prism::ConstantTargetNode,
-        Prism::ElseNode,
-        Prism::EmbeddedStatementsNode,
-        Prism::EmbeddedVariableNode,
-        Prism::EnsureNode,
-        Prism::FlipFlopNode,
-        Prism::ForwardingParameterNode,
-        Prism::GlobalVariableTargetNode,
-        Prism::ImplicitNode,
-        Prism::ImplicitRestNode,
-        Prism::InNode,
-        Prism::IndexTargetNode,
-        Prism::InstanceVariableTargetNode,
-        Prism::ItParametersNode,
-        Prism::KeywordHashNode,
-        Prism::KeywordRestParameterNode,
-        Prism::LocalVariableTargetNode,
-        Prism::MultiTargetNode,
-        Prism::NoKeywordsParameterNode,
-        Prism::NumberedParametersNode,
-        Prism::OptionalKeywordParameterNode,
-        Prism::OptionalParameterNode,
-        Prism::ParametersNode,
-        Prism::PreExecutionNode,
-        Prism::ProgramNode,
-        Prism::RequiredKeywordParameterNode,
-        Prism::RequiredParameterNode,
-        Prism::RescueNode,
-        Prism::RestParameterNode,
-        Prism::SplatNode,
-        Prism::StatementsNode,
-        Prism::WhenNode,
+      KINDS = [
+        Prism::AliasGlobalVariableNode,
+        Prism::AliasMethodNode,
+        Prism::AndNode,
+        Prism::ArrayNode,
+        Prism::BreakNode,
+        Prism::CallNode,
+        Prism::CallOperatorWriteNode,
+        Prism::CaseMatchNode,
+        Prism::ConstantWriteNode,
+        Prism::DefNode,
+        Prism::DefinedNode,
+        Prism::FloatNode,
+        Prism::ForwardingSuperNode,
+        Prism::HashNode,
+        Prism::IfNode,
+        Prism::ImaginaryNode,
+        Prism::IndexOrWriteNode,
+        Prism::IntegerNode,
+        Prism::InterpolatedRegularExpressionNode,
+        Prism::InterpolatedStringNode,
+        Prism::InterpolatedSymbolNode,
+        Prism::LambdaNode,
+        Prism::LocalVariableAndWriteNode,
+        Prism::LocalVariableOperatorWriteNode,
+        Prism::LocalVariableOrWriteNode,
+        Prism::LocalVariableReadNode,
+        Prism::LocalVariableWriteNode,
+        Prism::MatchPredicateNode,
+        Prism::MatchRequiredNode,
+        Prism::MatchWriteNode,
+        Prism::MultiWriteNode,
+        Prism::NextNode,
+        Prism::OrNode,
+        Prism::PostExecutionNode,
+        Prism::RangeNode,
+        Prism::RationalNode,
+        Prism::RedoNode,
+        Prism::RegularExpressionNode,
+        Prism::RetryNode,
+        Prism::ReturnNode,
+        Prism::SourceFileNode,
+        Prism::SourceLineNode,
+        Prism::StringNode,
+        Prism::SuperNode,
+        Prism::SymbolNode,
+        Prism::UndefNode,
+        Prism::UntilNode,
+        Prism::WhileNode,
+        Prism::XStringNode,
+        Prism::YieldNode,
       ].freeze
-      INTERPOLATED = [
+      COMPOUNDS = [
+        Prism::AliasMethodNode,
         Prism::InterpolatedMatchLastLineNode,
         Prism::InterpolatedRegularExpressionNode,
         Prism::InterpolatedStringNode,
         Prism::InterpolatedSymbolNode,
         Prism::InterpolatedXStringNode,
+        Prism::UndefNode,
       ].freeze
-      private_constant(:INTERPOLATED, :NOT_EXPRESSIONS)
+      private_constant(:COMPOUNDS, :KINDS)
 
       def self.holds?(node, parent, grandparent)
-        !NOT_EXPRESSIONS.include?(node.class) && !INTERPOLATED.include?(parent.class) && !label?(node) &&
-          !matched_with_captures?(node, parent, grandparent) && !body_run_before_test?(node, grandparent) &&
-          !bare_array?(node)
+        KINDS.include?(node.class) && !part?(node, parent) && !label?(node) && !bare_array?(node) &&
+          !matched_with_captures?(node, parent, grandparent)
       end
+
+      def self.part?(node, parent)
+        # A word of %w[] or %i[], an elsif, which Prism makes an IfNode inside
+        # its if, a part of an interpolated or adjacent string, and a name in
+        # alias or undef are each of a kind that holds a switch elsewhere, but
+        # not text that can stand in parentheses where it is.
+        case parent
+        when Prism::ArrayNode then parent.opening_loc&.slice.to_s.start_with?("%")
+        when Prism::IfNode then !parent.predicate.equal?(node)
+        else COMPOUNDS.include?(parent.class)
+        end
+      end
+      private_class_method(:part?)
 
       def self.label?(node)
         return false unless node.is_a?(Prism::SymbolNode)
@@ -79,14 +100,6 @@ module Stryker
           (node.is_a?(Prism::RegularExpressionNode) && grandparent.is_a?(Prism::MatchWriteNode))
       end
       private_class_method(:matched_with_captures?)
-
-      def self.body_run_before_test?(node, grandparent)
-        case grandparent
-        when Prism::WhileNode, Prism::UntilNode then node.is_a?(Prism::BeginNode) && grandparent.begin_modifier?
-        else false
-        end
-      end
-      private_class_method(:body_run_before_test?)
 
       def self.bare_array?(node)
         node.is_a?(Prism::ArrayNode) && !node.opening_loc

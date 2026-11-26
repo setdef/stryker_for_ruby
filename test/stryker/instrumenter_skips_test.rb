@@ -16,6 +16,20 @@ class InstrumenterSkipsTest < Minitest::Test
     assert_equal([source, [[1, :no_switch_site]]], [result.source, skips(result)])
   end
 
+  def test_a_mutant_on_a_class_name_with_no_node_around_it_gets_no_switch
+    source = "class Foo\nend\np defined?(Foo)\n"
+    result = instrument(source, %w[Foo Bar])
+
+    assert_equal([source, [[1, :no_switch_site]]], [result.source, skips(result)])
+  end
+
+  def test_a_mutant_on_a_module_name_with_no_node_around_it_gets_no_switch
+    source = "module Foo\nend\np defined?(Foo)\n"
+    result = instrument(source, %w[Foo Bar])
+
+    assert_equal([source, [[1, :no_switch_site]]], [result.source, skips(result)])
+  end
+
   def test_a_mutant_with_no_one_line_form_gets_no_switch
     source = "x = /a\nb/x\np x\n"
     result = instrument(source, ["/a\nb/x", "/c\nb/x"])

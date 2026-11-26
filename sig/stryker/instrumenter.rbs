@@ -20,8 +20,11 @@ module Stryker
   # Some mutants get no switch. The result lists each of them with the
   # reason, so that a run can report how many sites it skipped and why:
   #
-  # - `:no_switch_site`: no node around the mutant's site can hold a switch,
-  #   as inside `BEGIN { }`.
+  # - `:no_switch_site`: no node around the mutant's site can hold a switch:
+  #   inside `BEGIN { }`, or at a class or module name, or at a statement of
+  #   a kind that the placement table doesn't name, such as `@count = 0` or
+  #   an `unless`, at the top level of a file or directly in a class or
+  #   module body.
   # - `:no_one_line_form`: the mutant's text spans several lines, and has no
   #   form on one line, as a regexp with a line break inside it.
   # - `:does_not_parse`: the plain mutant, the original file with only the

@@ -23,6 +23,12 @@ class ConditionSitesTest < Minitest::Test
     assert_site(source, ["a > 1", "a > 3"], holder: Prism::CallNode)
   end
 
+  def test_a_whole_elsif
+    source = "a = 2\nif a > 5\n  p :big\nelsif a > 1\n  p :middle\nend\n"
+
+    assert_site(source, ["elsif a > 1\n  p :middle\nend", "elsif a > 0\n  p :small\nend"], holder: Prism::IfNode)
+  end
+
   def test_the_condition_of_a_while
     assert_site("i = 0\nwhile i < 3\n  i += 1\nend\np i\n", ["i < 3", "i < 5"], holder: Prism::CallNode)
   end
@@ -39,12 +45,24 @@ class ConditionSitesTest < Minitest::Test
     assert_site("a = 2\np :y if a > 1\np :done\n", ["a > 1", "a <= 1"], holder: Prism::CallNode)
   end
 
+  def test_a_bare_interpolated_regexp_as_a_condition
+    source = "$_ = 'foo'\ns = 'fo'\np :y if /\#{s}o/\np :done\n"
+
+    assert_site(source, ["/\#{s}o/", "/\#{s}x/"], holder: Prism::IfNode)
+  end
+
   def test_a_whole_ternary
     assert_site("a = 2\np(a > 1 ? :y : :n)\n", ["a > 1 ? :y : :n", ":z"], holder: Prism::IfNode)
   end
 
   def test_the_body_of_a_begin_end_while_loop
     assert_site("i = 0\nbegin\n  i += 1\nend while i > 5\np i\n", ["begin\n  i += 1\nend", "nil"], holder: Prism::WhileNode)
+  end
+
+  def test_the_body_of_a_begin_end_until_loop
+    source = "i = 0\nbegin\n  i += 1\nend until i < 5\np i\n"
+
+    assert_site(source, ["begin\n  i += 1\nend", "nil"], holder: Prism::UntilNode)
   end
 
   def test_a_statement_inside_a_begin_end_while_loop
