@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative("../test_helper")
 require "prism"
 
 # Finds the bodies of the heredocs that a mutant's edit replaces the openers
