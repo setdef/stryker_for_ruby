@@ -2,9 +2,7 @@
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class Span < Data.define(:start_offset, :end_offset)
-      # steep:ignore:end
       def self.grown(span, growth)
         new(start_offset: span.start_offset, end_offset: span.end_offset + growth)
       end
@@ -28,6 +26,8 @@ module Stryker
       def within?(other)
         other.start_offset <= start_offset && end_offset <= other.end_offset
       end
+
+      # @dynamic start_offset, end_offset
     end
   end
 end

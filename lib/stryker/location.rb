@@ -3,8 +3,7 @@
 require_relative "position"
 
 module Stryker
-  # steep:ignore:start
   class Location < Data.define(:start, :end)
-    # steep:ignore:end
+    # @dynamic start, end
   end
 end

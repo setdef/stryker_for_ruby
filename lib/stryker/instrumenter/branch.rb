@@ -2,9 +2,8 @@
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class Branch < Data.define(:id, :text)
-      # steep:ignore:end
+      # @dynamic id, text
     end
   end
 end

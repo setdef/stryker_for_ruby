@@ -6,9 +6,7 @@ require_relative "skip"
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class Outcome < Data.define(:mutant, :node, :text, :valid)
-      # steep:ignore:end
       def site
         return unless node && text
 
@@ -31,6 +29,8 @@ module Stryker
 
         valid ? :no_one_line_form : :does_not_parse
       end
+
+      # @dynamic mutant, node, text, valid
     end
   end
 end

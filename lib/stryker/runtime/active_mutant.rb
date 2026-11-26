@@ -2,9 +2,7 @@
 
 module Stryker
   module Runtime
-    # steep:ignore:start
     class ActiveMutant < Data.define(:id)
-      # steep:ignore:end
       def hit(*)
         nil
       end
@@ -12,6 +10,8 @@ module Stryker
       def load_began(_path)
         nil
       end
+
+      # @dynamic id
     end
   end
 end

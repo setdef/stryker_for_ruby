@@ -5,9 +5,7 @@ require_relative "holder"
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class Lineage < Data.define(:node, :parent, :grandparent, :context)
-      # steep:ignore:end
       def self.root(tree)
         new(node: tree, parent: nil, grandparent: nil, context: :free)
       end
@@ -19,6 +17,8 @@ module Stryker
       def holds?
         context == :free && Holder.holds?(node, parent, grandparent)
       end
+
+      # @dynamic node, parent, grandparent, context
     end
   end
 end

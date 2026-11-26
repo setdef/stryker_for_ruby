@@ -2,9 +2,7 @@
 
 module Stryker
   module Runtime
-    # steep:ignore:start
     class Recording < Data.define(:collector)
-      # steep:ignore:end
       def id
         nil
       end
@@ -24,6 +22,8 @@ module Stryker
         ractor.equal?(Ractor.main) ? RECORDER.receive(message) : collector << message
         nil
       end
+
+      # @dynamic collector
     end
   end
 end

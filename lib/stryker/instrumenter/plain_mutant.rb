@@ -2,9 +2,7 @@
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class PlainMutant < Data.define(:mutant, :span, :result)
-      # steep:ignore:end
       def self.without(source, bodies)
         bodies.reverse.reduce(source.b) do |text, body|
           "#{text.byteslice(0, body.start_offset)}#{text.byteslice((body.end_offset)..)}".b
@@ -27,6 +25,8 @@ module Stryker
         mutant.inside?(location) ? mutant.growth : 0
       end
       private_class_method(:edit_growth)
+
+      # @dynamic mutant, span, result
     end
   end
 end

@@ -2,9 +2,8 @@
 
 module Stryker
   class Instrumenter
-    # steep:ignore:start
     class Skip < Data.define(:mutant, :reason)
-      # steep:ignore:end
+      # @dynamic mutant, reason
     end
   end
 end
