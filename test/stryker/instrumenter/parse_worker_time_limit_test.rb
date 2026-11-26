@@ -36,7 +36,11 @@ class ParseWorkerTimeLimitTest < Minitest::Test
   end
 
   def test_the_error_gives_the_last_lines_the_worker_wrote_to_standard_error
-    error = failure(silent("warn('slow'); sleep")) { |worker| worker.verdict(plain) }
+    worker = asked(start("$stdin.gets; $stdin.gets; warn('slow'); puts('{\"valid\":true}'); sleep"), plain)
+    worker.verdict(plain)
+    worker.wait_at_most(0.2)
+
+    error = failure(worker) { |silent| silent.verdict(plain) }
 
     assert_includes(error.message, "seconds.\nThe last lines it wrote to standard error:\nslow")
   end

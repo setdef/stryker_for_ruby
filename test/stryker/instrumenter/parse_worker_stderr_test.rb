@@ -41,6 +41,12 @@ class ParseWorkerStderrTest < Minitest::Test
     assert_equal(lines.last(Stderr::LINES).join("\n"), errors.last_lines)
   end
 
+  def test_it_ends_each_line_with_a_line_feed_whichever_way_the_worker_ended_it
+    write("first\r\nsecond\n")
+
+    assert_equal("first\nsecond", errors.last_lines)
+  end
+
   def test_it_reads_only_the_end_of_a_file_that_is_large
     write("#{'x' * 100_000}\nlast\n")
 

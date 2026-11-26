@@ -33,7 +33,7 @@ module Stryker
       def last_lines
         path = @file.path.to_s
         tail = File.binread(path, TAIL_BYTES, [File.size(path) - TAIL_BYTES, 0].max)
-        String.new(tail.to_s, encoding: Encoding::UTF_8).scrub.lines.last(LINES).join.strip
+        String.new(tail.to_s, encoding: Encoding::UTF_8).scrub.lines.last(LINES).map(&:chomp).join("\n").strip
       end
 
       def close

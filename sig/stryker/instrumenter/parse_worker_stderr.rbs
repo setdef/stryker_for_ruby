@@ -42,8 +42,9 @@ module Stryker
       #   no shell reads.
       def popen: (Array[String] command) -> [IO, IO, Process::Waiter]
 
-      # The last lines in the file, up to `LINES` of them, without the blank
-      # space around them, or an empty string when the worker wrote nothing.
+      # The last lines in the file, up to `LINES` of them, joined with line
+      # feeds, which also ends a line that a Windows worker ended with a
+      # carriage return, and without the blank space around them, or an empty string when the worker wrote nothing.
       # It reads the last 8 KiB of the file at most. A byte that isn't valid
       # UTF-8 becomes U+FFFD.
       def last_lines: () -> String
