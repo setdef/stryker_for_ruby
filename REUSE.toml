@@ -5,3 +5,11 @@ path = "**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 setdef"
 SPDX-License-Identifier = "Apache-2.0"
+
+# The report schema is copied, unchanged, from mutation-testing-report-schema
+# 3.9.0, which the Stryker tools share. The tests validate reports against it.
+[[annotations]]
+path = "test/fixtures/mutation-testing-report-schema.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2018 Stryker Mutator contributors"
+SPDX-License-Identifier = "Apache-2.0"

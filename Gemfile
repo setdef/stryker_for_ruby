@@ -9,6 +9,8 @@ gemspec
 gem "irb", "~> 1.18"
 # Runs the tests.
 gem "minitest", "~> 6.0"
+# Validates the tests' reports against the report schema.
+gem "json_schemer", "~> 2.5"
 # Stubs objects in the tests.
 gem "minitest-mock", "~> 5.27"
 # Runs the tasks.
