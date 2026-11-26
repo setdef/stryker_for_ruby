@@ -3,26 +3,11 @@ module Stryker
     # Finds the nodes of a kind that `Stryker::Instrumenter::Holder` lists
     # that still can't hold a switch where they stand, because parentheses
     # around them there either don't parse or change what the code means.
-    # `Stryker::Instrumenter::Unparsable` finds the ones where they don't
-    # parse. From the placement table in
-    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
-    # parentheses change what the code means around:
-    #
-    # - a regexp with named captures on the left of `=~`, so the switch
-    #   goes on the whole match, whose range the `=~` call shares;
-    # - `self` as the receiver of a call, an index, or an assignment to
-    #   either, such as `self` in `self.x = 1`, since Ruby calls a private
-    #   method through a receiver only when the receiver is the keyword
-    #   `self`;
-    # - the body of a `begin ... end while` or `begin ... end until` loop,
-    #   which Ruby runs once before it tests the condition, so the switch
-    #   goes on the whole loop;
-    # - an integer literal as a flip-flop's endpoint, such as `2` in
-    #   `if 2..4`, and a node in a condition that holds a regexp literal or
-    #   a flip-flop through `!`, `not`, `&&`, `||`, `and`, `or`,
-    #   parentheses, or `begin ... end`, such as `!/foo/` in `if !/foo/`, so
-    #   the switch goes on the whole conditional, where the construct stays
-    #   in the condition. `Stryker::Instrumenter::Conditional` finds these.
+    # `Stryker::Instrumenter::Unwrappable::Syntax` finds the ones where they
+    # don't parse, and `Stryker::Instrumenter::Unwrappable::Meaning` finds
+    # the ones where they change the meaning. The placement table in
+    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site)
+    # lists both.
     module Unwrappable
       # Whether `node` can't hold a switch where it stands, even when its
       # kind is one that holds a switch elsewhere.
@@ -31,12 +16,6 @@ module Stryker
       # - `parent`: Prism::node, its parent, or nil at the root.
       # - `grandparent`: Prism::node, its grandparent, or nil.
       def self.at?: (Prism::node node, Prism::node? parent, Prism::node? grandparent) -> bool
-
-      private def self.matched_with_captures?: (Prism::node node, Prism::node? grandparent) -> bool
-
-      private def self.self_receiver?: (Prism::node node, Prism::node? parent) -> bool
-
-      private def self.loop_body?: (Prism::node node, Prism::node? grandparent) -> bool
     end
   end
 end
