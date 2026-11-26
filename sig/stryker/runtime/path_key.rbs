@@ -51,6 +51,21 @@ module Stryker
       # ```
       def self.of_file: (String path, ?String? separator) -> Array[String]
 
+      # The base name of `key`, a key that `of` made, with letter case folded
+      # on every system, because a file system can fold it whatever the
+      # platform's convention: the default macOS file system does. `key` has
+      # `/` between its parts, so the base name is what follows the last one.
+      # It reads nothing from disk.
+      #
+      # - `key`: String, the key of a file's path.
+      def self.name: (String key) -> String
+
+      # The base name of each of `keys`, with letter case folded, as `name`
+      # gives it.
+      #
+      # - `keys`: Array of String, keys that `of` made.
+      def self.names: (Array[String] keys) -> Set[String]
+
       # The real path of the file at `path`, with every symbolic link and `..`
       # resolved, or nil when `path` is relative or no file is at `path`. A
       # relative path is never resolved against the current directory,

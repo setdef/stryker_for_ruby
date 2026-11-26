@@ -45,7 +45,7 @@ The directory holds two kinds of file:
 
 No path holds a NUL byte, so the index needs no escaping, and the runtime reads it with `String#split`, so a project process loads no format library, not even the `json` default gem, whose version the project's bundle would choose. Each file's name comes from its place in the index, so no name that the project chose becomes part of a path in the cache.
 
-When the loader is installed, it reads the index into a lookup table from each instrumented file's keys to that file's place in the cache. It reads instrumented source only when it serves a file. Each instrumented file has two keys: one for its path, and one for its real path, with every symbolic link and `..` resolved. In one process, Ruby gives the hook the real path of a file it finds through `$LOAD_PATH` or `require_relative`, and the path as written for a `require` of an absolute path, so a table with one of the two misses some loads of a project under a symbolic link, such as a temporary folder under `/var` on macOS. The table is shareable ([Lookup tables](#lookup-tables)).
+When the loader is installed, it reads the index into a lookup table from each instrumented file's keys to that file's place in the cache. It reads instrumented source only when it serves a file. Each instrumented file has two keys: one for its path, and one for its real path, with every symbolic link and `..` resolved. In one process, Ruby gives the hook the real path of a file it finds through `$LOAD_PATH` or `require_relative`, and the path as written for a `require` of an absolute path, so a table with one of the two misses some loads of a project under a symbolic link, such as a temporary folder under `/var` on macOS. The table also holds the base name of each key, with letter case folded, which the hook uses to decide when to resolve a real path ([The `load_iseq` hook](#the-load_iseq-hook)). The table is shareable ([Lookup tables](#lookup-tables)).
 
 ## Parsing plain mutants
 
@@ -90,7 +90,7 @@ Ruby compiles every file it loads from disk, whether through `require`, `require
 
 The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
 
-- When `path` has one of an instrumented file's keys ([The cache](#the-cache), [Paths on Windows](#paths-on-windows)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as the file name and the file's real path as the path, records that it served that file, and returns the result.
+- When `path` is an instrumented file's path ([Finding an instrumented file](#finding-an-instrumented-file)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as the file name and the file's real path as the path, records that it served that file, and returns the result.
 - For any other file, it calls `super` when a module further down the chain defines `load_iseq`, and returns `nil` otherwise. Ruby has no default `load_iseq`, so a bare `super` raises `NoMethodError` when nothing else has prepended one.
 
 In both cases, when a test is running, the module records `path` as a file whose load began during that test. [Coverage](coverage.md#static-hits-inside-a-test) says what the recorder does with it.
@@ -104,6 +104,26 @@ The loader installs the hook before any of the project's code loads, in every pr
 `load_iseq` is part of CRuby's `RubyVM` API. JRuby and TruffleRuby don't call it, so **Stryker (for Ruby)** runs on CRuby only.
 
 The hook serves Ruby files. An ERB template reaches Ruby as text through Rails, `ERB`, Erubi, or Tilt, so it loads by another route: see [ERB templates](erb.md#loading-the-instrumented-text).
+
+### Finding an instrumented file
+
+The hook finds an instrumented file in up to two steps:
+
+1. It looks up the key of `path` in the table ([The cache](#the-cache), [Paths on Windows](#paths-on-windows)). The lookup is one Hash lookup, with no system call.
+2. When the table has no such key, but the base name of `path`, with letter case folded, is the base name of one of the keys, the hook resolves `path`'s real path and looks up its key. A `load` through a second symbolic link, or in other letter case on a file system that folds it, such as the default macOS file system, gives a path that the table doesn't have, and a `load` adds nothing to `$LOADED_FEATURES`, so the loading check can't see the miss. The hook records a file found this way under the path that Ruby gave, as it does for any other.
+
+Letter case is folded on every system, because a file system can fold it whatever the platform's convention. A path whose base name no instrumented file has is never resolved, so the hook pays for the real path only where a file may be instrumented. A file in another folder with the same base name as an instrumented file is resolved, and found not to be instrumented.
+
+One lookup costs this much on macOS, as the median of 7 rounds of 100,000 lookups in a table of 500 instrumented files (the rows that resolve a real path, of 5,000 lookups each):
+
+| Path | Cost of the lookup |
+| - | - |
+| A path with a key in the table | 0.2 µs |
+| No key, and a base name that no instrumented file has | 0.4 µs |
+| No key, a base name that an instrumented file has, and no file at the path | 3.5 µs |
+| No key, a base name that an instrumented file has, and a symbolic link to the instrumented file | 30 to 40 µs |
+
+The last row is the cost of resolving the real path of a file that exists, and each load of such a file pays it.
 
 ### Keeping the hook ahead of Bootsnap
 
@@ -236,4 +256,5 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't load Prism or refract in a project process.
 - It doesn't time out a parse worker, or restart one that failed: a worker's failure raises an error and ends the pool.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
+- It doesn't find an instrumented file that a `load` reaches through a symbolic link with a base name that no instrumented file has. A `load` adds nothing to `$LOADED_FEATURES`, so nothing reports it.
 - It doesn't write instrumented source into the project.

@@ -30,7 +30,7 @@ module Stryker
     module Loader
       # The cache that the hook serves from: an empty one until `install`
       # reads one. Shareable, so the hook reads it in any Ractor.
-      CACHE: Cache
+      CACHE: LookupTable
 
       # The paths of the files in the cache that the hook served in this
       # process, from the main Ractor. The loading check reads it. It isn't shareable, so
@@ -108,7 +108,7 @@ module Stryker
       #   `install` takes it.
       def self.check: (?Array[String] features, ?Class iseq_class) -> nil
 
-      private def self.use: (Cache cache) -> Cache
+      private def self.use: (LookupTable cache) -> LookupTable
 
       private def self.missed?: (String feature) -> bool
     end

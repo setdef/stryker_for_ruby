@@ -35,16 +35,36 @@ class LoaderPathsProcessTest < Minitest::Test
     File.join(folder, "alias").tap { |link| File.symlink(lib, link) }
   end
 
+  # The path of +file+ in lib through another spelling of lib.
+  def aliased(lib, file)
+    File.join(spelling(lib), file)
+  end
+
   # Plain Ruby gives __dir__ the real path of a file, and a file that the
   # loader serves is compiled with it.
   def test_a_file_required_through_another_spelling_of_its_folder_has_the_real_folder_as_its_dir
     lib, cache = project({ "folder.rb": "DIR = :original\n" }, {})
-    spelled = spelling(lib)
-    Stryker::Runtime::Cache.write(cache, { File.join(spelled, "folder.rb") => "DIR = __dir__\n" })
-    file = File.join(spelled, "folder.rb")
+    file = aliased(lib, "folder.rb")
+    Stryker::Runtime::Cache.write(cache, { file => "DIR = __dir__\n" })
     program = "#{installed(lib, cache)}require #{file.inspect}\np DIR == #{File.realpath(lib).inspect}"
 
     assert_equal("true\n", run_program(program).first)
+  end
+
+  # A load adds nothing to $LOADED_FEATURES, so the loading check can't see
+  # that the hook missed it.
+  def test_a_file_loaded_through_another_spelling_of_its_folder_is_instrumented
+    lib, cache = project(FILES, INSTRUMENTED)
+    program = "#{installed(lib, cache)}load(#{aliased(lib, 'line.rb').inspect})\np LINE\n#{CHECK}"
+
+    assert_equal(":instrumented\nchecked\n", run_program(program).first)
+  end
+
+  def test_a_file_required_through_another_spelling_of_its_folder_is_instrumented
+    lib, cache = project(FILES, INSTRUMENTED)
+    program = "#{installed(lib, cache)}require #{aliased(lib, 'line.rb').inspect}\np LINE\n#{CHECK}"
+
+    assert_equal(":instrumented\nchecked\n", run_program(program).first)
   end
 
   # A program that Ruby starts with the C locale reads each path from the file

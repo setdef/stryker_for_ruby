@@ -24,6 +24,17 @@ module Stryker
         (real ? [path, real] : [path]).map { |form| of(form, separator) }
       end
 
+      def self.name(key)
+        # Letter case is folded on every system, because a file system can
+        # fold it whatever the platform's convention: the default macOS file
+        # system does.
+        key.rpartition("/").last.downcase(:fold)
+      end
+
+      def self.names(keys)
+        keys.to_set { |key| name(key) }
+      end
+
       def self.real(path)
         # A relative path, such as the thread.rb that Ruby lists for a
         # built-in feature, names no file of the project, and realpath would

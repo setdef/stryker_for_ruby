@@ -4,13 +4,14 @@ require_relative "cache"
 require_relative "hook"
 require_relative "keep_ahead"
 require_relative "loading_error"
+require_relative "lookup_table"
 require_relative "path_key"
 require_relative "served"
 
 module Stryker
   module Runtime
     module Loader
-      CACHE = Ractor.make_shareable(Cache.new(files: {}, separator: nil))
+      CACHE = Ractor.make_shareable(LookupTable.new(files: {}, names: Set.new, separator: nil))
       SERVED = Served.new
       public_constant(:CACHE, :SERVED)
 

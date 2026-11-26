@@ -1,10 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "lookup_table"
 require_relative "path_key"
 
 module Stryker
   module Runtime
-    class Cache < Data.define(:files, :separator)
+    module Cache
       INDEX = "index"
       SEPARATOR = "\0"
       NUL_IN_PATH = "A path holds a NUL byte, which no file's path can hold, so the cache can't list it."
@@ -22,9 +23,7 @@ module Stryker
       end
 
       def self.read(directory, separator = File::ALT_SEPARATOR)
-        paths = text(File.join(directory, INDEX)).split(SEPARATOR)
-        pairs = paths.each_with_index.flat_map { |path, place| keyed(path, entry(directory, place), separator) }
-        Ractor.make_shareable(new(files: pairs.to_h, separator:))
+        LookupTable.of(table(directory, separator), separator)
       end
 
       def self.text(file)
@@ -32,10 +31,6 @@ module Stryker
         # otherwise, and compile honors that comment, so the bytes are read
         # as they are and only tagged.
         File.binread(file).force_encoding(Encoding::UTF_8)
-      end
-
-      def file(path)
-        files[PathKey.of(path, separator)]
       end
 
       def self.index(paths)
@@ -58,9 +53,13 @@ module Stryker
       def self.entry(directory, place)
         File.join(directory, "#{place}.rb")
       end
-      private_class_method(:entry, :index, :keyed)
 
-      # @dynamic files, separator
+      def self.table(directory, separator)
+        paths = text(File.join(directory, INDEX)).split(SEPARATOR)
+        pairs = paths.each_with_index.flat_map { |path, place| keyed(path, entry(directory, place), separator) }
+        pairs.to_h
+      end
+      private_class_method(:entry, :index, :keyed, :table)
     end
   end
 end

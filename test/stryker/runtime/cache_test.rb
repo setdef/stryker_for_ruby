@@ -74,7 +74,17 @@ class CacheTest < Minitest::Test
   end
 
   def test_no_sources_make_an_empty_cache
-    assert_empty(written.files)
+    assert_empty([written.files, written.names].flat_map(&:to_a))
+  end
+
+  def test_the_cache_has_the_base_name_of_each_instrumented_file_in_folded_letter_case
+    cache = written("/app/lib/Invoice.rb": "1\n", "/app/lib/billing/RECEIPT.rb": "2\n")
+
+    assert_equal(Set["invoice.rb", "receipt.rb"], cache.names)
+  end
+
+  def test_a_base_name_on_windows_is_found_after_either_separator
+    assert_equal(Set["invoice.rb"], written(WINDOWS, "C:\\App\\Lib\\Invoice.rb": "1\n").names)
   end
 
   def test_the_cache_is_shareable

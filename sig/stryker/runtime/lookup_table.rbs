@@ -1,0 +1,67 @@
+module Stryker
+  module Runtime
+    # The table that the loader's hook searches for the cache file that holds
+    # a path's instrumented source, as
+    # [Finding an instrumented file](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#finding-an-instrumented-file)
+    # specifies. `Stryker::Runtime::Cache.read` builds it from the cache's
+    # index. It is shareable, so the hook reads it in any Ractor.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # table = Stryker::Runtime::LookupTable.of({ "/app/lib/invoice.rb" => "/tmp/cache/0.rb" }, nil)
+    # table.file("/app/lib/invoice.rb")
+    # # => "/tmp/cache/0.rb"
+    # table.file("/app/lib/receipt.rb")
+    # # => nil
+    # ```
+    class LookupTable < Data
+      # Each key of each instrumented file, as
+      # `Stryker::Runtime::PathKey.of_file` gives them with `separator`, and
+      # the file in the cache that holds its instrumented source.
+      attr_reader files: Hash[String, String]
+
+      # The base name of each key in `files`, with letter case folded
+      # (`Stryker::Runtime::PathKey.names`). `file` resolves the real path of
+      # a file that it can't find only when the file's base name is here.
+      attr_reader names: Set[String]
+
+      # The alternative path separator that the keys were made with, or nil.
+      attr_reader separator: String?
+
+      # Builds a table from its parts. `of` builds the one a project process
+      # uses.
+      #
+      # - `files`: Hash of String to String, from each key to its file.
+      # - `names`: Set of String, the folded base name of each key.
+      # - `separator`: String or nil, the separator of the keys.
+      def self.new: (files: Hash[String, String], names: Set[String], separator: String?) -> instance
+                  | (Hash[String, String] files, Set[String] names, String? separator) -> instance
+
+      # The shareable table of `files`, with the folded base name of each of
+      # its keys.
+      #
+      # - `files`: Hash of String to String, from each key to its file.
+      # - `separator`: String or nil, the separator that made the keys.
+      def self.of: (Hash[String, String] files, String? separator) -> LookupTable
+
+      # The file in the cache that holds the instrumented source of the file
+      # at `path`, or nil when that file isn't instrumented. It compares
+      # `path`'s key with the keys in the table, and reads nothing from disk,
+      # so the hook pays only a Hash lookup for a file that Ruby loads.
+      #
+      # When the table has no such key, but the key's base name, with letter
+      # case folded, is in `names`, it resolves the real path
+      # (`Stryker::Runtime::PathKey.real`) and compares that key. A `load`
+      # through a second symbolic link, or in another letter case on a file
+      # system that folds it, gives a path that the table doesn't have, and
+      # nothing in `$LOADED_FEATURES` shows the miss. The resolution costs a
+      # system call, so a file with a base name that no instrumented file has
+      # never pays for it. A file in another folder with the same base name as
+      # an instrumented file does, and is then not instrumented.
+      #
+      # - `path`: String, a file's path, as Ruby gives it to the hook.
+      def file: (String path) -> String?
+    end
+  end
+end

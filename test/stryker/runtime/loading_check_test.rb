@@ -59,10 +59,12 @@ class LoadingCheckTest < Minitest::Test
     assert_equal([INSTRUMENTED], refusal([INSTRUMENTED]).files)
   end
 
-  def test_the_check_lists_a_file_the_hook_missed_under_another_spelling
+  # The hook resolves the real path of a file with an instrumented file's base
+  # name, so only a spelling it never saw, or one with another base name, is
+  # missed.
+  def test_the_check_lists_a_file_under_another_spelling_that_the_hook_never_saw
     real, other = two_spellings
     install([real])
-    iseq_class.load_iseq(other)
 
     assert_equal([other], refusal([other]).files)
   end

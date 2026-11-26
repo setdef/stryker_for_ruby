@@ -87,14 +87,6 @@ class LoaderTest < Minitest::Test
     assert_equal("instrumented", loaded(real))
   end
 
-  def test_an_instrumented_file_is_served_only_by_a_path_the_cache_has
-    real, other = two_spellings
-    install([real])
-
-    assert_equal("instrumented", loaded(real))
-    assert_nil(iseq_class.load_iseq(other))
-  end
-
   def test_a_path_on_windows_is_served_by_another_spelling
     install(["C:/App/lib/Invoice.rb"], WINDOWS)
 
