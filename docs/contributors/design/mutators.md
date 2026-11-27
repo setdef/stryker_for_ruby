@@ -329,6 +329,8 @@ The edit covers the whole literal and keeps its delimiters and flags. For `Regex
 
 It makes no mutant of a pattern with interpolation (`InterpolatedRegularExpressionNode`, or an `InterpolatedStringNode` given to `Regexp.new`), whose text isn't known until it runs. It makes none of a regexp literal that stands as a condition (`if /re/`, a `MatchLastLineNode`), which Ruby matches against `$_`. When regexp_parser can't parse a pattern, the pattern gets no mutant, and the run writes one warning to standard error with the file and the line, as `lib/a.rb:2: warning: Stryker (for Ruby) can't read this regular expression, so it makes no mutant of it: "...".` The parser's reason quotes the pattern's text, which comes from the project, so the warning writes the reason as `String#inspect` does: an invalid byte or a terminal escape character shows as an escape and never reaches the terminal.
 
+A regexp literal in a `case`/`in` pattern is mutated like any other: `in /^a/` gets `/a/` and `/\Aa/`, and both are valid.
+
 Weapon regeX has no Ruby version, and **Stryker (for Ruby)** doesn't run JavaScript or Scala, so it applies the mutations itself, to the tree that regexp_parser gives. Each node of the tree has the offsets, in characters, where it starts and ends in the pattern, and a mutation replaces that stretch of the pattern's text. The mutator relies on `to_s` giving back the pattern: it holds for every regexp literal in Ruby 4.1-dev's standard library, and for each pattern in the mutator's tests.
 
 ### `StringLiteral`
@@ -399,7 +401,7 @@ Each of these was left out of the catalog because its survivors would rarely be 
 | Symbols, `&:sym` | A symbol is the name of a method, key, or option, and a symbol nobody defines raises `NoMethodError`, `KeyError`, or `ArgumentError` at the first test that reaches it, which shows nothing that coverage doesn't. |
 | Number literals | No Stryker tool mutates them. The boundary mutants of `EqualityOperator` and `RangeOperator` test the values where off-by-one mistakes matter. |
 | `.` to `&.` | See [`OptionalChaining`](#optionalchaining). |
-| `case`/`in` patterns, flip-flops, `defined?`, `yield`, `super` | No Stryker tool has a counterpart, and their mutants mostly raise or change nothing a test sees. Their bodies and guards still get mutants. |
+| The shape of a `case`/`in` pattern (array, hash, find, and alternative patterns, captures, pins), flip-flops, `defined?`, `yield`, `super` | No Stryker tool has a counterpart, and their mutants mostly raise or change nothing a test sees. Their bodies and guards still get mutants, and so does a string, regexp, or range literal inside a pattern, as it does anywhere else: `in /^a/` gets the two `Regex` mutants of `/^a/`, both valid. |
 
 ## Turning mutators off
 
@@ -543,4 +545,4 @@ A mutant whose equivalence depends on a value's class or range at run time is ma
 - It doesn't remove a call whose value something reads, and it doesn't remove a call where another mutant is.
 - It has no mutation levels: every mutator runs unless `mutator.excludedMutations` lists it or a disable comment covers it.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
-- It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.
+- It doesn't mutate symbols, numbers other than their sign, `nil`, or the shape of a `case`/`in` pattern.

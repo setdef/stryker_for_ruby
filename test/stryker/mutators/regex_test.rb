@@ -25,6 +25,13 @@ class RegexTest < Minitest::Test
     assert_equal("Regex", mutator.name)
   end
 
+  def test_mutates_a_regexp_literal_in_a_case_in_pattern_as_it_mutates_one_anywhere
+    pattern = "case x\nin /^a/ then 1\nend"
+
+    assert_equal(["/a/", '/\Aa/'], replacements(pattern))
+    assert_equal(replacements("/^a/"), replacements(pattern))
+  end
+
   def test_an_anchor_is_removed_in_each_of_its_spellings
     assert_equal(%w[a a a a a], ["^a", "a$", '\Aa', 'a\z', 'a\Z'].map { |text| patterns(text).first })
   end
