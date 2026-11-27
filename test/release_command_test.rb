@@ -20,7 +20,18 @@ class ReleaseCommandTest < Minitest::Test
   private_constant(:NOW)
 
   def test_it_prints_the_version_a_tag_releases
-    assert_equal("0.1.0\n", step("version", "v0.1.0"))
+    assert_equal("0.1.0\n", step("version", "v0.1.0", commit_with("One.")))
+  end
+
+  def test_it_prints_the_version_a_tag_that_exists_at_the_commit_releases
+    sha = commit_with("One.")
+    tag("v0.1.0", sha)
+
+    assert_equal("0.1.0\n", step("version", "v0.1.0", sha))
+  end
+
+  def test_a_tag_to_release_with_no_commit_is_refused
+    assert_match(/version TAG needs the COMMIT it is released at/, failing_step({}, "version", "v0.3.0"))
   end
 
   def test_it_prints_the_version_after_the_newest_release_with_no_tag
@@ -73,7 +84,7 @@ class ReleaseCommandTest < Minitest::Test
   end
 
   def test_a_refusal_ends_the_run_with_its_reason
-    assert_match(/\Av0.1.0 is not newer than v0.2.0/, failing_step({}, "version", "v0.1.0"))
+    assert_match(/\Av0.1.0 is not newer than v0.2.0/, failing_step({}, "version", "v0.1.0", "abc"))
   end
 
   def test_the_reason_is_an_error_annotation_inside_github_actions
@@ -89,9 +100,9 @@ class ReleaseCommandTest < Minitest::Test
   end
 
   def test_a_step_given_too_many_arguments_is_refused
-    error = failing_step({}, "version", "v0.3.0", "v0.4.0")
+    error = failing_step({}, "version", "v0.3.0", "abc", "v0.4.0")
 
-    assert_match(/wrong number of arguments \(given 2, expected 0..1\)/, error)
+    assert_match(/wrong number of arguments \(given 3, expected 0..2\)/, error)
   end
 
   def test_a_failure_of_githubs_api_ends_the_run_with_its_message

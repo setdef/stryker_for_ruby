@@ -13,7 +13,7 @@ class Release
 
   def initialize: (root: String) -> void
 
-  def version: (String tag) -> String
+  def version: (String tag, String sha) -> String
 
   def next_version: () -> String
 
@@ -28,6 +28,8 @@ class Release
   def raise_version: (String version) -> void
 
   def tags: (*String options) -> Array[String]
+
+  def tag_commit: (String tag) -> String?
 
   def previous: (String sha) -> String?
 

@@ -34,6 +34,22 @@ class ReleasePlanScriptTest < Minitest::Test
     assert_includes(out, "Releasing v0.1.0 from #{@sha}.")
   end
 
+  def test_a_tag_that_exists_at_the_commit_is_published
+    git(@work, "push", "--quiet", "origin", "#{@sha}:refs/tags/v0.1.0")
+    out = script("plan", TAG: "v0.1.0", COMMIT: @sha)
+
+    assert_equal([@sha, "0.1.0", "v0.1.0", "true"], outputs.values_at(*FIELDS))
+    assert_includes(out, "Releasing v0.1.0 from #{@sha}.")
+  end
+
+  def test_a_tag_that_exists_at_another_commit_ends_the_run
+    other = commit_with("One.", "Two.")
+    push_trunk
+    git(@work, "push", "--quiet", "origin", "#{other}:refs/tags/v0.1.0")
+
+    assert_match(/v0.1.0 exists already, at #{other}, not #{@sha}/, failing_script("plan", TAG: "v0.1.0", COMMIT: @sha))
+  end
+
   def test_a_tag_on_a_run_of_a_branch_is_a_dry_run
     script("plan", TAG: "v0.1.0", GITHUB_REF: "refs/heads/rehearsal")
 

@@ -49,4 +49,14 @@ class ReleaseBuildScriptTest < Minitest::Test
 
     assert_match(/lists nothing new/, failing_script("build", COMMIT: empty, VERSION: "0.1.0"))
   end
+
+  def test_the_notes_of_a_tag_that_exists_at_the_commit_leave_out_the_release_before_it
+    earlier = commit_with("One.")
+    released = commit_with("One.", "Two.")
+    tag("v0.1.0", earlier)
+    tag("v0.2.0", released)
+    script("build", COMMIT: released, VERSION: "0.2.0")
+
+    assert_equal("### Added\n\n- Two.\n", File.read(File.join(@work, "release-notes.md")))
+  end
 end

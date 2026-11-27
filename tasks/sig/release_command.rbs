@@ -20,7 +20,7 @@ class ReleaseCommand
 
   def steps: () -> Hash[Symbol, _Step]
 
-  def version: (?String? tag) -> void
+  def version: (?String? tag, ?String? sha) -> void
 
   def commit: (String path, ?String? requested) -> void
 

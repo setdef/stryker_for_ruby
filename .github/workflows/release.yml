@@ -6,7 +6,9 @@
 # What it does. It picks the commit, wherever trunk has moved since: the one
 # asked for, or the newest of trunk's last 300 commits that has a run of
 # ci.yml that passed (tasks/release_commit.rb). It takes the version from the
-# tag, writes it into the version file of a checkout of that commit, builds
+# tag (a tag that exists already is released when it points at that commit, and
+# ends the run when it points anywhere else, because a tag never moves), writes
+# it into the version file of a checkout of that commit, builds
 # stryker_for_ruby-VERSION.gem there, checks that the gem says that version,
 # and writes SHA256SUMS. The notes are the entries of CHANGELOG.md's
 # [Unreleased] at that commit that the release before it did not list. It

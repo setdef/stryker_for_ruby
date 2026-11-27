@@ -10,8 +10,9 @@ require_relative "release_commit"
 #
 #   ruby -r ./tasks/release_command -e 'ReleaseCommand.main(ARGV)' COMMAND ARGUMENT...
 #
-#   version [TAG]           prints the version TAG releases, or, with no tag,
-#                           the version after the newest release
+#   version [TAG SHA]       prints the version TAG releases at the commit SHA,
+#                           or, with no tag, the version after the newest
+#                           release
 #   commit COMMITS [SHA]    prints the commit to release: SHA, or the newest of
 #                           the commits listed in the file COMMITS (newest
 #                           first) whose run of ci.yml passed
@@ -67,8 +68,10 @@ class ReleaseCommand
     }
   end
 
-  private def version(tag = nil)
-    @out.puts(tag ? @release.version(tag) : @release.next_version)
+  private def version(tag = nil, sha = nil)
+    return @out.puts(@release.next_version) unless tag
+
+    @out.puts(@release.version(tag, sha || raise(ArgumentError, "version TAG needs the COMMIT it is released at")))
   end
 
   private def commit(path, requested = nil)

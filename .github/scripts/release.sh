@@ -5,7 +5,9 @@
 #   plan     picks the commit and the version, and says whether this run
 #            publishes. Writes commit=, version=, tag=, and publish= to
 #            GITHUB_OUTPUT. Needs TAG (empty for a dry run) and, optionally,
-#            COMMIT; GITHUB_REF says where the run was started.
+#            COMMIT; GITHUB_REF says where the run was started. A TAG that
+#            exists is released when it points at the commit, and ends the run
+#            when it points anywhere else.
 #   build    builds stryker_for_ruby-VERSION.gem from COMMIT with VERSION
 #            written into its version file, and its SHA256SUMS, in
 #            RELEASE_DIR (release/), and the notes in RELEASE_NOTES
@@ -46,7 +48,7 @@ plan() {
   fi
   commit=$(release commit tmp/release-commits.txt ${requested:+"$requested"})
   if [ -n "$tag" ]; then
-    version=$(release version "$tag")
+    version=$(release version "$tag" "$commit")
     # A release GitHub holds without its tag would be published a second time.
     if gh release view "$tag" >/dev/null 2>&1; then
       echo "::error::GitHub has a release $tag already"

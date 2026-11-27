@@ -25,6 +25,15 @@ class ReleaseRecordScriptTest < Minitest::Test
     assert_equal("1\n", git(@dir, "--git-dir", @origin, "rev-list", "--count", "#{before}..trunk"))
   end
 
+  def test_a_tag_that_exists_at_the_commit_does_not_change_what_it_records
+    git(@work, "push", "--quiet", "origin", "#{@sha}:refs/tags/v0.1.0")
+    script("record", COMMIT: @sha, VERSION: "0.1.0")
+    text = git(@dir, "--git-dir", @origin, "show", "trunk:CHANGELOG.md")
+
+    assert_includes(text, "## [0.1.0] - ")
+    assert_includes(text, "### Added\n\n- One.\n- Two.\n")
+  end
+
   def test_the_commit_follows_the_conventions_of_the_project
     script("record", COMMIT: @sha, VERSION: "0.1.0")
     subject = git(@dir, "--git-dir", @origin, "log", "-1", "--format=%s", "trunk")

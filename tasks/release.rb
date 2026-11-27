@@ -45,13 +45,15 @@ class Release
     @root = root
   end
 
-  # The version that +tag+ releases, which must be v0.X.Y, a tag that does not
-  # exist yet, and newer than every release tag before it.
-  def version(tag)
+  # The version that +tag+ releases at the commit +sha+ (a full SHA). The tag
+  # must be v0.X.Y, must not exist or must point at +sha+, and must be newer
+  # than every other release tag.
+  def version(tag, sha)
     version = tag[TAG, :version] or raise(Refusal, "#{tag} is not v0.X.Y, with three plain integers")
-    raise(Refusal, "#{tag} exists already, and a tag never moves") if tags.include?(tag)
+    tagged = tag_commit(tag)
+    raise(Refusal, "#{tag} exists already, at #{tagged}, not #{sha}; a tag never moves") if tagged && tagged != sha
 
-    newest = tags.last
+    newest = (tags - [tag]).last
     raise(Refusal, "#{tag} is not newer than #{newest}") if newest && !newer?(version, newest)
 
     version
@@ -115,6 +117,11 @@ class Release
   private def tags(*options)
     names = git("tag", "--list", "v*", *options).split.grep(TAG)
     names.sort_by { |name| Gem::Version.new(name.delete_prefix("v")) }
+  end
+
+  # The commit +tag+ points at, or nil when the tag does not exist.
+  private def tag_commit(tag)
+    git("rev-list", "--max-count=1", "refs/tags/#{tag}").strip if tags.include?(tag)
   end
 
   # The newest release tag on a commit before +sha+, or nil.
