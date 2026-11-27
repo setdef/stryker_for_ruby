@@ -10,7 +10,7 @@ module Stryker
     #
     # ```ruby
     # flights = Stryker::Isolation::Flights.new(parent, config.concurrency)
-    # flights.run(runs) { |result| puts(result.status) }
+    # flights.run(runs, Stryker::Isolation::Verdict) { |result| puts(result.status) }
     # flights.stop
     # ```
     class Flights
@@ -35,12 +35,14 @@ module Stryker
       def initialize: (ParentProcess parent, Integer window) -> void
 
       # Gives the parent every run of `runs`, at most the window's number at
-      # once, and yields each result as the parent says how its child
-      # ended. Raises `Stryker::Isolation::Error` when the parent ends, or
-      # writes a line about a run that isn't in flight.
+      # once, and yields each result, as `judge` gives it, as the parent
+      # says how its child ended. Raises `Stryker::Isolation::Error` when the
+      # parent ends, or writes a line about a run that isn't in flight.
       #
       # - `runs`: Array of Stryker::MutantRun, the runs.
-      def run: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+      # - `judge`: what turns each run's messages and ending into its
+      #   result, such as `Stryker::Isolation::Verdict`.
+      def run: (Array[MutantRun] runs, _Judge judge) { (MutantResult result) -> void } -> void
 
       # Stops the parent, as `Stryker::Isolation::ParentProcess#stop` does,
       # then kills the group of each child that the parent said it forked
@@ -49,8 +51,8 @@ module Stryker
 
       private
 
-      # Adds `run`, and gives it to the parent.
-      def dispatch: (MutantRun run) -> nil
+      # Adds `run`, judged by `judge`, and gives it to the parent.
+      def dispatch: (MutantRun run, _Judge judge) -> nil
 
       # Reads the parent's next line, and returns the result of the run it
       # finishes, or nil.

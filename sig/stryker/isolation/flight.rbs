@@ -1,13 +1,26 @@
 module Stryker
   module Isolation
+    # What turns a mutant run, the messages its child wrote, and how the
+    # child ended into the run's result. `Stryker::Isolation::Verdict` is
+    # one.
+    interface _Judge
+      # The result of `run`.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      # - `messages`: Stryker::Isolation::Messages, what the child wrote.
+      # - `ending`: Stryker::Isolation::Ending, how the child ended.
+      def call: (MutantRun run, Messages messages, Ending ending) -> MutantResult
+    end
+
     # One run that the orchestrator gave the parent that forks, from then
     # until the parent says how its child ended: the run, its child's
     # process ID once the parent says it, and the messages the child wrote.
+    # Its judge turns them into the run's result.
     #
     # ## Examples
     #
     # ```ruby
-    # flight = Stryker::Isolation::Flight.new(run)
+    # flight = Stryker::Isolation::Flight.new(run, Stryker::Isolation::Verdict)
     # flight.receive({ "forked" => 4242 })
     # # => nil
     # flight.receive({ "exited" => { "exit_status" => 0, "signal" => nil, "timed_out" => false, "duration_ms" => 3.1, "errors" => "" } })
@@ -22,6 +35,9 @@ module Stryker
       # The run.
       @run: MutantRun
 
+      # What turns the run's messages and ending into its result.
+      @judge: _Judge
+
       # The child's process ID, once the parent says it.
       @pid: Integer?
 
@@ -31,7 +47,9 @@ module Stryker
       # Builds the flight.
       #
       # - `run`: Stryker::MutantRun, the run.
-      def initialize: (MutantRun run) -> void
+      # - `judge`: what turns the run's messages and ending into its result,
+      #   such as `Stryker::Isolation::Verdict`.
+      def initialize: (MutantRun run, _Judge judge) -> void
 
       # Takes one line that the parent wrote about the run, and returns the
       # run's result once the line says how the child ended, or nil before
@@ -55,8 +73,12 @@ module Stryker
       # - `value`: the line's value.
       def record: (String? kind, JsonValue::json_value value) -> void
 
-      # The run's result, from its messages and `ending`.
+      # The run's result, from its messages and `ending`, as the judge gives
+      # it.
       def verdict: (JsonValue::json_value ending) -> MutantResult
+
+      # The run's relay key as JSON, which names the run in an error.
+      def about: () -> String
     end
   end
 end

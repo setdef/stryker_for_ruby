@@ -6,6 +6,10 @@ require_relative "runtime_error_reason"
 module Stryker
   module Isolation
     class Verdict
+      def self.call(run, messages, ending)
+        new(run, messages, ending).result
+      end
+
       def initialize(run, messages, ending)
         @run = run
         @messages = messages

@@ -3,6 +3,7 @@
 require_relative("../../support/isolation_stand_ins")
 require "json"
 require "stryker/isolation/flights"
+require "stryker/isolation/verdict"
 
 # The runs that the orchestrator gives the fork parent, against a stand-in
 # parent that answers from a script, so that the tests run on every system.
@@ -43,7 +44,7 @@ class FlightsTest < Minitest::Test
   def test_the_parent_never_holds_more_runs_than_the_window
     parent = Parent.new
     results = []
-    Stryker::Isolation::Flights.new(parent, 2).run((1..5).map { |id| sample_run(id) }) { |result| results << result }
+    Stryker::Isolation::Flights.new(parent, 2).run((1..5).map { |id| sample_run(id) }, Stryker::Isolation::Verdict) { |result| results << result }
 
     assert_equal([2, 5], [parent.most, results.size])
   end
@@ -65,7 +66,7 @@ class FlightsTest < Minitest::Test
     pid, reader = scripted("sleep")
     parent = DyingParent.new(pid)
     flights = Stryker::Isolation::Flights.new(parent, 1)
-    assert_raises(Stryker::Isolation::Error) { flights.run([sample_run(7)]) { nil } }
+    assert_raises(Stryker::Isolation::Error) { flights.run([sample_run(7)], Stryker::Isolation::Verdict) { nil } }
     flights.stop
 
     assert(Process.detach(pid).join(20), "The child still runs.")

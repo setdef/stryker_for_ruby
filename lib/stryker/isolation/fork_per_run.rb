@@ -4,6 +4,7 @@ require_relative "error"
 require_relative "flights"
 require_relative "parent_launch"
 require_relative "stop_on_raise"
+require_relative "verdict"
 
 module Stryker
   module Isolation
@@ -30,7 +31,7 @@ module Stryker
         raise(ArgumentError, format(STATIC, id: static.mutant.id)) if static
 
         flights = @flights or raise(Error, UNSTARTED)
-        StopOnRaise.around(self) { flights.run(runs, &) }
+        StopOnRaise.around(self) { flights.run(runs, Verdict, &) }
       end
 
       def stop

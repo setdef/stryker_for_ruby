@@ -15,12 +15,12 @@ module Stryker
         @flights = {}
       end
 
-      def run(runs)
+      def run(runs, judge)
         waiting = runs.dup
         until waiting.empty? && @flights.empty?
           # At most the window's number of runs are in the parent at once, so
           # the parent forks at most that many children.
-          dispatch(waiting.shift) while @flights.size < @window && waiting.any?
+          dispatch(waiting.shift, judge) while @flights.size < @window && waiting.any?
           result = receive
           yield(result) if result
         end
@@ -33,8 +33,8 @@ module Stryker
         nil
       end
 
-      private def dispatch(run)
-        @flights[run.relay_key] = Flight.new(run)
+      private def dispatch(run, judge)
+        @flights[run.relay_key] = Flight.new(run, judge)
         @parent.give(run)
       end
 

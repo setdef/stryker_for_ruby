@@ -3,6 +3,7 @@
 require_relative("../../support/isolation_stand_ins")
 require "json"
 require "stryker/isolation/flight"
+require "stryker/isolation/verdict"
 
 # One run that the orchestrator gave the fork parent, from then until the
 # parent says how its child ended, with real processes on every system.
@@ -10,7 +11,7 @@ class FlightTest < Minitest::Test
   include IsolationStandIns
 
   def test_a_flight_keeps_its_childs_messages_until_the_child_ends
-    flight = Stryker::Isolation::Flight.new(sample_run(7))
+    flight = Stryker::Isolation::Flight.new(sample_run(7), Stryker::Isolation::Verdict)
     ending = { exit_status: 0, signal: nil, timed_out: false, duration_ms: 1.0, errors: "" }
     said = [flight.kill, flight.receive(JSON.parse('{"message":{"ended":true}}'))]
     result = flight.receive(JSON.parse(JSON.generate({ exited: ending })))
@@ -18,9 +19,18 @@ class FlightTest < Minitest::Test
     assert_equal([[nil, nil], "RuntimeError", 0], [said, result.status, result.tests_completed])
   end
 
+  def test_a_flight_hands_its_run_messages_and_ending_to_its_judge
+    judge = -> (run, messages, ending) { [run.mutant.id, messages.ended?, ending.exit_status] }
+    flight = Stryker::Isolation::Flight.new(sample_run(7), judge)
+    flight.receive(JSON.parse('{"message":{"ended":true}}'))
+    ending = { exit_status: 3, signal: nil, timed_out: false, duration_ms: 1.0, errors: "" }
+
+    assert_equal([7, true, 3], flight.receive(JSON.parse(JSON.generate({ exited: ending }))))
+  end
+
   def test_a_flight_kills_the_child_the_parent_said_it_forked
     pid, reader = scripted("sleep")
-    flight = Stryker::Isolation::Flight.new(sample_run(7))
+    flight = Stryker::Isolation::Flight.new(sample_run(7), Stryker::Isolation::Verdict)
     flight.receive(JSON.parse(JSON.generate({ forked: pid })))
     flight.kill
 
@@ -30,7 +40,7 @@ class FlightTest < Minitest::Test
   end
 
   def test_a_flight_refuses_a_line_of_a_kind_it_does_not_know_and_an_ending_that_is_none
-    flight = Stryker::Isolation::Flight.new(sample_run(7))
+    flight = Stryker::Isolation::Flight.new(sample_run(7), Stryker::Isolation::Verdict)
 
     assert_raises(Stryker::Isolation::Error) { flight.receive(JSON.parse('{"ready":true}')) }
     assert_raises(Stryker::Isolation::Error) { flight.receive(JSON.parse('{"exited":null}')) }
