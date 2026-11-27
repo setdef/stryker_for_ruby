@@ -9,7 +9,7 @@ module Stryker
       # ## Examples
       #
       # ```ruby
-      # root = Stryker::TestRunners::MinitestRunner::Root.new(Dir.pwd)
+      # root = Stryker::TestRunners::Root.new(Dir.pwd)
       # catalog = Stryker::TestRunners::MinitestRunner::Catalog.new([Shop::DiscountTest], root)
       # catalog.tests.map(&:id)
       # # => ["Shop::DiscountTest#test_bulk_rate", "Shop::DiscountTest#test_rate"]
@@ -22,7 +22,7 @@ module Stryker
         # and returns the catalog of the classes. Raises what `new` raises,
         # after the list is empty.
         #
-        # - `root`: Stryker::TestRunners::MinitestRunner::Root, the
+        # - `root`: Stryker::TestRunners::Root, the
         #   project's root.
         def self.take: (Root root) -> Catalog
 
@@ -31,7 +31,7 @@ module Stryker
         # has no name, or when two tests have the same ID.
         #
         # - `classes`: Array of Minitest::Runnable subclasses.
-        # - `root`: Stryker::TestRunners::MinitestRunner::Root, the
+        # - `root`: Stryker::TestRunners::Root, the
         #   project's root.
         def initialize: (Array[singleton(::Minitest::Runnable)] classes, Root root) -> void
 

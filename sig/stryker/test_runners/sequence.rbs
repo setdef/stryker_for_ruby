@@ -1,0 +1,37 @@
+module Stryker
+  module TestRunners
+    # One test that an adapter can run on its own, as `Sequence.run` takes
+    # it.
+    interface _RunnableTest
+      # Tells `observer` when the test starts and finishes, runs it, and
+      # returns its result.
+      def run: (_TestObserver observer) -> TestResult
+    end
+
+    # Runs an adapter's chosen tests in order, one at a time, as
+    # `Stryker::_TestRunner#run` says, stopping after the first failure when
+    # asked to.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tests = catalog.runnable_methods(["Shop::DiscountTest#test_rate", "Shop::CartTest#test_total"])
+    # Stryker::TestRunners::Sequence.run(tests, bail: true, observer: observer).map(&:status)
+    # # => ["failed"]
+    # ```
+    module Sequence
+      # Runs each of `tests` in order and returns their results. With `bail`
+      # true, starts no test after the first one that fails. A test that
+      # skips doesn't stop the run.
+      #
+      # - `tests`: Array of tests that each respond to `run`.
+      # - `bail`: true to stop after the first failing test.
+      # - `observer`: Stryker::_TestObserver, given to each test's `run`.
+      def self.run: (Array[_RunnableTest] tests, bail: bool, observer: _TestObserver) -> Array[TestResult]
+
+      # A private constant: the status of a result that stops a run, by `bail`: `"failed"`, or
+      # none.
+      STOPPING_STATUS: Hash[bool, String?]
+    end
+  end
+end

@@ -123,10 +123,6 @@ module Stryker
 
       private
 
-      # The status of a result that stops a run, by `bail`: `"failed"`, or
-      # none.
-      STOPPING_STATUS: Hash[bool, String?]
-
       @root: Root
       @helper: String
       @files: Array[String]

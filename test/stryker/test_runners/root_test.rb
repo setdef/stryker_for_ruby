@@ -2,14 +2,14 @@
 
 require_relative("../../test_helper")
 require "minitest/mock"
-require "stryker/test_runners/minitest_runner"
+require "stryker/test_runners/root"
 
-# How the Minitest adapter's root names a project's files. No folder is
+# How a test runner adapter's root names a project's files. No folder is
 # made: a root's paths are strings, and the one thing a root asks the disk
 # for, its real path, is given by a stand-in, so that the tests need no
 # symbolic link, which a Windows account may not make.
-class MinitestRootTest < Minitest::Test
-  Root = Stryker::TestRunners::MinitestRunner::Root
+class RootTest < Minitest::Test
+  Root = Stryker::TestRunners::Root
   private_constant(:Root)
 
   def test_a_path_under_the_root_as_written_is_relative_to_it

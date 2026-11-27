@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "minitest_runner/catalog"
-require_relative "minitest_runner/root"
+require_relative "root"
+require_relative "sequence"
 
 module Stryker
   module TestRunners
@@ -9,9 +10,7 @@ module Stryker
       HELPER = "test/test_helper.rb"
       FILES = ["test/**/test_*.rb", "test/**/*_test.rb"].freeze
       LIBS = %w[lib test .].freeze
-      STOPPING_STATUS = { true => "failed", false => nil }.freeze
       public_constant(:HELPER, :FILES, :LIBS)
-      private_constant(:STOPPING_STATUS)
 
       def initialize(root, helper: HELPER, files: FILES, libs: LIBS)
         @root = Root.new(root)
@@ -25,10 +24,7 @@ module Stryker
       end
 
       def run(test_ids, bail:, observer:)
-        # Lazy, so that no test after the one that stops the run starts.
-        results = catalog.runnable_methods(test_ids).lazy.map { |method| method.run(observer) }
-        ran = results.slice_after { |result| result.status == STOPPING_STATUS[bail] }
-        ran.first.to_a
+        Sequence.run(catalog.runnable_methods(test_ids), bail:, observer:)
       end
 
       private def catalog
