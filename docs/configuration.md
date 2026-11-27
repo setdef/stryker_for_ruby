@@ -14,7 +14,7 @@ A value on the command line replaces the file's value for that option. A list, s
 
 ### The configuration file
 
-A configuration file is JSON or YAML, and holds one object whose keys are option names. Nested options have a parent key: `thresholds` holds `high`, `low`, and `break`, and `mutator` holds `excludedMutations`. This page writes a nested option with a dot, as `thresholds.break`. In a file, either spelling works: a `thresholds` object with a `break` key, or the key `"thresholds.break"`.
+A configuration file is JSON or YAML, and holds one object whose keys are option names. Nested options have a parent key: `thresholds` holds `high`, `low`, and `break`, and `mutator` holds `excludedMutations`. This page writes a nested option with a dot, as `thresholds.break`. In a file, either spelling works: a `thresholds` object with a `break` key, or the key `"thresholds.break"`. A file that gives one option in both spellings is an error, because it doesn't say which value to use.
 
 **Stryker (for Ruby)** looks for these files in the project's root, in this order:
 
@@ -43,6 +43,12 @@ Before it does anything else, **Stryker (for Ruby)** checks every option in the 
 
   ```text
   "concurrency" in stryker.config.json takes a whole number of 1 or more, or a percentage of the processors such as "50%", but its value is 0.
+  ```
+
+- **An option that a file gives twice**, in both spellings of a nested option, is an error that names both keys:
+
+  ```text
+  "thresholds.break" in stryker.config.json is given twice, as "break" inside "thresholds" and as "thresholds.break". Give it once.
   ```
 
 - **A `thresholds.high` below `thresholds.low`** is an error that names both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).

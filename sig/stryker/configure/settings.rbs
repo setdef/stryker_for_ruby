@@ -11,9 +11,9 @@ module Stryker
       #
       # - `options`: Hash, the file's options as the adapter read them.
       # - `origin`: Origin, the file.
-      # - `prefix`: String or nil, the dotted path of the group that
-      #   `options` is the content of.
-      def self.from_file: (Hash[String, Object?] options, Origin origin, ?String? prefix) -> Array[Setting]
+      # - `parents`: Array of String, the keys of the groups that `options`
+      #   is the content of, outermost first.
+      def self.from_file: (Hash[String, Object?] options, Origin origin, ?Array[String] parents) -> Array[Setting]
 
       # Finds the project's configuration file as `Stryker::ConfigSources`
       # does, reads it, and returns its settings, or none when the project has
@@ -31,6 +31,12 @@ module Stryker
       # later one wins, so a list of the file's settings followed by the
       # command line's gives the command line precedence.
       def self.merge: (Array[Setting] settings) -> Hash[String, Setting]
+
+      # Returns the groups of settings that give one option more than once in
+      # the same place: a file with `{ "thresholds": { "break": 5 },
+      # "thresholds.break": 7 }` gives `thresholds.break` twice. Settings of
+      # different origins, such as a file's and a flag's, are never a group.
+      def self.repeated: (Array[Setting] settings) -> Array[Array[Setting]]
 
       # Returns the setting that a run would use for an option: the merged
       # one, or, when no file or flag gave the option, a setting that holds

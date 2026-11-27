@@ -14,6 +14,12 @@ module Stryker
       # Where the value came from.
       attr_reader origin: Origin
 
+      # The keys that the file wrote to reach the value, outermost first:
+      # `["thresholds", "break"]` for a `break` inside `thresholds`, and
+      # `["thresholds.break"]` for the dotted key. For a flag it is the
+      # option's name alone.
+      attr_reader keys: Array[String]
+
       # Returns the setting's name in quotes, followed by where it came from,
       # as `Origin#mention` writes it.
       def mention: () -> String
@@ -21,9 +27,16 @@ module Stryker
       # Returns an option's name as this setting's origin spells it.
       def spell: (String option) -> String
 
-      # Builds a setting.
-      def self.new: (name: String, value: Object?, origin: Origin) -> instance
-                  | (String name, Object? value, Origin origin) -> instance
+      # Returns the keys as the user wrote them, innermost first, each in
+      # quotes: `"break" inside "thresholds"`, or `"thresholds.break"`.
+      def written: () -> String
+
+      # Builds a setting. Without `keys`, the setting was written as one key,
+      # its name.
+      def initialize: (name: String, value: Object?, origin: Origin, ?keys: Array[String]) -> void
+
+      def self.new: (name: String, value: Object?, origin: Origin, ?keys: Array[String]) -> instance
+                  | (String name, Object? value, Origin origin, ?Array[String] keys) -> instance
     end
   end
 end

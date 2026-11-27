@@ -4,8 +4,9 @@ module Stryker
     # text for a person. For each setting it runs the checks in
     # `Stryker::Configure::Checks` in order, and keeps the lines of the first
     # check that has any, so that a value of the wrong type is never checked
-    # for its content. It also runs `Checks::ThresholdOrder` once on the
-    # settings as merged, because that check compares two options.
+    # for its content. It also runs the checks that compare settings:
+    # `Checks::GivenTwice` on each group of settings that give one option
+    # twice, and `Checks::ThresholdOrder` once on the settings as merged.
     class Problems
       @settings: Array[Setting]
       @root: String
@@ -23,6 +24,9 @@ module Stryker
       def to_a: () -> Array[String]
 
       private
+
+      # The lines for the checks that compare settings.
+      def among_settings: () -> Array[String]
 
       # The lines for one setting.
       def about: (Setting setting) -> Array[String]

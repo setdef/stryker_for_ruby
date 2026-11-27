@@ -1,0 +1,24 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks one group of settings that give the same option in the same
+      # place, as `Settings.repeated` finds them: a file that gives
+      # `thresholds.break` as a `break` inside `thresholds` and as the key
+      # `"thresholds.break"`. A file that does so doesn't say which value to
+      # use, so the line names the option and every key that gave it, in the
+      # order the file gives them.
+      class GivenTwice
+        @settings: Array[Setting]
+
+        # Builds the check.
+        #
+        # - `settings`: Array of Setting, two or more settings with the same
+        #   name and origin.
+        def initialize: (Array[Setting] settings) -> void
+
+        # Returns the line for the group.
+        def to_a: () -> Array[String]
+      end
+    end
+  end
+end

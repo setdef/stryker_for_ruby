@@ -9,13 +9,14 @@ require_relative("setting")
 module Stryker
   class Configure
     module Settings
-      def self.from_file(options, origin, prefix = nil)
+      def self.from_file(options, origin, parents = [])
         options.flat_map do |key, value|
-          name = [prefix, key].compact.join(".")
+          keys = [*parents, key]
+          name = keys.join(".")
           if value.is_a?(Hash) && !Config::OPTIONS.key?(name)
-            from_file(value, origin, name)
+            from_file(value, origin, keys)
           else
-            [Setting.new(name, value, origin)]
+            [Setting.new(name, value, origin, keys)]
           end
         end
       end
@@ -31,6 +32,11 @@ module Stryker
 
       def self.merge(settings)
         settings.to_h { |setting| [setting.name, setting] }
+      end
+
+      def self.repeated(settings)
+        groups = settings.group_by { |setting| [setting.name, setting.origin] }
+        groups.values.select { |group| group.size > 1 }
       end
 
       def self.effective(merged, name)

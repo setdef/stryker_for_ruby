@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative("checks/given_twice")
 require_relative("checks/nul_in_patterns")
 require_relative("checks/outside_patterns")
 require_relative("checks/threshold_order")
@@ -17,7 +18,12 @@ module Stryker
       end
 
       def to_a
-        @settings.flat_map { |setting| about(setting) } + Checks::ThresholdOrder.new(Settings.merge(@settings)).to_a
+        @settings.flat_map { |setting| about(setting) } + among_settings
+      end
+
+      private def among_settings
+        repeated = Settings.repeated(@settings).flat_map { |group| Checks::GivenTwice.new(group).to_a }
+        repeated + Checks::ThresholdOrder.new(Settings.merge(@settings)).to_a
       end
 
       private def about(setting)
