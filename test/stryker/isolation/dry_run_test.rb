@@ -26,6 +26,10 @@ class DryRunTest < Minitest::Test
     assert_equal([nil, nil], [sample_run.to_json, "[1]"].map { |line| Stryker::Isolation::DryRun.from_line(line) })
   end
 
+  def test_a_dry_runs_process_has_no_mutant_active
+    assert_nil(Stryker::Isolation::DryRun.within(5).mutant_id)
+  end
+
   def test_the_parent_knows_a_dry_runs_lines_and_files_by_names_of_its_own
     dry_run = Stryker::Isolation::DryRun.within(5)
 

@@ -55,6 +55,10 @@ module Stryker
       # - `line`: String, one line from the orchestrator.
       def self.from_line: (String line) -> DryRun?
 
+      # The ID of the mutant that is active in the process that runs the dry
+      # run: nil, for none.
+      def mutant_id: () -> nil
+
       # The key that the parent puts on each line about the dry run:
       # `{"dry_run" => true}`.
       def relay_key: () -> Hash[String, bool]

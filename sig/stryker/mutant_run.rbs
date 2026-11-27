@@ -67,6 +67,10 @@ module Stryker
     # `Stryker::JsonValue::Reading#readers` describes: `mutant` reads a Hash into a `Stryker::Mutant`.
     def self.readers: () -> Hash[Symbol, Proc]
 
+    # The ID of the mutant that is active in the process that runs this
+    # run: its mutant's.
+    def mutant_id: () -> Integer
+
     # The key that the parent that forks puts on each line it writes about
     # this run, `{"mutant" => id}`, with the mutant's ID, so the orchestrator
     # can tell the run's lines from those of every other run in the parent.

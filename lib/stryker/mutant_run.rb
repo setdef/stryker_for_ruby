@@ -11,6 +11,10 @@ module Stryker
       { mutant: Mutant.method(:from_h).to_proc }
     end
 
+    def mutant_id
+      mutant.id
+    end
+
     def relay_key
       { mutant: mutant.id }.transform_keys(&:to_s)
     end

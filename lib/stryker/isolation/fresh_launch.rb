@@ -27,7 +27,7 @@ module Stryker
         options = { chdir: @root, **fresh.output_options, **ProcessGroup::SYSTEM.spawn_options }
         # The mutant is active before the process starts, so its switch takes
         # the mutated branch while its file loads.
-        @process.spawn(Command.environment(fresh.run.mutant.id), *argv, options)
+        @process.spawn(Command.environment(fresh.run.mutant_id), *argv, options)
       end
     end
   end

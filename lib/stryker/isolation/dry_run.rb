@@ -20,6 +20,10 @@ module Stryker
         new(timeout_ms: Integer(options["timeout_ms"])) if options
       end
 
+      def mutant_id
+        nil
+      end
+
       def relay_key
         { KEY => true }
       end
