@@ -17,6 +17,12 @@ class ConfigurePathsTest < Minitest::Test
     assert_equal(patterns, configure({}, options: { mutate: patterns }).mutate)
   end
 
+  def test_a_tilde_starts_a_name_as_the_glob_reads_it_and_names_no_home_folder
+    patterns = ["~/lib/**/*.rb", "~no-such-user/lib/**/*.rb"]
+
+    assert_equal(patterns, configure({}, options: { mutate: patterns }).mutate)
+  end
+
   def test_a_pattern_above_the_root_is_an_error_that_names_it
     message = refusal({ "stryker.config.json": '{ "mutate": ["lib/**/*.rb", "../shared/lib/**/*.rb"] }' })
 

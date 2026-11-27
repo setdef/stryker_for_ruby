@@ -21,7 +21,7 @@ module Stryker
         end
 
         private def outside?(pattern)
-          path = File.expand_path(pattern.delete_prefix("!"), @root)
+          path = File.absolute_path(pattern.delete_prefix("!"), @root)
           path != @root && !path.start_with?(File.join(@root, ""))
         end
       end
