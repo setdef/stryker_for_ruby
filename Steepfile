@@ -1,5 +1,31 @@
 # frozen_string_literal: true
 
+# Steep loads the signatures of both targets into each, so each target needs
+# the libraries that every signature names. With fewer, Steep finds no type
+# error in the target's files and says nothing of it.
+libraries = %w[
+  json
+  etc
+  open3
+  pathname
+  fileutils
+  minitest
+  date
+  digest
+  timeout
+  tempfile
+  tmpdir
+  uri
+  stringio
+  securerandom
+  erb
+  prism
+  psych
+  did_you_mean
+  optparse
+  ripper
+]
+
 target :lib do
   # steep/ holds signatures for the parts of gems that ship none, which the
   # gem doesn't publish.
@@ -8,26 +34,7 @@ target :lib do
 
   configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
 
-  library "json"
-  library "etc"
-  library "open3"
-  library "pathname"
-  library "fileutils"
-  library "minitest"
-  library "date"
-  library "digest"
-  library "timeout"
-  library "tempfile"
-  library "tmpdir"
-  library "uri"
-  library "stringio"
-  library "securerandom"
-  library "erb"
-  library "etc"
-  library "prism"
-  library "psych"
-  library "did_you_mean"
-  library "optparse"
+  libraries.each { |name| library(name) }
 end
 
 target :tasks do
@@ -36,5 +43,5 @@ target :tasks do
 
   configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
 
-  library "ripper"
+  libraries.each { |name| library(name) }
 end
