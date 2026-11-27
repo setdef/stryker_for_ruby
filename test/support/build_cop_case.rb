@@ -26,6 +26,12 @@ module BuildCopCase
   OTHER = "Tests on Prism 1.7.0, Ruby 4.0"
   private_constant(:FAILED, :OTHER)
 
+  # The jobs of fast.yml, and the query the cop reads its runs with.
+  FAST_GATE = "Gate on Ruby 4.0, ubuntu-latest"
+  FAST_FAILED = "Tests on Ruby 4.0, windows-latest"
+  FAST_QUERY = { branch: "trunk", event: "push" }.freeze
+  private_constant(:FAST_GATE, :FAST_FAILED, :FAST_QUERY)
+
   # The commit that +name+ stands for.
   def commit(name)
     name * 40
@@ -62,18 +68,36 @@ module BuildCopCase
     [ci_run(green, 1, "success"), ci_run("f", 2, "failure")]
   end
 
-  # The cop's step for COMMITS, newest first, with +runs+ served and +reverts+
-  # as pairs of the commit that reverts and the commit it reverts.
-  def cop(*runs, reverts: [])
-    serve(*runs) do
+  # A run of fast.yml on trunk for +name+'s commit, with ids from 100 up, so
+  # that no run of ci.yml has the same. Its jobs are the two that fast.yml
+  # has, and the one that failed is the one on Windows.
+  def fast_run(name, id, conclusion, jobs: nil, **fields)
+    attempt = fields.fetch(:run_attempt, 1)
+    state = (conclusion == "failure") ? "failure" : "success"
+    jobs ||= [job(FAST_GATE, "success", attempt), job(FAST_FAILED, state, attempt)]
+    ci_run(name, id + 100, conclusion, jobs:, **fields)
+  end
+
+  # The second attempt of a run of fast.yml for +name+'s commit, in which the
+  # job that failed fails again.
+  def fast_failed_again(name, id)
+    jobs = [job(FAST_GATE, "success", 1), job(FAST_FAILED, "failure", 2)]
+    fast_run(name, id, "failure", run_attempt: 2, jobs:)
+  end
+
+  # The cop's step for COMMITS, newest first, with +runs+ of ci.yml and +fast+
+  # runs of fast.yml served, and +reverts+ as pairs of the commit that reverts
+  # and the commit it reverts.
+  def cop(*runs, reverts: [], fast: [])
+    serve(*runs, fast:) do
       cop = BuildCop.new(repository: REPOSITORY, token: "secret", api: FakeGitHub::API, pause: 0, now: NOW)
       cop.call(COMMITS.reverse, reverts)
     end
   end
 
   # Serves +runs+ at GitHub's paths while the block runs.
-  def serve(*runs, &)
-    github_serving(routes(runs), &)
+  def serve(*runs, fast: [], &)
+    github_serving(routes(runs, "ci.yml").merge(routes(fast, "fast.yml", **FAST_QUERY)), &)
   end
 
   # Calls the block while the +routes+ are served.
@@ -81,18 +105,18 @@ module BuildCopCase
     FakeGitHub.new(routes).serving(&)
   end
 
-  private def routes(runs)
+  private def routes(runs, workflow, **query)
     listing = runs.map { |run| run.except(:jobs) }
-    routes = { runs_path => [200, JSON.generate(total_count: runs.size, workflow_runs: listing)] }
+    routes = { runs_path(workflow, **query) => [200, JSON.generate(total_count: runs.size, workflow_runs: listing)] }
     runs.each do |run|
       routes[jobs_path(run[:id])] = [200, JSON.generate(total_count: run[:jobs].size, jobs: run[:jobs])]
     end
     routes
   end
 
-  private def runs_path
-    query = URI.encode_www_form(created: ">=2026-11-20", exclude_pull_requests: true, per_page: 50, page: 1)
-    "/repos/#{REPOSITORY}/actions/workflows/ci.yml/runs?#{query}"
+  private def runs_path(workflow, **query)
+    query = URI.encode_www_form(created: ">=2026-11-20", exclude_pull_requests: true, **query, per_page: 50, page: 1)
+    "/repos/#{REPOSITORY}/actions/workflows/#{workflow}/runs?#{query}"
   end
 
   private def jobs_path(id)

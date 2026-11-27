@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "build_cop_blame"
+require_relative "build_cop_fast"
 require_relative "build_cop_step"
 require_relative "commit_runs"
 require_relative "github_api"
@@ -21,6 +22,9 @@ require_relative "trunk_reverts"
 # once the commit's failed jobs have failed twice and its parent has passed
 # them.
 #
+# A run of fast.yml on trunk names one commit and needs no bisecting, so
+# BuildCopFast judges those runs first.
+#
 # It keeps no state: each call reads the runs as they are and says what to do
 # next, so .github/workflows/build-cop.yml can call it whenever a run ends and
 # on a schedule, and a call that finds the work in progress says to wait.
@@ -36,6 +40,10 @@ class BuildCop
   # The workflow bisected.
   WORKFLOW = "ci.yml"
   public_constant(:WORKFLOW)
+
+  # The workflow whose runs each name one commit.
+  FAST = "fast.yml"
+  public_constant(:FAST)
 
   # The branch a commit's bisecting run is started on.
   BISECT = "bisect/"
@@ -70,12 +78,23 @@ class BuildCop
     @since = (now - (DAYS * 86_400)).utc.strftime("%Y-%m-%d")
   end
 
-  # The next BuildCopStep for trunk's +commits+, newest first.
+  # The next BuildCopStep for trunk's +commits+, newest first. A run of Fast
+  # that is red names its commit, so a step for it to take, a rerun or a
+  # revert, comes before the step for the full run, and the full run's comes
+  # before a step that only waits or stops.
   def call(commits, reverts)
-    path = "actions/workflows/#{WORKFLOW}/runs"
-    runs = @github.all(path, "workflow_runs", created: ">=#{@since}", exclude_pull_requests: true)
-    @runs = CommitRuns.new(runs, @github)
-    step(commits, TrunkReverts.new(commits, reverts))
+    reverts = TrunkReverts.new(commits, reverts)
+    fast = BuildCopFast.new(CommitRuns.new(read(FAST, branch: "trunk", event: "push"), @github)).call(commits, reverts)
+    return fast if fast.acts?
+
+    @runs = CommitRuns.new(read(WORKFLOW), @github)
+    full = step(commits, reverts)
+    [full, fast].find { |step| step.action != :none } || full
+  end
+
+  private def read(workflow, **query)
+    path = "actions/workflows/#{workflow}/runs"
+    @github.all(path, "workflow_runs", created: ">=#{@since}", exclude_pull_requests: true, **query)
   end
 
   private def step(commits, reverts)

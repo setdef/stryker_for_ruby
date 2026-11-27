@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # build-cop.yml's one step, described at the top of that file. Asks
-# tasks/build_cop.rb what to do next about the oldest red full run on trunk
-# after its newest green one that is not settled (see build-cop.yml), and does
-# it:
+# tasks/build_cop.rb what to do next about the oldest red run of fast.yml, or
+# else of ci.yml, on trunk after its newest green one that is not settled (see
+# build-cop.yml), and does it:
 #
 #   none    nothing is red: deletes the bisect/* branches left over
 #   wait    a run it needs has not finished
@@ -163,7 +163,7 @@ revert: ${subject}
 
 This reverts commit $commit.
 
-The build cop found that it turned trunk's full run red: $reason
+The build cop found that it turned trunk red: $reason
 (.github/workflows/build-cop.yml). Land it again with the fix.
 EOF
     if push HEAD:refs/heads/trunk; then

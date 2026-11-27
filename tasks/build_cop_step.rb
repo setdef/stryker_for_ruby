@@ -22,6 +22,12 @@ class BuildCopStep < Data.define(:action, :commit, :run, :reason)
     of(:stuck, "#{told}, on attempt #{run['run_attempt']}")
   end
 
+  # Whether the step changes something: a run runs again, or a commit is
+  # reverted.
+  def acts?
+    %i[rerun revert].include?(action)
+  end
+
   # The lines GITHUB_OUTPUT takes.
   def to_output
     "action=#{action}\ncommit=#{commit}\nrun=#{run}\nreason=#{reason}\n"

@@ -73,6 +73,19 @@ class CommitRuns
     Verdict.new(state(run, failed), run)
   end
 
+  # The state of +commit+'s newest run on trunk that was not canceled, as a
+  # whole: :good when every job passed, :bad when it failed, :pending when it
+  # has not finished, :unknown when it ended without either, and :none when it
+  # has no run.
+  def state_on_trunk(commit)
+    run = newest(commit, TRUNK)
+    return :none unless run
+    return :pending if unfinished?(run)
+    return :bad if failed?(run)
+
+    green?(run) ? :good : :unknown
+  end
+
   private def newest(commit, only)
     runs = @by_commit.fetch(commit, []).reject { |run| run["conclusion"] == "cancelled" }
     runs = runs.select { |run| run["head_branch"].start_with?(only) } if only

@@ -49,6 +49,14 @@ class BuildCopRevertScriptTest < Minitest::Test
     refute_includes(git(@dir, "--git-dir", @origin, "ls-tree", "--name-only", "trunk"), "bad.txt")
   end
 
+  # The commit may be one that a run of fast.yml blamed, not only a full run.
+  def test_the_revert_says_that_it_turned_trunk_red_and_why
+    cop(pushed_commit("feat: bad"), "revert", BUILD_COP_REVERT: "true")
+    message = git(@dir, "--git-dir", @origin, "log", "-1", "--format=%B", "trunk")
+
+    assert_includes(message, "turned trunk red: setdef/stryker_for_ruby")
+  end
+
   def test_it_starts_a_run_on_trunk_to_judge_the_revert
     cop(pushed_commit("feat: bad"), "revert", BUILD_COP_REVERT: "true")
 
