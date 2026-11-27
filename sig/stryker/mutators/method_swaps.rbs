@@ -1,0 +1,29 @@
+module Stryker
+  module Mutators
+    # The method that `Stryker::Mutators::MethodExpression` puts in the place
+    # of another: `first` for `last` and `last` for `first`, `select` for
+    # `reject`, and so on. `select`, `filter`, and `select!` all become
+    # `reject` or `reject!`, and `reject` and `reject!` become `select` and
+    # `select!`. The mutator's documentation lists the pairs.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Mutators::MethodSwaps.for(:first)
+    # # => :last
+    # ```
+    module MethodSwaps
+      # The name, as a symbol, of the method that takes the place of `name`, or
+      # nil when no method does.
+      #
+      # - `name`: Symbol, the method's name, such as `:first`.
+      def self.for: (Symbol name) -> Symbol?
+
+      BOTH_WAYS: Array[Array[Symbol]]
+
+      ONE_WAY: Hash[Symbol, Symbol]
+
+      PAIRS: Hash[Symbol, Symbol]
+    end
+  end
+end

@@ -8,6 +8,7 @@ require_relative "mutators/boolean_literal"
 require_relative "mutators/conditional_expression"
 require_relative "mutators/equality_operator"
 require_relative "mutators/logical_operator"
+require_relative "mutators/method_expression"
 require_relative "mutators/object_literal"
 require_relative "mutators/optional_chaining"
 require_relative "mutators/range_operator"
@@ -25,6 +26,7 @@ module Stryker
       ConditionalExpression,
       EqualityOperator,
       LogicalOperator,
+      MethodExpression,
       ObjectLiteral,
       OptionalChaining,
       RangeOperator,

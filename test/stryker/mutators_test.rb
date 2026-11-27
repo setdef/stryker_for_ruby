@@ -16,6 +16,7 @@ class MutatorsTest < Minitest::Test
     ConditionalExpression
     EqualityOperator
     LogicalOperator
+    MethodExpression
     ObjectLiteral
     OptionalChaining
     RangeOperator

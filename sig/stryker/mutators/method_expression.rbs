@@ -1,0 +1,61 @@
+module Stryker
+  module Mutators
+    # Swaps a call to a core method for the method that a programmer could
+    # have written by mistake, or removes a call that does nothing a test
+    # checks. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `items.first` | `items.last` |
+    # | `name.upcase` | `name.downcase` |
+    # | `name.sub(a, b)` | `name.gsub(a, b)` |
+    # | `items.select { }` | `items.reject { }` |
+    # | `items.sort`, `items.reverse`, `name.strip` | `items`, `items`, `name` |
+    #
+    # Each swap works in both directions, and keeps the call's arguments and
+    # block: `first` and `last`, `min` and `max`, `min_by` and `max_by`,
+    # `start_with?` and `end_with?`, `upcase` and `downcase`, `lstrip` and
+    # `rstrip`, `ljust` and `rjust`, `sub` and `gsub`, `all?` and `any?`,
+    # `take` and `drop`, `take_while` and `drop_while`, `index` and `rindex`,
+    # `push` and `unshift`, `pop` and `shift`, `ceil` and `floor`, `even?` and
+    # `odd?`, `positive?` and `negative?`, and the `!` forms of `upcase`,
+    # `lstrip`, and `sub`. `select`, `filter`, and `select!` become `reject`
+    # and `reject!`, and `reject` and `reject!` become `select` and `select!`.
+    # A removal replaces the whole call, its arguments and block included,
+    # with the receiver: `sort`, `sort_by`, `reverse`, `uniq`, `compact`,
+    # `flatten`, `strip`, and `chomp`, and their `!` forms.
+    #
+    # The edit covers the whole call. It mutates only a call with a receiver,
+    # by the method's name alone, because the instrumenter can't know the
+    # receiver's class. `prepend` and `append` aren't swapped, and `freeze` is
+    # never removed.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#methodexpression)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("items.first").value.statements.body.first
+    # Stryker::Mutators::MethodExpression.edits(node, []).map(&:replacement)
+    # # => ["items.last"]
+    # ```
+    module MethodExpression
+      # The mutator's name in the report: `"MethodExpression"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a call with a receiver to a method that
+      # the lists have, and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      REMOVALS: Array[Symbol]
+
+      private def self.swapped: (Prism::CallNode call) -> Edit?
+
+      private def self.removed: (Prism::CallNode call, Prism::node receiver) -> Edit?
+    end
+  end
+end

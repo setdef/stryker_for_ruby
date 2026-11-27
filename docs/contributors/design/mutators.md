@@ -24,11 +24,11 @@ Each Stryker tool reports the same names, so a report from **Stryker (for Ruby)*
 
 A mutator for a Ruby construct that no Stryker tool mutates follows the organization's naming rule, from the thread behind the shared page ([stryker-handbook#11](https://github.com/stryker-mutator/stryker-handbook/issues/11)): a name follows the construct, is language-neutral and singular, and ends in a category word, one of Operator, Literal, Expression, Statement, or Declaration. StrykerJS's `OptionalChaining` is a name in the catalog that ends in none of them. `RangeOperator`, which swaps `..` and `...`, is the one name that no Stryker tool has, because no Stryker tool mutates a range. Every name is letters only, because StrykerJS's disable-comment grammar accepts only letters, commas, and spaces in its list of names.
 
-Where the sources disagree on the pairs, the catalog follows StrykerJS's code, because the name in `mutatorName` is StrykerJS's: a reader who knows what StrykerJS's `EqualityOperator` makes finds the same pairs here. Each place where the catalog departs from StrykerJS's pairs gives its reason.
+Where the sources disagree on the pairs, the catalog follows StrykerJS's code, because the name in `mutatorName` is StrykerJS's: a reader who knows what StrykerJS's `EqualityOperator` makes finds the same pairs here. Each place where the catalog departs from StrykerJS's pairs gives its reason, and the methods that `MethodExpression` mutates are Ruby's methods.
 
 ## The catalog
 
-Thirteen mutators make up the catalog. Twelve have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Fourteen mutators make up the catalog. Thirteen have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -40,6 +40,7 @@ Thirteen mutators make up the catalog. Twelve have the names of Stryker mutators
 | `ConditionalExpression` | Conditions of `if`, `unless`, `elsif`, ternaries, `while`, `until`, and `in` guards, and comparisons and `&&`/`\|\|` elsewhere | the condition's node, `CallNode`, `AndNode`, `OrNode` | StrykerJS `ConditionalExpression` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
+| `MethodExpression` | Calls to a fixed list of core methods, swapped or removed | `CallNode` | StrykerJS `MethodExpression` |
 | `ObjectLiteral` | Hash literals | `HashNode` | StrykerJS `ObjectLiteral` |
 | `OptionalChaining` | Safe navigation, `&.` | `CallNode` and the call write nodes with the safe-navigation flag | StrykerJS `OptionalChaining` |
 | `RangeOperator` | `..` and `...` | `RangeNode` | none |
@@ -199,6 +200,45 @@ An operator that has the comparison `__FILE__ == $0` as an operand gets no mutan
 
 StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"` is the idiom for a default, and it takes the `||` pair.
 
+### `MethodExpression`
+
+It mutates a call with a receiver to one of the methods listed, by its name alone, as StrykerJS and Stryker4s do, because the instrumenter can't know the receiver's class. A swap keeps the call's arguments and block. Each swap works in both directions.
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `items.first` | `items.last` | A test with a collection whose first and last elements differ. |
+| `items.min`, `items.min_by { }` | `items.max`, `items.max_by { }` | A test with elements that aren't all equal. |
+| `name.start_with?(x)` | `name.end_with?(x)` | A test where *receiver* starts with the argument and doesn't end with it, or the reverse. |
+| `name.upcase`, `name.upcase!` | `name.downcase`, `name.downcase!` | A test with a string that has letters. |
+| `name.lstrip`, `name.lstrip!` | `name.rstrip`, `name.rstrip!` | A test with whitespace on one side only. |
+| `name.ljust(10)` | `name.rjust(10)` | A test with a string shorter than the width. |
+| `name.sub(a, b)`, `name.sub!(a, b)` | `name.gsub(a, b)`, `name.gsub!(a, b)` | A test where the pattern matches more than once. |
+| `items.select { }`, `items.filter { }`, `items.select! { }` | `items.reject { }`, `items.reject { }`, `items.reject! { }` | A test where the block is true for some elements and false for others. `reject` becomes `select`. |
+| `items.all? { }` | `items.any? { }` | A test where some elements match and some don't. |
+| `items.take(n)`, `items.take_while { }` | `items.drop(n)`, `items.drop_while { }` | A test that checks which elements come back. |
+| `items.index(x)` | `items.rindex(x)` | A test where the element occurs more than once. |
+| `items.push(x)` | `items.unshift(x)` | A test with a nonempty array that checks the order. |
+| `items.pop` | `items.shift` | A test with two or more different elements. |
+| `price.ceil` | `price.floor` | A test with a value that isn't a whole number. |
+| `n.even?` | `n.odd?` | A test that checks the result. |
+| `n.positive?` | `n.negative?` | A test with a value that isn't zero. |
+
+A removal replaces the whole call, its arguments and block included, with the receiver, as StrykerJS turns `s.trim()` into `s`:
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `items.sort`, `items.sort { }`, `items.sort_by { }`, and their `!` forms | `items` | A test with elements out of order. |
+| `items.reverse`, `items.reverse!` | `items` | A test with two or more different elements. |
+| `items.uniq`, `items.uniq!` | `items` | A test with a repeated element. |
+| `items.compact`, `items.compact!` | `items` | A test with a `nil` element. |
+| `items.flatten`, `items.flatten!` | `items` | A test with a nested array. |
+| `name.strip`, `name.strip!` | `name` | A test with leading or trailing whitespace. |
+| `name.chomp`, `name.chomp!` | `name` | A test with a string that ends in a newline. |
+
+The list holds methods of Ruby's core classes where a programmer's likely mistake is the other method of the pair, or a forgotten call, such as `sub` where every match had to be replaced. StrykerJS's list is of JavaScript's methods, and Stryker4s's of Scala's, and the pairs of the same mistakes appear here under Ruby's names: StrykerJS's `startsWith` and `endsWith`, `toUpperCase` and `toLowerCase`, `min` and `max`, `every` and `some`, Stryker4s's `filter` and `filterNot`, `take` and `drop`, `indexOf` and `lastIndexOf`, and Stryker.NET's `PadLeft` and `PadRight`, `Ceiling` and `Floor`, and `Append` and `Prepend`, which are `push` and `unshift` here.
+
+`prepend` and `append` aren't swapped: in a class body, `prepend` is `Module#prepend`, and a mutant that calls `append` there raises at load. `freeze` is never removed (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
 ### `ObjectLiteral`
 
 | Original | Mutant | Kills it |
@@ -273,6 +313,7 @@ It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those 
 | - | - |
 | `UpdateOperator` (`++`, `--`) | Ruby has no `++` or `--`. `count += 1` takes `AssignmentOperator`'s pair. |
 | `ArrowFunction` | Ruby's blocks and lambdas always have a body of statements, which `BlockStatement` empties. |
+| Stryker.NET's `Checked`, `NullCoalescing`, `Bitwise`, `Linq`, `Math`, and `StringMethod` | They mutate C# constructs and .NET methods. The methods that matter in Ruby are in `MethodExpression`. |
 
 ## Constructs that get no mutator
 
@@ -330,7 +371,7 @@ A mutant whose equivalence depends on a value's class or range at run time is ma
 ## What this design doesn't do
 
 - It doesn't detect equivalent mutants beyond the ones the source text proves.
-- It doesn't use a value's class: the operator mutators match by name and syntax alone.
+- It doesn't use a value's class: `MethodExpression` and the operator mutators match by name and syntax alone.
 - It has no mutation levels: every mutator runs.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
 - It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.
