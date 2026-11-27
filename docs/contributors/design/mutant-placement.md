@@ -64,6 +64,12 @@ total = (::Stryker::Active.id == 7 ? (a - b * c) : (::Stryker::Active.hit(7); (a
 
 Copying the inner switches into every mutant branch would multiply the output. In a probe ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)), that turned the 95 KB of the standard library's `resolv.rb` into 730 KB, where mutant branches without inner switches gave 124 KB.
 
+### Why splice instead of formatting the whole file
+
+The instrumenter could instead convert the whole file with refract, put the switches into the converted tree, and format it. A file formatted that way loses what lies outside its nodes, and its lines move. In [#7](https://github.com/setdef/stryker_for_ruby/issues/7), the formatted file had the original line in place in only 2 of 18 line checks, the data after `__END__` was gone, `# frozen_string_literal: true` was gone from a file whose only strings are interpolated, and refract crashed on a named-capture `=~`. Moving the formatted lines back through refract's source map put all 18 lines in place, but the other faults stayed, and on the largest file that took 25 times as long as splicing with refract-formatted mutants, and 17 times the memory.
+
+Splicing changes no byte outside the switches, so it has none of those faults, and refract formats only the text of a mutant that has to go on one line ([The mutant adds no line break](#the-mutant-adds-no-line-break)).
+
 ## The switch
 
 With no mutant active, it runs the original code. With one of its mutants active, it runs that mutant's text instead. The switch chooses by reading `::Stryker::Active.id`, an attribute reader on an object that a constant holds, and it records a hit for [coverage](coverage.md) each time its original branch runs.

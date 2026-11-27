@@ -71,6 +71,14 @@ The pool starts one worker for each 40 million bytes of work, at most `concurren
 
 A worker pays for its start when it saves more parse time than the start costs. With the Windows figures, two workers break even at 18 million bytes of work for each, and every worker beyond two breaks even at less. At 40 million bytes of work for each worker, the time that the workers save is at least 2.2 times the time that they take to start on Windows, which starts slowest of the three systems.
 
+With Ruby 4.0.10 and Prism 2.1.0, instrumenting three files of the standard library took this long in one process and with the pool, which started one worker for each 40 million bytes of work, one for each processor at most ([#16](https://github.com/setdef/stryker_for_ruby/issues/16)):
+
+| File | Size | Mutants | Linux, one process | Linux, pool | Windows, one process | Windows, pool |
+| - | - | - | - | - | - | - |
+| `resolv.rb` | 95 KB | 665 | 1.5 s | 1.5 s | 3.7 s | 3.4 s |
+| `prism/node.rb` | 990 KB | 835 | 12.1 s | 2.4 s | 21.2 s | 7.5 s |
+| `unicode_normalize/tables.rb` | 229 KB | 17,279 | 116.9 s | 51 s | 242.4 s | 85 s |
+
 Both ways give the same verdicts, because both make the text with the same patches and parse it with the same call. The site tests check it on every kind of site: each of them instruments its source once with the parses in the test's process and once with a pool, and the two results must be equal.
 
 ### When a worker fails
@@ -147,6 +155,12 @@ A new Rails 8.1 app sets up Bootsnap from its test helper, after the hook: `test
 So the loader keeps the hook in front. When it installs the hook, before any of the project's code loads, it also overrides `prepend` on `RubyVM::InstructionSequence.singleton_class`. Whenever a module that defines `load_iseq` is prepended after the hook, the override prepends a new copy of the hook module in front of it. The copy is new because Ruby doesn't move a module that is already among the ancestors, so prepending the first hook module again would change nothing.
 
 Bootsnap prepends its module twice, so two copies of the hook stack in front of it. Both behave the same: for an instrumented file, the front copy serves the instrumented source; for any other file, each copy calls `super`, and Bootsnap serves the file from its cache as usual. The override covers any library that prepends `load_iseq` after the hook, not only Bootsnap, whether the module it prepends defines `load_iseq` or includes a module that does, and whether the method is public or private. A library that bypasses `prepend`, such as by calling `Module#prepend_features` itself, gets past the override, and the loading check catches each file that this leaves uninstrumented.
+
+Three other ways to keep the hook in front fall short:
+
+- **Stubbing `bootsnap/setup`** turns Bootsnap off for the whole project, and misses a project that calls `Bootsnap.setup` or requires `bootsnap` directly.
+- **Prepending the hook again after the test helper loads** comes too late for a Rails app, which loads files while its helper loads, and those files stay uninstrumented.
+- **Wrapping Bootsnap's module** depends on the name of a module inside Bootsnap, and covers no other library that prepends a `load_iseq`.
 
 ### The loading check
 
