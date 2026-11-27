@@ -90,6 +90,12 @@ class ConfigureThresholdsTest < Minitest::Test
     assert_equal([90.0, 70.0], [config.threshold_high, config.threshold_low])
   end
 
+  def test_a_number_with_a_zero_fraction_is_held_as_an_integer
+    config = configure({}, options: { :"thresholds.high" => 90.0, :"thresholds.low" => 70.0 })
+
+    assert_equal([Integer, Integer], [config.threshold_high.class, config.threshold_low.class])
+  end
+
   def test_the_break_threshold_still_takes_a_fraction
     assert_in_delta(80.5, configure({}, options: { :"thresholds.break" => 80.5 }).threshold_break, 0.001)
   end

@@ -42,7 +42,8 @@ module Stryker
       score = number("a number from 0 to 100", 0..100)
       whole_score = Kind.new(
         "a whole number from 0 to 100",
-        -> (value) { value.is_a?(Numeric) && score.accepts?(value) && value == value.floor }
+        -> (value) { value.is_a?(Numeric) && score.accepts?(value) && value == value.floor },
+        -> (value) { Float(value.to_s).to_i }
       )
       score_or_null = Kind.new(
         "a number from 0 to 100, or null",

@@ -201,7 +201,7 @@ A whole number may be more than the number of processors. Each project process l
 
 ### `thresholds.high`
 
-The mutation score, as a percentage, at or above which the score counts as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number. A fraction such as `82.5` is an error, because the JSON report gives this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
+The mutation score, as a percentage, at or above which the score counts as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number, and the configuration holds it as `80`. A fraction such as `82.5` is an error, because the JSON report gives this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
 
 ### `thresholds.low`
 
