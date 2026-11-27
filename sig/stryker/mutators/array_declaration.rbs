@@ -1,0 +1,49 @@
+module Stryker
+  module Mutators
+    # Empties an array, or fills an empty one, to find the tests that never
+    # check what an array holds. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `[a, b]`, `%w[a b]`, `%i[a b]`, `[*items]` | `[]` |
+    # | `[]` | `["Stryker was here"]` |
+    # | `Array.new(3, 0)` | `Array.new` |
+    #
+    # The edit covers the whole array, or the whole call of `Array.new`, its
+    # arguments and block included. An array with no brackets, the right side
+    # of `a, b = 1, 2`, gets no mutant, because `a, b = []` reads as a
+    # different assignment and not as an emptied array. `Array.new` with no
+    # arguments, or with `[]`, gets no mutant either: it already gives an empty
+    # array, and so does the mutant. An array inside the `[]` that
+    # `Array.new([])` is given still gets its own mutant.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#arraydeclaration)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("[a, b]").value.statements.body.first
+    # Stryker::Mutators::ArrayDeclaration.edits(node, []).map(&:replacement)
+    # # => ["[]"]
+    # ```
+    module ArrayDeclaration
+      # The mutator's name in the report: `"ArrayDeclaration"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for an array literal that has brackets, or
+      # for a call of `Array.new` with an argument other than `[]`, and none
+      # for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      EMPTIED: String
+
+      FILLER: String
+
+      private def self.literal: (Prism::ArrayNode node) -> Array[Edit]
+    end
+  end
+end

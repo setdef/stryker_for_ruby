@@ -1,0 +1,44 @@
+module Stryker
+  module Mutators
+    # A call of `Array.new` that is given something: a size, a size and a
+    # value, or a size and a block. The mutator drops what it is given.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("Array.new(3, 0)").value.statements.body.first
+    # Stryker::Mutators::ArrayConstructor.of(node).edit.replacement
+    # # => "Array.new"
+    # ```
+    class ArrayConstructor < Data
+      # The call.
+      attr_reader call: Prism::CallNode
+
+      # Where the name `new` is written.
+      attr_reader message_loc: Prism::Location
+
+      # Builds the constructor.
+      #
+      # - `call`: Prism::CallNode, the call.
+      # - `message_loc`: Prism::Location, where its name is written.
+      def self.new: (call: Prism::CallNode, message_loc: Prism::Location) -> instance
+                  | (Prism::CallNode call, Prism::Location message_loc) -> instance
+
+      # The constructor that `node` is, or nil when it isn't a call of `new`
+      # on `Array` or `::Array`, or is given no argument, or only `[]`. Both
+      # give an empty array already, so a call with the arguments dropped
+      # would be the same.
+      #
+      # - `node`: Prism::node, the node.
+      def self.of: (Prism::node node) -> ArrayConstructor?
+
+      # The edit that covers the whole call and gives its receiver, its
+      # operator, and `new`, as written, without the arguments and the block.
+      def edit: () -> Edit
+
+      private def self.given_something?: (Prism::CallNode call) -> bool
+
+      private def self.empty_array?: (Prism::node? node) -> bool
+    end
+  end
+end

@@ -28,11 +28,12 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Six mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Seven mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
 | `ArithmeticOperator` | `+`, `-`, `*`, `/`, `%` between two operands | `CallNode` | StrykerJS `ArithmeticOperator` |
+| `ArrayDeclaration` | Array literals and `Array.new` | `ArrayNode`, `CallNode` | StrykerJS `ArrayDeclaration` |
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
@@ -60,6 +61,16 @@ It mutates a binary operator call: a `CallNode` named `+`, `-`, `*`, `/`, or `%`
 It makes no mutant when either operand is a string literal (`StringNode`, `InterpolatedStringNode`, `XStringNode`, or `InterpolatedXStringNode`), as StrykerJS skips string operands. In Ruby, `"=" * 40`, `"%.2f" % total`, and `names * ", "` repeat, format, and join, and their mutants raise `NoMethodError` at the first test that runs them, so each is killed by any test that reaches it and shows nothing that coverage doesn't.
 
 Ruby's `**`, `<<`, and `>>` get no mutant, as in StrykerJS. `<<` is mostly append in Ruby, and a mutant that turns an append into a shift raises at once.
+
+### `ArrayDeclaration`
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `[a, b]`, `%w[a b]`, `%i[a b]`, `[*items]` | `[]` | A test that checks the array's elements. |
+| `[]` | `["Stryker was here"]` | A test that checks that the array is empty. |
+| `Array.new(3, 0)` | `Array.new` | A test that checks the array's elements. |
+
+The replacement text for an empty array is StrykerJS's. An array with no brackets, the right side of `a, b = 1, 2`, gets no mutant: `a, b = []` reads as a different assignment, not as an emptied array. StrykerJS turns `new Array()` into `new Array([])`, but in Ruby `Array.new([])` and `Array.new` both give an empty array, so `Array.new` with no arguments, or with `[]`, gets no mutant. The `[]` inside `Array.new([])` still gets its own mutant.
 
 ### `BooleanLiteral`
 
@@ -202,7 +213,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, and `-0i`.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, and `-0i`, and `Array.new` given no argument or `[]`.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
 
