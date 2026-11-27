@@ -1,8 +1,8 @@
 module Stryker
   module ConfigSources
     # The text of a JSON configuration file, before the JSON parser reads it.
-    # It knows what the parser can't be trusted to refuse: a byte-order mark,
-    # which JSON doesn't allow, and bytes that aren't valid UTF-8, which Ruby's
+    # It checks for what Ruby's JSON parser doesn't refuse: a byte-order mark,
+    # which JSON doesn't allow, and bytes that aren't valid UTF-8, which the
     # parser loads as they are.
     #
     # ```ruby

@@ -58,7 +58,8 @@ Each flag writes its value as text, and the command turns the text into the type
 | Type of the option | Text of the flag |
 | - | - |
 | list of strings (`mutate`, `reporters`, `mutator.excludedMutations`) | Items separated by commas, such as `--reporters clear-text,json`. A comma inside braces belongs to the item, so `--mutate "lib/{a,b}/**/*.rb"` is one pattern. The flag adds to its list each time it appears, and empty text gives an empty list. |
-| whole number or number (`thresholds.high`, `timeoutMS`, `timeoutFactor`, and the others) | `80` is a whole number, and `80.5` or `1e3` is a decimal. |
+| number (`timeoutMS`, `timeoutFactor`, `dryRunTimeoutMinutes`) | `80` is a whole number, and `80.5` or `1e3` is a decimal. |
+| whole number (`thresholds.high`, `thresholds.low`) | A whole number such as `80`. `80.0` counts as one, and a decimal such as `80.5` is an error. |
 | `concurrency` | A whole number such as `4`, or a percentage such as `50%`. |
 | `thresholds.break` | A number, or `none` to clear a `thresholds.break` that the file sets. |
 | boolean (`incremental`) | `--incremental` for true and `--no-incremental` for false. |
@@ -201,7 +202,7 @@ A whole number may be more than the number of processors. Each project process l
 
 ### `thresholds.high`
 
-The mutation score, as a percentage, at or above which the score counts as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number, and the configuration holds it as `80`. A fraction such as `82.5` is an error, because the JSON report gives this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
+The mutation score, as a percentage, at or above which the score counts as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number, and the configuration holds it as `80`. A fraction such as `82.5` is an error, because the JSON report holds this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
 
 ### `thresholds.low`
 
