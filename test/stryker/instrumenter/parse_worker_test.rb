@@ -4,6 +4,9 @@ require_relative("../../test_helper")
 require "stringio"
 require "stryker/instrumenter/parse_request"
 require "stryker/instrumenter/parse_worker"
+require "stryker/instrumenter/plain_mutant"
+require "stryker/instrumenter/span"
+require "stryker/mutant"
 
 # Checks what a parse worker answers to the lines it reads.
 class ParseWorkerTest < Minitest::Test

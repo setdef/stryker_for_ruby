@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../test_helper")
+require "prism"
 require "stryker/instrumenter/heredoc_body"
 
 # Checks what the sites in the placement table can't show: the error for a
