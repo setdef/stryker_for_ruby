@@ -68,6 +68,18 @@ class OperandTest < Minitest::Test
     assert_equal(["(a or b)", "(a || b)"], ["a or b", "a || b"].map { |source| left_text(source) })
   end
 
+  def test_an_assignment_goes_in_parentheses_on_the_left
+    sources = ["x = 1", "@x = 1", "@@x = 1", "$x = 1", "X = 1", "B::X = 1", "b.c = 1", "b&.c = 1", "b[0] = 1"]
+
+    assert_equal(sources.map { |source| "(#{source})" }, sources.map { |source| left_text(source) })
+  end
+
+  def test_an_assignment_that_changes_its_variable_goes_in_parentheses_on_the_left
+    sources = ["x += 1", "x ||= 1", "x &&= 1", "@x ||= 1", "B::X ||= 1", "b.c += 1", "b.c ||= 1", "b[0] += 1"]
+
+    assert_equal(sources.map { |source| "(#{source})" }, sources.map { |source| left_text(source) })
+  end
+
   def test_a_defined_check_with_parentheses_is_its_text_on_the_left
     assert_equal("defined?(b)", left_text("defined?(b)"))
   end
@@ -87,7 +99,7 @@ class OperandTest < Minitest::Test
   end
 
   def test_other_operands_are_their_text_on_the_left
-    sources = ["a", "f(1)", "a + b", "-a"]
+    sources = ["a", "f(1)", "a + b", "-a", "b.c", "b[0]", "b.c(1)", "b == c"]
 
     assert_equal(sources, sources.map { |source| left_text(source) })
   end

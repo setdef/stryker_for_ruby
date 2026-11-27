@@ -34,7 +34,8 @@ module Stryker
       # original, because the operands have the same text, or when an operand
       # holds a heredoc opener, because a heredoc's body follows its opener and
       # the swap would give each opener the other's body. The right operand
-      # goes in parentheses when it binds looser than `<=>`, as
+      # goes in parentheses when it binds looser than `<=>`, as a `defined?`
+      # with no parentheses or an assignment does, as
       # `Stryker::Mutators::Operand.left_text` defines.
       def swapped: () -> Edit?
 

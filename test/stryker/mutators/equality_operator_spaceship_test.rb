@@ -52,6 +52,26 @@ class EqualityOperatorSpaceshipTest < Minitest::Test
     assert_equal(["defined?(b) <=> a"], replacements("a <=> defined?(b)"))
   end
 
+  def test_puts_a_swapped_assignment_in_parentheses
+    # Written as x = 1 <=> a, the mutant would mean x = (1 <=> a).
+    assert_equal(["(x = 1) <=> a"], replacements("a <=> x = 1"))
+  end
+
+  def test_the_mutant_of_an_assignment_operand_is_the_whole_file_with_the_swap
+    assert_equal(["y = (x = 1) <=> a\n"], mutated("y = a <=> x = 1\n"))
+  end
+
+  def test_puts_a_swapped_attribute_or_index_assignment_in_parentheses
+    sources = ["a <=> b.c = 1", "a <=> b[0] = 1", "a <=> b.c += 1"]
+    swapped = sources.flat_map { |source| replacements(source) }
+
+    assert_equal(["(b.c = 1) <=> a", "(b[0] = 1) <=> a", "(b.c += 1) <=> a"], swapped)
+  end
+
+  def test_keeps_an_assignment_in_parentheses_as_written
+    assert_equal(["(x = 1) <=> a"], replacements("a <=> (x = 1)"))
+  end
+
   def test_swaps_the_comparison_inside_a_defined_check_as_any_other
     assert_equal(["b <=> a"], replacements("defined? a <=> b"))
   end

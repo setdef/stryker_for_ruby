@@ -28,11 +28,19 @@ module Stryker
         case node
         when Prism::DefinedNode then !node.lparen_loc
         when Prism::AndNode, Prism::OrNode then true
-        when Prism::CallNode then node.message == "not" && !node.opening_loc
-        else false
+        when Prism::CallNode then node.attribute_write? || (node.message == "not" && !node.opening_loc)
+        else assignment?(node)
         end
       end
       private_class_method(:loose?)
+
+      def self.assignment?(node)
+        # Prism has a node for each kind of assignment, such as
+        # LocalVariableWriteNode and IndexOperatorWriteNode, and no class that
+        # they share.
+        node.type.end_with?("_write_node")
+      end
+      private_class_method(:assignment?)
     end
   end
 end
