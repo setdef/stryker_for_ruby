@@ -31,6 +31,12 @@ class CLIFlagsTest < Minitest::Test
     end
   end
 
+  def test_help_says_that_an_excluded_mutators_mutants_show_as_ignored
+    help = stryker("run", "--help").out
+
+    assert_match(/excluded-mutations NAMES\s+Mutators to turn off: their mutants show as Ignored$/, help)
+  end
+
   def test_help_for_help_and_for_the_overview
     assert_equal(Stryker::CLI::Help.overview, stryker("help", "help").out)
   end

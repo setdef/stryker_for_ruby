@@ -18,7 +18,7 @@ module Stryker
         Flag.new("timeoutMS", "MS", :number, "Milliseconds that a mutant's time limit adds"),
         Flag.new("timeoutFactor", "FACTOR", :number, "Times the dry-run time that a mutant may take"),
         Flag.new("dryRunTimeoutMinutes", "MINUTES", :number, "Minutes that the dry run may take"),
-        Flag.new("mutator.excludedMutations", "NAMES", :list, "Mutators that make no mutant"),
+        Flag.new("mutator.excludedMutations", "NAMES", :list, "Mutators to turn off: their mutants show as Ignored"),
         Flag.new("incremental", nil, :switch, "Unused: a run reuses no earlier results yet"),
       ].freeze
       private_constant(:FLAGS)
