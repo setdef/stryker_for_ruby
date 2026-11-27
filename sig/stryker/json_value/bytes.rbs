@@ -1,0 +1,44 @@
+module Stryker
+  module JsonValue
+    # How a member that holds source text or a path crosses JSON: as its bytes
+    # and the name of its encoding, so that a round trip gives the same bytes
+    # in the same encoding, whatever it is. JSON holds only Unicode text, and
+    # a project's files, and so the text and paths from them, can be in any
+    # encoding, or hold bytes that no encoding accepts. The bytes go through
+    # `Stryker::Packing`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::JsonValue::Bytes.write("\x83\x41".dup.force_encoding("Shift_JIS"))
+    # # => {"bytes" => "g0E=", "encoding" => "Shift_JIS"}
+    # Stryker::JsonValue::Bytes.read({ "bytes" => "g0E=", "encoding" => "Shift_JIS" })
+    # # => "\x83\x41", in Shift_JIS
+    # ```
+    module Bytes
+      SHAPE: Array[String]
+
+      # `item` as JSON holds it: a Hash of `"bytes"`, its bytes packed as
+      # text, and `"encoding"`, the name of its encoding. An Array gives an
+      # Array of those, and nil gives nil.
+      #
+      # - `item`: String, nil, or an Array of String or nil, a member's value.
+      def self.write: (String? | Array[String?] item) -> (Hash[String, String]? | Array[Hash[String, String]?])
+
+      # The member that `item`, as `write` gave it, holds: the bytes in the
+      # encoding that the name says. An Array gives an Array, and nil gives
+      # nil. Raises ArgumentError when `item` isn't such a Hash, or when no
+      # encoding has the name.
+      #
+      # - `item`: Hash, an Array of Hash or nil, or nil, as `JSON.parse`
+      #   returns what `write` made.
+      def self.read: (Hash[String, String]? | Array[Hash[String, String]?] item) -> (String? | Array[String?])
+
+      private def self.write_one: (String? item) -> Hash[String, String]?
+
+      private def self.read_one: (Hash[String, String]? item) -> String?
+
+      private def self.shaped?: (Object item) -> bool
+    end
+  end
+end

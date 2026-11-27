@@ -17,12 +17,21 @@ module Stryker
   # provides. Reading never calls `Marshal.load`, because the process that
   # wrote the text ran the project's tests.
   #
-  # `JSON.generate` refuses a String that isn't valid UTF-8, and a test can
-  # fail with such a message, so a refusal would lose the failure. `as_json`
-  # converts each String to UTF-8 and replaces each byte that isn't valid
-  # with U+FFFD, in the members of a value and in the keys and items of a
-  # Hash or Array it holds. A round trip of a String that is valid UTF-8
-  # gives an equal String.
+  # A member holds one of two kinds of String, and a class says which of its
+  # members hold the first kind (`Stryker::JsonValue::Reading#byte_members`).
+  #
+  # - A member that holds source text or a path crosses as its bytes and the
+  #   name of its encoding (`Stryker::JsonValue::Bytes`), as a Hash of
+  #   `"bytes"` and `"encoding"`. A round trip gives the same bytes in the
+  #   same encoding, whatever the encoding is, so an equal value comes back.
+  #   A nil, or an Array of such Strings, crosses the same way.
+  # - Every other member, and every key, holds a name or a message for a
+  #   reader, which `JSON.generate` writes only as valid UTF-8. A test can
+  #   fail with a message that isn't valid UTF-8, and a refusal would lose the
+  #   failure, so `as_json` converts such a String to UTF-8 and replaces each
+  #   byte that isn't valid with U+FFFD, in the members of a value and in the
+  #   keys and items of a Hash or Array it holds. A round trip of a String
+  #   that is valid UTF-8 gives an equal String.
   #
   # ## Examples
   #
@@ -50,7 +59,7 @@ module Stryker
     def self.included: (Class base) -> void
 
     # `value` as JSON holds it: the JSON object of a `Stryker::JsonValue` or
-    # Hash, as `plain_hash` gives it, an Array with each item converted the
+    # Hash, as `plain_hash` gives its members, an Array with each item converted the
     # same way, a String or Symbol as a String in valid UTF-8, or `value`
     # itself.
     #
@@ -58,10 +67,17 @@ module Stryker
     def self.plain: (member value) -> json_value
 
     # The JSON object of a `Stryker::JsonValue` or Hash: a Hash with a String
-    # key in valid UTF-8 for each key, and each item as `plain` gives it.
+    # key in valid UTF-8 for each key, and each item as `plain` gives it. The
+    # keys and items of a value are its `json_members`.
     #
     # - `value`: Stryker::JsonValue or Hash, what to convert.
     def self.plain_hash: (JsonValue | Hash[member, member] value) -> Hash[String, json_value]
+
+    # The Hash that `value` converts from: its `json_members` for a
+    # `Stryker::JsonValue`, and `value` itself for a Hash.
+    #
+    # - `value`: Stryker::JsonValue or Hash.
+    def self.members: (JsonValue | Hash[member, member] value) -> Hash[Symbol | member, member]
 
     # `text` as a String in valid UTF-8: converted from its encoding, with
     # each byte that doesn't convert replaced by U+FFFD. A Symbol gives its
@@ -79,6 +95,11 @@ module Stryker
     # - `options`: the options that ActiveSupport passes to `as_json`, a Hash
     #   or nil. A value ignores them.
     def as_json: (?Hash[Symbol, Object]? options) -> Hash[String, json_value]
+
+    # The members of the value for `as_json`: `to_h`, with each member that
+    # holds source text or a path (`Stryker::JsonValue::Reading#byte_members`)
+    # as `Stryker::JsonValue::Bytes.write` gives it.
+    def json_members: () -> Hash[Symbol, member]
 
     # The value as one line of JSON, with no line break in it, from
     # `JSON.generate`. A pipe carries one such line for each value. Raises
@@ -106,6 +127,21 @@ module Stryker
       #
       # - `object`: Hash, one value as `as_json` gives it.
       def from_h: (Hash[String, json_value] object) -> T
+
+      # The names of the members that hold source text or a path, which cross
+      # JSON as their bytes and their encoding's name
+      # (`Stryker::JsonValue::Bytes`). A member that holds a name or a
+      # message for a reader isn't one. A class that has such members
+      # overrides this method, and a class whose members hold none has an empty
+      # Array.
+      def byte_members: () -> Array[Symbol]
+
+      # The reader of the member `name`: `Stryker::JsonValue::Bytes.read` for
+      # a member in `byte_members`, and otherwise the one in `readers`, or a
+      # Proc that returns its argument.
+      #
+      # - `name`: Symbol, a member's name.
+      def reader: (Symbol name) -> Proc
 
       # The readers of the members of the value that hold another value, or
       # an array of them, keyed by the member's name. A reader is a Proc that

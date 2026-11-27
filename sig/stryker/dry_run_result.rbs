@@ -46,7 +46,8 @@ module Stryker
     # The path of each file that began to load during a test, as
     # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-known-gap)
     # says. The dry run reports them so that a reader can see which results
-    # rest on the rule for such files.
+    # rest on the rule for such files. Each path crosses JSON as its bytes
+    # and its encoding's name.
     attr_reader files_loaded_in_tests: Array[String]
 
     # The milliseconds from the start of the first test to the end of the
@@ -66,6 +67,11 @@ module Stryker
     #   test to the end of the last.
     def self.new: (results: Array[TestResult], buckets: Hash[String, Array[Integer]], static_bucket: Array[Integer], files_loaded_in_tests: Array[String], duration_ms: Float) -> instance
                 | (Array[TestResult] results, Hash[String, Array[Integer]] buckets, Array[Integer] static_bucket, Array[String] files_loaded_in_tests, Float duration_ms) -> instance
+
+    # The names of the members that cross JSON as their bytes and their
+    # encoding's name: `files_loaded_in_tests`. The keys of `buckets` are
+    # test IDs, which are names, so they don't.
+    def self.byte_members: () -> Array[Symbol]
 
     # The readers of the members of a dry run result that hold another value, as
     # `Stryker::JsonValue::Reading#readers` describes: `results` reads an Array of Hashes into an Array of `Stryker::TestResult`.

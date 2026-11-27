@@ -7,6 +7,10 @@ module Stryker
   class DryRunResult < Data.define(:results, :buckets, :static_bucket, :files_loaded_in_tests, :duration_ms)
     include JsonValue
 
+    def self.byte_members
+      %i[files_loaded_in_tests]
+    end
+
     def self.readers
       { results: method(:read_results).to_proc }
     end

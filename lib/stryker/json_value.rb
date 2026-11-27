@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "json_value/bytes"
+require_relative "json_value/reading"
 
 module Stryker
   module JsonValue
@@ -18,7 +20,14 @@ module Stryker
     end
 
     def self.plain_hash(value)
-      value.to_h.to_h { |key, item| [clean_text(key), plain(item)] }
+      members(value).to_h { |key, item| [clean_text(key), plain(item)] }
+    end
+
+    def self.members(value)
+      case value
+      when JsonValue then value.json_members
+      else value
+      end
     end
 
     def self.clean_text(text)
@@ -31,28 +40,15 @@ module Stryker
       JsonValue.plain_hash(self)
     end
 
-    def to_json(*)
-      JSON.generate(as_json)
+    def json_members
+      # steep:ignore:start
+      exact = self.class.byte_members
+      # steep:ignore:end
+      to_h.to_h { |name, item| [name, exact.include?(name) ? Bytes.write(item) : item] }
     end
 
-    module Reading
-      AS_IT_IS = :itself.to_proc
-      private_constant(:AS_IT_IS)
-
-      def from_json(text)
-        object = JSON.parse(text)
-        raise(ArgumentError, "expected a JSON object, got #{object.class}") unless object.is_a?(Hash)
-
-        from_h(object)
-      end
-
-      def from_h(object)
-        new(**object.transform_keys(&:to_sym).to_h { |name, value| [name, readers.fetch(name, AS_IT_IS).call(value)] })
-      end
-
-      def readers
-        {}
-      end
+    def to_json(*)
+      JSON.generate(as_json)
     end
   end
 end

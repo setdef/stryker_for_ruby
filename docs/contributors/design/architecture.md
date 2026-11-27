@@ -192,6 +192,14 @@ Every value that passes between stages is a `Data.define` class: immutable and c
 | [`MutantRun`](../../../sig/stryker/mutant_run.rbs) | One run of a chosen set of tests with one mutant active. |
 | [`MutantResult`](../../../sig/stryker/mutant_result.rbs) | What a run found out about one mutant, in the terms of the report. |
 
+A round trip through JSON gives an equal value. A project's files can be in any encoding, so each field that holds source text or a path crosses as its bytes and its encoding's name, as the parse pool sends a file's bytes ([Parsing plain mutants](loading-and-isolation.md#what-crosses-the-pipes)). A field that holds a message for a reader crosses as valid UTF-8, with each byte that isn't valid replaced by U+FFFD, because a test can fail with such a message, and JSON holds only Unicode text. Each value's RBS documentation says which of its fields are which:
+
+| Fields | How they cross JSON |
+| - | - |
+| `Mutant#file`, `Mutant#replacement`, `Test#file`, and each path in `DryRunResult#files_loaded_in_tests` | Bytes and encoding name |
+| `TestResult#failure_message` and `MutantResult#status_reason` | Valid UTF-8 |
+| Every other String, such as IDs, names, and the keys of `DryRunResult#buckets` | Valid UTF-8 |
+
 A run publishes domain events, each also a `Data.define` value ([`Stryker::Events`](../../../sig/stryker/events.rbs)), and the core hands each event to every reporter:
 
 | Event | Published when |

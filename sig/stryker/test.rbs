@@ -41,7 +41,7 @@ module Stryker
     attr_reader name: String
 
     # The path of the file that defines the test, or nil when the framework
-    # doesn't give one.
+    # doesn't give one. It crosses JSON as its bytes and its encoding's name.
     attr_reader file: String?
 
     # Where in `file` the test is defined, or nil when the framework doesn't
@@ -56,6 +56,10 @@ module Stryker
     # - `location`: Stryker::Location or nil, where the test is defined.
     def self.new: (id: String, name: String, file: String?, location: Location?) -> instance
                 | (String id, String name, String? file, Location? location) -> instance
+
+    # The names of the members that cross JSON as their bytes and their
+    # encoding's name: `file`. `id` and `name` hold names, so they don't.
+    def self.byte_members: () -> Array[Symbol]
 
     # The readers of the members of a test that hold another value, as
     # `Stryker::JsonValue::Reading#readers` describes: `location` reads a Hash into a `Stryker::Location`, and nil into nil.

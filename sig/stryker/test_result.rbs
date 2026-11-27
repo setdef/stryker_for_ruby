@@ -43,8 +43,10 @@ module Stryker
     # `"passed"`, `"failed"`, or `"skipped"`.
     attr_reader status: String
 
-    # The failure's message, or nil for a test that didn't fail. The result
-    # doesn't check the message against the status.
+    # The failure's message, or nil for a test that didn't fail. It is a
+    # message for a reader, so it crosses JSON as valid UTF-8, with each
+    # byte that isn't valid replaced by U+FFFD. The result doesn't check the
+    # message against the status.
     attr_reader failure_message: String?
 
     # How long the test took, in milliseconds, with a fraction for a test

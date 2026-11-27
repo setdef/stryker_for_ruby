@@ -57,7 +57,9 @@ module Stryker
 
     # The reason for the status, in the words of
     # [#27](https://github.com/setdef/stryker_for_ruby/issues/27),
-    # or nil for a status that has none.
+    # or nil for a status that has none. It is a message for a reader, so it
+    # crosses JSON as valid UTF-8, with each byte that isn't valid replaced
+    # by U+FFFD.
     attr_reader status_reason: String?
 
     # The IDs of the tests that killed the mutant. A run stops at its first

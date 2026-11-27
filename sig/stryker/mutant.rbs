@@ -48,7 +48,8 @@ module Stryker
     # The mutant's ID, unique in the run.
     attr_reader id: Integer
 
-    # The path of the file the mutant changes.
+    # The path of the file the mutant changes. It crosses JSON as its bytes
+    # and its encoding's name.
     attr_reader file: String
 
     # The name of the mutator that made the mutant, in the naming scheme that
@@ -63,8 +64,15 @@ module Stryker
     # the last one the edit replaces.
     attr_reader end_offset: Integer
 
-    # The text that takes the place of the replaced bytes.
+    # The text that takes the place of the replaced bytes. It crosses JSON
+    # as its bytes and its encoding's name, because it keeps the encoding of
+    # the source, which can be any, or hold bytes that no encoding accepts.
     attr_reader replacement: String
+
+    # The names of the members that cross JSON as their bytes and their
+    # encoding's name: `file` and `replacement`. `mutator_name` holds a name,
+    # so it doesn't.
+    def self.byte_members: () -> Array[Symbol]
 
     # Builds the mutant.
     #

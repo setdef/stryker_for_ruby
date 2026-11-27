@@ -6,6 +6,10 @@ module Stryker
   class Mutant < Data.define(:id, :file, :mutator_name, :start_offset, :end_offset, :replacement)
     include JsonValue
 
+    def self.byte_members
+      %i[file replacement]
+    end
+
     def edit(text, offset = 0)
       bytes = text.b
       "#{bytes.byteslice(0, start_offset - offset)}#{replacement.b}#{bytes.byteslice((end_offset - offset)..)}".b
