@@ -9,8 +9,8 @@ module Stryker
     # When the reader has gone, which raises `Errno::EPIPE`, a write does
     # nothing.
     #
-    # `Stryker::Isolation::RunReport` is the kind that a run's process
-    # writes.
+    # `Stryker::Isolation::RunReport` and `Stryker::Isolation::Relay` are
+    # the two kinds.
     class LineWriter
       # The pipe or file the lines go to.
       @io: IO

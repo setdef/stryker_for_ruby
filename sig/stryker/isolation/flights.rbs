@@ -1,0 +1,63 @@
+module Stryker
+  module Isolation
+    # The parent that forks, and the runs that the orchestrator gives it,
+    # from when it gives each one until the parent says how its child ended.
+    # It keeps at most the window's number of runs in the parent at once,
+    # and sends each line that the parent writes about a run to that run's
+    # flight.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # flights = Stryker::Isolation::Flights.new(parent, config.concurrency)
+    # flights.run(runs) { |result| puts(result.status) }
+    # flights.stop
+    # ```
+    class Flights
+      # The text of the error for a parent that ended while runs were in
+      # flight.
+      ENDED: String
+
+      # The parent, which has loaded the tests.
+      @parent: ParentProcess
+
+      # How many runs may be in the parent at once.
+      @window: Integer
+
+      # Each flight, by its mutant's ID.
+      @flights: Hash[Integer, Flight]
+
+      # Builds the set, with no run in flight.
+      #
+      # - `parent`: Stryker::Isolation::ParentProcess, the parent, which has
+      #   loaded the tests.
+      # - `window`: Integer, how many runs may be in the parent at once.
+      def initialize: (ParentProcess parent, Integer window) -> void
+
+      # Gives the parent every run of `runs`, at most the window's number at
+      # once, and yields each result as the parent says how its child
+      # ended. Raises `Stryker::Isolation::Error` when the parent ends, or
+      # writes a line about a mutant that isn't in flight.
+      #
+      # - `runs`: Array of Stryker::MutantRun, the runs.
+      def run: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+
+      # Stops the parent, as `Stryker::Isolation::ParentProcess#stop` does,
+      # then kills the group of each child that the parent said it forked
+      # and never said ended, and empties the set.
+      def stop: () -> nil
+
+      private
+
+      # Adds `run`, and gives it to the parent.
+      def dispatch: (MutantRun run) -> nil
+
+      # Reads the parent's next line, and returns the result of the run it
+      # finishes, or nil.
+      def receive: () -> MutantResult?
+
+      # The flight of mutant `id`.
+      def flight: (JsonValue::json_value id, Hash[String, JsonValue::json_value] object) -> Flight
+    end
+  end
+end

@@ -1,0 +1,78 @@
+module Stryker
+  module Isolation
+    # One running process, as the loop that waits on many processes sees
+    # it: what it is for, the process, the pipe it writes to, and its time
+    # limit. The loop finishes it when its pipe ends or its time runs out.
+    # The parent that forks watches each child with one.
+    #
+    # The pipe ends once every process that holds its write end has ended,
+    # so a process that a test started and that inherited the pipe can keep
+    # it open after the run's process ended. Then the loop finishes the
+    # watch at its deadline instead, and the run counts as timed out only
+    # if its process was still running then.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # watch = Stryker::Isolation::Watch.new(run, Stryker::Isolation::Child.new(pid), reader, Stryker::Isolation::Timer.new(1500))
+    # watch.done?([reader]) { |subject, line| relay.message(subject, line) }
+    # # => true, once the child has ended and its pipe closed
+    # subject, ending = watch.finish { |subject, line| relay.message(subject, line) }
+    # ```
+    class Watch[S]
+      # What the process is for: the run, or what the adapter keeps for it.
+      attr_reader subject: S
+
+      # The process.
+      @child: Child
+
+      # The reader of the process's pipe.
+      @reader: LineReader
+
+      # The run's time limit.
+      @timer: Timer
+
+      # Starts watching.
+      #
+      # - `subject`: what the process is for.
+      # - `child`: Stryker::Isolation::Child, the process.
+      # - `output`: IO, the read end of the pipe the process writes to.
+      # - `timer`: Stryker::Isolation::Timer, the run's time limit.
+      def initialize: (S subject, Child child, IO output, Timer timer) -> void
+
+      # The read end of the pipe.
+      def output: () -> IO
+
+      # The seconds left before the time is up, or 0.
+      def left: () -> Float
+
+      # Whether the watch is done: its pipe is among `ready` and closed once
+      # it has read what the pipe holds, or its time is up. Yields the
+      # subject with each whole line it reads.
+      #
+      # - `ready`: Array of IO, the pipes that `IO.select` found ready.
+      def done?: (Array[IO] ready) { (S subject, String line) -> void } -> bool
+
+      # Finishes the watch once the pipe closed or the time is up. It waits
+      # for the process for what is left of its time, kills it if it still
+      # runs, reaps it, kills what it left running in its group, and yields
+      # each line still in the pipe without waiting for more. Returns the
+      # subject and how the process ended.
+      def finish: () { (S subject, String line) -> void } -> [S, Ending]
+
+      # Kills the process and its group, waits until it ended, and closes
+      # the pipe, for a run that nobody waits for any more.
+      def stop: () -> nil
+
+      private
+
+      # Reads what the pipe holds now, yields the subject with each whole
+      # line, and returns what `Stryker::Isolation::LineReader#read`
+      # returns.
+      def read: () { (S subject, String line) -> void } -> (:more | :idle | :closed)
+
+      # Yields the subject with each line still in the pipe, and closes it.
+      def drain: () { (S subject, String line) -> void } -> nil
+    end
+  end
+end

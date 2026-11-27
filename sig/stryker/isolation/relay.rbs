@@ -1,0 +1,49 @@
+module Stryker
+  module Isolation
+    # Writes what the parent that forks tells the orchestrator, on the pipe
+    # the orchestrator reads: that it loaded the tests, which child runs
+    # each mutant, each line that child wrote, and how the child ended.
+    # Every line about a run holds its mutant's ID under `"mutant"`. The
+    # parent writes from one thread, and the lock keeps lines whole anyway.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # relay = Stryker::Isolation::Relay.new(results)
+    # relay.ready                  # {"ready":true}
+    # relay.forked(run, 4242)      # {"mutant":7,"forked":4242}
+    # relay.message(run, line)     # {"mutant":7,"message":{"finished":{...}}}
+    # relay.exited(run, ending)    # {"mutant":7,"exited":{"exit_status":0,...}}
+    # ```
+    class Relay < LineWriter
+      # The object that `line` holds as JSON, or nil when it isn't JSON.
+      #
+      # - `line`: String, a line that a child wrote.
+      def self.parse: (String line) -> JsonValue::json_value
+
+      # Writes `{"ready":true}`, which tells the orchestrator that the
+      # parent loaded the tests and takes runs.
+      def ready: () -> nil
+
+      # Writes the ID of the child that runs `run`.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      # - `pid`: Integer, the child's process ID.
+      def forked: (MutantRun run, Integer pid) -> nil
+
+      # Writes the message on `line` from the child that runs `run`, or
+      # null when the line isn't JSON, which ends what the orchestrator
+      # trusts of the run's messages.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      # - `line`: String, a whole line the child wrote.
+      def message: (MutantRun run, String line) -> nil
+
+      # Writes how the child that ran `run` ended.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      # - `ending`: Stryker::Isolation::Ending, how its process ended.
+      def exited: (MutantRun run, Ending ending) -> nil
+    end
+  end
+end

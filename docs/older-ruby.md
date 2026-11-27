@@ -7,6 +7,7 @@ This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn
 | Problem | Ruby 3.3 | Ruby 3.4 |
 | - | - | - |
 | [A hit from a non-main Ractor can't be recorded](#a-hit-from-a-non-main-ractor-cant-be-recorded) | yes | yes |
+| [A fork while a Ractor is running crashes the child](#a-fork-while-a-ractor-is-running-crashes-the-child) | yes | no |
 | [`require` in a non-main Ractor raises](#require-in-a-non-main-ractor-raises) | yes | no |
 | [A private index method called through `self` in a multiple assignment](#a-private-index-method-called-through-self-in-a-multiple-assignment) | yes | no |
 
@@ -14,7 +15,11 @@ This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn
 
 **Ruby 3.3 and 3.4.** The runtime records a hit from code that runs in a Ractor other than the main one by sending it to a collector Ractor, through a `Ractor::Port`. Ruby 3.3 and 3.4 have no `Ractor::Port`, and a send from a thread inside a non-main Ractor hangs there, so no mechanism records such a hit.
 
-In a process that records hits, the project's first `Ractor.new` with a block raises `NameError` (`uninitialized constant Ractor::Port`), because the runtime starts the collector's Ractor there. The error stops the code that made the Ractor. A project that makes no Ractor is not affected. [Coverage](design/coverage.md#ractors) has the design.
+In a process that records hits, such as the parent that forks, the project's first `Ractor.new` with a block raises `NameError` (`uninitialized constant Ractor::Port`), because the runtime starts the collector's Ractor there. The error stops the code that made the Ractor. A project that makes no Ractor is not affected. [Coverage](design/coverage.md#ractors) has the design.
+
+## A fork while a Ractor is running crashes the child
+
+**Ruby 3.3.** A process that forks while one of its Ractors is running gets a child that crashes with a segmentation fault, on macOS and on Linux. On Ruby 3.4 and later the child works. The parent that forks doesn't check for a live Ractor before it forks.
 
 ## `require` in a non-main Ractor raises
 

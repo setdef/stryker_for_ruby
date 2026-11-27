@@ -4,12 +4,13 @@
 # active before any of the project's code loads.
 require_relative "../runtime"
 require_relative "../test_runners/minitest_runner"
+require_relative "fork_parent"
 require_relative "static_run"
 
 module Stryker
   module Isolation
     module ProjectProcess
-      MODES = { static: StaticRun }.transform_keys(&:to_s).freeze
+      MODES = { "fork-parent": ForkParent, static: StaticRun }.transform_keys(&:to_s).freeze
       RUNNERS = { minitest: TestRunners::MinitestRunner }.transform_keys(&:to_s).freeze
       public_constant(:MODES, :RUNNERS)
 
