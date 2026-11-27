@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("test_helper")
-require "open3"
+require "etc"
 require "rbconfig"
 
 # Checks that SimpleCov starts before any file from lib loads, whichever test
@@ -21,14 +21,32 @@ class LoadOrderTest < Minitest::Test
 
   def test_every_test_file_starts_simplecov_before_lib_loads
     paths = Dir.glob("test/**/*.rb", base: ROOT)
-    late = paths.reject { |path| starts_simplecov_first?(path) }
+    late = probe_all(paths).filter_map { |path, success| path unless success }
 
     assert_empty(late, "These files load a lib file before SimpleCov starts.")
   end
 
-  def starts_simplecov_first?(path)
+  # Runs one probe process per path, at most one per processor at a time, and
+  # returns every result before the caller judges any. Each wait is on the
+  # oldest probe, so it never reaps a process this test didn't start.
+  private def probe_all(paths)
+    running = []
+    results = {}
+    paths.each do |path|
+      collect(running.shift, results) if running.size >= Etc.nprocessors
+      running << [path, start_probe(path)]
+    end
+    collect(running.shift, results) until running.empty?
+    results
+  end
+
+  private def start_probe(path)
     command = [RbConfig.ruby, "-Ilib:test", "-e", PROBE, File.join(ROOT, path)]
-    _output, _errors, status = Open3.capture3(*command, chdir: ROOT)
-    status.success?
+    Process.spawn(*command, chdir: ROOT, in: File::NULL, out: File::NULL, err: File::NULL)
+  end
+
+  private def collect(probe, results)
+    path, pid = probe
+    results[path] = Process.wait2(pid).last.success?
   end
 end
