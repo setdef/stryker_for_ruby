@@ -1,0 +1,42 @@
+module Stryker
+  class CLI
+    # The reporters that the `reporters` option names, built for one run:
+    # `clear-text` writes to standard output, with color when standard
+    # output may have it, and `json` writes its file under the project's
+    # root.
+    class Reporting
+      # The name of the `clear-text` reporter. Private.
+      CLEAR_TEXT: String
+
+      # The name of every reporter that the gem has. Private.
+      NAMES: Array[String]
+
+      @config: Config
+
+      @root: String
+
+      # Builds the choice of reporters.
+      #
+      # - `config`: Stryker::Config, whose `reporters` names them.
+      # - `root`: String, the project's root.
+      def initialize: (Config config, String root) -> void
+
+      # One reporter for each name in the option, once, in the option's
+      # order. Raises Stryker::ConfigError, before it builds any, when a
+      # name isn't a reporter's.
+      #
+      # - `stdout`: the stream that `clear-text` writes to.
+      # - `color`: Stryker::CLI::Color, which says whether that stream may
+      #   have color.
+      def reporters: (IO | StringIO stdout, Color color) -> Array[_Reporter]
+
+      private
+
+      # The `clear-text` reporter.
+      def clear_text: (IO | StringIO stdout, Color color) -> Reporters::ClearText
+
+      # The `json` reporter.
+      def json: () -> Reporters::JsonReport
+    end
+  end
+end

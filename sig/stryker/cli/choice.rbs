@@ -1,0 +1,34 @@
+module Stryker
+  class CLI
+    # The names that one option may take, such as the names of the
+    # reporters that the gem has, and the error for a name it may not.
+    class Choice
+      # `names` quoted, with `conjunction` before the last: `"a"`,
+      # `"a" or "b"`, or `"a", "b", or "c"`.
+      #
+      # - `names`: Array of String.
+      # - `conjunction`: String, such as `"or"` or `"and"`.
+      def self.listed: (Array[String] names, String conjunction) -> String
+
+      @option: String
+
+      @what: String
+
+      @known: Array[String]
+
+      # Builds the choice.
+      #
+      # - `option`: String, the option's name, such as `"reporters"`.
+      # - `what`: String, what each name names, such as `"reporter"`.
+      # - `known`: Array of String, the names that the option may take.
+      def initialize: (String option, String what, Array[String] known) -> void
+
+      # Returns nil when every one of `names` is known. Raises
+      # Stryker::ConfigError otherwise, with a message that gives each name
+      # that isn't, and every name that is.
+      #
+      # - `names`: Array of String, the names that the option gives.
+      def check: (Array[String] names) -> nil
+    end
+  end
+end

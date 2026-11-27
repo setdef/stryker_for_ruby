@@ -1,0 +1,63 @@
+module Stryker
+  class CLI
+    # The pipeline that `stryker run` hands a checked config to: it builds
+    # the adapters for the system it runs on and the reporters that the
+    # config names, and runs `Stryker::Pipeline` with them. It is the one
+    # place that picks an adapter, so the pipeline refers to none.
+    #
+    # Where Ruby has `fork`, as on Linux and macOS, each run's dry run and
+    # runtime mutants go through `Stryker::Isolation::ForkPerRun`, and its
+    # static mutants through `Stryker::Isolation::FreshProcesses`. Where it
+    # has none, as on Windows, a run isn't built: `call` raises
+    # Stryker::UnsupportedError before it reads any file.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # testing = Stryker::CLI::MutationTesting.new(Dir.pwd)
+    # streams = Stryker::CLI::Streams.new($stdout, $stderr)
+    # testing.call(config, streams, Stryker::CLI::Color.from(ENV.to_h, false))
+    # # => 83.33333333333333
+    # ```
+    class MutationTesting
+      # Whether Ruby has `fork` on this system. Private.
+      FORKS: bool
+
+      # The message of the error where the system has no `fork`. Private.
+      NO_FORK: String
+
+      @root: String
+
+      @forks: bool
+
+      @pipeline: singleton(Pipeline)
+
+      # Builds the run.
+      #
+      # - `root`: String, the project's root.
+      # - `forks`: bool, whether Ruby has `fork` on this system. By default,
+      #   `FORKS`.
+      # - `pipeline`: the class of the pipeline, `Stryker::Pipeline` by
+      #   default, or a stand-in in a test.
+      def initialize: (String root, ?forks: bool, ?pipeline: singleton(Pipeline)) -> void
+
+      # Runs mutation testing as `config` says, and returns the run's
+      # mutation score, or nil when no mutant was valid. Before it reads any
+      # file, it raises Stryker::UnsupportedError where the system has no
+      # `fork`, and Stryker::ConfigError when `testRunner` or a name in
+      # `reporters` names nothing that the gem has.
+      #
+      # - `config`: Stryker::Config, the checked options of the run.
+      # - `streams`: Stryker::CLI::Streams, whose standard output the
+      #   `clear-text` reporter writes to.
+      # - `color`: Stryker::CLI::Color, which says whether standard output
+      #   may have color.
+      def call: (Config config, Streams streams, Color color) -> Float?
+
+      private
+
+      # The adapters that read the cache at `cache`, for the run's root.
+      def isolations: (String cache) -> [Isolation::ForkPerRun, Isolation::FreshProcesses]
+    end
+  end
+end
