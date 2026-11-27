@@ -2,7 +2,7 @@
 
 ## Report a vulnerability privately
 
-Report a vulnerability in **Stryker (for Ruby)** through GitHub's private vulnerability reporting, never in [the issue tracker](https://github.com/setdef/stryker_for_ruby/issues), in an email thread, or anywhere else others can read it:
+Report a vulnerability in **Stryker (for Ruby)** through GitHub's private vulnerability reporting, never in [the Discussions](https://github.com/setdef/stryker_for_ruby/discussions), in an email thread, or anywhere else others can read it:
 
 1. Open [the repository's Security tab](https://github.com/setdef/stryker_for_ruby/security) and choose **Report a vulnerability**, or go straight to [a new private advisory](https://github.com/setdef/stryker_for_ruby/security/advisories/new).
 2. Fill in the form. Only the project's maintainers can see what you send.
