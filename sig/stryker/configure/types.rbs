@@ -35,8 +35,10 @@ module Stryker
       # sure that it is one, and the conversion tells Steep the type.
       def self.strings: (Object? value) -> Array[String]
 
-      # Returns the type of a whole number in a range.
-      def self.whole_number: (String description, Range[Integer?] range) -> Kind
+      # Returns the type of a finite number in a range, a whole number or a
+      # fraction. A whole number too big to be a Float isn't finite as a
+      # Float, so it isn't in the type.
+      def self.number: (String description, Range[Numeric?] range) -> Kind
     end
   end
 end

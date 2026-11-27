@@ -56,11 +56,33 @@ class ConfigureThresholdsTest < Minitest::Test
     assert_equal([70, 70], [config.threshold_high, config.threshold_low])
   end
 
+  def test_a_value_out_of_range_is_the_only_problem_reported
+    message = refusal({}, options: { :"thresholds.low" => 150 })
+
+    assert_equal(
+      '"--thresholds.low" on the command line takes a number from 0 to 100, but its value is 150.',
+      message
+    )
+  end
+
+  def test_fractions_are_compared_as_they_are
+    message = refusal({}, options: { :"thresholds.high" => 70.4, :"thresholds.low" => 70.5 })
+
+    assert_equal(
+      [
+        %("--thresholds.high" on the command line is 70.4,),
+        %(which is below "--thresholds.low" on the command line (70.5).),
+        %("thresholds.high" can't be below "thresholds.low".),
+      ].join(" "),
+      message
+    )
+  end
+
   def test_a_value_of_the_wrong_type_is_the_only_problem_reported
     message = refusal({}, options: { :"thresholds.high" => "lots", :"thresholds.low" => 70 })
 
     assert_equal(
-      '"--thresholds.high" on the command line takes a whole number from 0 to 100, but its value is "lots".',
+      '"--thresholds.high" on the command line takes a number from 0 to 100, but its value is "lots".',
       message
     )
   end

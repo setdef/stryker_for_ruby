@@ -68,10 +68,10 @@ The checks read the type of `testRunner` and `reporters`. They don't check that 
 | [`testRunner`](#testrunner) | string | `minitest` when the project has a `test/` folder, `rspec` when it has a `spec/` folder |
 | [`reporters`](#reporters) | list of strings | `clear-text`, `progress`, `html` |
 | [`concurrency`](#concurrency) | whole number, or a percentage string | the number of logical processors, less one when there are more than four |
-| [`thresholds.high`](#thresholdshigh) | whole number from 0 to 100 | `80` |
-| [`thresholds.low`](#thresholdslow) | whole number from 0 to 100 | `60` |
-| [`thresholds.break`](#thresholdsbreak) | whole number from 0 to 100, or null | none |
-| [`timeoutMS`](#timeoutms) | whole number of 0 or more | `5000` |
+| [`thresholds.high`](#thresholdshigh) | number from 0 to 100 | `80` |
+| [`thresholds.low`](#thresholdslow) | number from 0 to 100 | `60` |
+| [`thresholds.break`](#thresholdsbreak) | number from 0 to 100, or null | none |
+| [`timeoutMS`](#timeoutms) | number of 0 or more | `5000` |
 | [`timeoutFactor`](#timeoutfactor) | number of 0 or more | `1.5` |
 | [`mutator.excludedMutations`](#mutatorexcludedmutations) | list of strings | none |
 | [`incremental`](#incremental) | boolean | `false` |
@@ -111,19 +111,19 @@ A whole number may be more than the number of processors. Each project process l
 
 ### `thresholds.high`
 
-The mutation score, as a percentage, at or above which the score counts as high. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
+The mutation score, as a percentage, at or above which the score counts as high. It takes any number from 0 to 100, such as `82.5`. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
 
 ### `thresholds.low`
 
-The mutation score, as a percentage, below which the score counts as low. The default is `60`. Reports use it to color the score. It can't be above `thresholds.high`.
+The mutation score, as a percentage, below which the score counts as low. It takes any number from 0 to 100. The default is `60`. Reports use it to color the score. It can't be above `thresholds.high`.
 
 ### `thresholds.break`
 
-The mutation score, as a percentage, below which the run exits with status 1. The default is null, which sets no limit. `0` is a limit that no score is below. Set it in CI to fail a build when the tests get weaker: `stryker run --thresholds.break 75`.
+The mutation score, as a percentage, below which the run exits with status 1. It takes any number from 0 to 100, such as `80.5`, or null. The default is null, which sets no limit. `0` is a limit that no score is below. Set it in CI to fail a build when the tests get weaker: `stryker run --thresholds.break 75`.
 
 ### `timeoutMS`
 
-The milliseconds that a run's time limit adds to the dry-run time of its tests. The default is `5000`. Raise it on a busy machine, so that a slow run isn't taken for an infinite loop.
+The milliseconds that a run's time limit adds to the dry-run time of its tests. It takes any number of 0 or more, such as `2500.5`. The default is `5000`. Raise it on a busy machine, so that a slow run isn't taken for an infinite loop.
 
 ### `timeoutFactor`
 

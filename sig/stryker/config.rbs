@@ -68,19 +68,19 @@ module Stryker
 
     # The mutation score, as a percentage, at or above which the score is
     # high. By default, 80.
-    attr_reader threshold_high: Integer
+    attr_reader threshold_high: Numeric
 
     # The mutation score, as a percentage, below which the score is low. By
     # default, 60.
-    attr_reader threshold_low: Integer
+    attr_reader threshold_low: Numeric
 
     # The mutation score, as a percentage, below which the run fails, or nil
     # for no limit. By default, nil.
-    attr_reader threshold_break: Integer?
+    attr_reader threshold_break: Numeric?
 
     # How many milliseconds a run's limit adds to the dry-run time of its
     # tests. By default, 5000.
-    attr_reader timeout_ms: Integer
+    attr_reader timeout_ms: Numeric
 
     # How many times the dry-run time of a run's tests a run may take, before
     # `timeout_ms` is added. By default, 1.5.
@@ -117,14 +117,14 @@ module Stryker
     # - `test_runner`: String, the name of the test runner.
     # - `reporters`: Array of String, the reporters to run.
     # - `concurrency`: Integer, how many processes run at once.
-    # - `threshold_high`: Integer, the high score.
-    # - `threshold_low`: Integer, the low score.
-    # - `threshold_break`: Integer or nil, the score that breaks the run.
-    # - `timeout_ms`: Integer, the time a run's limit adds.
+    # - `threshold_high`: Numeric, the high score.
+    # - `threshold_low`: Numeric, the low score.
+    # - `threshold_break`: Numeric or nil, the score that breaks the run.
+    # - `timeout_ms`: Numeric, the time a run's limit adds.
     # - `timeout_factor`: Float, the factor on the dry-run time.
     # - `excluded_mutations`: Array of String, the mutators that make nothing.
     # - `incremental`: bool, whether to store and reuse results.
-    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Integer, ?threshold_low: Integer, ?threshold_break: Integer?, ?timeout_ms: Integer, ?timeout_factor: Float, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
+    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
 
     # Builds the config, with each default for a field that the keywords leave
     # out.

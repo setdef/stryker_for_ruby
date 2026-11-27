@@ -27,6 +27,11 @@ module Stryker
       # Returns an option's name as this setting's origin spells it.
       def spell: (String option) -> String
 
+      # Returns whether the value has the type that the option takes, as
+      # `Types::KINDS` has it. A setting whose name is no option is valid,
+      # because its type accepts every value.
+      def valid?: () -> bool
+
       # Returns the keys as the user wrote them, innermost first, each in
       # quotes: `"break" inside "thresholds"`, or `"thresholds.break"`.
       def written: () -> String

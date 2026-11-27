@@ -20,13 +20,15 @@ class ConfigureTypesTest < Minitest::Test
     ["concurrency", "50", NUMBER_OR_PERCENT],
     ["concurrency", "101%", NUMBER_OR_PERCENT],
     ["concurrency", "5.5%", NUMBER_OR_PERCENT],
-    ["thresholds.high", 101, "a whole number from 0 to 100"],
-    ["thresholds.low", -1, "a whole number from 0 to 100"],
-    ["thresholds.low", 50.5, "a whole number from 0 to 100"],
-    ["thresholds.break", "70", "a whole number from 0 to 100, or null"],
-    ["thresholds.break", 101, "a whole number from 0 to 100, or null"],
-    ["timeoutMS", -1, "a whole number of milliseconds, 0 or more"],
-    ["timeoutMS", 1.5, "a whole number of milliseconds, 0 or more"],
+    ["thresholds.high", 101, "a number from 0 to 100"],
+    ["thresholds.high", 100.5, "a number from 0 to 100"],
+    ["thresholds.low", -1, "a number from 0 to 100"],
+    ["thresholds.low", -0.5, "a number from 0 to 100"],
+    ["thresholds.break", "70", "a number from 0 to 100, or null"],
+    ["thresholds.break", 101, "a number from 0 to 100, or null"],
+    ["timeoutMS", -1, "a number of milliseconds, 0 or more"],
+    ["timeoutMS", -0.5, "a number of milliseconds, 0 or more"],
+    ["timeoutMS", "5000", "a number of milliseconds, 0 or more"],
     ["timeoutFactor", -0.5, "a number of 0 or more"],
     ["timeoutFactor", "2", "a number of 0 or more"],
     ["mutator.excludedMutations", "BooleanLiteral", "an array of mutator names, written as strings"],
@@ -35,10 +37,10 @@ class ConfigureTypesTest < Minitest::Test
   ].freeze
   RIGHT_VALUES = {
     :concurrency => [1, 16, "0%", "1%", "50%", "100%"],
-    :"thresholds.high" => [60, 100],
-    :"thresholds.low" => [0, 80],
-    :"thresholds.break" => [nil, 0, 100],
-    :timeoutMS => [0, 5000],
+    :"thresholds.high" => [60, 100, 80.5, 100.0],
+    :"thresholds.low" => [0, 80, 0.5, 59.99],
+    :"thresholds.break" => [nil, 0, 100, 80.5],
+    :timeoutMS => [0, 5000, 0.5, 2500.5],
     :timeoutFactor => [0, 1, 1.5],
     :mutate => [[], ["lib/a.rb"]],
     :incremental => [true, false],
@@ -65,28 +67,10 @@ class ConfigureTypesTest < Minitest::Test
     message = refusal({}, options: { :timeoutMS => "fast" })
 
     assert_equal(
-      '"--timeout-ms" on the command line takes a whole number of milliseconds, 0 or more, ' \
+      '"--timeout-ms" on the command line takes a number of milliseconds, 0 or more, ' \
         'but its value is "fast".',
       message
     )
-  end
-
-  def test_a_factor_that_is_not_finite_is_refused
-    messages = [Float::INFINITY, Float::NAN].map { |value| refusal({}, options: { :timeoutFactor => value }) }
-
-    assert_equal(
-      [
-        '"--timeout-factor" on the command line takes a number of 0 or more, but its value is Infinity.',
-        '"--timeout-factor" on the command line takes a number of 0 or more, but its value is NaN.',
-],
-      messages
-    )
-  end
-
-  def test_a_whole_number_too_big_for_a_float_is_refused_as_infinite
-    message = refusal({}, options: { :timeoutFactor => 10 ** 400 })
-
-    assert_includes(message, '"--timeout-factor" on the command line takes a number of 0 or more, but its value is 10')
   end
 
   def test_the_flag_of_a_nested_option_keeps_its_dot_and_dashes_its_words
@@ -99,7 +83,7 @@ class ConfigureTypesTest < Minitest::Test
     message = refusal({ "stryker.config.yml": "thresholds:\n  high: lots\n" })
 
     assert_equal(
-      '"thresholds.high" in stryker.config.yml takes a whole number from 0 to 100, but its value is "lots".', message
+      '"thresholds.high" in stryker.config.yml takes a number from 0 to 100, but its value is "lots".', message
     )
   end
 

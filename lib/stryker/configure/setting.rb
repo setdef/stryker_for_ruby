@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("origin")
+require_relative("types")
 
 module Stryker
   class Configure
@@ -15,6 +16,10 @@ module Stryker
 
       def spell(option)
         origin.spell(option)
+      end
+
+      def valid?
+        Types::KINDS[name].accepts?(value)
       end
 
       def written

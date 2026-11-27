@@ -20,6 +20,8 @@ module Stryker
         end
 
         private def inverted?
+          return false unless [@high, @low].all?(&:valid?)
+
           high = @high.value
           low = @low.value
           high.is_a?(Numeric) && low.is_a?(Numeric) && high < low

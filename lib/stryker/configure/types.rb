@@ -17,27 +17,27 @@ module Stryker
         Kind.new("an array of #{what}, written as strings", -> (value) { value.is_a?(Array) && value.all?(String) })
       end
 
-      def self.whole_number(description, range)
-        Kind.new(description, -> (value) { value.is_a?(Integer) && range.cover?(value) })
+      def self.number(description, range)
+        Kind.new(
+          description,
+          -> (value) { value.is_a?(Numeric) && value.finite? && range.cover?(value) && Float(value.to_s).finite? }
+        )
       end
 
       def self.strings(value)
         Array(value).map { |item| String(item) }
       end
 
-      score = whole_number("a whole number from 0 to 100", 0..100)
+      score = number("a number from 0 to 100", 0..100)
       score_or_null = Kind.new(
-        "a whole number from 0 to 100, or null",
+        "a number from 0 to 100, or null",
         -> (value) { value.nil? || score.accepts?(value) }
       )
       concurrency = Kind.new(
         'a whole number of 1 or more, or a percentage of the processors such as "50%"',
         -> (value) { (value.is_a?(Integer) && value >= 1) || (value.is_a?(String) && PERCENT.match?(value)) }
       )
-      factor = Kind.new(
-        "a number of 0 or more",
-        -> (value) { value.is_a?(Numeric) && value.finite? && value >= 0 && Float(value.to_s).finite? }
-      )
+      factor = number("a number of 0 or more", 0..)
 
       anything = Kind.new("anything", -> (_value) { true })
 
@@ -49,7 +49,7 @@ module Stryker
         "thresholds.high": score,
         "thresholds.low": score,
         "thresholds.break": score_or_null,
-        timeoutMS: whole_number("a whole number of milliseconds, 0 or more", 0..),
+        timeoutMS: number("a number of milliseconds, 0 or more", 0..),
         timeoutFactor: factor,
         "mutator.excludedMutations": list_of("mutator names"),
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
