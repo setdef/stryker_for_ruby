@@ -5,6 +5,7 @@ require "net/http"
 require "uri"
 require_relative "github_api/job"
 require_relative "github_api/run"
+require_relative "json_reader"
 
 # Reads one repository's part of GitHub's REST API, as a workflow's steps
 # can, with Net::HTTP alone.
@@ -56,11 +57,11 @@ class GitHubAPI
 
   # Every item under +key+ on every page of the API's answer at +path+.
   def all(path, key, **query)
-    # @type var items: Array[Hash[String, json]]
+    # @type var items: Array[Hash[String, JSONReader::json]]
     items = []
     page = 1
     loop do
-      answer = Reader.new(get(path, **query, per_page: PER_PAGE, page:), "the answer at #{path}")
+      answer = JSONReader.new(get(path, **query, per_page: PER_PAGE, page:), "GitHub's API answered #{path}", Error)
       batch = answer.objects(key)
       items.concat(batch)
       return items if batch.size < PER_PAGE || items.size >= answer.integer("total_count")

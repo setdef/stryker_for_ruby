@@ -48,6 +48,7 @@ target :tasks do
   check "tasks/commit_runs.rb"
   check "tasks/github_api.rb"
   check "tasks/github_api"
+  check "tasks/json_reader.rb"
   check "tasks/release.rb"
   check "tasks/release_assets.rb"
   check "tasks/release_command.rb"

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "reader"
+require_relative "../json_reader"
 
 class GitHubAPI
   # One job of a run, as GitHub's API gives it: the members that the build cop
@@ -15,7 +15,7 @@ class GitHubAPI
     # Raises GitHubAPI::Error for a missing member, and for one of another
     # kind.
     def self.from_api(object)
-      reader = Reader.new(object, "a job")
+      reader = JSONReader.new(object, "GitHub's API answered a job", Error)
       new(
         name: reader.string("name"),
         conclusion: reader.string_or_nil("conclusion"),

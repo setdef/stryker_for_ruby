@@ -1,0 +1,25 @@
+class JSONReader
+  type json = String | Integer | Float | bool | nil | Array[json] | Hash[String, json]
+
+  @object: Hash[String, json]
+  @subject: String
+  @error: singleton(StandardError)
+
+  def initialize: (Hash[String, json] object, String subject, singleton(StandardError) error) -> void
+
+  def string: (String key) -> String
+
+  def string_or_nil: (String key) -> String?
+
+  def optional_string: (String key) -> String?
+
+  def integer: (String key) -> Integer
+
+  def objects: (String key) -> Array[Hash[String, json]]
+
+  private
+
+  def value: (String key) -> json
+
+  def refuse: (String key, json value, String expected) -> bot
+end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "reader"
+require_relative "../json_reader"
 
 class GitHubAPI
   # One run of a workflow, as GitHub's API gives it: the members that the build
@@ -22,7 +22,7 @@ class GitHubAPI
     # Raises GitHubAPI::Error for a missing member, except +html_url+, and for
     # one of another kind.
     def self.from_api(object)
-      reader = Reader.new(object, "a run")
+      reader = JSONReader.new(object, "GitHub's API answered a run", Error)
       new(**identity(reader), **progress(reader))
     end
 
