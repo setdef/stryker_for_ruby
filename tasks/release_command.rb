@@ -45,17 +45,26 @@ class ReleaseCommand
     @now = now
   end
 
-  # Runs the step +command+ with +arguments+.
-  def call(command = nil, *)
-    case command
-    when "version" then version(*)
-    when "commit" then commit(*)
-    when "notes" then notes(*)
-    when "stamp" then @release.stamp(*)
-    when "assets" then assets(*)
-    when "record" then record(*)
-    else raise(ArgumentError, "unknown step #{command.inspect}; see tasks/release_command.rb")
-    end
+  # Runs the step +command+ with +arguments+. Raises ArgumentError for a step
+  # that is not one of these, and for a step given too few or too many
+  # arguments.
+  def call(command = nil, *arguments)
+    step = steps.fetch(command.to_s.to_sym, nil)
+    raise(ArgumentError, "unknown step #{command.inspect} for #{arguments.size} arguments") unless step
+
+    step.call(*arguments)
+  end
+
+  # The steps, by the name that .github/scripts/release.sh gives each.
+  private def steps
+    {
+      version: method(:version),
+      commit: method(:commit),
+      notes: method(:notes),
+      stamp: @release.method(:stamp),
+      assets: method(:assets),
+      record: method(:record),
+    }
   end
 
   private def version(tag = nil)
@@ -84,7 +93,7 @@ class ReleaseCommand
   # The runs of ci.yml in the last DAYS days.
   private def runs
     api = @env.fetch("GITHUB_API_URL", "https://api.github.com")
-    github = GitHubAPI.new(repository: @env["GITHUB_REPOSITORY"], token: @env["GH_TOKEN"], api:)
+    github = GitHubAPI.new(repository: @env.fetch("GITHUB_REPOSITORY", ""), token: @env.fetch("GH_TOKEN", ""), api:)
     since = (@now - (DAYS * 86_400)).utc.strftime("%Y-%m-%d")
     CommitRuns.new(github.runs("ci.yml", since:), github)
   end

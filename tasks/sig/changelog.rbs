@@ -1,0 +1,54 @@
+class Changelog
+  class Entry < Data
+    attr_reader heading: String?
+
+    attr_reader text: String
+
+    def self.new: (heading: String?, text: String) -> instance
+                | (String? heading, String text) -> instance
+  end
+
+  class Malformed < StandardError
+  end
+
+  UNRELEASED: String
+  DATED: Regexp
+  ITEM: Regexp
+  CONTINUATION: Regexp
+
+  @lines: Array[String]
+
+  def self.added: (Array[Entry] entries, Array[Entry] previous) -> Array[Entry]
+
+  def self.body: (Array[Entry] entries) -> String
+
+  def initialize: (String text) -> void
+
+  def to_s: () -> String
+
+  def unreleased: () -> Array[Entry]
+
+  def record: (String version, Date date, Array[Entry] listed, Array[Entry] moved) -> Changelog
+
+  private
+
+  def around_unreleased: () -> [Array[String], Array[String]]
+
+  def dated_section: (String version, Date date, Array[Entry] listed, last: bool) -> Array[String]
+
+  def pending: (Array[Entry] moved) -> Array[String]
+
+  def unreleased_heading: () -> Integer
+
+  def dated_heading: (String version) -> Integer?
+
+  def section: (Integer heading) -> Array[String]
+
+  def older_section: (Array[String] lines, String version) -> Integer?
+
+  def entries: (Array[String] lines) -> Array[Entry]
+
+  def entry_text: (Array[String] chunk) -> String
+
+  def chunks: (Array[String] lines) -> Enumerator[Array[String], void]
+end

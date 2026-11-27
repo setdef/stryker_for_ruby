@@ -61,8 +61,8 @@ class Release
   def next_version
     newest = tags.last or return "0.0.1"
 
-    major, minor, patch = newest.delete_prefix("v").split(".")
-    "#{major}.#{minor}.#{Integer(patch, 10) + 1}"
+    parts = newest.delete_prefix("v").split(".")
+    "#{parts.first}.#{parts[1]}.#{Integer(parts[2], 10) + 1}"
   end
 
   # The notes of a release of +sha+, as a section's body: the entries of its
@@ -134,7 +134,8 @@ class Release
   end
 
   private def current_version
-    File.read(File.join(@root, VERSION_FILE))[/VERSION = "([^"]+)"/, 1]
+    File.read(File.join(@root, VERSION_FILE))[/VERSION = "([^"]+)"/, 1] or
+      raise(Refusal, "#{VERSION_FILE} has no VERSION to read")
   end
 
   private def newer?(version, tag)
@@ -142,7 +143,8 @@ class Release
   end
 
   private def git(*arguments)
-    output, error, status = Open3.capture3("git", *arguments, chdir: @root)
+    command = ["git", *arguments]
+    output, error, status = Open3.capture3(*command, chdir: @root)
     raise(Refusal, "git #{arguments.join(' ')} failed: #{error.strip}") unless status.success?
 
     output

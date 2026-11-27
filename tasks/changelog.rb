@@ -103,13 +103,14 @@ class Changelog
 
   # A dated section's lines, with a blank line after them unless +last+.
   private def dated_section(version, date, listed, last:)
-    ["## [#{version}] - #{date.iso8601}\n", "\n", Changelog.body(listed), *("\n" unless last)]
+    section = ["## [#{version}] - #{date.iso8601}\n", "\n", Changelog.body(listed)]
+    last ? section : [*section, "\n"]
   end
 
   # The lines of [Unreleased] after its heading once +moved+ has left it.
   private def pending(moved)
     kept = Changelog.added(unreleased, moved)
-    ["\n", *(["#{Changelog.body(kept)}\n"] unless kept.empty?)]
+    kept.empty? ? ["\n"] : ["\n", "#{Changelog.body(kept)}\n"]
   end
 
   private def unreleased_heading
@@ -136,6 +137,7 @@ class Changelog
   # The entries in +lines+, each under the ### heading above it. An entry runs
   # on over the indented lines after its first.
   private def entries(lines)
+    # @type var heading: String?
     heading = nil
     chunks(lines).filter_map do |chunk|
       heading = chunk.first.strip if chunk.first.start_with?("### ")

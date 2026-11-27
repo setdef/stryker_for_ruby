@@ -1,0 +1,43 @@
+class Release
+  class Refusal < StandardError
+  end
+
+  TAG: Regexp
+  VERSION_FILE: String
+  CHANGELOG: String
+  GEM: String
+  LOCKFILES: Array[String]
+  ASSIGNMENT: Regexp
+
+  @root: String
+
+  def initialize: (root: String) -> void
+
+  def version: (String tag) -> String
+
+  def next_version: () -> String
+
+  def notes: (String sha) -> String
+
+  def stamp: (String version) -> Integer
+
+  def record: (String version, String sha, Date date) -> void
+
+  private
+
+  def raise_version: (String version) -> void
+
+  def tags: (*String options) -> Array[String]
+
+  def previous: (String sha) -> String?
+
+  def added: (String sha) -> Array[Changelog::Entry]
+
+  def changelog: (String ref) -> Changelog
+
+  def current_version: () -> String
+
+  def newer?: (String version, String tag) -> bool
+
+  def git: (*String arguments) -> String
+end

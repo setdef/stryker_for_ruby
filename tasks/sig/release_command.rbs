@@ -1,0 +1,34 @@
+class ReleaseCommand
+  interface _Step
+    def call: (*String arguments) -> void
+  end
+
+  DAYS: Integer
+
+  @env: BuildCop::_Environment
+  @out: IO
+  @release: Release
+  @now: Time
+
+  def self.main: (Array[String] argv, ?env: BuildCop::_Environment, ?out: IO, ?root: String, ?now: Time) -> void
+
+  def initialize: (env: BuildCop::_Environment, out: IO, root: String, now: Time) -> void
+
+  def call: (?String? command, *String arguments) -> void
+
+  private
+
+  def steps: () -> Hash[Symbol, _Step]
+
+  def version: (?String? tag) -> void
+
+  def commit: (String path, ?String? requested) -> void
+
+  def notes: (String sha, String path) -> void
+
+  def assets: (String dir, String version) -> void
+
+  def record: (String version, String sha) -> void
+
+  def runs: () -> CommitRuns
+end

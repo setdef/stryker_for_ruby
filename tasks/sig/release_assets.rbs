@@ -1,0 +1,19 @@
+class ReleaseAssets
+  class Refusal < StandardError
+  end
+
+  NAME: String
+  CHECKSUMS: String
+
+  @dir: String
+
+  def initialize: (String dir) -> void
+
+  def check: (String version) -> void
+
+  def sums: () -> String
+
+  private
+
+  def files: () -> Array[String]
+end

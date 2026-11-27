@@ -1,0 +1,16 @@
+class ReleaseCommit
+  class Refusal < StandardError
+  end
+
+  @runs: CommitRuns
+
+  def initialize: (CommitRuns runs) -> void
+
+  def call: (Array[String] commits, ?String? requested) -> String
+
+  private
+
+  def check: (Array[String] commits, String requested) -> void
+
+  def newest: (Array[String] commits) -> String
+end

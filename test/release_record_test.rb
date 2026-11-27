@@ -25,6 +25,14 @@ class ReleaseRecordTest < Minitest::Test
     assert_match(/has no VERSION/, error.message)
   end
 
+  def test_recording_into_a_version_file_with_no_version_is_refused
+    tagged = commit_with("One.")
+    File.write(File.join(@work, VERSION_FILE), "module Stryker\nend\n")
+    error = assert_raises(Release::Refusal) { release.record("0.1.0", tagged, DAY) }
+
+    assert_match(/has no VERSION to read/, error.message)
+  end
+
   def test_recording_files_the_entries_the_tagged_commit_held_and_raises_the_version
     tagged = commit_with("One.", "Two.")
     commit_with("One.", "Two.", "Three.")

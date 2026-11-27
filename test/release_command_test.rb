@@ -84,6 +84,16 @@ class ReleaseCommandTest < Minitest::Test
     assert_match(/unknown step "nonsense"/, failing_step({}, "nonsense"))
   end
 
+  def test_a_step_given_too_few_arguments_is_refused
+    assert_match(/wrong number of arguments \(given 1, expected 2\)/, failing_step({}, "notes", "abc"))
+  end
+
+  def test_a_step_given_too_many_arguments_is_refused
+    error = failing_step({}, "version", "v0.3.0", "v0.4.0")
+
+    assert_match(/wrong number of arguments \(given 2, expected 0..1\)/, error)
+  end
+
   def test_a_failure_of_githubs_api_ends_the_run_with_its_message
     error = failing_step({}, "commit", list_of_commits)
 

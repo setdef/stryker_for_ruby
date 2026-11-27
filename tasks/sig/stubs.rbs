@@ -1,0 +1,16 @@
+module Open3
+  def self.capture3: (*String command, chdir: String) -> [String, String, Process::Status]
+                   | ...
+end
+
+class Gem::Package
+  def self.new: (String path) -> Gem::Package
+
+  def spec: () -> Gem::Specification
+end
+
+class Gem::Specification
+  def name: () -> String
+
+  def version: () -> Gem::Version
+end
