@@ -10,9 +10,10 @@ module Stryker
   # files and, in each file, in the order of `Stryker::Mutators::Walk`. A
   # mutant whose plain mutant doesn't parse gets no switch, and its result
   # has the status `CompileError`. A mutant with no place for a switch, or
-  # no form on one line, gets no switch either, and has no result: the
-  # report doesn't list it. Every other mutant is live: its switch is in its
-  # file's instrumented source, and a run can make it active.
+  # no form on one line, gets no switch either, and its result has the
+  # status `Ignored`, with a `status_reason` that says why. Every other
+  # mutant is live: its switch is in its file's instrumented source, and a
+  # run can make it active.
   #
   # The instrumenter loads Prism and refract, so this stage runs only in the
   # orchestrator. It starts no process that outlives `call`: the pool of

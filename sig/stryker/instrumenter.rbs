@@ -18,7 +18,7 @@ module Stryker
   # the line numbers in backtraces are unchanged.
   #
   # Some mutants get no switch. The result lists each of them with the
-  # reason, so that a run can report how many sites it skipped and why:
+  # reason, so that a run can report each of them with a status and say why:
   #
   # - `:no_switch_site`: no node around the mutant's site can hold a switch:
   #   inside `BEGIN { }`, or at a class or module name, or at a statement of

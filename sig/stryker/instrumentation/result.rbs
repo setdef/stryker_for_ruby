@@ -2,7 +2,7 @@ module Stryker
   class Instrumentation
     # What the instrumentation of a run's files gives: the instrumented
     # source of each file for the cache, the live mutants for the plan, and
-    # a result for each mutant that won't run because it isn't valid Ruby.
+    # a result for each mutant that got no switch.
     #
     # ## Examples
     #
@@ -18,8 +18,9 @@ module Stryker
       # Every mutant that got a switch, in the order of its ID.
       attr_reader mutants: Array[Mutant]
 
-      # The result, with the status `CompileError`, of each mutant that got
-      # no switch because its plain mutant doesn't parse.
+      # The result of each mutant that got no switch: `CompileError` when its
+      # plain mutant doesn't parse, and `Ignored` when its site can't hold a
+      # switch or its text has no form on one line.
       attr_reader unrun: Array[MutantResult]
 
       # Joins what each file gave, in the order of the files.
@@ -28,8 +29,8 @@ module Stryker
       def self.of: (Array[InstrumentedFile] files) -> Result
 
       # The event of `plan`'s decision for the live mutants, with the results
-      # of the mutants that aren't valid Ruby before those of the mutants
-      # that no test reached.
+      # of the mutants that got no switch before those of the mutants that no
+      # test reached.
       #
       # - `plan`: Stryker::Plan, built from the dry run.
       def planned: (Plan plan) -> Events::PlanReady
@@ -39,7 +40,7 @@ module Stryker
       # - `sources`: Hash of String to String, each file's instrumented
       #   source by its absolute path.
       # - `mutants`: Array of Stryker::Mutant, the live mutants.
-      # - `unrun`: Array of Stryker::MutantResult, the `CompileError` results.
+      # - `unrun`: Array of Stryker::MutantResult, the results of the mutants that got no switch.
       def self.new: (sources: Hash[String, String], mutants: Array[Mutant], unrun: Array[MutantResult]) -> instance
                   | (Hash[String, String] sources, Array[Mutant] mutants, Array[MutantResult] unrun) -> instance
     end

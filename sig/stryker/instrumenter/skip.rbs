@@ -1,7 +1,7 @@
 module Stryker
   class Instrumenter
     # A mutant that got no switch, and the reason, so that a run can report
-    # how many sites it skipped and why.
+    # the mutant with a status and say why.
     #
     # The reason is one of these:
     #
@@ -27,6 +27,10 @@ module Stryker
     # A mutant with no switch site has no plain mutant, so its reason is
     # `:no_switch_site` whether or not its edit makes valid Ruby.
     #
+    # A mutant that got no switch for either of the first two reasons is
+    # reported with the status `Ignored` and a `status_reason` that says why,
+    # so that no test can run with it, and it counts in no score.
+    #
     # ## Examples
     #
     # ```ruby
@@ -35,6 +39,10 @@ module Stryker
     # # => [1, :no_switch_site]
     # ```
     class Skip < Data
+      # The `status_reason` of each reason that gives the status `Ignored`.
+      # Private.
+      IGNORED: Hash[Symbol, String]
+
       # Why a mutant got no switch.
       type reason = :no_switch_site | :no_one_line_form | :does_not_parse
 
@@ -43,6 +51,11 @@ module Stryker
 
       # Why it got none.
       attr_reader reason: reason
+
+      # The result of the mutant, which didn't run: `CompileError` for
+      # `:does_not_parse`, and for each other reason `Ignored`, with a
+      # `status_reason` that says why no test can run with the mutant.
+      def result: () -> MutantResult
 
       # Builds the skip.
       #

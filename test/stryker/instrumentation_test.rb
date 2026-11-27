@@ -17,15 +17,14 @@ class InstrumentationTest < Minitest::Test
 
     [Stryker::Edit.over(node.location, "a +")]
   end
-  # Makes a mutant of every `true`, with nothing to check that the site can
-  # hold a switch.
-  ANYWHERE = FakeMutator.new("BooleanLiteral") do |node, _ancestors|
-    node.is_a?(Prism::TrueNode) ? [Stryker::Edit.over(node.location, "false")] : []
+  # Makes a mutant of every regexp literal whose text has no form on one line.
+  MULTILINE = FakeMutator.new("RegexLiteral") do |node, _ancestors|
+    node.is_a?(Prism::RegularExpressionNode) ? [Stryker::Edit.over(node.location, "/c\nb/x")] : []
   end
   # Two mutators of the catalog, so that the mutants stay the same as the
   # catalog grows.
   OPERATORS = [Stryker::Mutators::ArithmeticOperator, Stryker::Mutators::BooleanLiteral].freeze
-  private_constant(:BROKEN, :ANYWHERE, :OPERATORS)
+  private_constant(:BROKEN, :MULTILINE, :OPERATORS)
 
   def setup
     @root = Dir.mktmpdir("stryker-instrumentation-")
@@ -91,11 +90,25 @@ class InstrumentationTest < Minitest::Test
     assert_equal("def total(a, b) = a + b\n", found.sources.values.first)
   end
 
-  def test_a_mutant_with_no_place_for_a_switch_gets_no_switch_and_no_result
-    write("lib/boot.rb", "BEGIN { true }\n")
-    found = instrumented(["lib/boot.rb"], mutators: [ANYWHERE])
+  def test_a_mutant_with_no_place_for_a_switch_gets_no_switch_and_the_status_ignored_with_its_reason
+    write("lib/boot.rb", "BEGIN { $b = 1 + 2 }\n")
+    found = instrumented(["lib/boot.rb"])
 
-    assert_equal([[], []], [found.mutants, found.unrun])
+    assert_empty(found.mutants)
+    assert_equal(
+      [[1, "Ignored", "The site can't hold a switch, so no test can run with this mutant."]],
+      found.unrun.map { |result| [result.mutant.id, result.status, result.status_reason] }
+    )
+  end
+
+  def test_a_mutant_with_no_one_line_form_gets_no_switch_and_the_status_ignored_with_its_reason
+    write("lib/pattern.rb", "def pattern = /a\nb/x\n")
+    found = instrumented(["lib/pattern.rb"], mutators: [MULTILINE])
+
+    assert_equal(
+      [[1, "Ignored", "The mutant has no form on one line, so no test can run with this mutant."]],
+      found.unrun.map { |result| [result.mutant.id, result.status, result.status_reason] }
+    )
   end
 
   def test_an_erb_template_stops_the_run_before_any_file_is_instrumented
