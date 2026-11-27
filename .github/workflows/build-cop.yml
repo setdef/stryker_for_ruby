@@ -79,11 +79,33 @@
 #
 # and -f dry-run=false takes the step.
 #
-# It does not cover: a run that ci.yml's concurrency replaced while waiting
-# has no run of its own, and the cop judges that commit by a run on a bisect
-# branch; a run red only for canceled jobs, which no commit failed; and a
-# failure that passes on every second attempt, which reverts nothing and ends
-# when a later run on trunk passes.
+# Its limits.
+#
+#   - It reads the runs of the last three days and trunk's newest 300
+#     first-parent commits. A red batch whose green run on trunk is older than
+#     that is a person's, and the cop says none.
+#   - A green run is one whose every job succeeded. A run with a job skipped
+#     is not green, and a trunk whose runs all skip one never has a green run.
+#   - It judges one red run at a time, the oldest that is not settled, and one
+#     commit at a time, so a later break waits until the earlier one is
+#     settled. A red run with no job that failed or timed out, because its
+#     jobs were canceled, skipped, or neutral, has no commit to blame, and
+#     stays the oldest until a revert or a newer green run settles it.
+#   - It keeps no record of which commit it blamed for a red run, so a revert
+#     of any commit the run covers settles it, a person's revert included. A
+#     revert that a later commit reverted settles nothing.
+#   - A job that passes when run again blames nobody, so a failure that passes
+#     on every second attempt reverts nothing. A job that waits for a
+#     person's approval has not failed: the cop waits.
+#   - A run that finished without passing or failing the jobs that turned
+#     trunk red is run again once, and is then a person's.
+#   - It never reverts a revert. A commit that does not revert cleanly fails
+#     the cop's run.
+#   - A commit whose ci.yml has no workflow_dispatch can't be run on a
+#     branch. The bisect step warns about it every half hour, as long as that
+#     commit is the next to run, and leaves it to a person.
+#   - A commit whose run ci.yml's concurrency replaced while it waited has no
+#     run of its own, and the cop judges it by a run on a bisect branch.
 name: Build cop
 
 on:
