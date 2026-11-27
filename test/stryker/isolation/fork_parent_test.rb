@@ -15,10 +15,12 @@ class ForkParentTest < Minitest::Test
   # Starts, for each run, the process whose script the run's first test ID
   # holds.
   class Scripts
-    include IsolationStandIns
+    def initialize(test)
+      @test = test
+    end
 
     def start(run)
-      scripted(run.test_ids.first)
+      @test.scripted(run.test_ids.first)
     end
 
     def errors(_run)
@@ -78,7 +80,7 @@ class ForkParentTest < Minitest::Test
 
   def parent(runner, results)
     relay = Stryker::Isolation::Relay.new(results)
-    Stryker::Isolation::ForkParent.new(runner, Stryker::Isolation::Children.new(Scripts.new, relay), relay)
+    Stryker::Isolation::ForkParent.new(runner, Stryker::Isolation::Children.new(Scripts.new(self), relay), relay)
   end
 
   def script_run(script, timeout_ms: 30_000)

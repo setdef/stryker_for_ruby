@@ -3,6 +3,7 @@
 require_relative("../../support/isolation_stand_ins")
 require "stryker/isolation/fresh_watch"
 require "stryker/isolation/fresh_watches"
+require "stryker/isolation/messages"
 
 # Which fresh processes the set finishes: each that has ended or run out of
 # time, after a wait for the one whose time ends first, which is short while

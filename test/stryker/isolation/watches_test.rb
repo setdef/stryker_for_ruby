@@ -2,6 +2,7 @@
 
 require_relative("../../support/isolation_stand_ins")
 require "stryker/isolation/watches"
+require "tmpdir"
 
 # How one thread watches many processes: their pipes, their lines, their
 # ends, and their time limits. The processes are real Ruby processes that
@@ -72,16 +73,27 @@ class WatchesTest < Minitest::Test
     assert_operator(ending.duration_ms, :>=, 300)
   end
 
-  def test_a_process_whose_pipe_another_holds_ends_without_timing_out
-    # The grandchild inherits the pipe and outlives the process, so the pipe
-    # stays open until the time limit ends.
-    script = "#{STARTED}; Process.spawn(RbConfig.ruby, '-e', 'sleep 8'); puts 'done'; exit!(0)"
-    lines, endings = watched(watches({ parent: script }, timeout_ms: 300, ended: true))
+  # A script that starts a grandchild, which inherits the pipe and outlives
+  # the process, and records the grandchild's process ID in +record+, so that
+  # the test can end it.
+  def script_with_grandchild(record)
+    grandchild = "Process.spawn(RbConfig.ruby, '-e', 'sleep 8')"
+    "#{STARTED}; File.write(#{record.dump}, #{grandchild}.to_s); puts 'done'; exit!(0)"
+  end
 
-    assert_equal(
-      [[%({"started":{}}\n), "done\n"], 0, false],
-      [lines[:parent], endings[:parent].exit_status, endings[:parent].timed_out]
-    )
+  def test_a_process_whose_pipe_another_holds_ends_without_timing_out
+    # The pipe stays open until the time limit ends.
+    Dir.mktmpdir do |folder|
+      record = File.join(folder, "grandchild")
+      lines, endings = watched(watches({ parent: script_with_grandchild(record) }, timeout_ms: 300, ended: true))
+
+      assert_equal(
+        [[%({"started":{}}\n), "done\n"], 0, false],
+        [lines[:parent], endings[:parent].exit_status, endings[:parent].timed_out]
+      )
+    ensure
+      end_process(Integer(File.read(record), 10)) if record && File.exist?(record)
+    end
   end
 
   def test_a_time_limit_starts_with_the_first_test

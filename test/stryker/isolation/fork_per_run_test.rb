@@ -38,14 +38,15 @@ class ForkPerRunTest < Minitest::Test
 
   # Starts the stand-in parent in place of the real one.
   class Launch
-    def initialize(argument = "ready")
+    def initialize(test, argument = "ready")
+      @test = test
       @argument = argument
     end
 
     def call(_runner)
       input, commands = IO.pipe
       results, output = IO.pipe
-      pid = Process.spawn(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output, **Stryker::Isolation::ProcessGroup::SYSTEM.spawn_options)
+      pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
       [input, output].each(&:close)
       Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], Dir.mktmpdir)
     end
@@ -56,7 +57,7 @@ class ForkPerRunTest < Minitest::Test
     Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency:)
   end
 
-  def started(launch = Launch.new, concurrency: 2)
+  def started(launch = Launch.new(self), concurrency: 2)
     Stryker::Isolation::ForkPerRun.new("/cache", "/project", launch).tap { |isolation| isolation.start(config(concurrency)) }
   end
 
@@ -95,7 +96,7 @@ class ForkPerRunTest < Minitest::Test
   end
 
   def test_the_adapter_raises_when_the_parent_ends_before_it_is_ready
-    error = assert_raises(Stryker::Isolation::Error) { started(Launch.new("late")) }
+    error = assert_raises(Stryker::Isolation::Error) { started(Launch.new(self, "late")) }
 
     assert_includes(error.message, "NameError: Minitest")
   end
@@ -110,13 +111,13 @@ class ForkPerRunTest < Minitest::Test
   end
 
   def test_the_adapter_raises_when_the_parent_ends_before_it_says_anything
-    error = assert_raises(Stryker::Isolation::Error) { started(Launch.new("gone")) }
+    error = assert_raises(Stryker::Isolation::Error) { started(Launch.new(self, "gone")) }
 
     assert_includes(error.message, "ended before it loaded the tests, and said nothing.")
   end
 
   def test_a_parent_that_loads_no_tests_in_time_is_stopped_with_an_error_that_names_the_limit
-    parent = Launch.new("silent").call("minitest")
+    parent = Launch.new(self, "silent").call("minitest")
     error = assert_raises(Stryker::Isolation::Error) { parent.await_ready(0.5) }
 
     assert_includes(error.message, "0.5 seconds")

@@ -72,14 +72,66 @@ module IsolationStandIns
     end
   end
 
+  # The processes that one test started, which end when the test ends,
+  # however it ends: a stand-in that waits for the code under test to end it
+  # would otherwise stay running when an assertion fails first.
+  class Started
+    def initialize
+      @pids = Queue.new
+    end
+
+    # Starts the process that +arguments+ and +options+ describe, in a group
+    # of its own where the system has groups.
+    def spawn(*arguments, **options)
+      Process.spawn(*arguments, **options, **Stryker::Isolation::ProcessGroup::SYSTEM.spawn_options)
+        .tap { |pid| @pids << pid }
+    end
+
+    # Ends each process that is still running, and reaps it. What an ended
+    # process left running in its group ends too.
+    def end_all
+      @pids.size.times { end_one(@pids.pop) }
+    end
+
+    private def end_one(pid)
+      return Stryker::Isolation::ProcessGroup.kill_rest(pid) if Process.wait(pid, Process::WNOHANG)
+
+      Stryker::Isolation::ProcessGroup.kill(pid)
+      Process.wait(pid)
+    rescue Errno::ECHILD
+      Stryker::Isolation::ProcessGroup.kill_rest(pid)
+    end
+  end
+
+  def before_setup
+    super
+    @started = Started.new
+  end
+
+  def after_teardown
+    @started.end_all
+    super
+  end
+
+  # Starts a process that ends with the test, in a group of its own where the
+  # system has groups.
+  def start_process(*, **)
+    @started.spawn(*, **)
+  end
+
+  # Ends a process that a stand-in started, and that the test didn't.
+  def end_process(pid)
+    Process.kill(:KILL, pid)
+  rescue Errno::ESRCH, Errno::EPERM
+    nil
+  end
+
   # A Ruby process that runs +script+, with its standard output on a new pipe.
   # Returns its process ID and the pipe's read end.
   def scripted(script)
     reader, writer = IO.pipe
     # Binary, because Ruby on Windows writes each LF to a pipe as CRLF.
-    pid = Process.spawn(
-      RbConfig.ruby, "-e", "$stdout.binmode; #{script}", out: writer, **Stryker::Isolation::ProcessGroup::SYSTEM.spawn_options
-    )
+    pid = start_process(RbConfig.ruby, "-e", "$stdout.binmode; #{script}", out: writer)
     writer.close
     [pid, reader]
   end
@@ -101,7 +153,7 @@ module IsolationStandIns
 
   # The process ID of a process that has ended and been reaped.
   def ended_pid
-    pid = Process.spawn(RbConfig.ruby, "-e", "nil")
+    pid = start_process(RbConfig.ruby, "-e", "nil")
     Process.wait(pid)
     pid
   end
@@ -109,7 +161,7 @@ module IsolationStandIns
   # The process ID of a process that ends at once, and that nothing has
   # reaped yet.
   def ended_pid_unreaped
-    Process.spawn(RbConfig.ruby, "-e", "nil")
+    start_process(RbConfig.ruby, "-e", "nil")
   end
 
   # Each line on +io+ until it closes, parsed as JSON.
