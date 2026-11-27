@@ -19,6 +19,12 @@ class MutantResultTest < Minitest::Test
     assert_equal([1, 41.5, false], [result.tests_completed, result.duration_ms, result.static])
   end
 
+  def test_the_result_of_a_mutant_that_did_not_run_has_its_status_and_no_test_or_run
+    unrun = { status_reason: nil, killed_by: [], covered_by: [], tests_completed: nil, duration_ms: nil, static: false }
+
+    assert_equal({ mutant:, status: "CompileError", **unrun }, Stryker::MutantResult.unrun(mutant, "CompileError").to_h)
+  end
+
   def test_results_with_equal_members_are_equal
     assert_equal(mutant_result, Stryker::MutantResult.new(*mutant_result.to_h.values))
   end

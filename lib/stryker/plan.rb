@@ -18,16 +18,7 @@ module Stryker
     end
 
     def self.no_coverage_of(mutant)
-      MutantResult.new(
-        mutant:,
-        status: "NoCoverage",
-        status_reason: nil,
-        killed_by: [],
-        covered_by: [],
-        tests_completed: nil,
-        duration_ms: nil,
-        static: false
-      )
+      MutantResult.unrun(mutant, "NoCoverage")
     end
 
     def initialize(dry_run, config)

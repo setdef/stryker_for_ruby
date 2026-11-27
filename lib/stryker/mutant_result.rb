@@ -20,6 +20,19 @@ module Stryker
     STATUSES = %w[Killed Survived NoCoverage CompileError RuntimeError Timeout Ignored].freeze
     public_constant(:STATUSES)
 
+    def self.unrun(mutant, status)
+      new(
+        mutant:,
+        status:,
+        status_reason: nil,
+        killed_by: [],
+        covered_by: [],
+        tests_completed: nil,
+        duration_ms: nil,
+        static: false
+      )
+    end
+
     def self.readers
       { mutant: Mutant.method(:from_h).to_proc }
     end

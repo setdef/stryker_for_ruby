@@ -95,6 +95,21 @@ module Stryker
     def self.new: (mutant: Mutant, status: String, status_reason: String?, killed_by: Array[String], covered_by: Array[String], tests_completed: Integer?, duration_ms: Float?, static: bool) -> instance
                 | (Mutant mutant, String status, String? status_reason, Array[String] killed_by, Array[String] covered_by, Integer? tests_completed, Float? duration_ms, bool static) -> instance
 
+    # The result of `mutant` when it didn't run: the status, with no reason,
+    # no test that killed it or reached it, no run, and not static. The plan
+    # makes one for each mutant that no test reached, and the instrumentation
+    # one for each mutant that isn't valid Ruby. Raises ArgumentError when
+    # `status` isn't in `STATUSES`.
+    #
+    # - `mutant`: Stryker::Mutant, the mutant that didn't run.
+    # - `status`: String, one of `STATUSES`, such as `"NoCoverage"`.
+    #
+    # ```ruby
+    # Stryker::MutantResult.unrun(mutant, "NoCoverage").tests_completed
+    # # => nil
+    # ```
+    def self.unrun: (Mutant mutant, String status) -> MutantResult
+
     # The readers of the members of a mutant result that hold another value, as
     # `Stryker::JsonValue::Reading#readers` describes: `mutant` reads a Hash into a `Stryker::Mutant`.
     def self.readers: () -> Hash[Symbol, Proc]
