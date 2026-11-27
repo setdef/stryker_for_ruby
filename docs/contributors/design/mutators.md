@@ -23,13 +23,13 @@ Each Stryker tool reports the same names, so a report from **Stryker (for Ruby)*
 | Stryker.NET | Short names in its configuration, and display names in its report | `Arithmetic`, "Arithmetic mutation" | Stryker.NET reports one name for a mutator and accepts another in its configuration. |
 | Stryker4s | Group names, close to StrykerJS's | `RegularExpression` | StrykerJS's `Regex` is the spelling that the shared page and Stryker.NET also use. |
 
-A mutator for a Ruby construct that no Stryker tool mutates follows the organization's naming rule, from the thread behind the shared page ([stryker-handbook#11](https://github.com/stryker-mutator/stryker-handbook/issues/11)): a name follows the construct, is language-neutral and singular, and ends in a category word, one of Operator, Literal, Expression, Statement, or Declaration. StrykerJS's `OptionalChaining` is a name in the catalog that ends in none of them. `RangeOperator`, which swaps `..` and `...`, is the one name that no Stryker tool has, because no Stryker tool mutates a range. Every name is letters only, because StrykerJS's disable-comment grammar accepts only letters, commas, and spaces in its list of names.
+A mutator for a Ruby construct that no Stryker tool mutates follows the organization's naming rule, from the thread behind the shared page ([stryker-handbook#11](https://github.com/stryker-mutator/stryker-handbook/issues/11)): a name follows the construct, is language-neutral and singular, and ends in a category word, one of Operator, Literal, Expression, Statement, or Declaration. StrykerJS's `OptionalChaining` and `Regex` are the names in the catalog that end in none of them. `RangeOperator`, which swaps `..` and `...`, is the one name that no Stryker tool has, because no Stryker tool mutates a range. Every name is letters only, because StrykerJS's disable-comment grammar accepts only letters, commas, and spaces in its list of names.
 
 Where the sources disagree on the pairs, the catalog follows StrykerJS's code, because the name in `mutatorName` is StrykerJS's: a reader who knows what StrykerJS's `EqualityOperator` makes finds the same pairs here. Each place where the catalog departs from StrykerJS's pairs gives its reason, and the methods that `MethodExpression` mutates are Ruby's methods.
 
 ## The catalog
 
-Fifteen mutators make up the catalog. Fourteen have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Sixteen mutators make up the catalog. Fifteen have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -46,6 +46,7 @@ Fifteen mutators make up the catalog. Fourteen have the names of Stryker mutator
 | `ObjectLiteral` | Hash literals | `HashNode` | StrykerJS `ObjectLiteral` |
 | `OptionalChaining` | Safe navigation, `&.` | `CallNode` and the call write nodes with the safe-navigation flag | StrykerJS `OptionalChaining` |
 | `RangeOperator` | `..` and `...` | `RangeNode` | none |
+| `Regex` | Regexp literals, and the pattern given to `Regexp.new` | `RegularExpressionNode`, `StringNode` | StrykerJS `Regex` |
 | `StringLiteral` | String literals, interpolated strings, and heredocs | `StringNode`, `InterpolatedStringNode` | StrykerJS `StringLiteral` |
 | `UnaryOperator` | Unary `-`, `+`, `~`, and signed numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
 
@@ -302,6 +303,32 @@ A range's end is where Ruby code has its off-by-one mistakes: `(0..items.size)` 
 
 An endless range (`a..`, `a...`) gets no mutant: the two forms iterate, slice, and test membership the same way. A flip-flop (a range in a condition, a `FlipFlopNode`) gets none either.
 
+### `Regex`
+
+It mutates the pattern of a regexp literal (`/.../` or `%r{...}`, a `RegularExpressionNode`) and the string literal given as the first argument of `Regexp.new`. It parses each pattern with the [regexp_parser](https://github.com/ammar/regexp_parser) gem, in the orchestrator only, and makes these mutants:
+
+| Mutation | Original | Mutant | Kills it |
+| - | - | - | - |
+| Anchor removed | `/^\d+$/`, `/\A\d+\z/` | `/\d+$/`, `/^\d+/`, `/\d+\z/`, `/\A\d+/` | A test with a string that has the match away from that end. |
+| Line anchor to string anchor | `/^\d+$/` | `/\A\d+$/`, `/^\d+\z/` | A test with a string that has a newline before or after the match. |
+| Character class negated | `/[aeiou]/`, `/[^aeiou]/` | `/[^aeiou]/`, `/[aeiou]/` | A test with a string that the class matches, and one that it doesn't. |
+| Shorthand class negated | `/\d/`, `/\s/`, `/\w/`, and `/\D/`, `/\S/`, `/\W/` | `/\D/`, `/\S/`, `/\W/`, and `/\d/`, `/\s/`, `/\w/` | A test with a string that the class matches, and one that it doesn't. |
+| Property negated | `/\p{Alpha}/`, `/\P{Alpha}/` | `/\P{Alpha}/`, `/\p{Alpha}/` | A test with a string that the property matches, and one that it doesn't. |
+| Quantifier removed | `/ab+c/`, `/ab?c/`, `/ab*c/`, `/ab{2,4}c/` | `/abc/` | A test where the quantified character or group is absent or repeated. |
+| Lookaround negated | `/a(?=b)/`, `/a(?!b)/`, `/(?<=a)b/`, `/(?<!a)b/` | `/a(?!b)/`, `/a(?=b)/`, `/(?<!a)b/`, `/(?<=a)b/` | A test where the lookaround holds, and one where it doesn't. |
+
+These are the mutations at level 1 of [Weapon regeX](https://github.com/stryker-mutator/weapon-regex), which StrykerJS and Stryker4s run, with Ruby's string anchors `\A`, `\z`, and `\Z` added to anchor removal, and one mutation from Weapon regeX's level 2: a line anchor becomes a string anchor. In Ruby, `^` matches at the start of any line and `$` at the end of any line, whatever the flags. A pattern that validates input with `^` and `$` therefore accepts a string with a newline in it, and the survivor of `^` to `\A` shows that no test sends one. A negation goes both ways, as Stryker.NET's regex mutators go: `[^aeiou]` loses its `^` as `[aeiou]` gains one. A lazy or possessive quantifier, such as `+?` or `*+`, is removed whole. A character class inside a character class, as in `[a-z&&[^b]]`, and a shorthand class inside one, as in `[\d]`, get their own mutants.
+
+Only `\d`, `\s`, `\w` and their capital forms are shorthand classes here, as Weapon regeX has them. Word boundaries (`\b`, `\B`), groups, alternations, backreferences, and character ranges get no mutant.
+
+The mutator keeps the pattern's flags. It compiles each mutant with `Regexp.new` and those flags in the orchestrator, and drops one that raises `RegexpError`: negating `(?<=(a))`, which holds a capture, gives a lookbehind that Ruby refuses. The flags matter because `x` makes whitespace and `#` comments free-spacing, so a mutant that is valid with `x` can be invalid without it. For the pattern given to `Regexp.new`, the flags are the second argument when the source gives them: none, `nil`, `true`, `false`, an integer literal, a string of `i`, `x`, and `m`, `Regexp::IGNORECASE`, `Regexp::EXTENDED`, `Regexp::MULTILINE`, or those joined by `|`, with or without `timeout:` keywords after them. When the second argument is anything else, such as a variable, the flags are unknown at the site, and the pattern gets no mutant.
+
+The edit covers the whole literal and keeps its delimiters and flags. For `Regexp.new`, the edit covers the string and writes the mutated pattern as a double-quoted string, so `Regexp.new('^a')` becomes `Regexp.new("a")`.
+
+It makes no mutant of a pattern with interpolation (`InterpolatedRegularExpressionNode`, or an `InterpolatedStringNode` given to `Regexp.new`), whose text isn't known until it runs. It makes none of a regexp literal that stands as a condition (`if /re/`, a `MatchLastLineNode`), which Ruby matches against `$_`. When regexp_parser can't parse a pattern, the pattern gets no mutant, and the run writes one warning to standard error with the file and the line, as `lib/a.rb:2: warning: Stryker (for Ruby) can't read this regular expression, so it makes no mutant of it: ...`.
+
+Weapon regeX has no Ruby version, and **Stryker (for Ruby)** doesn't run JavaScript or Scala, so it applies the mutations itself, to the tree that regexp_parser gives. Each node of the tree has the offsets, in characters, where it starts and ends in the pattern, and a mutation replaces that stretch of the pattern's text. The mutator relies on `to_s` giving back the pattern: it holds for every regexp literal in Ruby 4.1-dev's standard library, and for each pattern in the mutator's tests.
+
 ### `StringLiteral`
 
 | Original | Mutant | Kills it |
@@ -317,7 +344,7 @@ It makes no mutant of:
 
 - the key of a hash pair, such as `"rate"` in `{ "rate" => 0.1 }`, as StrykerJS doesn't mutate an object's keys;
 - an element of `%w[]` or `%W[]`, whose syntax has no empty element and has no quotes to put around one;
-- the pattern given to `Regexp.new`, a string without interpolation that is the first argument, which is the source of a regular expression and not text;
+- the pattern given to `Regexp.new`, a string without interpolation that is the first argument, which is the source of a regular expression and not text, and which [`Regex`](#regex) covers;
 - a backtick or `%x` command (`XStringNode`, `InterpolatedXStringNode`), because the mutant makes the tests run a different command on the machine.
 
 A string that Ruby freezes under `frozen_string_literal: true` is replaced by one that Ruby freezes too, so frozenness doesn't change ([Kinds of site](mutant-placement.md#literals)). An interpolated string, with or without a heredoc, isn't frozen under that comment, and `""` is, so a test that appends to such a string raises `FrozenError` with the mutant active and kills it.
@@ -337,6 +364,20 @@ StrykerJS turns `-a` into `+a`. In Ruby, `+a` calls `+@`, which `Numeric` define
 A zero of any kind (`-0`, `-0.0`, `-0r`, `-0i`, and the same with `+`) gets no mutant. An integer, rational, or imaginary zero equals the zero without its sign, so that mutant would be equivalent. A float zero doesn't: `1 / -0.0` is `-Infinity` and `1 / 0.0` is `Infinity`. Only a test that divides by the value tells the two apart, so the survivor of that mutant wouldn't be worth acting on, and the rule applies to `-0.0` all the same.
 
 It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those control whether the string is frozen (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
+## The description
+
+A mutant has an optional `description`, which the JSON report writes as the report schema's mutant `description`. It is filled only for `Regex` mutants, as Stryker.NET and Stryker4s fill it, and it says what changed in the pattern. StrykerJS never fills it. No Stryker tool puts the original code or a hint about killing the mutant there: the **Kills it** sentences stay in this design and out of the report.
+
+The sentence names the part of the pattern by its text and says what happened to it and where, in the form of Stryker.NET's regex mutants. The offset counts characters in the pattern, from 0. The kind is `Anchor`, `Quantifier`, `Character class`, `Character class shorthand`, `Property`, or `Lookaround`. For `/^\d+$/`, three of the mutants have these descriptions:
+
+```text
+Anchor "^" was removed at offset 0.
+Anchor "^" was replaced with "\A" at offset 0.
+Character class shorthand "\d" was replaced with "\D" at offset 1.
+```
+
+A `Regex` mutant has a description whatever its status, `Ignored` included. A description holds text for a reader, so it crosses JSON as valid UTF-8 ([Values and events](architecture.md#values-and-events)).
 
 ## Shared groups with no Ruby mutator
 

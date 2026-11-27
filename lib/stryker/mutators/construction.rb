@@ -10,10 +10,14 @@ module Stryker
       end
 
       def self.first_argument?(node, ancestors, class_name)
-        arguments = ancestors.last
-        return false unless arguments.is_a?(Prism::ArgumentsNode) && arguments.arguments.first.equal?(node)
+        arguments_given_first(node, ancestors, class_name).is_a?(Prism::ArgumentsNode)
+      end
 
-        of?(ancestors[-2], class_name)
+      def self.arguments_given_first(node, ancestors, class_name)
+        arguments = ancestors.last
+        return unless arguments.is_a?(Prism::ArgumentsNode) && arguments.arguments.first.equal?(node)
+
+        arguments if of?(ancestors[-2], class_name)
       end
 
       def self.named?(receiver, class_name)

@@ -1,0 +1,22 @@
+module Stryker
+  module Mutators
+    # Tells whether Ruby accepts a pattern, so that the `Regex` mutator makes
+    # no mutant that Ruby refuses.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Mutators::Compilable.pattern?("(?<!(a))b", 0)
+    # # => false
+    # ```
+    module Compilable
+      # Whether `Regexp.new` accepts `pattern` with `options`. It writes none
+      # of the warnings that Ruby gives about a valid but unusual pattern, such
+      # as a nested repeat operator.
+      #
+      # - `pattern`: String, the text of the pattern.
+      # - `options`: Integer, the flags, as `Regexp.new` takes them.
+      def self.pattern?: (String pattern, Integer options) -> bool
+    end
+  end
+end

@@ -1,0 +1,37 @@
+module Stryker
+  module Mutators
+    # Every change that the `Regex` mutator makes to a pattern, from the tree
+    # that regexp_parser gives for it. The changes come in the order of the
+    # tree, and the changes at one expression come in the order of `KINDS`,
+    # which puts its quantifier's last.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Mutators::PatternChanges.of("^\\d+", 0).map(&:description)
+    # # => [
+    # #   "Anchor \"^\" was removed at offset 0.",
+    # #   "Anchor \"^\" was replaced with \"\\A\" at offset 0.",
+    # #   "Character class shorthand \"\\d\" was replaced with \"\\D\" at offset 1.",
+    # #   "Quantifier \"+\" was removed at offset 3."
+    # # ]
+    # ```
+    module PatternChanges
+      # The changes of `pattern`. A pattern that has nothing to change gives
+      # none. A pattern that regexp_parser can't parse raises
+      # `Stryker::Mutators::Unreadable`.
+      #
+      # - `pattern`: String, the text of the pattern, with no delimiters.
+      # - `options`: Integer, the flags that the pattern is read with, as
+      #   `Regexp.new` takes them: `Regexp::EXTENDED` makes whitespace and `#`
+      #   comments in it free-spacing.
+      def self.of: (String pattern, Integer options) -> Array[PatternChange]
+
+      KINDS: Array[singleton(AnchorChanges) | singleton(CharacterClassChanges) | singleton(ShorthandChanges) | singleton(PropertyChanges) | singleton(LookaroundChanges) | singleton(QuantifierChanges)]
+
+      UNREADABLE: String
+
+      private def self.at: (Regexp::Expression::Base expression) -> Array[PatternChange]
+    end
+  end
+end

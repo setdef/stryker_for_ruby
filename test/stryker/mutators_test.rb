@@ -21,6 +21,7 @@ class MutatorsTest < Minitest::Test
     ObjectLiteral
     OptionalChaining
     RangeOperator
+    Regex
     StringLiteral
     UnaryOperator
   ].freeze

@@ -13,6 +13,7 @@ require_relative "mutators/method_expression"
 require_relative "mutators/object_literal"
 require_relative "mutators/optional_chaining"
 require_relative "mutators/range_operator"
+require_relative "mutators/regex"
 require_relative "mutators/string_literal"
 require_relative "mutators/unary_operator"
 
@@ -32,6 +33,7 @@ module Stryker
       ObjectLiteral,
       OptionalChaining,
       RangeOperator,
+      Regex,
       StringLiteral,
       UnaryOperator,
     ].freeze

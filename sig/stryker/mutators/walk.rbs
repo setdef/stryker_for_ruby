@@ -11,7 +11,10 @@ module Stryker
     # only where no other mutant is, on its site or inside it.
     # `Stryker::Mutators::Roster` leaves out the mutants that would show
     # nothing and numbers the rest, and `Stryker::Mutators::Traversal` leaves
-    # out the sites that no mutator makes a mutant of.
+    # out the sites that no mutator makes a mutant of. A mutator that can't
+    # read a site raises `Stryker::Mutators::Unreadable`, and
+    # `Stryker::Mutators::Search` writes a warning with the file and the line
+    # to standard error, makes no mutant of the site, and goes on.
     #
     # ## Examples
     #
@@ -43,14 +46,12 @@ module Stryker
 
       private
 
-      @tree: Prism::ProgramNode
+      @search: Search
       @mutators: Array[_Mutator]
       @fallbacks: Array[_Mutator]
       @roster: Roster
 
       def made: (Array[Candidate] candidates) -> Array[Candidate]
-
-      def candidates_of: (_Mutator mutator) -> Array[Candidate]
     end
   end
 end

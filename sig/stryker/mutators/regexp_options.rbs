@@ -1,0 +1,47 @@
+module Stryker
+  module Mutators
+    # The flags of a regular expression that the `Regex` mutator reads, as
+    # `Regexp.new` takes them: `Regexp::IGNORECASE`, `Regexp::EXTENDED`, and
+    # `Regexp::MULTILINE`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("/a/ix").value.statements.body.first
+    # Stryker::Mutators::RegexpOptions.of_literal(node)
+    # # => 3
+    # ```
+    module RegexpOptions
+      # The flags of a regexp literal.
+      #
+      # - `node`: Prism::RegularExpressionNode, the literal.
+      def self.of_literal: (Prism::RegularExpressionNode node) -> Integer
+
+      # The flags that the second argument of a call of `Regexp.new` gives, or
+      # 0 when it has no second argument or the second is keywords, such as
+      # `timeout: 1`. The flags are known when the argument is `nil`, `true`,
+      # `false`, an integer literal, a string of the letters `i`, `x`, and `m`,
+      # `Regexp::IGNORECASE`, `Regexp::EXTENDED`, or `Regexp::MULTILINE`, or
+      # those joined by `|`. For any other argument, such as a variable, the
+      # source doesn't give the flags, and the result is nil.
+      #
+      # - `arguments`: Prism::ArgumentsNode, the arguments of the call of
+      #   `Regexp.new`.
+      def self.of_arguments: (Prism::ArgumentsNode arguments) -> Integer?
+
+      LETTERS: Hash[Symbol, Integer]
+
+      NAMES: Hash[Symbol, Integer]
+
+      private def self.value: (Prism::node? node) -> Integer?
+
+      private def self.computed: (Prism::node? node) -> Integer?
+
+      private def self.lettered: (String letters) -> Integer
+
+      private def self.named: (String path) -> Integer?
+
+      private def self.combined: (Prism::CallNode node) -> Integer?
+    end
+  end
+end

@@ -1,0 +1,27 @@
+module Stryker
+  module Mutators
+    # The changes that the `Regex` mutator makes at an anchor: it removes any
+    # of `^`, `$`, `\A`, `\z`, and `\Z`, and it turns `^` into `\A` and `$`
+    # into `\z`. The line anchors match at every line, and the string anchors
+    # only at the ends of the string.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("^a")
+    # expression = tree.expressions.first
+    # Stryker::Mutators::AnchorChanges.of(expression).map(&:description)
+    # # => ["Anchor \"^\" was removed at offset 0.", "Anchor \"^\" was replaced with \"\\A\" at offset 0."]
+    # ```
+    module AnchorChanges
+      # The changes at `expression`. An expression that isn't an anchor, and
+      # an anchor that no change reaches, such as `\b`, give none.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+
+      REPLACEMENTS: Hash[Symbol, Array[String]]
+    end
+  end
+end

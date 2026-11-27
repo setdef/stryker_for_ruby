@@ -52,14 +52,14 @@ class StandardLibraryTest < Minitest::Test
     assert_equal(["", []], run_program(PROGRAM))
   end
 
-  def test_the_runtime_and_the_values_load_neither_prism_refract_nor_erubi
-    program = "#{REQUIRES}puts $LOADED_FEATURES.grep(/prism|refract|erubi/)"
+  def test_the_runtime_and_the_values_load_neither_prism_refract_regexp_parser_nor_erubi
+    program = "#{REQUIRES}puts $LOADED_FEATURES.grep(/prism|refract|regexp_parser|erubi/)"
 
     assert_equal(["", []], run_program(program))
   end
 
   def test_the_check_sees_a_gem_that_loads
-    program = "require 'prism'\nputs $LOADED_FEATURES.grep(/prism|refract|erubi/).any?"
+    program = "require 'regexp_parser'\nputs $LOADED_FEATURES.grep(/prism|refract|regexp_parser|erubi/).any?"
 
     assert_equal(["true\n", []], run_program(program))
   end

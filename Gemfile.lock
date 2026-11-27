@@ -4,6 +4,7 @@ PATH
     stryker_for_ruby (0.1.0)
       prism (>= 1.7)
       refract (~> 2.0)
+      regexp_parser (~> 2.12)
 
 GEM
   remote: https://rubygems.org/

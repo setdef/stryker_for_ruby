@@ -1,0 +1,62 @@
+module Stryker
+  module Mutators
+    # A regular expression's pattern in the source, which the `Regex` mutator
+    # changes: a regexp literal, or the string given as the first argument of
+    # `Regexp.new`. It holds the pattern's text and flags, and writes a changed
+    # pattern back as an edit of the whole node.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("/^a/i").value.statements.body.first
+    # site = Stryker::Mutators::PatternSite.of(node, [])
+    # site.text
+    # # => "^a"
+    # site.edit("a", "Anchor \"^\" was removed at offset 0.").replacement
+    # # => "/a/i"
+    # ```
+    class PatternSite < Data
+      # The node: a regexp literal, or the string given to `Regexp.new`.
+      attr_reader node: Prism::RegularExpressionNode | Prism::StringNode
+
+      # The pattern's text, with no delimiters. For a string, it is the text
+      # that the string has once Ruby reads its escapes.
+      attr_reader text: String
+
+      # The flags that the pattern is read with, as `Regexp.new` takes them.
+      attr_reader options: Integer
+
+      # Builds the site.
+      #
+      # - `node`: Prism::RegularExpressionNode or Prism::StringNode, the node.
+      # - `text`: String, the pattern's text.
+      # - `options`: Integer, the pattern's flags.
+      def self.new: (node: Prism::RegularExpressionNode | Prism::StringNode, text: String, options: Integer) -> instance
+                  | (Prism::RegularExpressionNode | Prism::StringNode node, String text, Integer options) -> instance
+
+      # The site that `node` is, as a list of one, or an empty list when it
+      # isn't one. A regexp literal with interpolation isn't one, and neither
+      # is a string with interpolation, which Prism gives as another kind of
+      # node. A string given to `Regexp.new` isn't one when the flags in its
+      # second argument aren't in the source.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   to its parent.
+      def self.at: (Prism::node node, Array[Prism::node] ancestors) -> Array[PatternSite]
+
+      # The edits of the pattern, one for each change that Ruby accepts the
+      # changed pattern for, in the order of the pattern's tree. A pattern
+      # that regexp_parser can't read raises `Stryker::Mutators::Unreadable`.
+      # A regexp literal keeps its delimiters and flags in the edit, and a
+      # string becomes a double-quoted string that holds the changed pattern.
+      def edits: () -> Array[Edit]
+
+      private def self.argument: (Prism::StringNode node, Array[Prism::node] ancestors) -> Array[PatternSite]
+
+      private def edit: (String mutated, String description) -> Edit
+
+      private def written: (String mutated) -> String
+    end
+  end
+end

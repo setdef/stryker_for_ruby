@@ -31,6 +31,16 @@ module Stryker
       # - `class_name`: Symbol, the class's name, such as `:Regexp`.
       def self.first_argument?: (Prism::node node, Array[Prism::node] ancestors, Symbol class_name) -> bool
 
+      # The arguments of the call that `node` is the first argument of, when
+      # the call is a call of `new` on the class named `class_name`, as `of?`
+      # defines it. For any other node, nil.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above `node`, from the
+      #   root to its parent, as `first_argument?` takes them.
+      # - `class_name`: Symbol, the class's name, such as `:Regexp`.
+      def self.arguments_given_first: (Prism::node node, Array[Prism::node] ancestors, Symbol class_name) -> Prism::ArgumentsNode?
+
       private def self.named?: (Prism::node? receiver, Symbol class_name) -> bool
     end
   end

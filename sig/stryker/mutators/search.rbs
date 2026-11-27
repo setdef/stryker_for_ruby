@@ -1,0 +1,36 @@
+module Stryker
+  module Mutators
+    # Finds the candidates that one mutator makes in a parsed file, and tells
+    # the person who runs Stryker (for Ruby) about each site the mutator can't
+    # read. The warning goes to standard error, with the file and the line of
+    # the site, and the site gets no candidate.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("x = 1 + 2").value
+    # search = Stryker::Mutators::Search.new(tree, "lib/a.rb")
+    # search.candidates_of(Stryker::Mutators::ArithmeticOperator).size
+    # # => 1
+    # ```
+    class Search
+      # Prepares to search the file.
+      #
+      # - `tree`: Prism::ProgramNode, the file's tree.
+      # - `file`: String, the file's path, which a warning gives.
+      def initialize: (Prism::ProgramNode tree, String file) -> void
+
+      # The candidates of `mutator` in the file, in the order of the tree.
+      #
+      # - `mutator`: Stryker::_Mutator, the mutator to ask at every node.
+      def candidates_of: (_Mutator mutator) -> Array[Candidate]
+
+      private
+
+      @tree: Prism::ProgramNode
+      @file: String
+
+      def candidates_at: (_Mutator mutator, Prism::node node, Array[Prism::node] ancestors) -> Array[Candidate]
+    end
+  end
+end

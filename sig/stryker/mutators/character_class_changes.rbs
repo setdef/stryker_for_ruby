@@ -1,0 +1,24 @@
+module Stryker
+  module Mutators
+    # The change that the `Regex` mutator makes at a character class: it
+    # negates `[abc]` into `[^abc]`, and `[^abc]` into `[abc]`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("[aeiou]")
+    # Stryker::Mutators::CharacterClassChanges.of(tree.expressions.first).map(&:replacement)
+    # # => ["[^aeiou]"]
+    # ```
+    module CharacterClassChanges
+      # The change at `expression`. An expression that isn't a character class
+      # gives none.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+
+      private def self.negated: (Regexp::Expression::Base expression) -> String
+    end
+  end
+end

@@ -1,0 +1,33 @@
+# regexp_parser 2.13 ships no signatures. These cover the part of its API that
+# the Regex mutator calls.
+class Regexp
+  class Parser
+    class Error < StandardError
+    end
+
+    def self.parse: (String input, ?untyped syntax, ?options: Integer?) -> Expression::Subexpression
+  end
+
+  module Expression
+    class Quantifier
+      def ts: () -> Integer
+      def text: () -> String
+    end
+
+    class Base
+      def type: () -> Symbol
+      def token: () -> Symbol
+      def ts: () -> Integer
+      def quantifier: () -> Quantifier?
+      def negative?: () -> bool
+      def to_s: (?Symbol format) -> String
+    end
+
+    class Subexpression < Base
+      def each_expression: () -> Enumerator[[Base, Integer], void]
+    end
+
+    class CharacterSet < Subexpression
+    end
+  end
+end

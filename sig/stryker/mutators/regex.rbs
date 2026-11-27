@@ -1,0 +1,55 @@
+module Stryker
+  module Mutators
+    # Changes the patterns of regular expressions, to find the tests that never
+    # check what a pattern accepts. It reads each pattern with the
+    # [regexp_parser](https://github.com/ammar/regexp_parser) gem and makes
+    # these mutants:
+    #
+    # | Mutation | Original | Mutant |
+    # | - | - | - |
+    # | Anchor removed | `/^\d+$/`, `/\A\d+\z/` | `/\d+$/`, `/^\d+/`, `/\d+\z/`, `/\A\d+/` |
+    # | Line anchor to string anchor | `/^\d+$/` | `/\A\d+$/`, `/^\d+\z/` |
+    # | Character class negated | `/[aeiou]/` | `/[^aeiou]/` |
+    # | Shorthand class negated | `/\d/`, `/\s/`, `/\w/` | `/\D/`, `/\S/`, `/\W/` |
+    # | Property negated | `/\p{Alpha}/` | `/\P{Alpha}/` |
+    # | Quantifier removed | `/ab+c/`, `/ab?c/`, `/ab{2,4}c/` | `/abc/` |
+    # | Lookaround negated | `/a(?=b)/` | `/a(?!b)/` |
+    #
+    # A negation works in both directions: `[^aeiou]` becomes `[aeiou]`, `\D`
+    # becomes `\d`, `\P{Alpha}` becomes `\p{Alpha}`, and `(?!b)` becomes
+    # `(?=b)`. The mutator reads a regexp literal, `/.../` or `%r{...}`, and
+    # the string given as the first argument of `Regexp.new`. The edit covers
+    # the whole literal or string and keeps a literal's delimiters and flags.
+    # A string comes back as a double-quoted string.
+    #
+    # Each edit has a description, in the form of Stryker.NET's regex mutants,
+    # such as `Anchor "^" was removed at offset 0.`. The mutator compiles each
+    # mutant with `Regexp.new` and the pattern's flags, and drops one that
+    # raises `RegexpError`. A pattern with interpolation gets no mutant. A
+    # pattern that regexp_parser can't parse raises
+    # `Stryker::Mutators::Unreadable`.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#regex)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("/^\\d+$/").value.statements.body.first
+    # Stryker::Mutators::Regex.edits(node, []).map(&:replacement)
+    # # => ["/\\d+$/", "/\\A\\d+$/", "/^\\D+$/", "/^\\d$/", "/^\\d+/", "/^\\d+\\z/"]
+    # ```
+    module Regex
+      # The mutator's name in the report: `"Regex"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for each change to a pattern that compiles,
+      # when `node` is a regexp literal or the pattern given to `Regexp.new`,
+      # and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   to its parent.
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+    end
+  end
+end

@@ -1,0 +1,27 @@
+module Stryker
+  module Mutators
+    # The change that the `Regex` mutator makes at a lookaround: it turns
+    # `(?=a)` into `(?!a)`, and `(?<=a)` into `(?<!a)`, and the other way
+    # round.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("a(?=b)")
+    # Stryker::Mutators::LookaroundChanges.of(tree.expressions.last).map(&:replacement)
+    # # => ["(?!b)"]
+    # ```
+    module LookaroundChanges
+      # The change at `expression`. An expression that isn't a lookahead or a
+      # lookbehind gives none.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+
+      OPENING: Regexp
+
+      private def self.negated: (String text) -> String
+    end
+  end
+end

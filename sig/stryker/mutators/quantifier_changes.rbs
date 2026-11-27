@@ -1,0 +1,23 @@
+module Stryker
+  module Mutators
+    # The change that the `Regex` mutator makes at a quantified expression: it
+    # removes the quantifier, `+`, `?`, `*`, or `{2,4}`, with a lazy or
+    # possessive mark that follows it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("ab+")
+    # Stryker::Mutators::QuantifierChanges.of(tree.expressions.last).map(&:description)
+    # # => ["Quantifier \"+\" was removed at offset 2."]
+    # ```
+    module QuantifierChanges
+      # The change at `expression`. An expression with no quantifier gives
+      # none.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+    end
+  end
+end

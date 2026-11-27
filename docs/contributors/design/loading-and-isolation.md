@@ -22,7 +22,7 @@ The orchestrator never loads the project's code, and a project process never ins
 | The orchestrator | Reads the configuration, parses the files, instruments them (starting parse workers for a file with many mutants), writes the cache, starts the project processes, and judges each run from what they write. | The code that instruments, with Prism and refract, and the part of each isolation adapter that starts and judges the runs. |
 | A project process: the parent that forks, each child forked from it, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
 
-Prism and refract load in the orchestrator, and never in a project process. A parse worker, which isn't a project process, loads Prism too ([Parsing plain mutants](#parsing-plain-mutants)). The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
+Prism, refract, and regexp_parser load in the orchestrator, and never in a project process. A parse worker, which isn't a project process, loads Prism too ([Parsing plain mutants](#parsing-plain-mutants)). The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
 
 ### The bundle
 
@@ -327,7 +327,7 @@ Every lookup table that the runtime keeps is shareable, because a non-main Racto
 - It doesn't fork on Windows, which has no `fork`, so no adapter runs a runtime mutant's run in a child there.
 - It doesn't run on Ruby implementations other than CRuby.
 - It doesn't turn Bootsnap off or change its settings. Files that aren't instrumented still load through Bootsnap's cache.
-- It doesn't load Prism or refract in a project process.
+- It doesn't load Prism, refract, or regexp_parser in a project process.
 - It doesn't restart a parse worker that failed: a worker's failure raises an error and ends the pool.
 - It doesn't attribute a hit made on another thread or a fiber to a file that loads inside a test.
 - It doesn't find an instrumented file that a `load` reaches through a symbolic link with a base name that no instrumented file has. A `load` adds nothing to `$LOADED_FEATURES`, so nothing reports it.

@@ -225,6 +225,7 @@ The report is one line of JSON in the [mutation testing report schema](https://g
 | `id` | The mutant's number in the run, as a string. |
 | `mutatorName` | The name of the mutator that made the mutant. |
 | `replacement` | The text that replaces the range in `location`. |
+| `description` | What the mutant changed in a regular expression's pattern, as in `Anchor "^" was removed at offset 0.`. Only mutants of the `Regex` mutator have one. |
 | `location` | The range in the file that the mutant replaces: `start` and `end`, each with a `line` and a `column` counted from 1. `end` is just after the range. Columns count UTF-16 code units, as JavaScript counts the index of a character in a string, so an emoji takes two columns. |
 | `status` | `Killed`, `Survived`, `NoCoverage`, `CompileError`, `RuntimeError`, `Timeout`, or `Ignored`. |
 | `statusReason` | Why the mutant has that status, for a status that has a reason. A mutant that no test can run with has the status `Ignored`, and the reason says why: its site can't hold a switch, or its text has no form on one line. |

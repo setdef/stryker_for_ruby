@@ -40,7 +40,7 @@ A run has two kinds of process. The orchestrator is the process that `stryker ru
 
 ```mermaid
 flowchart LR
-  subgraph O["Orchestrator: loads Prism and refract"]
+  subgraph O["Orchestrator: loads Prism, refract, and regexp_parser"]
     direction TB
     S1["Configure, parse and find sites, instrument, plan"]
   end
@@ -53,7 +53,7 @@ flowchart LR
   CA -- read by the hook --> S5
 ```
 
-Prism and refract load only in the orchestrator, and only when `stryker run` goes on to configure a run, so `stryker --version` and `stryker help` don't load them. A project process loads only the runtime, which uses nothing outside the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
+Prism, refract, and regexp_parser, which the `Regex` mutator reads patterns with, load only in the orchestrator, and only when `stryker run` goes on to configure a run, so `stryker --version` and `stryker help` don't load them. A project process loads only the runtime, which uses nothing outside the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
 
 ## Ports and adapters
 

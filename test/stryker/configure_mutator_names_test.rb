@@ -20,9 +20,9 @@ class ConfigureMutatorNamesTest < Minitest::Test
 
   def test_several_unknown_mutator_names_are_listed_together
     valid = Stryker::Mutators::ALL.map(&:name).join(", ")
-    message = refusal({ "stryker.config.json": '{ "mutator": { "excludedMutations": ["Equality", "Regex"] } }' })
+    message = refusal({ "stryker.config.json": '{ "mutator": { "excludedMutations": ["Equality", "Range"] } }' })
 
-    assert_equal("#{EXCLUDED} has unknown mutator names: Equality, Regex. The valid names are #{valid}.", message)
+    assert_equal("#{EXCLUDED} has unknown mutator names: Equality, Range. The valid names are #{valid}.", message)
   end
 
   def test_a_mutator_name_matches_with_its_letter_case

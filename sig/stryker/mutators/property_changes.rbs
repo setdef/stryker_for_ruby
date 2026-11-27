@@ -1,0 +1,27 @@
+module Stryker
+  module Mutators
+    # The change that the `Regex` mutator makes at a Unicode property: it
+    # turns `\p{Alpha}` into `\P{Alpha}`, `\P{Alpha}` into `\p{Alpha}`, and
+    # `\p{^Alpha}` into `\p{Alpha}`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("\\p{Alpha}")
+    # Stryker::Mutators::PropertyChanges.of(tree.expressions.first).map(&:replacement)
+    # # => ["\\P{Alpha}"]
+    # ```
+    module PropertyChanges
+      # The change at `expression`. An expression that isn't a property gives
+      # none.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+
+      TYPES: Array[Symbol]
+
+      private def self.negated: (String text) -> String
+    end
+  end
+end

@@ -1,0 +1,61 @@
+module Stryker
+  module Mutators
+    # One change that the `Regex` mutator makes to a regular expression's
+    # pattern: the part of the pattern that changes, where it starts, and what
+    # takes its place. It can say what it did, in the words of the report.
+    #
+    # The offset counts characters in the pattern, from 0.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # change = Stryker::Mutators::PatternChange.new(kind: "Anchor", offset: 0, original: "^", replacement: "")
+    # change.applied_to("^a$")
+    # # => "a$"
+    # change.description
+    # # => "Anchor \"^\" was removed at offset 0."
+    # ```
+    class PatternChange < Data
+      # What the changed part is: `"Anchor"`, `"Quantifier"`, `"Character class"`,
+      # `"Character class shorthand"`, `"Property"`, or `"Lookaround"`.
+      attr_reader kind: String
+
+      # The offset, in characters from the start of the pattern, of the changed
+      # part.
+      attr_reader offset: Integer
+
+      # The text of the changed part, as the pattern has it.
+      attr_reader original: String
+
+      # The text that takes the place of the changed part. It is empty when the
+      # change removes the part.
+      attr_reader replacement: String
+
+      # Builds the change.
+      #
+      # - `kind`: String, what the changed part is.
+      # - `offset`: Integer, where the changed part starts in the pattern.
+      # - `original`: String, the text of the changed part.
+      # - `replacement`: String, the text that takes its place.
+      def self.new: (kind: String, offset: Integer, original: String, replacement: String) -> instance
+                  | (String kind, Integer offset, String original, String replacement) -> instance
+
+      # The change that replaces the whole of `expression`, a node of
+      # regexp_parser's tree, with `replacement`, which is empty to remove it.
+      #
+      # - `expression`: Regexp::Expression::Base, the node.
+      # - `kind`: String, what the node is, as `kind` has it.
+      # - `replacement`: String, the text that takes the node's place.
+      def self.of: (Regexp::Expression::Base expression, String kind, String replacement) -> PatternChange
+
+      # `pattern` with the change made.
+      #
+      # - `pattern`: String, the pattern that the change was found in.
+      def applied_to: (String pattern) -> String
+
+      # A sentence that says what changed and where, as Stryker.NET words its
+      # regex mutants: `Quantifier "+" was removed at offset 3.`
+      def description: () -> String
+    end
+  end
+end

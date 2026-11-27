@@ -1,0 +1,21 @@
+module Stryker
+  module Mutators
+    # What a mutator raises for a site it can't read, so that the walk makes
+    # no mutant of the site and tells the person who runs it. `Stryker::Mutators::Regex`
+    # raises it for a pattern that regexp_parser can't parse. The message says
+    # what the walk prints after the file and the line.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # begin
+    #   Stryker::Mutators::PatternChanges.of("(", 0)
+    # rescue Stryker::Mutators::Unreadable => error
+    #   error.message
+    # end
+    # # => "Stryker (for Ruby) can't read this regular expression, so it makes no mutant of it: ..."
+    # ```
+    class Unreadable < StandardError
+    end
+  end
+end

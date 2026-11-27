@@ -1,0 +1,24 @@
+module Stryker
+  module Mutators
+    # The change that the `Regex` mutator makes at a shorthand class: it turns
+    # `\d`, `\s`, and `\w` into `\D`, `\S`, and `\W`, and the other way round.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Regexp::Parser.parse("\\d")
+    # Stryker::Mutators::ShorthandChanges.of(tree.expressions.first).map(&:replacement)
+    # # => ["\\D"]
+    # ```
+    module ShorthandChanges
+      # The change at `expression`. An expression that isn't one of the six
+      # shorthand classes gives none, and neither does `\h`.
+      #
+      # - `expression`: Regexp::Expression::Base, a node of regexp_parser's
+      #   tree.
+      def self.of: (Regexp::Expression::Base expression) -> Array[PatternChange]
+
+      TOKENS: Array[Symbol]
+    end
+  end
+end

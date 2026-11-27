@@ -30,7 +30,10 @@ Gem::Specification.new do |spec|
   # Only the orchestrator loads these, never a process that loads the
   # project's code (docs/contributors/decisions/0003). Ruby 3.3 bundles Prism 0.19.0,
   # which refract can't use, so the gem needs the Prism gem. Prism 1.7 is the
-  # first release that parses with the syntax of Ruby 4.0 and 4.1.
+  # first release that parses with the syntax of Ruby 4.0 and 4.1. regexp_parser
+  # 2.12 is the first release that knows Ruby 4.0's Unicode properties, which the
+  # Regex mutator reads.
   spec.add_dependency("prism", ">= 1.7")
   spec.add_dependency("refract", "~> 2.0")
+  spec.add_dependency("regexp_parser", "~> 2.12")
 end
