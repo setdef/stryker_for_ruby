@@ -2,6 +2,7 @@
 
 require_relative("../config_error")
 require_relative("../isolation/dry_run_error")
+require_relative("../isolation/tests_load_error")
 require_relative("../source_error")
 require_relative("../unsupported_error")
 require_relative("bug_report")
@@ -18,7 +19,7 @@ module Stryker
 
       def guard
         yield
-      rescue ConfigError, SourceError, UnsupportedError, Isolation::DryRunError
+      rescue ConfigError, SourceError, UnsupportedError, Isolation::DryRunError, Isolation::TestsLoadError
         report($ERROR_INFO.to_s)
       rescue SignalException
         stopped(rescued)

@@ -18,11 +18,12 @@ module SampleProjects
   Outcome = Data.define(:status, :out, :err, :report)
   private_constant(:Outcome)
 
-  # Runs the command in a copy of `project`, with the flags and with
-  # `TMPDIR` set to `temporary`.
-  def run_in_copy(project, *flags, temporary: Dir.tmpdir)
+  # Runs the command in a copy of `project`, with the flags, with `TMPDIR`
+  # set to `temporary`, and with `env` added to the process's environment.
+  def run_in_copy(project, *flags, temporary: Dir.tmpdir, env: {})
     in_copy(project) do |root|
-      out, err, status = Open3.capture3({ "TMPDIR" => temporary }, *COMMAND, *flags, chdir: root)
+      variables = { TMPDIR: temporary, **env }.transform_keys(&:to_s)
+      out, err, status = Open3.capture3(variables, *COMMAND, *flags, chdir: root)
       Outcome.new(status.exitstatus, out, err, report_in(root))
     end
   end

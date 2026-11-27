@@ -1,0 +1,6 @@
+{
+  "mutate": ["lib/**/*.rb"],
+  "testRunner": "minitest",
+  "reporters": ["clear-text"],
+  "concurrency": 1
+}

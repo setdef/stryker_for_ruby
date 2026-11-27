@@ -2,6 +2,7 @@
 
 require_relative("../support/cli_project")
 require "stryker/isolation/dry_run_error"
+require "stryker/isolation/tests_load_error"
 require "stryker/source_error"
 
 # Checks the exit status of `stryker run` for each way a run ends.
@@ -41,6 +42,14 @@ class CLIExitTest < Minitest::Test
     outcome = stryker("run", pipeline: RecordingPipeline.new(raises: failure))
 
     assert_equal([2, "The dry run failed: ShopTest#test_total failed.\n"], [outcome.status, outcome.err])
+  end
+
+  def test_tests_that_fail_to_load_exit_with_status_two_and_their_message_alone
+    message = "The project's tests failed to load, so no mutant can run.\nNameError: Minitest"
+    failure = Stryker::Isolation::TestsLoadError.new(message)
+    outcome = stryker("run", pipeline: RecordingPipeline.new(raises: failure))
+
+    assert_equal([2, "#{message}\n"], [outcome.status, outcome.err])
   end
 
   def test_a_file_that_does_not_parse_exits_with_status_two_and_its_message_alone

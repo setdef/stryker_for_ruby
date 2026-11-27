@@ -27,9 +27,6 @@ module Stryker
       # The line that says the parent loaded the tests.
       READY: Hash[String, bool]
 
-      # The text of the error for a parent that ended before it was ready.
-      ENDED: String
-
       # The text of the error for a parent that wasn't ready in time.
       SLOW: String
 
@@ -55,10 +52,14 @@ module Stryker
       def initialize: (Child child, [IO, IO] pipes, String folder) -> void
 
       # Waits at most `seconds` for the parent to say it loaded the tests.
-      # When it says anything else, ends first, or doesn't say it in time,
-      # it stops the parent and raises `Stryker::Isolation::Error`: with
-      # what the parent said and the last lines of its standard error, or
-      # with the limit and the test helper.
+      # When the parent says that the project's tests raised while it loaded
+      # them, it stops the parent and raises
+      # `Stryker::Isolation::TestsLoadError`, with what they raised and the
+      # last lines of the parent's standard error. When the parent says
+      # anything else, ends first, or doesn't say it in time, it stops the
+      # parent and raises `Stryker::Isolation::Error`: with what the parent
+      # said and the last lines of its standard error, or with the limit and
+      # the test helper.
       #
       # - `seconds`: Integer or Float, `LOAD_SECONDS` unless a test passes
       #   another.
@@ -84,10 +85,10 @@ module Stryker
 
       # Waits at most `seconds` for the parent's first line, and returns nil
       # when the line says the parent is ready. Otherwise it returns the
-      # error: the one that names the limit when no line came in time, or
-      # one with what the parent said, or that it said nothing before it
-      # ended, and the last lines of its standard error.
-      def load_error: (Integer | Float seconds) -> Error?
+      # error: the one that names the limit when no line came in time, and
+      # else the one that `Stryker::Isolation::NotReady` gives for what the
+      # parent said.
+      def load_error: (Integer | Float seconds) -> (Error | TestsLoadError)?
     end
   end
 end
