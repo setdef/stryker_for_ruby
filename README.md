@@ -194,6 +194,8 @@ The mutants that the comment covers have the status `Ignored`, count toward no s
 
 Open an issue in [the issue tracker](https://github.com/setdef/stryker_for_ruby/issues). Include the command you ran, what it printed, your Ruby version, and your operating system. When **Stryker (for Ruby)** stops because of an error in its code, it prints a backtrace and the address to report it at: include the backtrace.
 
+Report a security problem privately, as [SECURITY.md](SECURITY.md) says, never in the issue tracker.
+
 ## Contributing
 
 [Working on Stryker (for Ruby)](CONTRIBUTING.md) holds the rules for every change, and [the contributor documentation](docs/contributors/README.md) explains the design.
