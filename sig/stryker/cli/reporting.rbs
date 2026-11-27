@@ -11,6 +11,9 @@ module Stryker
       # The name of every reporter that the gem has. Private.
       NAMES: Array[String]
 
+      # The check of a name that the user wrote. Private.
+      CHOICE: Choice
+
       @config: Config
 
       @root: String
@@ -22,15 +25,31 @@ module Stryker
       def initialize: (Config config, String root) -> void
 
       # One reporter for each name in the option, once, in the option's
-      # order. Raises Stryker::ConfigError, before it builds any, when a
-      # name isn't a reporter's.
+      # order. Raises Stryker::ConfigError, before it builds any, when the
+      # user wrote a name that isn't a reporter's. A name that only the
+      # default holds, and that isn't a reporter's, is left out, with one
+      # warning on standard error (Stryker::CLI::UnbuiltReporters).
       #
-      # - `stdout`: the stream that `clear-text` writes to.
+      # - `streams`: Stryker::CLI::Streams, whose standard output
+      #   `clear-text` writes to, and whose standard error gets the warning.
       # - `color`: Stryker::CLI::Color, which says whether that stream may
       #   have color.
-      def reporters: (IO | StringIO stdout, Color color) -> Array[_Reporter]
+      def reporters: (Streams streams, Color color) -> Array[_Reporter]
 
       private
+
+      # The names to build: those the user wrote, or the default's.
+      def names: (IO | StringIO stderr) -> Array[String]
+
+      # The names that the user wrote, once each, after the check.
+      def named: () -> Array[String]
+
+      # The default's names that the gem has, once each. Writes the warning
+      # when the default holds any that it hasn't.
+      def defaulted: (IO | StringIO stderr) -> Array[String]
+
+      # The names in the option, once each, in its order.
+      def listed: () -> Array[String]
 
       # The `clear-text` reporter.
       def clear_text: (IO | StringIO stdout, Color color) -> Reporters::ClearText

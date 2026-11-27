@@ -1,0 +1,22 @@
+module Stryker
+  class CLI
+    # The warning that `stryker run` writes to standard error when the
+    # default `reporters` option holds names that the gem has no reporter
+    # for: it says the run leaves them out, and how to name reporters of
+    # your own. A name that the user wrote is an error instead, which
+    # Stryker::CLI::Choice words.
+    class UnbuiltReporters
+      @names: Array[String]
+
+      # Builds the warning.
+      #
+      # - `names`: Array of String, the default reporters that the gem
+      #   hasn't built. It holds at least one.
+      def initialize: (Array[String] names) -> void
+
+      # The one-line warning, naming each reporter, in the singular for one
+      # and the plural for more.
+      def to_s: () -> String
+    end
+  end
+end

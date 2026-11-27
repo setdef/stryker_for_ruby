@@ -126,7 +126,7 @@ Before it does anything else, `stryker run` checks every option in the file and 
 - **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
 - **A pattern in `mutate` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
 
-The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter with those names exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
+The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter that you name exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
 
 ## Options
 
@@ -184,13 +184,19 @@ With no value, the project's folders choose it: `minitest` when the project has 
 
 ### `reporters`
 
-A list of reporter names. The default is `clear-text`, `progress`, and `html`, as in StrykerJS. The reporters are `clear-text` and `json`. A name that isn't one of them stops the run before it reads any file, so a run with the default stops too, because the default holds `progress` and `html`:
+A list of reporter names. The default is `clear-text`, `progress`, and `html`, as in StrykerJS. The reporters are `clear-text` and `json`. A name that you give, in the file or on the command line, and that isn't one of them stops the run before it reads any file:
 
 ```text
 Stryker (for Ruby) has no reporter named "progress" or "html". The reporters option takes "clear-text" and "json".
 ```
 
-Set the option to the reporters you want, as in `stryker run --reporters clear-text,json`. Each reporter runs once, even when the list holds its name twice.
+The default holds `progress` and `html`, which aren't built. A run with the default leaves them out, runs `clear-text`, and writes one warning to standard error before it reads any file:
+
+```text
+Warning: this run leaves out the default reporters "progress" and "html", because Stryker (for Ruby) hasn't built them yet. Name the reporters you want, as in --reporters clear-text,json, to choose your own.
+```
+
+Set the option to the reporters you want, as in `stryker run --reporters clear-text,json`, to run `json` too and to stop the warning. Each reporter runs once, even when the list holds its name twice.
 
 #### The `clear-text` reporter
 
