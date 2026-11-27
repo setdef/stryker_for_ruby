@@ -28,7 +28,7 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Five mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Six mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -36,6 +36,7 @@ Five mutators make up the catalog, and each has the name of a Stryker mutator. T
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
+| `StringLiteral` | String literals, interpolated strings, and heredocs | `StringNode`, `InterpolatedStringNode` | StrykerJS `StringLiteral` |
 | `UnaryOperator` | Unary `-`, `+`, `~`, and signed numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
 
 ### How to read the tables
@@ -117,6 +118,26 @@ An operator that has the comparison `__FILE__ == $0` as an operand gets no mutan
 
 StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"` is the idiom for a default, and it takes the `||` pair.
 
+### `StringLiteral`
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `"Free shipping"`, `'Free shipping'`, `?a` | `""` | A test that checks the string. |
+| `""`, `''` | `"Stryker was here!"` | A test that checks that the string is empty. |
+| `"Total: #{total}"`, `"a" "b"` | `""` | A test that checks the string. |
+| `<<~TEXT` | `""` | A test that checks the string. |
+
+The replacement texts are StrykerJS's. An interpolated string, and adjacent literals joined into one, are mutated whole, as StrykerJS mutates a template literal whole. A string inside an interpolation, at any depth, or a part of `"a" "b"`, gets no separate mutant. The edit for a heredoc covers only its opener, such as `<<~TEXT`, because that is the heredoc node's range, and its body stays where it is ([Kinds of site](mutant-placement.md#literals)). A string is empty when it has no text and no interpolation, so an empty heredoc, `%q()`, and `"" ''` get the text.
+
+It makes no mutant of:
+
+- the key of a hash pair, such as `"rate"` in `{ "rate" => 0.1 }`, as StrykerJS doesn't mutate an object's keys;
+- an element of `%w[]` or `%W[]`, whose syntax has no empty element and has no quotes to put around one;
+- the pattern given to `Regexp.new`, a string without interpolation that is the first argument, which is the source of a regular expression and not text;
+- a backtick or `%x` command (`XStringNode`, `InterpolatedXStringNode`), because the mutant makes the tests run a different command on the machine.
+
+A string that Ruby freezes under `frozen_string_literal: true` is replaced by one that Ruby freezes too, so frozenness doesn't change ([Kinds of site](mutant-placement.md#literals)). An interpolated string, with or without a heredoc, isn't frozen under that comment, and `""` is, so a test that appends to such a string raises `FrozenError` with the mutant active and kills it.
+
 ### `UnaryOperator`
 
 | Original | Mutant | Kills it |
@@ -161,6 +182,7 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 | Site | Reason |
 | - | - |
 | A call with no receiver to `require`, `require_relative`, `load`, or `autoload`, and `autoload` called on a module: the call's arguments, and the call's removal | A changed path loads another file or raises `LoadError`, and a removed `require` or `autoload` either raises `NameError` or changes nothing because another file loaded the same code. Each such mutant is static, so it would cost a fresh process and the whole suite. [Mutant placement](mutant-placement.md#sites-that-get-no-mutant) gives the rule for the arguments. |
+| A backtick or `%x` command | See [`StringLiteral`](#stringliteral). |
 | Comments, magic comments such as `# frozen_string_literal: true`, and the data after `__END__` | They aren't code that Prism gives a mutator. The instrumenter keeps them byte for byte ([Splicing into the original bytes](mutant-placement.md#splicing-into-the-original-bytes)). |
 | `freeze` | No mutator removes a call to `freeze`, or the `-` or `+` before a string literal. The receiver behaves the same unfrozen unless some code changes it, and only a test that expects `FrozenError` would kill the mutant, so it would survive on every frozen constant. |
 | The comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round, wherever it stands | A mutant that makes the comparison true, such as `true` in its place or `!=` for `==`, runs the file's script code inside the test process, where it does whatever the script does. The comparison gets none whether it is a condition or a value. |

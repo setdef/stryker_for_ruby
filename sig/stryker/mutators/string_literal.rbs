@@ -1,0 +1,53 @@
+module Stryker
+  module Mutators
+    # Empties a string, or fills an empty one, to find the tests that never
+    # check what a string says. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `"Free shipping"`, `'Free shipping'`, `?a` | `""` |
+    # | `""`, `''` | `"Stryker was here!"` |
+    # | `"Total: #{total}"`, `"a" "b"` | `""` |
+    # | `<<~TEXT` | `""` |
+    #
+    # The edit covers the whole literal. An interpolated string, and adjacent
+    # literals joined into one, are mutated whole, and a string inside an
+    # interpolation, or a part of `"a" "b"`, gets no mutant of its own. The
+    # edit of a heredoc covers only its opener, such as `<<~TEXT`, and its
+    # body stays where it is. A string that is empty, with no text and no
+    # interpolation, gets the filler text, also when it is a heredoc.
+    #
+    # It makes no mutant of the key of a hash pair, of an element of `%w[]` or
+    # `%W[]`, of the pattern given to `Regexp.new`, or of a backtick or `%x`
+    # command.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#stringliteral)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("'Free shipping'").value.statements.body.first
+    # Stryker::Mutators::StringLiteral.edits(node, []).map(&:replacement)
+    # # => ["\"\""]
+    # ```
+    module StringLiteral
+      # The mutator's name in the report: `"StringLiteral"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a string literal or an interpolated
+      # string, and none for any other node, or for a string that the class
+      # description lists.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   to its parent. The mutator reads them to tell a key, a part, a word,
+      #   a string inside an interpolation, and the argument of `Regexp.new`
+      #   from a string of its own.
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+
+      EMPTIED: String
+
+      FILLER: String
+    end
+  end
+end

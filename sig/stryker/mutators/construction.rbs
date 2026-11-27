@@ -1,0 +1,37 @@
+module Stryker
+  module Mutators
+    # Tells a call of `new` on a core class from other nodes, for the mutators
+    # that treat such a call as a site of their own.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("Regexp.new('a+')").value.statements.body.first
+    # Stryker::Mutators::Construction.of?(node, :Regexp)
+    # # => true
+    # ```
+    module Construction
+      # Whether `node` is a call of `new` on the class named `class_name`,
+      # written `Regexp.new` or `::Regexp.new`. A class with the same name in
+      # a module, such as `Tools::Regexp.new`, and any other receiver, give
+      # false.
+      #
+      # - `node`: Prism::node, the node, which may be nil for a call's missing
+      #   argument.
+      # - `class_name`: Symbol, the class's name, such as `:Regexp`.
+      def self.of?: (Prism::node? node, Symbol class_name) -> bool
+
+      # Whether `node` is the first argument of a call of `new` on the class
+      # named `class_name`, as `of?` defines it.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above `node`, from the
+      #   root to its parent. The call's `ArgumentsNode` is the last, and the
+      #   call is the one before it.
+      # - `class_name`: Symbol, the class's name, such as `:Regexp`.
+      def self.first_argument?: (Prism::node node, Array[Prism::node] ancestors, Symbol class_name) -> bool
+
+      private def self.named?: (Prism::node? receiver, Symbol class_name) -> bool
+    end
+  end
+end

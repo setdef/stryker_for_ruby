@@ -1,0 +1,60 @@
+module Stryker
+  module Mutators
+    # Where a string literal stands: the nodes above it, which decide whether
+    # it is a string of its own or a part of something else, such as a hash
+    # key, an element of `%w[]`, or a piece of an interpolated literal.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("{ 'rate' => 0.1 }").value
+    # hash = tree.statements.body.first
+    # key = hash.elements.first.key
+    # Stryker::Mutators::StringContext.new(node: key, ancestors: [tree, tree.statements, hash, hash.elements.first]).mutable?
+    # # => false
+    # ```
+    class StringContext < Data
+      # The string literal.
+      attr_reader node: Prism::node
+
+      # The nodes above the literal, from the root of the file to its parent.
+      attr_reader ancestors: Array[Prism::node]
+
+      # Builds the context.
+      #
+      # - `node`: Prism::node, the literal.
+      # - `ancestors`: Array of Prism::node, the nodes above it.
+      def self.new: (node: Prism::node, ancestors: Array[Prism::node]) -> instance
+                  | (Prism::node node, Array[Prism::node] ancestors) -> instance
+
+      # Whether `node` is an array written `%w[]` or `%W[]`, whose elements are
+      # words with no quotes.
+      #
+      # - `node`: Prism::node, the node, or nil.
+      def self.word_array?: (Prism::node? node) -> bool
+
+      # Whether the literal is a string of its own. It isn't when it is the key
+      # of a hash pair, an element of a `%w[]` or `%W[]` array, a part of an
+      # interpolated literal such as `"a" "b"`, a literal inside an
+      # interpolation at any depth, or the first argument of `Regexp.new` when
+      # that is a string with no interpolation.
+      def mutable?: () -> bool
+
+      INTERPOLATED: Array[singleton(Prism::Node)]
+
+      WORD_ARRAYS: Array[String]
+
+      private def parent: () -> Prism::node?
+
+      private def part?: () -> bool
+
+      private def key?: () -> bool
+
+      private def word?: () -> bool
+
+      private def interpolated?: () -> bool
+
+      private def pattern?: () -> bool
+    end
+  end
+end

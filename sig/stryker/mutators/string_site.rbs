@@ -1,0 +1,57 @@
+module Stryker
+  module Mutators
+    # A string literal that `Stryker::Mutators::StringLiteral` mutates, with
+    # the nodes above it. Whether a string is a site depends on where it
+    # stands, which `Stryker::Mutators::StringContext` decides.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse('puts "Total"').value
+    # call = tree.statements.body.first
+    # string = call.arguments.arguments.first
+    # Stryker::Mutators::StringSite.of(string, [tree, tree.statements, call, call.arguments]).empty?
+    # # => false
+    # ```
+    class StringSite < Data
+      # The node: a string literal when `mutable?` is true.
+      attr_reader node: Prism::node
+
+      # The nodes above the literal, from the root of the file to its parent.
+      attr_reader ancestors: Array[Prism::node]
+
+      # Builds the site.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above it.
+      def self.new: (node: Prism::node, ancestors: Array[Prism::node]) -> instance
+                  | (Prism::node node, Array[Prism::node] ancestors) -> instance
+
+      # The site that `node` is, or nil when it isn't a string literal, or is
+      # one that gets no mutant: the key of a hash pair, a part of an
+      # interpolated literal such as `"a" "b"`, an element of `%w[]` or
+      # `%W[]`, a literal inside an interpolation, or the first argument of
+      # `Regexp.new` when it has no interpolation. A backtick or `%x` command
+      # isn't a string literal here.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above `node`, from the
+      #   root to its parent. The site keeps a copy.
+      def self.of: (Prism::node node, Array[Prism::node] ancestors) -> StringSite?
+
+      # Whether `node` holds no text and no interpolation: `""`, `%q()`, an
+      # empty heredoc, or adjacent literals that are all empty.
+      #
+      # - `node`: Prism::node, the node.
+      def self.empty?: (Prism::node node) -> bool
+
+      # Whether the site is a string literal that gets a mutant.
+      def mutable?: () -> bool
+
+      # Whether the literal is empty, as `StringSite.empty?` defines it.
+      def empty?: () -> bool
+
+      LITERALS: Array[singleton(Prism::Node)]
+    end
+  end
+end
