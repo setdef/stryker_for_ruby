@@ -34,7 +34,8 @@ module Stryker
 
         # `path` from the root, when it begins with the root's path or the
         # root's real path, with every symbolic link resolved; otherwise
-        # `path` as it is. The first call reads the root's real path.
+        # `path` as it is. Raises Errno::ENOENT when the root folder doesn't
+        # exist.
         #
         # - `path`: String, a whole path.
         def relative: (String path) -> String

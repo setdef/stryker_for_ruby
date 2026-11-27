@@ -23,11 +23,10 @@ module Stryker
         # - `test`: Stryker::Test, the test.
         def initialize: (singleton(::Minitest::Runnable) klass, String name, Test test) -> void
 
-        # Tells `observer` that the test started, runs it with
-        # `Minitest::Runnable.run_suite` and a filter that matches only its
-        # method, tells `observer` that it finished, and returns its result.
-        # While it runs, `Minitest.parallel_executor` is
-        # `Stryker::TestRunners::MinitestRunner::InlineExecutor`.
+        # Tells `observer` that the test started, runs it as Minitest runs it
+        # when you pass `--include` with its name, tells `observer` that it
+        # finished, and returns its result. A class that calls
+        # `parallelize_me!` runs the test at once, in the calling thread.
         #
         # - `observer`: Stryker::_TestObserver.
         def run: (_TestObserver observer) -> TestResult

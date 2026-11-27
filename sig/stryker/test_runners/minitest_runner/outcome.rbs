@@ -1,14 +1,12 @@
 module Stryker
   module TestRunners
     class MinitestRunner
-      # The Minitest reporter for one test's run: it notes every result that
-      # Minitest records while the test runs, and makes the test's
-      # `Stryker::TestResult` from them. Besides the test's result,
-      # Minitest records one for a hook around the whole class that fails,
-      # such as minitest-hooks' `before_all`, under the hook's name.
-      #
-      # It has the methods of Minitest's reporter API that a class's run
-      # calls, and no others. Its time starts when it is built.
+      # The reporter to give Minitest when it runs one test, as the
+      # reporter that `Minitest::Runnable.run_suite` takes. After the run,
+      # `result` returns the test's `Stryker::TestResult`, made from every
+      # result that Minitest recorded: the test's, and one for each hook
+      # around the whole class that failed, such as minitest-hooks'
+      # `before_all`. The result's time runs from when the reporter was built.
       #
       # ## Examples
       #
@@ -37,8 +35,8 @@ module Stryker
         # - `result`: Minitest::Result, a result that Minitest recorded.
         def record: (::Minitest::Result result) -> nil
 
-        # Returns true. Minitest's handler for the INFO signal calls it, and
-        # on true prints only the running test's name and time.
+        # Returns true, whatever Minitest recorded. Minitest's reporter API
+        # has it, and a caller has no use for it.
         def passed?: () -> true
 
         # The test's result, with the time since the reporter was built:

@@ -1,13 +1,11 @@
 module Stryker
   module TestRunners
     class MinitestRunner
-      # A stand-in for `Minitest.parallel_executor` that runs each test it
-      # is given at once, in the thread that gives it. A class that calls
-      # `parallelize_me!` hands its tests to the parallel executor instead
-      # of running them, and Minitest's executor runs them in threads it
-      # starts only inside `Minitest.run`, which the adapter never calls. So
-      # without this stand-in, such a test would run later or never, outside
-      # its turn and its bucket.
+      # A `Minitest.parallel_executor` that runs each test it is given at
+      # once, in the thread that gives it. A class that calls
+      # `parallelize_me!` hands its tests to the parallel executor, so while
+      # `around` runs a block, such a test runs in its turn, in the thread
+      # that runs the class.
       #
       # ## Examples
       #
@@ -22,11 +20,11 @@ module Stryker
         # Returns what the block returns.
         def self.around: [T] () { () -> T } -> T
 
-        # Runs the job at once, with `Minitest::Runnable.run`, which tells
-        # the reporter that the test starts and records its result.
+        # Runs the job's test at once, and records its result in the job's
+        # reporter.
         #
         # - `job`: Array, the test's class, its method's name, and the
-        #   reporter, as Minitest's parallel classes hand them over.
+        #   reporter, as a `parallelize_me!` class hands them over.
         def self.<<: ([singleton(::Minitest::Runnable), String, Outcome] job) -> void
       end
     end

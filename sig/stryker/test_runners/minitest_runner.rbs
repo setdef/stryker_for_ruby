@@ -23,15 +23,13 @@ module Stryker
     #   so the block that `minitest/autorun` registers with `at_exit` runs no
     #   test when the process exits normally. That block still prints
     #   Minitest's summary of a run of 0 tests to standard output.
-    # - It sets `Minitest.seed` to 0 when the project set none, because
-    #   `Minitest.run`, which sets it otherwise, never runs.
+    # - It sets `Minitest.seed` to 0 when the project set none.
     #
-    # Each test runs as Minitest runs a class's tests with `--include`, by
-    # `Minitest::Runnable.run_suite` with a filter that matches only that
-    # test's method, so the hooks that a plugin or the project adds to a
-    # class's run, its test's run, or a test's setup all run. A class that
-    # calls `parallelize_me!` runs its test at once, in its turn, in the
-    # thread that called `run`.
+    # Each test runs as Minitest runs it when you pass `--include` with its
+    # name, so the hooks that a plugin or the project adds to a class's run,
+    # its test's run, or a test's setup all run. A class that calls
+    # `parallelize_me!` runs its test at once, in its turn, in the thread
+    # that called `run`.
     #
     # A test's result comes from every result that Minitest records while
     # it runs:

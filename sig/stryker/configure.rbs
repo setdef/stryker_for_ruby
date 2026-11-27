@@ -57,8 +57,9 @@ module Stryker
   class Configure
     @processors: Integer
 
-    # Reads the file and the options, checks them, and returns the config.
-    # It builds a Configure for this machine and calls it with the keywords.
+    # Reads the file and the options, checks them, and returns the config,
+    # taking the number of processors from this machine. Raises what `call`
+    # raises.
     def self.call: (?options: Hash[String | Symbol, Object?], ?file: String?, ?root: String) -> Config
 
     # Builds a Configure for a machine.
