@@ -1,29 +1,43 @@
-# The build cop. A full run of ci.yml on trunk covers a batch of pushes (see
-# the comment on ci.yml's concurrency), so when one goes red after a green one,
-# any commit of the batch may be at fault. fast.yml gives each push a verdict
-# of its own, but only on one system and one Ruby; this finds what the full
-# run alone caught.
+# The build cop. It follows two workflows, ci.yml and fast.yml.
 #
-# What it does. It bisects the batch with full runs of single commits,
-# started on branches bisect/SHA, which only it writes. It runs the failed
-# jobs of the first bad commit's run again, so that a flaky job blames nobody.
-# When they fail again and the commit's parent, run on a bisect branch of its
-# own since trunk went red, passed them, it reverts that commit on trunk and
-# starts a full run there to judge the revert. When the parent fails them
-# too, the cause is outside the batch, and it reverts nothing.
+# A full run of ci.yml on trunk covers a batch of pushes (see the comment on
+# ci.yml's concurrency), so when one goes red after a green one, any commit of
+# the batch may be at fault. fast.yml gives each push to trunk a run of its
+# own, never canceled (see the comment on its concurrency), but only on one
+# system and one Ruby. A red run of it names exactly one commit, and the full
+# run finds what fast.yml alone doesn't.
+#
+# What it does for ci.yml. It bisects the batch with full runs of single
+# commits, started on branches bisect/SHA, which only it writes. It runs the
+# failed jobs of the first bad commit's run again, so that a flaky job blames
+# nobody. When they fail again and the commit's parent, run on a bisect branch
+# of its own since trunk went red, passed them, it reverts that commit on
+# trunk and starts a full run there to judge the revert. When the parent fails
+# them too, the cause is outside the batch, and it reverts nothing.
+#
+# What it does for fast.yml. It bisects nothing, since the run names the
+# commit. It runs the failed jobs of the red run again, as for ci.yml. When
+# they fail again and the run of the commit's parent on trunk passed, it
+# reverts that commit on trunk. The revert's push starts fast.yml on it. When
+# the parent's run failed or has not finished, it does nothing for this run
+# yet: the parent is judged first, and a later call comes back to this run. A
+# red run of fast.yml is judged before a red run of ci.yml, since it names its
+# commit.
 #
 # How it is built. This file starts .github/scripts/build-cop.sh, which asks
 # tasks/build_cop.rb for the next step and takes it. The task keeps no state:
-# it reads the runs of ci.yml of the last three days from GitHub's API and
-# trunk's first-parent commits from git, and works on the oldest red run on
-# trunk after its newest green one, a run that passed every job, that is not
+# it reads the runs of ci.yml and fast.yml of the last three days from
+# GitHub's API (those of fast.yml on trunk only) and trunk's first-parent
+# commits from git. For each workflow, it works on the oldest red run on trunk
+# after its newest green one, a run that passed every job, that is not
 # settled. A red run is settled once a commit that it covers has been reverted
 # on trunk by a newer commit, which any commit that says "This reverts commit"
-# and a hash is, or a newer run on trunk passed. The jobs that
-# failed in that run are the failure. Each commit between the green run's head
-# and the red run's head is judged by its newest run that was not canceled,
-# on any branch, by those jobs alone: bad when one of them failed, good when
-# all passed, and not known otherwise. Each step is one of:
+# and a hash is, or a newer run on trunk passed. A job that failed or timed
+# out failed. For ci.yml, the jobs that failed in that run are the failure.
+# Each commit between the green run's head and the red run's head is judged by
+# its newest run that was not canceled, on any branch, by those jobs alone:
+# bad when one of them failed, good when all passed, and not known otherwise.
+# Each step is one of:
 #
 #   bisect  The commit halfway between the last good commit and the first bad
 #           one, which has no run yet, is pushed to bisect/SHA, and ci.yml is
@@ -32,22 +46,34 @@
 #           script starts none while the branch exists and no run is listed on
 #           it. A commit whose own ci.yml has no workflow_dispatch can't be
 #           run on a branch; the script warns and leaves it to a person.
-#   wait    A run it needs has not finished.
+#   wait    A run it needs has not finished. For fast.yml, the run of the
+#           commit's parent failed or has not finished.
 #   rerun   The first bad commit's parent is good, and the jobs that failed in
 #           the bad commit's run have not failed twice, so they run again. A
 #           run that finished without passing or failing those jobs has them
-#           run again once, then is left for a person.
+#           run again once, then is left for a person. The jobs that failed in
+#           a red run of fast.yml run again once, in the same way.
 #   revert  Described above. The revert is made by github-actions[bot], with a
 #           message that says why. It fails the cop's run when the commit
 #           does not revert cleanly, which calls a person. It never reverts a
-#           revert; it names that commit in a warning.
-#   none    No run on trunk is red and unsettled after its newest green
-#           run: the bisect/* branches are deleted.
-#   stuck   It says why, for a person.
+#           revert; it names that commit in a warning. The push is tried up
+#           to three times, since trunk may move meanwhile, and before each
+#           try the script looks for a revert of the commit that landed in
+#           the meantime, a person's or another call's, and stops with
+#           nothing to do when it finds one.
+#   none    No run of either workflow on trunk is red and unsettled after its
+#           newest green run: the bisect/* branches are deleted.
+#   stuck   It says why, for a person. A red run of fast.yml ends here when
+#           it has no job that failed, or when its parent has no run that
+#           passed or failed.
 #
-# When it runs. It runs when a run of CI ends on trunk or on a bisect branch,
-# and every half hour, since GitHub does not say whether the end of a run that
-# this workflow's token started, or ran again, starts a workflow_run. Its runs
+# When it runs. It runs when a run of CI or Fast ends on trunk, when a run of
+# CI ends on a bisect branch, and every half hour, since GitHub does not say
+# whether the end of a run that this workflow's token started, or ran again,
+# starts a workflow_run. GitHub's documentation says that a workflow_run that
+# names several workflows runs when any one of them completes. A run of Fast
+# on a bisect branch, which each bisect push starts, or for a pull request,
+# starts nothing. Its runs
 # wait for one another, a waiting one is replaced by the next, and every call
 # reads the same runs, so a call more or fewer changes nothing. Because a
 # rerun on trunk has a concurrency group of its own (ci.yml), the pushes that
@@ -69,8 +95,8 @@
 # revert, beside the run the script starts by hand.
 #
 # Reverting is off until the repository variable BUILD_COP_REVERT is true.
-# While it isn't, the cop bisects and reports each revert it would make, and
-# pushes no revert.
+# While it isn't, the cop bisects, runs failed jobs again, and reports each
+# revert it would make, and pushes no revert.
 #
 # Run it by hand to see what it would do: it is a dry run by default, which
 # mints no token, pushes nothing, and starts and reruns nothing.
@@ -82,15 +108,21 @@
 # Its limits.
 #
 #   - It reads the runs of the last three days and trunk's newest 300
-#     first-parent commits. A red batch whose green run on trunk is older than
-#     that is a person's, and the cop says none.
+#     first-parent commits. A red batch or a red run of fast.yml whose green
+#     run on trunk is older than that is a person's, and the cop says none.
 #   - A green run is one whose every job succeeded. A run with a job skipped
 #     is not green, and a trunk whose runs all skip one never has a green run.
-#   - It judges one red run at a time, the oldest that is not settled, and one
+#   - It judges one red run at a time, the oldest of fast.yml's that is not
+#     settled, or of ci.yml's when fast.yml's has no step to take, and one
 #     commit at a time, so a later break waits until the earlier one is
 #     settled. A red run with no job that failed or timed out, because its
 #     jobs were canceled, skipped, or neutral, has no commit to blame, and
 #     stays the oldest until a revert or a newer green run settles it.
+#   - A red run of fast.yml is reverted only once its parent's run passed. A
+#     parent whose run failed, though a revert has settled it, leaves its
+#     child's red run waiting for a newer run on trunk to pass, since the
+#     parent's failure may have failed the child. A parent whose run was
+#     skipped, or never ran, leaves the child's to a person.
 #   - It keeps no record of which commit it blamed for a red run, so a revert
 #     of any commit the run covers settles it, a person's revert included. A
 #     revert that a later commit reverted settles nothing.
@@ -110,7 +142,7 @@ name: Build cop
 
 on:
   workflow_run:
-    workflows: [CI]
+    workflows: [CI, Fast]
     types: [completed]
     branches: [trunk, "bisect/**"]
   schedule:
@@ -135,7 +167,11 @@ defaults:
 jobs:
   cop:
     name: Find and revert the commit that turned trunk red
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.event != 'pull_request'
+    if: >-
+      github.event_name != 'workflow_run'
+      || (github.event.workflow_run.event != 'pull_request'
+      && (github.event.workflow_run.name != 'Fast'
+      || github.event.workflow_run.head_branch == 'trunk'))
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: build-cop

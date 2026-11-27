@@ -18,7 +18,7 @@ class BuildCopWorkflowTest < Minitest::Test
   def test_it_follows_ci_on_trunk_and_the_bisect_branches
     trigger = workflow("build-cop.yml")[true]["workflow_run"]
 
-    assert_equal([workflow("ci.yml")["name"]], trigger["workflows"])
+    assert_equal(workflow("ci.yml")["name"], trigger["workflows"].first)
     assert_equal(["trunk", "#{BuildCop::BISECT}**"], trigger["branches"])
     assert_equal(["completed"], trigger["types"])
   end
