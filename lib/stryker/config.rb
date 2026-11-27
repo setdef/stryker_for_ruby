@@ -15,7 +15,8 @@ module Stryker
     :timeout_factor,
     :dry_run_timeout_minutes,
     :excluded_mutations,
-    :incremental
+    :incremental,
+    :given
   )
     OPTIONS = {
       mutate: :mutate,
@@ -32,6 +33,7 @@ module Stryker
       incremental: :incremental,
     }.transform_keys(&:to_s).freeze
     NO_EXCLUDED_MUTATIONS = Array(nil).freeze
+    NONE_GIVEN = Array(nil).freeze
     DEFAULTS = {
       reporters: %w[clear-text progress html].freeze,
       threshold_high: 80,
@@ -43,7 +45,7 @@ module Stryker
       excluded_mutations: NO_EXCLUDED_MUTATIONS,
       incremental: false,
     }.freeze
-    public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS)
+    public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS, :NONE_GIVEN)
 
     def self.default_concurrency(processors = Etc.nprocessors)
       return processors if processors <= 4
@@ -52,11 +54,11 @@ module Stryker
     end
 
     def initialize(**options)
-      defaults = DEFAULTS.merge(concurrency: self.class.default_concurrency)
+      defaults = DEFAULTS.merge(concurrency: self.class.default_concurrency, given: NONE_GIVEN)
       super(**defaults.merge(options))
     end
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break
-    # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental
+    # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental, given
   end
 end

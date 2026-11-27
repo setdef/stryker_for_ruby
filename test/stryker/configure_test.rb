@@ -48,7 +48,7 @@ class ConfigureTest < Minitest::Test
   end
 
   def test_reads_stryker_config_json
-    assert_equal(FROM_FILE, configure(JSON_FILE).to_h)
+    assert_equal(FROM_FILE, configure(JSON_FILE).to_h.except(:given))
   end
 
   def test_reads_stryker_config_yml_with_the_same_names

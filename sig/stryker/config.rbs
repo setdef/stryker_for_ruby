@@ -6,7 +6,8 @@ module Stryker
   # describes. Its options have StrykerJS's names and defaults, taken from
   # StrykerJS's `packages/api/schema/stryker-core.json`, and each field has a
   # Ruby name. `Stryker::Config::OPTIONS` pairs each option's camelCase name
-  # with its field.
+  # with its field. It also records which of those options a file or a
+  # flag gave, in `given`.
   #
   # A config is a value: two configs with equal members are equal. It checks
   # no member's name or type, because Configure does. `mutate` and
@@ -50,6 +51,11 @@ module Stryker
     # its parents before it, joined with `.`, as `thresholds.high` is the
     # `high` option inside `thresholds`.
     OPTIONS: Hash[String, Symbol]
+
+    # The empty list of option fields, frozen. It is the default of `given`,
+    # and the source writes it as `Array(nil)` for the reason that
+    # `NO_EXCLUDED_MUTATIONS` gives.
+    NONE_GIVEN: Array[Symbol]
 
     # The patterns that select the files to mutate, relative to the project's
     # root. A pattern that starts with `!` leaves files out.
@@ -98,6 +104,13 @@ module Stryker
     # By default, false.
     attr_reader incremental: bool
 
+    # The fields whose option a configuration file or a flag gave, as
+    # opposed to a field that holds its default, so that a stage can treat a
+    # name the user wrote differently from one the default holds. A field
+    # whose option is given the value of its default is still given. By
+    # default, none.
+    attr_reader given: Array[Symbol]
+
     # The number of project processes to run at once when no option says: the
     # number of logical processors, less one when there are more than four,
     # which is StrykerJS's rule. A machine with 1 to 4 processors gets that
@@ -131,7 +144,8 @@ module Stryker
     #   minutes.
     # - `excluded_mutations`: Array of String, the mutators that make nothing.
     # - `incremental`: bool, whether to store and reuse results.
-    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
+    # - `given`: Array of Symbol, the fields that a file or a flag gave.
+    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool, ?given: Array[Symbol]) -> instance
 
     # Builds the config, with each default for a field that the keywords leave
     # out.

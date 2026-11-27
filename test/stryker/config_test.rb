@@ -39,7 +39,7 @@ class ConfigTest < Minitest::Test
   end
 
   def test_holds_the_options_it_is_given
-    assert_equal(GIVEN, Stryker::Config.new(**GIVEN).to_h)
+    assert_equal(GIVEN, Stryker::Config.new(**GIVEN).to_h.except(:given))
   end
 
   def test_the_options_it_is_not_given_have_strykerjss_defaults
@@ -47,7 +47,11 @@ class ConfigTest < Minitest::Test
   end
 
   def test_a_config_takes_the_defaults_of_this_machine
-    assert_equal(DEFAULTS, config.to_h.except(:mutate, :test_runner, :concurrency))
+    assert_equal(DEFAULTS, config.to_h.except(:mutate, :test_runner, :concurrency, :given))
+  end
+
+  def test_a_config_built_with_no_word_about_it_has_every_option_at_its_default
+    assert_equal([[], [:reporters]], [config.given, config(given: [:reporters]).given])
   end
 
   def test_a_config_takes_the_options_it_is_given_over_the_defaults
@@ -94,7 +98,7 @@ class ConfigTest < Minitest::Test
   end
 
   def test_the_options_pair_with_every_field_once
-    assert_equal(Stryker::Config.members.sort, Stryker::Config::OPTIONS.values.sort)
+    assert_equal(Stryker::Config.members.sort - [:given], Stryker::Config::OPTIONS.values.sort)
   end
 
   def test_the_arrays_of_the_defaults_are_frozen

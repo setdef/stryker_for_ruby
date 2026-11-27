@@ -30,7 +30,8 @@ module Stryker
         values = given
         Config.new(mutate: Types.strings(values.fetch(:mutate, MUTATE)), test_runner: runner(values)).with(
           **values,
-          concurrency: concurrency(values[:concurrency])
+          concurrency: concurrency(values[:concurrency]),
+          given: values.keys
         )
       end
 
