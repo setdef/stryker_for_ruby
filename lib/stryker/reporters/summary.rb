@@ -2,6 +2,7 @@
 
 require_relative "file_tree"
 require_relative "score_table"
+require_relative "test_tree"
 require_relative "two_decimals"
 require_relative "undetected_mutants"
 
@@ -18,7 +19,11 @@ module Stryker
       def to_s
         rows = FileTree.new(@report.file_entries).rows
         table = ScoreTable.new(rows, ink: @ink, high: @high, low: @low)
-        "#{['', '', *undetected(rows), average, table].join("\n")}\n"
+        "#{['', *tests, '', *undetected(rows), average, table].join("\n")}\n"
+      end
+
+      private def tests
+        TestTree.new(@report.tests, @report.mutants, @ink).lines
       end
 
       private def undetected(rows)

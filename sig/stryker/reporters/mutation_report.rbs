@@ -48,6 +48,12 @@ module Stryker
       # The mutated files with their mutants, in the order of the results.
       attr_reader file_entries: Array[FileEntry]
 
+      # The tests of the dry run, in its order.
+      def tests: () -> Array[Test]
+
+      # The mutants of all files, in the order of the results.
+      def mutants: () -> Array[MutationReport::MutantEntry]
+
       # The name of each test of the dry run, by its ID.
       def test_names: () -> Hash[String, String]
 

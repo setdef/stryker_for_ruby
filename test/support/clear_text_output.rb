@@ -27,6 +27,16 @@ module ClearTextOutput
     end
   end
 
+  # The event of a dry run in which `tests` all passed.
+  def dry_run_of(tests)
+    results = tests.map { |test| Stryker::TestResult.new(test:, status: "passed", failure_message: nil, duration_ms: 1.0) }
+    Stryker::Events::DryRunCompleted.new(
+      result: Stryker::DryRunResult.new(
+        results:, buckets: {}, static_bucket: Array.new(0, 0), files_loaded_in_tests: %w[], duration_ms: 2.0
+      )
+    )
+  end
+
   def completed(*results)
     [Stryker::Events::RunCompleted.new(results:)]
   end

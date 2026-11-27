@@ -26,6 +26,14 @@ module Stryker
           @nodes
         end
 
+        def joined
+          children.one? ? children.first.under(@name).joined : self
+        end
+
+        def under(parent)
+          Folder.new(FileNode.joined_name(parent, @name), @nodes)
+        end
+
         def statuses
           @nodes.flat_map(&:statuses)
         end

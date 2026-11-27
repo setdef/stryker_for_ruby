@@ -3,7 +3,9 @@
 module Stryker
   module Reporters
     class Ink
-      CODES = { red: 31, green: 32, yellow: 33, cyan: 36, grey: 90 }.freeze
+      CODES = {
+        red: 31, green: 32, yellow: 33, cyan: 36, grey: 90, red_bright: 91, green_bright: 92, blue_bright: 94
+      }.freeze
       private_constant(:CODES)
 
       def initialize(enabled:)

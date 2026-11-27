@@ -1,8 +1,9 @@
 module Stryker
   module Reporters
     # Paints text with the ANSI escape sequence of a color, or leaves it as it is
-    # when color is off. The colors are `:red`, `:green`, `:yellow`, `:cyan`, and
-    # `:grey`, and each ends with the sequence that resets the foreground color.
+    # when color is off. The colors are `:red`, `:green`, `:yellow`, `:cyan`,
+    # `:grey`, `:red_bright`, `:green_bright`, `:blue_bright`, and each ends with the
+    # sequence that resets the foreground color.
     #
     # ## Examples
     #

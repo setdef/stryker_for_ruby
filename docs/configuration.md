@@ -215,13 +215,21 @@ Set the option to the reporters you want, as in `stryker run --reporters clear-t
 
 #### The `clear-text` reporter
 
-Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. The summary has three parts:
+Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. The summary has four parts:
 
-1. A description of each mutant that no test caught, which has the status `Survived` or `NoCoverage`. It gives the status and the mutator, the file with the line and column of the mutant, the original lines with `-` before each, and the lines with the mutant in place with `+` before each. For a survivor, it then lists the first three tests that ran against the mutant and counts the rest, as `and 2 more tests!`. For a static survivor, it says `Ran all tests for this mutant.` A mutant that a test killed, or that ended with an error or a timeout, gets no description.
-2. The line `Ran 1.25 tests per mutant on average.`, with the number of tests that finished, over all mutants, divided by the number of mutants. For a run with no mutants, the number is `NaN`.
-3. A table of the [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) of all files, of each folder, and of each file, with the counts of killed, timed-out, surviving, uncovered, and errored mutants. The folders that every file shares are left out of the names. Folders come before files, and each group is in the order of the names. The `total` column is the score of all valid mutants, and the `covered` column leaves out the mutants that no test reached. A score is `n/a` when no mutant is valid. A mutant with the status `Ignored` is in no count and in neither score, and no part of the summary describes it. The `json` report lists it.
+1. The tree of the tests that the dry run found, under `All tests`. Each test file is under the folders that some test files share, and a folder that holds one folder or one file is on one line with it, as in `All tests/discount_test.rb` or `a/b`. Each test is under its file, in the order of the dry run, with the line that it starts on, and what it did to the mutants: a green `✓` and `killed 2` for a test that killed two mutants, a blue `~` and `covered 3` for a test that reached three mutants and killed none, and a red `✘` and `covered 0` for a test that reached none. A test with no file is under `All tests` and in no file. A run whose dry run found no test has no tree.
 
-The reporter paints the file and location, the lines with `-` and `+`, and each score with ANSI colors: a score at or above [`thresholds.high`](#thresholdshigh) is green, one at or above [`thresholds.low`](#thresholdslow) is yellow, a lower one is red, and `n/a` is gray. It paints nothing when standard output isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`.
+   ```text
+   All tests/discount_test.rb
+     ~ test_label [line 2] (covered 1)
+     ✓ test_rate [line 3] (killed 1)
+   ```
+
+2. A description of each mutant that no test caught, which has the status `Survived` or `NoCoverage`. It gives the status and the mutator, the file with the line and column of the mutant, the original lines with `-` before each, and the lines with the mutant in place with `+` before each. For a survivor, it then lists the first three tests that ran against the mutant and counts the rest, as `and 2 more tests!`. For a static survivor, it says `Ran all tests for this mutant.` A mutant that a test killed, or that ended with an error or a timeout, gets no description.
+3. The line `Ran 1.25 tests per mutant on average.`, with the number of tests that finished, over all mutants, divided by the number of mutants. For a run with no mutants, the number is `NaN`.
+4. A table of the [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) of all files, of each folder, and of each file, with the counts of killed, timed-out, surviving, uncovered, and errored mutants. The folders that every file shares are left out of the names. Folders come before files, and each group is in the order of the names. The `total` column is the score of all valid mutants, and the `covered` column leaves out the mutants that no test reached. A score is `n/a` when no mutant is valid. A mutant with the status `Ignored` is in no count and in neither score, and no part of the summary describes it. The `json` report lists it.
+
+The reporter paints each test's mark and its name with its line in the tree: the mark green, blue, or red as above, and the name gray. It paints the file and location of each mutant, the lines with `-` and `+`, and each score with ANSI colors: a score at or above [`thresholds.high`](#thresholdshigh) is green, one at or above [`thresholds.low`](#thresholdslow) is yellow, a lower one is red, and `n/a` is gray. It paints nothing when standard output isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`.
 
 #### The `progress` reporter
 

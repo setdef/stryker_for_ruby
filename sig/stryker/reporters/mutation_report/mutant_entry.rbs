@@ -43,6 +43,9 @@ module Stryker
         # The IDs of the tests that reached the mutant.
         def covered_by: () -> Array[String]
 
+        # The IDs of the tests that killed the mutant.
+        def killed_by: () -> Array[String]
+
         # Whether the mutant was static.
         def static?: () -> bool
 

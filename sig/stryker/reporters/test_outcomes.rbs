@@ -1,0 +1,53 @@
+module Stryker
+  module Reporters
+    # What the tests did to the mutants of a run: how many mutants each test
+    # killed, and how many it reached. A mutant that names a test twice counts
+    # twice, as the report names it, because StrykerJS counts from the report.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # outcomes = Stryker::Reporters::TestOutcomes.new(report.mutants)
+    # outcomes.of("ShopTest#test_rate").killed # => 1
+    # ```
+    class TestOutcomes
+      # What one test did to the mutants.
+      class Outcome < Data
+        # How many times the mutants name the test as the one that killed them.
+        attr_reader killed: Integer
+
+        # How many times the mutants name the test as one that reached them.
+        attr_reader covered: Integer
+
+        # Builds the outcome.
+        def self.new: (killed: Integer, covered: Integer) -> instance
+                    | (Integer killed, Integer covered) -> instance
+
+        # How the test's line shows the outcome: the color of its mark, the mark,
+        # and the words in brackets. A test that killed a mutant has a green `✓`
+        # and `killed` and the count. Otherwise a test that reached a mutant has
+        # a blue `~` and `covered` and the count, and a test that reached none has
+        # a red `✘` and `covered 0`.
+        def style: () -> [Symbol, String, String]
+      end
+
+      @mutants: Array[MutationReport::MutantEntry]
+
+      # Builds the outcomes.
+      #
+      # - `mutants`: Array of Stryker::Reporters::MutationReport::MutantEntry, every mutant of the run.
+      def initialize: (Array[MutationReport::MutantEntry] mutants) -> void
+
+      # What the test did to the mutants.
+      #
+      # - `id`: String, the test's ID.
+      def of: (String id) -> Outcome
+
+      private
+
+      # How many times the mutants name the test in `member`, which is
+      # `:killed_by` or `:covered_by`.
+      def named: (Symbol member, String id) -> Integer
+    end
+  end
+end

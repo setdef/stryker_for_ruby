@@ -5,7 +5,8 @@ require "stryker/testing/reporter_contract"
 
 # Checks the clear-text reporter against the contract of the port, and the text
 # it writes against the text that StrykerJS's clear-text reporter writes for the
-# same run: the mutants that no test caught, then the table of scores.
+# same run: the tree of tests, the mutants that no test caught, then the table of
+# scores.
 class ClearTextTest < Minitest::Test
   include Stryker::Testing::ReporterContract
   include ClearTextOutput
@@ -28,6 +29,9 @@ class ClearTextTest < Minitest::Test
   def survivor_text
     <<~TEXT
 
+      All tests/discount_test.rb
+        ~ test_label [line 2] (covered 1)
+        ✓ test_rate [line 3] (killed 1)
 
       [Survived] EqualityOperator
       lib/shop/discount.rb:2:#{column_of('> 100')}
@@ -62,7 +66,11 @@ class ClearTextTest < Minitest::Test
   def test_writes_the_average_and_the_table_for_a_run_with_no_mutants
     text = written { Run.without_mutants }
 
-    assert_equal("\n\nRan NaN tests per mutant on average.\n", text[/\A.*?average\.\n/m])
+    assert_equal(
+      "\nAll tests/discount_test.rb\n  ✘ test_label [line 2] (covered 0)\n  ✘ test_rate [line 3] (covered 0)\n\n" \
+        "Ran NaN tests per mutant on average.\n",
+      text[/\A.*?average\.\n/m]
+    )
   end
 
   def test_paints_the_location_and_the_quoted_lines_when_color_is_on

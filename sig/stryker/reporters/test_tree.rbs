@@ -1,0 +1,49 @@
+module Stryker
+  module Reporters
+    # The tree of tests that the clear-text report starts with, as StrykerJS's
+    # `clear-text` reporter writes it for `reportTests`. `All tests` is the root.
+    # Each test file is under the folders that some test files share, as the
+    # table of scores shows files, and a folder that holds one folder or one
+    # file is on the same line as what it holds, with a slash between. Each
+    # test file has its tests under it, in the order of the dry run, and each
+    # level is indented two spaces more than the one above.
+    #
+    # The tests that have no file are in a file with no name. When no test has a
+    # file, the tests are directly under `All tests`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Reporters::TestTree.new(report.tests, report.mutants, ink).lines
+    # # => ["All tests/discount_test.rb", "  ✓ test_rate [line 3] (killed 1)"]
+    # ```
+    class TestTree
+      @by_path: Hash[String, Array[Test]]
+
+      @outcomes: TestOutcomes
+
+      @ink: Ink
+
+      # The name of the root. Private.
+      ROOT_NAME: String
+
+      # Builds the tree.
+      #
+      # - `tests`: Array of Stryker::Test, every test the dry run found.
+      # - `mutants`: Array of Stryker::Reporters::MutationReport::MutantEntry, every mutant of the run.
+      # - `ink`: Stryker::Reporters::Ink, which paints the tests' lines.
+      def initialize: (Array[Test] tests, Array[MutationReport::MutantEntry] mutants, Ink ink) -> void
+
+      # The lines of text, none when the dry run found no test.
+      def lines: () -> Array[String]
+
+      private
+
+      # The lines of `node`, and of the nodes under it, with `node` at `depth`.
+      def node_lines: (FileTree::Folder | FileTree::FileNode node, Integer depth) -> Array[String]
+
+      # The lines of the tests of `node`, none for a folder.
+      def test_lines: (FileTree::Folder | FileTree::FileNode node, Integer depth) -> Array[String]
+    end
+  end
+end

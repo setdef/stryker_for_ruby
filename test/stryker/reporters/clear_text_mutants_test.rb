@@ -13,15 +13,6 @@ class ClearTextMutantsTest < Minitest::Test
     end
   end
 
-  def dry_run_of(tests)
-    results = tests.map { |test| Stryker::TestResult.new(test:, status: "passed", failure_message: nil, duration_ms: 1.0) }
-    Stryker::Events::DryRunCompleted.new(
-      result: Stryker::DryRunResult.new(
-        results:, buckets: {}, static_bucket: Array.new(0, 0), files_loaded_in_tests: %w[], duration_ms: 2.0
-      )
-    )
-  end
-
   def written_for_tests(count)
     tests = tests_named(count)
     written { [dry_run_of(tests), *completed(Run.survivor.with(covered_by: tests.map(&:id)))] }

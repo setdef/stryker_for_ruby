@@ -47,6 +47,10 @@ module Stryker
           @result.covered_by
         end
 
+        def killed_by
+          @result.killed_by
+        end
+
         def static?
           @result.static
         end

@@ -33,6 +33,16 @@ module Stryker
         # The folders and files in the folder, folders first.
         def children: () -> Array[Folder | FileNode]
 
+        # The folder, or when it holds one node, that node joined with it, and so
+        # on down: a folder `a` that holds a folder `b` that holds files is the
+        # folder `a/b`, and one that holds one file `x.rb` is the file `a/x.rb`.
+        def joined: () -> (Folder | FileNode)
+
+        # The folder as if it were one node with its parent folder, named for both.
+        #
+        # - `parent`: String, the name of the folder that holds the folder.
+        def under: (String parent) -> Folder
+
         # The status of each mutant of the files under the folder.
         def statuses: () -> Array[String]
 

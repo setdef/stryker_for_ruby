@@ -25,6 +25,14 @@ module Stryker
         @tests.map(&:id).zip(@tests.map(&:name)).to_h
       end
 
+      def tests
+        @tests.dup
+      end
+
+      def mutants
+        @file_entries.flat_map(&:mutants)
+      end
+
       def mutant_count
         @file_entries.sum(&:mutant_count)
       end

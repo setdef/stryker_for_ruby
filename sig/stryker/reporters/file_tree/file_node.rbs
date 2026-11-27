@@ -22,6 +22,18 @@ module Stryker
         # What the file holds, which is nothing: a file has no nodes under it.
         def children: () -> Array[Folder | FileNode]
 
+        # The name of a node `name` that is under a node `parent`, with a slash
+        # between, or `parent` when `name` is empty. Private.
+        def self.joined_name: (String parent, String name) -> String
+
+        # The node itself: a file holds nothing to join with.
+        def joined: () -> FileNode
+
+        # The file as if it were one node with its parent folder, named for both.
+        #
+        # - `parent`: String, the name of the folder that holds the file.
+        def under: (String parent) -> FileNode
+
         # The status of each mutant of the file.
         def statuses: () -> Array[String]
 

@@ -9,6 +9,10 @@ module Stryker
       class FileNode
         attr_reader :name
 
+        def self.joined_name(parent, name)
+          name.empty? ? parent : "#{parent}/#{name}"
+        end
+
         def initialize(name, leaf)
           @name = name
           @leaf = leaf
@@ -20,6 +24,14 @@ module Stryker
 
         def children
           Array(nil)
+        end
+
+        def joined
+          self
+        end
+
+        def under(parent)
+          FileNode.new(FileNode.joined_name(parent, @name), @leaf)
         end
 
         def statuses

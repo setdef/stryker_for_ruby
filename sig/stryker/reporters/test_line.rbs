@@ -1,0 +1,38 @@
+module Stryker
+  module Reporters
+    # The line of the tree of tests for one test: a mark, the test's name with
+    # its line in the file, and what the test did. A test that killed a mutant
+    # has a green `✓` and says `killed` and how many. A test that reached a
+    # mutant and killed none has a blue `~` and says `covered` and how many. A
+    # test that reached none has a red `✘` and says `covered 0`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Reporters::TestLine.new(test, outcomes, ink).to_s
+    # # => "✓ test_rate [line 3] (killed 1)"
+    # ```
+    class TestLine
+      @test: Test
+
+      @outcomes: TestOutcomes
+
+      @ink: Ink
+
+      # Builds the line.
+      #
+      # - `test`: Stryker::Test, the test.
+      # - `outcomes`: Stryker::Reporters::TestOutcomes, what the tests did.
+      # - `ink`: Stryker::Reporters::Ink, which paints the line.
+      def initialize: (Test test, TestOutcomes outcomes, Ink ink) -> void
+
+      # The text, without indent.
+      def to_s: () -> String
+
+      private
+
+      # The test's name, and its line in the file when it has a location.
+      def label: () -> String
+    end
+  end
+end
