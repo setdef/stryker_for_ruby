@@ -15,6 +15,40 @@ module Stryker
     # # => "/app/lib/Invoice.rb"
     # ```
     module PathKey
+      # The keys of one file, as `of_file` gives them. It is Enumerable over
+      # the keys that exist, `given` first, so a caller that only needs every
+      # key iterates it.
+      class Keys < Data
+        include Enumerable[String]
+
+        # The key of the path as it was given.
+        attr_reader given: String
+
+        # The key of the path's real path, or nil when the path is relative
+        # or no file is at it.
+        attr_reader real: String?
+
+        # Builds the keys of one file.
+        #
+        # - `given`: String, the key of the path as given.
+        # - `real`: String or nil, the key of the real path.
+        def self.new: (given: String, real: String?) -> instance
+                    | (String given, String? real) -> instance
+
+        # Yields the key of the path as given, and then the key of its real
+        # path when there is one.
+        def each: () { (String key) -> void } -> void
+
+        # The key of the real path when there is one, and otherwise the key of
+        # the path as given.
+        def resolved: () -> String
+
+        # A Hash from each key to `file`: the keys of one file, each
+        # pointing at it.
+        #
+        # - `file`: String, what each key maps to.
+        def to: (String file) -> Hash[String, String]
+      end
       # The key of `path`. With a `separator`, each `separator` in it becomes
       # `/`, and every letter is lowercased, as on Windows, where Ruby can
       # give one file with another drive letter, letter case, or separator.
@@ -31,25 +65,25 @@ module Stryker
       #   Windows, and nil elsewhere.
       def self.of: (String path, ?String? separator) -> String
 
-      # The keys of the two paths that can name the file at `path`: `path`
-      # itself, and its real path, with every symbolic link and `..`
-      # resolved. Ruby gives the loader's hook a path that can hold either,
+      # The `Keys` of the two paths that can name the file at `path`: `path`
+      # itself (`given`), and its real path (`real`), with every symbolic link
+      # and `..` resolved. Ruby gives the loader's hook a path that can hold either,
       # and gives a file that Ruby or Bootsnap compiles its real path, in the
       # file's frames and in `$LOADED_FEATURES`. A file that the hook
       # compiles shows the path the hook received. When no file is at
-      # `path`, or `path` is relative, it is the key of `path` alone. It reads
+      # `path`, or `path` is relative, `real` is nil. It reads
       # the disk once, to resolve the real path.
       #
       # - `path`: String, a file's path.
       # - `separator`: String or nil, as `of` takes it.
       #
       # ```ruby
-      # Stryker::Runtime::PathKey.of_file("/var/app/lib/invoice.rb")
+      # Stryker::Runtime::PathKey.of_file("/var/app/lib/invoice.rb").to_a
       # # => ["/var/app/lib/invoice.rb", "/private/var/app/lib/invoice.rb"], on macOS
-      # Stryker::Runtime::PathKey.of_file("C:\\App\\Lib\\Invoice.rb", "\\")
+      # Stryker::Runtime::PathKey.of_file("C:\\App\\Lib\\Invoice.rb", "\\").to_a
       # # => ["c:/app/lib/invoice.rb"], when no file is there
       # ```
-      def self.of_file: (String path, ?String? separator) -> Array[String]
+      def self.of_file: (String path, ?String? separator) -> Keys
 
       # The absolute form of `path`, a path that Ruby gave the loader's hook.
       # A load that Ruby finds relative to the working directory gives the

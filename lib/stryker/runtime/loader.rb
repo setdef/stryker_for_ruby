@@ -11,7 +11,7 @@ require_relative "served"
 module Stryker
   module Runtime
     module Loader
-      CACHE = Ractor.make_shareable(LookupTable.new(files: {}, names: Set.new, separator: nil))
+      CACHE = Ractor.make_shareable(LookupTable.of({}, nil))
       SERVED = Served.new
       public_constant(:CACHE, :SERVED)
 
@@ -35,7 +35,7 @@ module Stryker
         # reads, and a require there runs in the main Ractor. What it records
         # is the path as Ruby gave it, because Ruby records a loaded file in
         # $LOADED_FEATURES under that path, and one file can come under two.
-        SERVED.add(PathKey.of(path, CACHE.separator)) if ractor.equal?(Ractor.main)
+        SERVED.add(CACHE.key(path)) if ractor.equal?(Ractor.main)
         iseq
       end
 
@@ -63,9 +63,7 @@ module Stryker
         # hook served it, because the hook may have served the file under
         # another path.
         cache = CACHE
-        separator = cache.separator
-        instrumented = PathKey.of_file(feature, separator).any? { |key| cache.files.key?(key) }
-        instrumented && !SERVED.include?(PathKey.of(feature, separator))
+        cache.instrumented?(feature) && !SERVED.include?(cache.key(feature))
       end
       private_class_method(:missed?, :use)
     end

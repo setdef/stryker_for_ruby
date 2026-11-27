@@ -3,6 +3,24 @@
 module Stryker
   module Runtime
     module PathKey
+      class Keys < Data.define(:given, :real)
+        include Enumerable
+
+        def each(&)
+          (real ? [given, real] : [given]).each(&)
+        end
+
+        def resolved
+          real || given
+        end
+
+        def to(file)
+          to_h { |key| [key, file] }
+        end
+
+        # @dynamic given, real
+      end
+
       def self.of(path, separator = File::ALT_SEPARATOR)
         # Ruby on Windows can give the same file with a different drive
         # letter, letter case, or separator. Elsewhere a path is compared as
@@ -21,7 +39,7 @@ module Stryker
         # link or "..", and gives a file it compiles itself the real path, in
         # its frames and in $LOADED_FEATURES.
         real = real(path)
-        (real ? [path, real] : [path]).map { |form| of(form, separator) }
+        Keys.new(given: of(path, separator), real: real && of(real, separator))
       end
 
       def self.located(path)

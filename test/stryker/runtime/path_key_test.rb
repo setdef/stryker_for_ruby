@@ -42,17 +42,37 @@ class PathKeyTest < Minitest::Test
   end
 
   def test_a_path_that_no_file_has_is_given_back_as_it_is
-    assert_equal(["/app/lib/Invoice.rb"], Stryker::Runtime::PathKey.of_file("/app/lib/Invoice.rb", nil))
+    assert_equal(["/app/lib/Invoice.rb"], Stryker::Runtime::PathKey.of_file("/app/lib/Invoice.rb", nil).to_a)
   end
 
   def test_a_path_on_windows_that_no_file_has_is_folded
-    assert_equal(["c:/app/lib/invoice.rb"], Stryker::Runtime::PathKey.of_file("C:\\App\\Lib\\Invoice.rb", WINDOWS))
+    assert_equal(["c:/app/lib/invoice.rb"], Stryker::Runtime::PathKey.of_file("C:\\App\\Lib\\Invoice.rb", WINDOWS).to_a)
   end
 
   def test_a_path_with_a_file_gets_its_real_path_as_well_on_windows
     path = file
 
-    assert_equal([path, File.realpath(path)].map(&:downcase), Stryker::Runtime::PathKey.of_file(path, WINDOWS))
+    assert_equal([path, File.realpath(path)].map(&:downcase), Stryker::Runtime::PathKey.of_file(path, WINDOWS).to_a)
+  end
+
+  def test_the_keys_of_a_file_have_names
+    path = file
+    keys = Stryker::Runtime::PathKey.of_file(path, nil)
+
+    assert_equal([path, File.realpath(path), File.realpath(path)], [keys.given, keys.real, keys.resolved])
+  end
+
+  def test_a_path_that_no_file_has_has_no_real_key_and_is_resolved_as_it_is
+    keys = Stryker::Runtime::PathKey.of_file("/app/lib/Invoice.rb", nil)
+
+    assert_equal([nil, "/app/lib/Invoice.rb"], [keys.real, keys.resolved])
+  end
+
+  def test_the_keys_of_a_file_are_enumerable_and_give_the_real_key_after_the_given_one
+    path = file
+    keys = Stryker::Runtime::PathKey.of_file(path, nil)
+
+    assert_equal([path, File.realpath(path)], keys.to_a)
   end
 
   # Ruby gives a built-in feature such as thread.rb as the bare name it was
@@ -63,7 +83,7 @@ class PathKeyTest < Minitest::Test
     path = file
     found = -> (_name) { path }
 
-    File.stub(:realpath, found) { assert_equal(["thread.rb"], Stryker::Runtime::PathKey.of_file("thread.rb", nil)) }
+    File.stub(:realpath, found) { assert_equal(["thread.rb"], Stryker::Runtime::PathKey.of_file("thread.rb", nil).to_a) }
   end
 
   def test_a_relative_path_has_no_real_path

@@ -64,9 +64,9 @@ module Stryker
       # and the file's real path (`Stryker::Runtime::PathKey.real`) as its
       # path, so `__dir__` and `absolute_path` show what Ruby shows for a
       # file it compiles itself, or nil when that file isn't instrumented. It
-      # compares `path`'s key (`Stryker::Runtime::PathKey.of`) with the
-      # cache's. In the main Ractor, it also records in `SERVED` the key of
-      # `path`, as Ruby gave it, because that is the path that Ruby records
+      # asks `CACHE` for the file (`Stryker::Runtime::LookupTable#file`). In
+      # the main Ractor, it also records in `SERVED` the key of `path`
+      # (`Stryker::Runtime::LookupTable#key`), as Ruby gave it, because that is the path that Ruby records
       # the file under in `$LOADED_FEATURES`. It resolves the real path once,
       # and twice for a file that `LookupTable#file` finds by its base name,
       # because the lookup resolves it as well.
@@ -93,11 +93,11 @@ module Stryker
       # module ahead of the hook (`Stryker::Runtime::Hook.ahead`) when there
       # is one.
       #
-      # A file in `features` matches an instrumented file when its path, or
-      # its real path, has one of that file's keys
-      # (`Stryker::Runtime::PathKey.of_file`), so a file that the hook
-      # missed because Ruby gave it through another symbolic link is listed
-      # too. It counts as served only when the hook served that very path,
+      # A file in `features` matches an instrumented file when `CACHE` says
+      # it is instrumented (`Stryker::Runtime::LookupTable#instrumented?`):
+      # its path, or its real path, has one of that file's keys, so a file
+      # that the hook missed because Ruby gave it through another symbolic
+      # link is listed too. It counts as served only when the hook served that very path,
       # so a file that loaded under two spellings, with the hook serving
       # one, is listed. An instrumented file that no test loaded isn't in `features`,
       # and isn't an error. It resolves the real path of each file in

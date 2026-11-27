@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "lookup_table"
-require_relative "path_key"
 
 module Stryker
   module Runtime
@@ -23,7 +22,7 @@ module Stryker
       end
 
       def self.read(directory, separator = File::ALT_SEPARATOR)
-        LookupTable.of(table(directory, separator), separator)
+        LookupTable.of(table(directory), separator)
       end
 
       def self.text(file)
@@ -47,23 +46,15 @@ module Stryker
         paths.map(&:b).join(SEPARATOR)
       end
 
-      def self.keyed(path, file, separator)
-        # Under both its paths, because one process gives the hook the real
-        # path for a file it finds through $LOAD_PATH or require_relative,
-        # and the path as written for an absolute require.
-        PathKey.of_file(path, separator).map { |key| [key, file] }
-      end
-
       def self.entry(directory, place)
         File.join(directory, "#{place}.rb")
       end
 
-      def self.table(directory, separator)
+      def self.table(directory)
         paths = text(File.join(directory, INDEX)).split(SEPARATOR)
-        pairs = paths.each_with_index.flat_map { |path, place| keyed(path, entry(directory, place), separator) }
-        pairs.to_h
+        paths.each_with_index.to_h { |path, place| [path, entry(directory, place)] }
       end
-      private_class_method(:entry, :index, :keyed, :table)
+      private_class_method(:entry, :index, :table)
     end
   end
 end

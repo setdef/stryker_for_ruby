@@ -47,15 +47,12 @@ module Stryker
       def self.write: (String directory, Hash[String, String] sources) -> nil
 
       # Reads the index in `directory`, and returns the shareable
-      # Stryker::Runtime::LookupTable of each instrumented file's keys and
-      # the file in the cache that holds its instrumented source. Each
-      # instrumented file has the keys of its path and of its real path
-      # (`Stryker::Runtime::PathKey.of_file`), because Ruby gives the hook
-      # the real path of a file it finds through `$LOAD_PATH` or
-      # `require_relative`, and the path as written for an absolute
-      # `require`, in one process. It resolves each real path once, and reads
-      # no instrumented source. Raises SystemCallError when `directory` holds
-      # no index.
+      # Stryker::Runtime::LookupTable of each instrumented file's path and
+      # the file in the cache that holds its instrumented source. The table
+      # keys each file as it says
+      # (`Stryker::Runtime::LookupTable.of`). It resolves each real path
+      # once, and reads no instrumented source. Raises SystemCallError when
+      # `directory` holds no index.
       #
       # - `directory`: String, the cache's directory.
       # - `separator`: String or nil, the system's alternative path
@@ -73,9 +70,7 @@ module Stryker
 
       private def self.index: (Array[String] paths) -> String
 
-      private def self.table: (String directory, String? separator) -> Hash[String, String]
-
-      private def self.keyed: (String path, String file, String? separator) -> Array[[String, String]]
+      private def self.table: (String directory) -> Hash[String, String]
 
       private def self.entry: (String directory, Integer place) -> String
 

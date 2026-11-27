@@ -6,6 +6,12 @@ module Stryker
     # specifies. `Stryker::Runtime::Cache.read` builds it from the cache's
     # index. It is shareable, so the hook reads it in any Ractor.
     #
+    # The table owns the rule that a file has two keys: the key of its path as
+    # given, and the key of its real path, with every symbolic link and `..`
+    # resolved (`Stryker::Runtime::PathKey.of_file`). It builds the keys
+    # and the base names from the files it is given, and answers whether a
+    # path is instrumented, so no caller reads or builds them.
+    #
     # ## Examples
     #
     # ```ruby
@@ -14,36 +20,37 @@ module Stryker
     # # => "/tmp/cache/0.rb"
     # table.file("/app/lib/receipt.rb")
     # # => nil
+    # table.instrumented?("/app/lib/invoice.rb")
+    # # => true
     # ```
     class LookupTable < Data
       # Each key of each instrumented file, as
       # `Stryker::Runtime::PathKey.of_file` gives them with `separator`, and
-      # the file in the cache that holds its instrumented source.
+      # the file in the cache that holds its instrumented source. Only the
+      # table reads it.
       attr_reader files: Hash[String, String]
 
       # The base name of each key in `files`, with letter case folded
       # (`Stryker::Runtime::PathKey.names`). `file` resolves the real path of
       # a file that it can't find only when the file's base name is here.
+      # Only the table reads it.
       attr_reader names: Set[String]
 
       # The alternative path separator that the keys were made with, or nil.
       attr_reader separator: String?
 
-      # Builds a table from its parts. `of` builds the one a project process
-      # uses.
-      #
-      # - `files`: Hash of String to String, from each key to its file.
-      # - `names`: Set of String, the folded base name of each key.
-      # - `separator`: String or nil, the separator of the keys.
-      def self.new: (files: Hash[String, String], names: Set[String], separator: String?) -> instance
-                  | (Hash[String, String] files, Set[String] names, String? separator) -> instance
+      private def self.new: (files: Hash[String, String], names: Set[String], separator: String?) -> instance
 
-      # The shareable table of `files`, with the folded base name of each of
-      # its keys.
+      # The shareable table of `paths`: each path's keys, and the folded base
+      # name of each key. It resolves the real path of each path once. Only
+      # `of` builds a table, so `files` and `names` never disagree.
       #
-      # - `files`: Hash of String to String, from each key to its file.
-      # - `separator`: String or nil, the separator that made the keys.
-      def self.of: (Hash[String, String] files, String? separator) -> LookupTable
+      # - `paths`: Hash of String to String, from each instrumented file's
+      #   path to the file in the cache that holds its instrumented source.
+      #   A path can be in any encoding.
+      # - `separator`: String or nil, the separator that makes the keys, as
+      #   `Stryker::Runtime::PathKey.of` takes it.
+      def self.of: (Hash[String, String] paths, String? separator) -> LookupTable
 
       # The file in the cache that holds the instrumented source of the file
       # at `path`, or nil when that file isn't instrumented. It compares
@@ -65,7 +72,26 @@ module Stryker
       # - `path`: String, a file's path, as Ruby gives it to the hook.
       def file: (String path) -> String?
 
-      private def resolved: (String path, String key) -> String?
+      # Whether `path` is an instrumented file: `path`'s key, or the key of its
+      # real path, is one of the table's keys. Unlike `file`, it resolves the
+      # real path of every absolute `path`, whatever its base name, and it
+      # never resolves a relative one, because the loading check gives it
+      # `$LOADED_FEATURES`, where Ruby lists a built-in feature such as
+      # `thread.rb` by its bare name. It reads the disk once. It tells nothing
+      # about whether the hook served the file.
+      #
+      # - `path`: String, a file's path.
+      def instrumented?: (String path) -> bool
+
+      # The key of `path` as `Stryker::Runtime::PathKey.of` makes it with the
+      # table's separator, the form in which the table compares `path` as
+      # given. The loader records each file it serves under it. It reads
+      # nothing from disk.
+      #
+      # - `path`: String, a file's path.
+      def key: (String path) -> String
+
+      private def resolved: (String path, String own) -> String?
     end
   end
 end
