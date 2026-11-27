@@ -11,9 +11,19 @@ module Stryker
           new(name, Leaves.grouped(leaves).flat_map { |child, group| nodes(child, group) })
         end
 
+        attr_reader :name
+
         def initialize(name, nodes)
           @name = name
           @nodes = nodes
+        end
+
+        def file
+          nil
+        end
+
+        def children
+          @nodes
         end
 
         def statuses
@@ -31,6 +41,8 @@ module Stryker
           [of(name, group.map(&:below))]
         end
         private_class_method(:nodes)
+
+        # @dynamic name
       end
     end
   end

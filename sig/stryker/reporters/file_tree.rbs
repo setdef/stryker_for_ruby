@@ -23,10 +23,14 @@ module Stryker
       # The name of the row for all files. Private.
       ROOT_NAME: String
 
+      # The folder for all files, which holds the folders and files under it.
+      attr_reader root: Folder
+
       # Builds the tree.
       #
       # - `files`: Array of Stryker::Reporters::MutationReport::FileEntry, the files to show.
-      def initialize: (Array[MutationReport::FileEntry] files) -> void
+      # - `root_name`: String, the name of the row for all files, `All files` unless given.
+      def initialize: (Array[MutationReport::FileEntry] files, ?String root_name) -> void
 
       # The rows, each followed by the rows under it.
       def rows: () -> Array[Row]

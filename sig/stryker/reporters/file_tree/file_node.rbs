@@ -13,6 +13,15 @@ module Stryker
         # - `leaf`: Stryker::Reporters::FileTree::Leaf, the file.
         def initialize: (String name, Leaf leaf) -> void
 
+        # The file's name.
+        attr_reader name: String
+
+        # The file.
+        def file: () -> MutationReport::FileEntry
+
+        # What the file holds, which is nothing: a file has no nodes under it.
+        def children: () -> Array[Folder | FileNode]
+
         # The status of each mutant of the file.
         def statuses: () -> Array[String]
 

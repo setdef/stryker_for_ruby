@@ -17,7 +17,7 @@ module Stryker
                     | (MutationReport::FileEntry file, Array[String] names) -> instance
 
         # The leaf of `file`, with the names of its path split at each slash or
-        # backslash.
+        # backslash. A file whose path is blank has the one name `""`.
         #
         # - `file`: the file.
         def self.of: (MutationReport::FileEntry file) -> Leaf

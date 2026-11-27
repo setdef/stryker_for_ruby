@@ -7,9 +7,19 @@ module Stryker
   module Reporters
     class FileTree
       class FileNode
+        attr_reader :name
+
         def initialize(name, leaf)
           @name = name
           @leaf = leaf
+        end
+
+        def file
+          @leaf.file
+        end
+
+        def children
+          Array(nil)
         end
 
         def statuses
@@ -17,8 +27,10 @@ module Stryker
         end
 
         def rows(depth)
-          [Row.new(name: @name, depth:, file: @leaf.file, metrics: Metrics.count(statuses))]
+          [Row.new(name: @name, depth:, file:, metrics: Metrics.count(statuses))]
         end
+
+        # @dynamic name
       end
     end
   end

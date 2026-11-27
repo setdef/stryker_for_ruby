@@ -68,6 +68,34 @@ class FileTreeTest < Minitest::Test
     assert_equal([nil, nil, "lib/x/b.rb", "lib/a.rb"], paths)
   end
 
+  def tree(*paths, root_name: nil)
+    files = none(*paths).map { |path, statuses| File.new(path, statuses) }
+    root_name ? Stryker::Reporters::FileTree.new(files, root_name) : Stryker::Reporters::FileTree.new(files)
+  end
+
+  def test_names_the_root_row_by_the_name_given
+    assert_equal("All tests", tree("a.rb", root_name: "All tests").rows.first.name)
+  end
+
+  def test_gives_the_root_folder_with_the_folders_and_files_in_it
+    root = tree("lib/a.rb", "lib/x/b.rb").root
+
+    assert_equal(
+      [["All files", nil], [["x", nil], ["a.rb", "lib/a.rb"]]],
+      [[root.name, root.file], root.children.map { |node| [node.name, node.file&.path] }]
+    )
+  end
+
+  def test_gives_a_file_no_children_and_a_folder_its_nodes
+    root = tree("lib/x/b.rb", "lib/a.rb").root
+
+    assert_equal([[], ["b.rb"]], [root.children.last.children, root.children.first.children.map(&:name)])
+  end
+
+  def test_places_a_file_whose_path_is_blank_as_a_file_without_a_name
+    assert_equal(["All files", " ", " a.rb"], outline(*none("", "a.rb")))
+  end
+
   def test_reads_the_backslashes_of_a_windows_path_as_folder_separators
     paths = none("lib\\a.rb", "lib\\x\\b.rb")
 

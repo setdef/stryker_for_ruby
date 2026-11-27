@@ -5,7 +5,8 @@ module Stryker
     class FileTree
       class Leaf < Data.define(:file, :names)
         def self.of(file)
-          new(file, file.path.split(%r{[/\\]}).reject(&:empty?))
+          names = file.path.split(%r{[/\\]}).reject(&:empty?)
+          new(file, names.empty? ? [""] : names)
         end
 
         def statuses

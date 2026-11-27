@@ -24,6 +24,15 @@ module Stryker
         # - `nodes`: Array of Stryker::Reporters::FileTree::Folder or FileNode, what the folder holds.
         def initialize: (String name, Array[Folder | FileNode] nodes) -> void
 
+        # The folder's name.
+        attr_reader name: String
+
+        # The file of the node, which a folder has none of.
+        def file: () -> nil
+
+        # The folders and files in the folder, folders first.
+        def children: () -> Array[Folder | FileNode]
+
         # The status of each mutant of the files under the folder.
         def statuses: () -> Array[String]
 
