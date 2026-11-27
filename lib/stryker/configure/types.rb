@@ -51,6 +51,7 @@ module Stryker
         "thresholds.break": score_or_null,
         timeoutMS: number("a number of milliseconds, 0 or more", 0..),
         timeoutFactor: factor,
+        dryRunTimeoutMinutes: number("a number of minutes, 0 or more", 0..),
         "mutator.excludedMutations": list_of("mutator names"),
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
       }

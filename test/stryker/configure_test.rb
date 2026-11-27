@@ -18,6 +18,7 @@ class ConfigureTest < Minitest::Test
       "thresholds": { "high": 90, "low": 70, "break": 50 },
       "timeoutMS": 1000,
       "timeoutFactor": 2,
+      "dryRunTimeoutMinutes": 10,
       "mutator": { "excludedMutations": ["BooleanLiteral"] },
       "incremental": true,
       "mutate": ["lib/models/**/*.rb"]
@@ -34,6 +35,7 @@ class ConfigureTest < Minitest::Test
     threshold_break: 50,
     timeout_ms: 1000,
     timeout_factor: 2.0,
+    dry_run_timeout_minutes: 10,
     excluded_mutations: ["BooleanLiteral"],
     incremental: true,
   }.freeze

@@ -17,6 +17,7 @@ class ConfigTest < Minitest::Test
     threshold_break: 50,
     timeout_ms: 1000,
     timeout_factor: 2.0,
+    dry_run_timeout_minutes: 10,
     excluded_mutations: ["StringLiteral"],
     incremental: true,
   }.freeze
@@ -27,6 +28,7 @@ class ConfigTest < Minitest::Test
     threshold_break: nil,
     timeout_ms: 5000,
     timeout_factor: 1.5,
+    dry_run_timeout_minutes: 5,
     excluded_mutations: [],
     incremental: false,
   }.freeze
@@ -86,7 +88,7 @@ class ConfigTest < Minitest::Test
 
   def test_the_option_names_are_strykerjss
     names = %w[mutate testRunner reporters concurrency thresholds.high thresholds.low thresholds.break]
-    names.push("timeoutMS", "timeoutFactor", "mutator.excludedMutations", "incremental")
+    names.push("timeoutMS", "timeoutFactor", "dryRunTimeoutMinutes", "mutator.excludedMutations", "incremental")
 
     assert_equal(names, Stryker::Config::OPTIONS.keys)
   end

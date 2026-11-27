@@ -13,6 +13,7 @@ module Stryker
     :threshold_break,
     :timeout_ms,
     :timeout_factor,
+    :dry_run_timeout_minutes,
     :excluded_mutations,
     :incremental
   )
@@ -26,6 +27,7 @@ module Stryker
       "thresholds.break": :threshold_break,
       timeoutMS: :timeout_ms,
       timeoutFactor: :timeout_factor,
+      dryRunTimeoutMinutes: :dry_run_timeout_minutes,
       "mutator.excludedMutations": :excluded_mutations,
       incremental: :incremental,
     }.transform_keys(&:to_s).freeze
@@ -37,6 +39,7 @@ module Stryker
       threshold_break: nil,
       timeout_ms: 5000,
       timeout_factor: 1.5,
+      dry_run_timeout_minutes: 5,
       excluded_mutations: NO_EXCLUDED_MUTATIONS,
       incremental: false,
     }.freeze
@@ -54,6 +57,6 @@ module Stryker
     end
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break
-    # @dynamic timeout_ms, timeout_factor, excluded_mutations, incremental
+    # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental
   end
 end

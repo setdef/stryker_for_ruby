@@ -73,6 +73,7 @@ The checks read the type of `testRunner` and `reporters`. They don't check that 
 | [`thresholds.break`](#thresholdsbreak) | number from 0 to 100, or null | none |
 | [`timeoutMS`](#timeoutms) | number of 0 or more | `5000` |
 | [`timeoutFactor`](#timeoutfactor) | number of 0 or more | `1.5` |
+| [`dryRunTimeoutMinutes`](#dryruntimeoutminutes) | number of 0 or more | `5` |
 | [`mutator.excludedMutations`](#mutatorexcludedmutations) | list of strings | none |
 | [`incremental`](#incremental) | boolean | `false` |
 
@@ -166,6 +167,10 @@ limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
 ```
 
 A run of a mutant that tests reach has the tests that passed and reached it. A run of a static mutant has every test that passed in the dry run. The overhead is the dry run's time from the start of its first test to the end of its last, less the sum of its tests' times: the test runner's time between tests. With the defaults, a mutant reached by two tests that took 100 ms and 20 ms, in a dry run whose overhead was 30 ms, has a limit of 1.5 × 120 + 5000 + 30 = 5210 ms.
+
+### `dryRunTimeoutMinutes`
+
+How many minutes the dry run's tests may take, from the start of the first test to the end of the last. It takes any number of 0 or more, such as `0.5`. The default is `5`, as in StrykerJS. A dry run that takes longer fails the run. Raise it for a test suite that takes longer than 5 minutes to run once.
 
 ### `mutator.excludedMutations`
 

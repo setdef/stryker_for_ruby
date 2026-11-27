@@ -26,7 +26,7 @@ class ConfigureNumbersTest < Minitest::Test
   end
 
   def test_a_number_that_is_not_finite_is_refused_for_every_option_that_takes_a_number
-    names = %i[timeoutMS timeoutFactor thresholds.high thresholds.low thresholds.break]
+    names = %i[timeoutMS timeoutFactor dryRunTimeoutMinutes thresholds.high thresholds.low thresholds.break]
     refused = names.to_h do |name|
       [name, [Float::INFINITY, Float::NAN].map { |value| refusal({}, options: { name => value }).lines.count }]
     end
@@ -56,5 +56,18 @@ class ConfigureNumbersTest < Minitest::Test
     message = refusal({}, options: { :timeoutMS => 10 ** 400 })
 
     assert_includes(message, '"--timeout-ms" on the command line takes a number of milliseconds, 0 or more')
+  end
+
+  def test_the_dry_run_takes_a_fraction_of_a_minute
+    config = configure({ "stryker.config.json": '{ "dryRunTimeoutMinutes": 0.5 }' })
+
+    assert_in_delta(0.5, config.dry_run_timeout_minutes)
+  end
+
+  def test_a_negative_dry_run_limit_is_refused
+    assert_equal(
+      '"--dry-run-timeout-minutes" on the command line takes a number of minutes, 0 or more, but its value is -1.',
+      refusal({}, options: { :dryRunTimeoutMinutes => -1 }).lines.last.strip
+    )
   end
 end

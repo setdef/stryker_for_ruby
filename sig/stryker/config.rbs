@@ -86,6 +86,11 @@ module Stryker
     # `timeout_ms` is added. By default, 1.5.
     attr_reader timeout_factor: Float
 
+    # How many minutes the dry run's tests may take, from the start of the
+    # first to the end of the last. A dry run past it fails the run. By
+    # default, 5.
+    attr_reader dry_run_timeout_minutes: Numeric
+
     # The names of the mutators that make no mutant. By default, none.
     attr_reader excluded_mutations: Array[String]
 
@@ -122,9 +127,11 @@ module Stryker
     # - `threshold_break`: Numeric or nil, the score that breaks the run.
     # - `timeout_ms`: Numeric, the time a run's limit adds.
     # - `timeout_factor`: Float, the factor on the dry-run time.
+    # - `dry_run_timeout_minutes`: Numeric, the dry run's time limit in
+    #   minutes.
     # - `excluded_mutations`: Array of String, the mutators that make nothing.
     # - `incremental`: bool, whether to store and reuse results.
-    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
+    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool) -> instance
 
     # Builds the config, with each default for a field that the keywords leave
     # out.
