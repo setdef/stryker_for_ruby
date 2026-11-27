@@ -30,6 +30,20 @@ class CodeUnitsTest < Minitest::Test
     assert_equal([2, 2, 2, 2], [family, flag, heart, keycap].map { |text| Stryker::Reporters::CodeUnits.width(text) })
   end
 
+  def test_counts_two_for_the_subdivision_flags_that_are_tag_sequences
+    england = "\u{1F3F4}\u{E0067}\u{E0062}\u{E0065}\u{E006E}\u{E0067}\u{E007F}"
+    scotland = "\u{1F3F4}\u{E0067}\u{E0062}\u{E0073}\u{E0063}\u{E0074}\u{E007F}"
+    wales = "\u{1F3F4}\u{E0067}\u{E0062}\u{E0077}\u{E006C}\u{E0073}\u{E007F}"
+
+    assert_equal([2, 2, 2], [england, scotland, wales].map { |text| Stryker::Reporters::CodeUnits.width(text) })
+  end
+
+  def test_counts_the_tags_of_a_subdivision_that_emoji_regex_has_no_flag_for
+    texas = "\u{1F3F4}\u{E0075}\u{E0073}\u{E0074}\u{E0078}\u{E007F}"
+
+    assert_equal(12, Stryker::Reporters::CodeUnits.width(texas))
+  end
+
   def test_leaves_out_the_first_code_units
     tails = [0, 1, 3, 4].map { |count| Stryker::Reporters::CodeUnits.tail(EMOJI, count) }
 

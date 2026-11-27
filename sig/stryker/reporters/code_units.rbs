@@ -36,8 +36,13 @@ module Stryker
       # Matches a pictograph, with its skin tone. Private.
       PICTOGRAPH: Regexp
 
-      # Matches an emoji: a pictograph, several joined by a zero-width joiner, a
-      # flag, or a keycap. Private.
+      # Matches the flag of England, Scotland, or Wales: a black flag followed by
+      # tag characters and a cancel tag. These are the three subdivision flags that
+      # StrykerJS's emoji-regex matches whole. Private.
+      SUBDIVISION_FLAG: Regexp
+
+      # Matches an emoji: a subdivision flag, a pictograph, several joined by a
+      # zero-width joiner, a flag, or a keycap. Private.
       EMOJI: Regexp
 
       # Turns UTF-16 bytes into a UTF-8 String. Private.
