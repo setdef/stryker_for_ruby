@@ -21,7 +21,7 @@ class WatchesTest < Minitest::Test
   # how long Ruby takes to start never counts against the limit. With +ended+,
   # it starts once the process has ended, and a pipe that another process
   # holds open is what keeps the watch going.
-  def watches(scripts, timeout_ms: 30_000, ended: false)
+  def watches(scripts, timeout_ms: 30_000, ended: false, limits: {})
     Stryker::Isolation::Watches.new.tap do |set|
       scripts.each do |subject, script|
         pid, reader = scripted("$stdout.sync = true; #{script}")
@@ -30,7 +30,7 @@ class WatchesTest < Minitest::Test
         # the test waiting.
         reader.wait_readable
         child.end_within(60) if ended
-        timer = Stryker::Isolation::Timer.new(timeout_ms)
+        timer = Stryker::Isolation::Timer.new(limits.fetch(subject, timeout_ms))
         set.add(Stryker::Isolation::Watch.new(subject, child, reader, timer))
       end
     end
@@ -71,6 +71,18 @@ class WatchesTest < Minitest::Test
 
     assert_equal([[%({"started":{}}\n)], true], [lines[:slow], ending.timed_out])
     assert_operator(ending.duration_ms, :>=, 300)
+  end
+
+  def test_the_process_whose_time_ends_first_ends_first
+    # The wait lasts until the first time limit, not the last, so a process
+    # past its limit isn't left running until the others are past theirs.
+    set = watches({ short: "#{STARTED}; sleep", long: "#{STARTED}; sleep" }, limits: { short: 300, long: 10_000 })
+    ended = []
+    _, ended = set.wait([]) { nil } while ended.empty?
+
+    assert_equal([:short], ended.map(&:first))
+  ensure
+    set&.stop
   end
 
   # A script that starts a grandchild, which inherits the pipe and outlives
