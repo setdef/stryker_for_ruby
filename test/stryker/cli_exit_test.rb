@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../support/cli_project")
+require "stryker/isolation/dry_run_error"
 
 # Checks the exit status of `stryker run` for each way a run ends.
 class CLIExitTest < Minitest::Test
@@ -32,6 +33,13 @@ class CLIExitTest < Minitest::Test
 
   def test_a_terminate_signal_exits_as_a_shell_reports_it
     assert_equal(143, stryker("run", pipeline: RecordingPipeline.new(raises: SignalException.new("TERM"))).status)
+  end
+
+  def test_a_dry_run_that_fails_exits_with_status_two_and_its_message_alone
+    failure = Stryker::Isolation::DryRunError.new("The dry run failed: ShopTest#test_total failed.")
+    outcome = stryker("run", pipeline: RecordingPipeline.new(raises: failure))
+
+    assert_equal([2, "The dry run failed: ShopTest#test_total failed.\n"], [outcome.status, outcome.err])
   end
 
   def test_an_unexpected_error_exits_with_status_two_with_a_backtrace_and_where_to_report_it
