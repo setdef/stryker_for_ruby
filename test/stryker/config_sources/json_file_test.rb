@@ -35,6 +35,17 @@ class JsonFileTest < Minitest::Test
     end
   end
 
+  def test_says_that_a_byte_order_mark_is_the_problem_instead_of_an_unexpected_character
+    in_file("\uFEFF{ \"mutate\": [] }") do |path|
+      error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }
+      assert_equal(
+        "#{path} isn't valid JSON: it starts with a byte-order mark, which JSON doesn't allow. " \
+          "Save the file as UTF-8 without one.",
+        error.message
+      )
+    end
+  end
+
   def test_names_the_file_by_its_label_when_it_has_one
     in_file("[]") do |path|
       error = assert_raises(Stryker::ConfigError) { Stryker::ConfigSources::JsonFile.new(path, label: "stryker.config.json").read }

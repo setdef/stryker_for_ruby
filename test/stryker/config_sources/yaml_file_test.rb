@@ -35,6 +35,10 @@ class YamlFileTest < Minitest::Test
     in_file("# nothing yet\n") { |path| assert_empty(source_under_test(path).read) }
   end
 
+  def test_reads_a_file_that_starts_with_a_byte_order_mark
+    in_file("\uFEFFmutate: [lib]\n") { |path| assert_equal(["lib"], source_under_test(path).read["mutate"]) }
+  end
+
   def test_says_where_the_syntax_error_is
     in_file(malformed_text) do |path|
       error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }

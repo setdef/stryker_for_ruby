@@ -23,6 +23,8 @@ A configuration file is JSON or YAML, and holds one object whose keys are option
 
 With neither file, a run uses the defaults and the command line. With both, the run stops, because it can't tell which one you mean: delete one, or name the one to read, as in `stryker run stryker.config.yml`. A file you name takes the place of both. A named file whose name doesn't end in `.json`, `.yml`, or `.yaml` is an error, and so is one that doesn't exist.
 
+A JSON file can't start with a byte-order mark (BOM), because JSON doesn't allow one. A file that does is an error that says so: save it as UTF-8 without a BOM. A YAML file may start with one.
+
 An empty YAML file has no options. A YAML file may hold only strings, numbers, booleans, null, lists, and maps. A date, a symbol, an alias, or a tag that names a Ruby class is an error, because the file comes from the project and loading it must never run code.
 
 ### The command line
@@ -45,13 +47,13 @@ Before it does anything else, **Stryker (for Ruby)** checks every option in the 
   "concurrency" in stryker.config.json takes a whole number of 1 or more, or a percentage of the processors such as "50%", but its value is 0.
   ```
 
-- **An option that a file gives twice**, in both spellings of a nested option, is an error that names both keys:
+- **An option that a file gives twice**, in both spellings of a nested option, is an error that gives both keys:
 
   ```text
   "thresholds.break" in stryker.config.json is given twice, as "break" inside "thresholds" and as "thresholds.break". Give it once.
   ```
 
-- **A `thresholds.high` below `thresholds.low`** is an error that names both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).
+- **A `thresholds.high` below `thresholds.low`** is an error that gives both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
 - **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
 - **A pattern in `mutate` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
