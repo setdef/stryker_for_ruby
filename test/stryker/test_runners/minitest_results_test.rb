@@ -51,8 +51,19 @@ class MinitestResultsTest < Minitest::Test
       def test_passes = assert(true)
     end
   RUBY
+  TWO_FAILURES = { "test/two_failures_test.rb": <<~RUBY }.freeze
+    require "minitest/hooks/test"
+
+    class FailsTwiceTest < Minitest::Test
+      include Minitest::Hooks
+
+      def after_all = raise("Raised in after_all.")
+      def test_fails = flunk("Failed in the test.")
+    end
+  RUBY
   TIMED = { "test/timed_test.rb": "class TimedTest < Minitest::Test; def test_t = pass; end\n" }.freeze
-  private_constant(:ABSTRACT, :BROKEN_HOOK, :SKIP_THEN_TEARDOWN, :SKIPPING_HOOK, :TEARDOWN, :TIMED)
+  private_constant(:ABSTRACT, :BROKEN_HOOK, :SKIP_THEN_TEARDOWN, :SKIPPING_HOOK)
+  private_constant(:TEARDOWN, :TIMED, :TWO_FAILURES)
 
   def test_a_test_that_passes_and_then_raises_in_teardown_fails
     result = run_ids(loaded(TEARDOWN), "TeardownRaisesTest#test_passes").first
@@ -77,6 +88,13 @@ class MinitestResultsTest < Minitest::Test
     result = run_ids(loaded(SKIPPING_HOOK), "SkipsInAfterAllTest#test_passes").first
 
     assert_equal(["passed", nil], [result.status, result.failure_message])
+  end
+
+  def test_the_message_of_a_failed_test_holds_each_failure_that_minitest_recorded
+    result = run_ids(loaded(TWO_FAILURES), "FailsTwiceTest#test_fails").first
+
+    assert_includes(result.failure_message, "Failed in the test.")
+    assert_includes(result.failure_message, "Raised in after_all.")
   end
 
   def test_a_test_of_an_abstract_test_case_that_minitest_never_runs_is_skipped
