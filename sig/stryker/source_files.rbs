@@ -1,0 +1,58 @@
+module Stryker
+  # The files that the `mutate` patterns select in a project's root: the
+  # stage Find files of
+  # [the pipeline](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-pipeline).
+  #
+  # The patterns apply in order, as StrykerJS applies them. A pattern
+  # selects the files it matches, and a pattern that starts with `!` leaves
+  # out the files it matches from those that the patterns before it
+  # selected, so a later pattern can select a file again. A pattern is a
+  # glob, as `Dir.glob` reads one, relative to the root: `**/` matches any
+  # number of folders, `{a,b}` matches either, and `*` matches no file
+  # name that starts with a dot. A folder is never selected, whatever its
+  # name.
+  #
+  # Configure has checked that no pattern resolves outside the root, so
+  # every path given is inside it.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # Stryker::SourceFiles.new(Dir.pwd, ["lib/**/*.rb", "!**/*_test.rb"]).to_a
+  # # => ["lib/shop.rb", "lib/shop/cart.rb"]
+  # ```
+  class SourceFiles
+    # What starts a pattern that leaves files out. Private.
+    LEAVE_OUT: String
+
+    # The flags that match a pattern that leaves files out, so that it reads
+    # `**/` and `{a,b}` as a pattern that selects files does. Private.
+    MATCHING: Integer
+
+    @root: Pathname
+
+    @patterns: Array[String]
+
+    # Builds the selection.
+    #
+    # - `root`: String, the project's root.
+    # - `patterns`: Array of String, the `mutate` patterns.
+    def initialize: (String root, Array[String] patterns) -> void
+
+    # The path from the root of each file selected, with `/` between
+    # folders and no `..`, each once, sorted. No pattern selects no file.
+    def to_a: () -> Array[String]
+
+    private
+
+    # Adds the files that `pattern` selects to `selected`, or takes out of
+    # it those that a pattern starting with `!` matches.
+    def apply: (String pattern, Array[String] selected) -> void
+
+    # The path from the root of each file that `pattern` matches.
+    def matches: (String pattern) -> Array[String]
+
+    # `path`, absolute or from the root, as a path from the root.
+    def from_root: (String path) -> String
+  end
+end
