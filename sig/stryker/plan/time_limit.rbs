@@ -1,0 +1,39 @@
+module Stryker
+  class Plan
+    # A run's time limit in milliseconds, as StrykerJS computes it:
+    # `timeoutFactor` times the dry-run time of the run's tests, plus
+    # `timeoutMS`, plus the dry run's overhead, rounded up.
+    class TimeLimit
+      # The dry run's time less the sum of its tests' times, or 0 when the
+      # tests took longer: the test runner's time between tests.
+      #
+      # - `dry_run`: Stryker::DryRunResult, the dry run.
+      def self.overhead: (DryRunResult dry_run) -> Float
+
+      # The sum of the `duration_ms` of `results`, or 0 for none.
+      #
+      # - `results`: Array of Stryker::TestResult.
+      def self.total: (Array[TestResult] results) -> Float
+
+      # The config's `timeout_factor`.
+      @factor: Float
+
+      # The config's `timeout_ms` plus the dry run's overhead.
+      @added: Numeric
+
+      # Reads the overhead from `dry_run`, and the factor and the added time
+      # from `config`.
+      #
+      # - `dry_run`: Stryker::DryRunResult, the dry run.
+      # - `config`: Stryker::Config, the run's options.
+      def initialize: (DryRunResult dry_run, Config config) -> void
+
+      # The time limit of a run of the tests of `results`, in whole
+      # milliseconds, rounded up.
+      #
+      # - `results`: Array of Stryker::TestResult, the dry-run results of the
+      #   run's tests.
+      def of: (Array[TestResult] results) -> Integer
+    end
+  end
+end

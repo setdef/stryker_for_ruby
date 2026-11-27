@@ -1,0 +1,10 @@
+module Stryker
+  class Plan
+    # Raised when the dry run can't be planned from: it holds a bucket for a
+    # test that it has no result for, which only a test runner adapter at
+    # fault can cause. The message names each such test. The run stops, and
+    # no mutant runs.
+    class Error < StandardError
+    end
+  end
+end

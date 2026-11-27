@@ -149,7 +149,13 @@ The milliseconds that a run's time limit adds to the dry-run time of its tests. 
 
 How many times the dry-run time of a run's tests a run may take, before `timeoutMS` is added. The default is `1.5`. Raise it when mutants make the code slower without making it loop forever. Use `timeoutMS` for a mutant that loops forever.
 
-A run's limit is the dry-run time of the tests that reach the mutant, times `timeoutFactor`, plus `timeoutMS`.
+A run's limit is the dry-run time of the run's tests, times `timeoutFactor`, plus `timeoutMS`, plus the dry run's overhead, rounded up to a whole millisecond, as in StrykerJS:
+
+```text
+limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
+```
+
+A run of a mutant that tests reach has the tests that passed and reached it. A run of a static mutant has every test that passed in the dry run. The overhead is the dry run's time from the start of its first test to the end of its last, less the sum of its tests' times: the test runner's time between tests. With the defaults, a mutant reached by two tests that took 100 ms and 20 ms, in a dry run whose overhead was 30 ms, has a limit of 1.5 × 120 + 5000 + 30 = 5210 ms.
 
 ### `mutator.excludedMutations`
 

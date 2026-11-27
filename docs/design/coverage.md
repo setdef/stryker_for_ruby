@@ -165,6 +165,32 @@ The errors have two causes:
 
 Hits avoid both causes, because each switch records the IDs of the mutants it holds, and a switch runs exactly when the code at its sites does.
 
+## The plan
+
+The plan, `Stryker::Plan`, reads the map that a dry run recorded and gives each mutant a status or a run, so that each mutant runs against only the tests that reach it, and a mutant that no test reaches gets the status `NoCoverage` without running:
+
+| What the dry run recorded for a mutant | Its status or run |
+| - | - |
+| No hit, or hits only in the buckets of skipped tests | `NoCoverage`, and it doesn't run. |
+| A static hit, with or without hits in tests' buckets | A static run: a fresh process with the mutant active before load, running every test that passed. |
+| Hits in the buckets of tests that passed, and no static hit | A runtime run of exactly those tests, which the report lists as the mutant's `coveredBy`. |
+
+A static run includes every test because a value set while a file loads can reach any test, whichever tests recorded hits. The same rule covers hits recorded between tests, such as in an RSpec `before(:context)` hook, which runs outside any single test. A static mutant's `coveredBy` still lists only the tests that recorded a hit.
+
+A skipped test covers no mutant. It didn't pass, so it can't judge one: a run of only skipped tests would report its mutant `Survived`, though no test passed against it. So skipped tests are in no run and in no `coveredBy`, a mutant that only skipped tests reached gets `NoCoverage`, and so does a static mutant when no test passed.
+
+A bucket for a test that the dry run has no result for stops the run with `Stryker::Plan::Error`. Only a test runner adapter at fault records a test's hits without its result, and the plan can't tell whether such a test passed, so it fails loudly instead of guessing.
+
+### Each run's time limit
+
+Each run's time limit is StrykerJS's, from its `mutant-test-planner.ts` and `3-dry-run-executor.ts`:
+
+```text
+limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
+```
+
+The run's tests are the tests that it runs: for a runtime run, the tests that reached its mutant, and for a static run, every test that passed. The overhead is the dry run's `duration_ms` less the sum of its tests' `duration_ms`, and never below 0. A dry run's `duration_ms` counts from the start of its first test, so the time its process took to start and to load the tests is in neither the tests' times nor the overhead, which leaves the test runner's time between tests ([#85](https://github.com/setdef/stryker_for_ruby/issues/85)). The plan adds the overhead because a limit without it would time out, on a test runner that is slow between tests, mutants that StrykerJS wouldn't. The limit is rounded up to a whole millisecond, because a run holds its limit as an Integer, and with a limit rounded down, the isolation adapter could end a run a fraction of a millisecond early.
+
 ## What this design doesn't do
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.

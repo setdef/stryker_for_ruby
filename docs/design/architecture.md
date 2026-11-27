@@ -13,23 +13,25 @@ flowchart TB
   C["Configure"] --> P["Parse and find sites"]
   P --> I["Instrument"]
   I --> L["Load"]
+  L --> PL["Plan mutant runs"]
 ```
 
 - **Configure.** A config source adapter reads `stryker.config.json` or `stryker.config.yml`, and `Configure.call` merges the file with the command line's options and the defaults, checks every option, and returns one `Config` value. [Configuration](../configuration.md) lists the options, their defaults, and the checks.
 - **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog).
 - **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
 - **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
+- **Plan mutant runs.** From what a dry run of every test found, a `DryRunResult`, the plan gives each mutant the status `NoCoverage`, a static run, or a runtime run of the tests that reached it, with a time limit taken from the dry-run times of those tests. It publishes `Events::PlanReady`. [The plan](coverage.md#the-plan) explains the rules and the time limit.
 - **Run each mutant in isolation.** An isolation adapter runs each mutant run in a clean process: a child forked from a loaded parent for a runtime mutant on Linux and macOS, or a fresh process for a static mutant on every system. [Loading and isolation](loading-and-isolation.md#isolation) specifies it.
 
 ## Two kinds of process
 
-A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Parse and find sites, and Instrument. A project process loads the project's code, and it runs Load. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
+A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Parse and find sites, Instrument, and Plan mutant runs. A project process loads the project's code, and it runs Load. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
 
 ```mermaid
 flowchart LR
   subgraph O["Orchestrator: loads Prism and refract"]
     direction TB
-    S1["Configure, parse and find sites, instrument"]
+    S1["Configure, parse and find sites, instrument, plan"]
   end
   CA[("Cache of instrumented source, in a temporary directory")]
   subgraph PP["Project processes: load only the runtime"]
@@ -50,7 +52,7 @@ Prism and refract load only in the orchestrator, and a project process loads onl
 flowchart TB
   subgraph core["Core"]
     direction TB
-    PIPE["Pipeline: parse, instrument, load"]
+    PIPE["Pipeline: parse, instrument, load, plan"]
     VAL["Values: Config, Mutant, Location, Test, TestResult, DryRunResult, MutantRun, MutantResult"]
     EVT["Events: DryRunCompleted, PlanReady, MutantTested, RunCompleted"]
     subgraph ports["Ports: RBS interfaces only"]
@@ -185,6 +187,7 @@ Stages never call a reporter directly, so adding a reporter changes no stage.
 | Serving instrumented source to Ruby, and checking that every loaded instrumented file came through the hook | the loader |
 | Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework ([Test runners](test-runners.md)) |
 | Recording which tests reach which mutants | the hit recorder in the Stryker runtime |
+| Choosing each mutant's tests, kind of run, and time limit | the plan |
 
 ## Why this isn't an information system
 

@@ -1,0 +1,77 @@
+module Stryker
+  # The stage that decides, from what the dry run found, how each mutant is
+  # tested, as
+  # [The plan](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-plan)
+  # explains. A mutant that no test that passed reached gets the status
+  # `NoCoverage` and doesn't run. A static mutant gets a static run of every
+  # test that passed. Any other mutant gets a runtime run of the tests that
+  # passed and reached it. Each run's time limit is StrykerJS's:
+  # `timeoutFactor` times the dry-run time of the run's tests, plus
+  # `timeoutMS`, plus the dry run's overhead, rounded up to a whole
+  # millisecond.
+  #
+  # A skipped test covers no mutant: it never appears in a run or in a
+  # `covered_by`.
+  #
+  # ## Examples
+  #
+  # A dry run of 150 ms in which `test_rate` took 100 ms and reached mutant
+  # 3, `test_bulk` took 20 ms, and mutant 1 is static, planned with the
+  # default options. Mutant 9 was reached by no test. The overhead is
+  # 150 - 120 = 30 ms, so mutant 3's limit is 1.5 × 100 + 5000 + 30, and
+  # mutant 1's, which runs both tests, is 1.5 × 120 + 5000 + 30:
+  #
+  # ```ruby
+  # event = Stryker::Plan.new(dry_run_result, config).call([mutant_3, mutant_1, mutant_9])
+  # event.runs.map { |run| [run.mutant.id, run.static, run.test_ids, run.timeout_ms] }
+  # # => [[3, false, ["Shop::DiscountTest#test_rate"], 5180],
+  # #     [1, true, ["Shop::DiscountTest#test_rate", "Shop::DiscountTest#test_bulk"], 5210]]
+  # event.unrun.map { |result| [result.mutant.id, result.status] }
+  # # => [[9, "NoCoverage"]]
+  # ```
+  class Plan
+    # The IDs of the tests of `results`, in order.
+    #
+    # - `results`: Array of Stryker::TestResult.
+    def self.ids: (Array[TestResult] results) -> Array[String]
+
+    # The result of each of `mutants` when no test that passed reached it,
+    # in order, as `no_coverage_of` gives it.
+    #
+    # - `mutants`: Array of Stryker::Mutant, the mutants that won't run.
+    def self.no_coverage: (Array[Mutant] mutants) -> Array[MutantResult]
+
+    # The result of `mutant` when no test that passed reached it: the status
+    # `NoCoverage`, with no reason, no test, and no run.
+    #
+    # - `mutant`: Stryker::Mutant, the mutant that won't run.
+    def self.no_coverage_of: (Mutant mutant) -> MutantResult
+
+    # Which tests passed, and which of them reached each mutant.
+    @map: Map
+
+    # The time limit of a run of the given tests.
+    @time_limit: TimeLimit
+
+    # Builds the plan. Raises `Stryker::Plan::Error` when the dry run holds
+    # a bucket for a test that it has no result for.
+    #
+    # - `dry_run`: Stryker::DryRunResult, what a dry run that passed found.
+    # - `config`: Stryker::Config, whose `timeout_ms` and `timeout_factor`
+    #   set each run's time limit.
+    def initialize: (DryRunResult dry_run, Config config) -> void
+
+    # The event that holds a run for each mutant that a test reaches, and a
+    # `NoCoverage` result for each other mutant, each list in the order of
+    # `mutants`. An empty `mutants` gives two empty lists.
+    #
+    # - `mutants`: Array of Stryker::Mutant, every mutant of the run.
+    def call: (Array[Mutant] mutants) -> Events::PlanReady
+
+    # The run of each of `mutants`, in order.
+    def runs: (Array[Mutant] mutants) -> Array[MutantRun]
+
+    # The run of `mutant`, which a test that passed reached.
+    def run: (Mutant mutant) -> MutantRun
+  end
+end

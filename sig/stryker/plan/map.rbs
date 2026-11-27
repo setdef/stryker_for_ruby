@@ -1,0 +1,58 @@
+module Stryker
+  class Plan
+    # The dry run's map, read for the plan: the tests that passed, the
+    # static mutants, and the tests that passed and reached each mutant.
+    # A skipped test reached nothing, whatever its bucket holds.
+    class Map
+      # The text of the error for a bucket of a test with no result.
+      NO_RESULT: String
+
+      # Raises `Stryker::Plan::Error` when `dry_run` holds a bucket for a
+      # test that it has no result for, naming each such test.
+      #
+      # - `dry_run`: Stryker::DryRunResult, the dry run to check.
+      def self.check: (DryRunResult dry_run) -> nil
+
+      # The results of the tests that reached each mutant, keyed by the
+      # mutant's ID, each list in the order of `passed`.
+      #
+      # - `passed`: Array of Stryker::TestResult, the tests that passed.
+      # - `buckets`: Hash, each test's ID with the IDs of the mutants it
+      #   reached.
+      def self.covering: (Array[TestResult] passed, Hash[String, Array[Integer]] buckets) -> Hash[Integer, Array[TestResult]]
+
+      # The results of the tests that passed, in the order they ran.
+      @passed: Array[TestResult]
+
+      # The IDs of the static mutants.
+      @static: Set[Integer]
+
+      # The tests that passed and reached each mutant.
+      @covering: Hash[Integer, Array[TestResult]]
+
+      # Reads `dry_run`. Raises `Stryker::Plan::Error` as `check` does.
+      #
+      # - `dry_run`: Stryker::DryRunResult, what a dry run that passed found.
+      def initialize: (DryRunResult dry_run) -> void
+
+      # Whether the mutant with ID `id` is static.
+      #
+      # - `id`: Integer, the mutant's ID.
+      def static?: (Integer id) -> bool
+
+      # The results of the tests that passed and reached the mutant with ID
+      # `id`, in the order they ran, or an empty Array.
+      #
+      # - `id`: Integer, the mutant's ID.
+      def covering: (Integer id) -> Array[TestResult]
+
+      # The results of the tests that a run of the mutant with ID `id` runs,
+      # in the order they ran: every test that passed for a static mutant,
+      # and the tests that passed and reached it for any other. An empty
+      # Array means that no test that passed reached it.
+      #
+      # - `id`: Integer, the mutant's ID.
+      def tests: (Integer id) -> Array[TestResult]
+    end
+  end
+end
