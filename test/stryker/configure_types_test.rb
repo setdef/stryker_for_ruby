@@ -82,6 +82,12 @@ class ConfigureTypesTest < Minitest::Test
     )
   end
 
+  def test_a_whole_number_too_big_for_a_float_is_refused_as_infinite
+    message = refusal({}, options: { :timeoutFactor => 10 ** 400 })
+
+    assert_includes(message, '"--timeout-factor" on the command line takes a number of 0 or more, but its value is 10')
+  end
+
   def test_the_flag_of_a_nested_option_keeps_its_dot_and_dashes_its_words
     message = refusal({}, options: { :"mutator.excludedMutations" => "x" })
 

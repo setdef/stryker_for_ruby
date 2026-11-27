@@ -34,7 +34,10 @@ module Stryker
         'a whole number of 1 or more, or a percentage of the processors such as "50%"',
         -> (value) { (value.is_a?(Integer) && value >= 1) || (value.is_a?(String) && PERCENT.match?(value)) }
       )
-      factor = Kind.new("a number of 0 or more", -> (value) { value.is_a?(Numeric) && value.finite? && value >= 0 })
+      factor = Kind.new(
+        "a number of 0 or more",
+        -> (value) { value.is_a?(Numeric) && value.finite? && value >= 0 && Float(value.to_s).finite? }
+      )
 
       anything = Kind.new("anything", -> (_value) { true })
 
