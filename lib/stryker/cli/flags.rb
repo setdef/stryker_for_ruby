@@ -9,8 +9,8 @@ module Stryker
     class Flags
       FLAGS = [
         Flag.new("mutate", "PATTERNS", :list, "Files to mutate, as globs"),
-        Flag.new("testRunner", "NAME", :text, "Test runner: minitest or rspec"),
-        Flag.new("reporters", "NAMES", :list, "Reporters to run"),
+        Flag.new("testRunner", "NAME", :text, "Test runner: minitest"),
+        Flag.new("reporters", "NAMES", :list, "Reporters to run: clear-text, json"),
         Flag.new("concurrency", "N", :number, "Processes at once: a whole number, or a percentage such as 50%"),
         Flag.new("thresholds.high", "SCORE", :number, "Score at or above which a score is high"),
         Flag.new("thresholds.low", "SCORE", :number, "Score below which a score is low"),
@@ -19,7 +19,7 @@ module Stryker
         Flag.new("timeoutFactor", "FACTOR", :number, "Times the dry-run time that a mutant may take"),
         Flag.new("dryRunTimeoutMinutes", "MINUTES", :number, "Minutes that the dry run may take"),
         Flag.new("mutator.excludedMutations", "NAMES", :list, "Mutators that make no mutant"),
-        Flag.new("incremental", nil, :switch, "Reuse the results of an earlier run"),
+        Flag.new("incremental", nil, :switch, "Unused: a run reuses no earlier results yet"),
       ].freeze
       private_constant(:FLAGS)
 
