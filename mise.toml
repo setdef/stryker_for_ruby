@@ -5,8 +5,11 @@
 min_version = "2026.10.11"
 
 [tools]
-# The development version of Ruby. mise builds it with ruby-build.
-ruby = "4.1-dev"
+# The development version of Ruby, which mise builds with ruby-build on Linux
+# and macOS. On Windows, mise installs RubyInstaller's builds, and
+# RubyInstaller has no 4.1-dev, so Windows gets Ruby 4.0, the oldest Ruby the
+# project supports. mise renders the template in a version before it reads it.
+ruby = "{% if os() == 'windows' %}4.0{% else %}4.1-dev{% endif %}"
 python = "3.14"
 pre-commit = "latest"
 # mise installs the REUSE tool below with uv, so a computer without pipx can
