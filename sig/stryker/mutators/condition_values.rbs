@@ -1,0 +1,32 @@
+module Stryker
+  module Mutators
+    # The values that `Stryker::Mutators::ConditionalExpression` puts in the
+    # place of a condition: `true` and `false` for an `if`, an `unless`, and a
+    # ternary, `false` for a `while`, and `true` for an `until`. A loop's
+    # condition becomes only the value that ends the loop at once, because the
+    # other value never ends it, and the run would end in a `Timeout`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("work while busy").value
+    # node = tree.statements.body.first
+    # place = Stryker::Mutators::Place.of(node.predicate, [tree, tree.statements, node])
+    # Stryker::Mutators::ConditionValues.of(place)
+    # # => ["false"]
+    # ```
+    module ConditionValues
+      # The values for the node in `place`, or nil when it isn't the condition
+      # of an `if`, an `unless`, a `while`, or an `until`.
+      #
+      # - `place`: Stryker::Mutators::Place, where the node stands.
+      def self.of: (Place place) -> Array[String]?
+
+      BOTH: Array[String]
+
+      LOOPS: Hash[Class, Array[String]]
+
+      private def self.predicate: (Prism::node? node) -> Prism::node?
+    end
+  end
+end

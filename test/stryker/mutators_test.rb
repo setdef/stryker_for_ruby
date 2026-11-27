@@ -12,6 +12,7 @@ class MutatorsTest < Minitest::Test
     ArrayDeclaration
     BlockStatement
     BooleanLiteral
+    ConditionalExpression
     EqualityOperator
     LogicalOperator
     ObjectLiteral

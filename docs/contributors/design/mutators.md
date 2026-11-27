@@ -28,7 +28,7 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Nine mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Ten mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -36,6 +36,7 @@ Nine mutators make up the catalog, and each has the name of a Stryker mutator. T
 | `ArrayDeclaration` | Array literals and `Array.new` | `ArrayNode`, `CallNode` | StrykerJS `ArrayDeclaration` |
 | `BlockStatement` | The body of a method, block, lambda, branch, loop, `when`, `in`, `begin`, `rescue`, or `ensure` | `StatementsNode` | StrykerJS `BlockStatement` |
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
+| `ConditionalExpression` | Conditions of `if`, `unless`, `elsif`, ternaries, `while`, `until`, and `in` guards, and comparisons and `&&`/`\|\|` elsewhere | the condition's node, `CallNode`, `AndNode`, `OrNode` | StrykerJS `ConditionalExpression` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
 | `ObjectLiteral` | Hash literals | `HashNode` | StrykerJS `ObjectLiteral` |
@@ -109,6 +110,26 @@ A loop whose body is emptied can run forever when the body is what ends it. The 
 `unless c` is `if !c`, and `until c` is `while !c`, so turning `unless` into `if` is the same mutation as StrykerJS's removal of the `!` in `if (!c)`. An `unless` hides its negation in the keyword, which makes a compound condition such as `unless paid && shipped` easy to get backwards, and a survivor shows that no test takes the other branch. A project that turns off `BooleanLiteral` turns these off too. Because the node spans its whole body, the edit for these two covers only the keyword, and the report's `replacement` is `if` or `while`.
 
 An `unless`, an `until`, or a negation whose condition or operand is the comparison `__FILE__ == $0` gets no mutant, as in `unless __FILE__ == $0` and `!(__FILE__ == $0)` (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
+### `ConditionalExpression`
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `if c`, `elsif c`, `unless c`, `c ? a : b`, `x if c`, `in pattern if c` | `true` in place of `c` | A test where *condition* is falsy. |
+| the same | `false` in place of `c` | A test where *condition* is truthy. |
+| `while c`, `x while c`, `begin ... end while c` | `false` in place of `c` | A test where the loop runs at least once. |
+| `until c`, `x until c`, `begin ... end until c` | `true` in place of `c` | A test where the loop runs at least once. |
+| `a == b`, `a < b`, `a && b`, and the other comparisons and logical operators, anywhere else | `true`, `false` | A test where the expression is falsy, for `true`, or truthy, for `false`. |
+| an operand of `\|\|` or `or` that is a comparison or a logical operator | `false` | A test where *operand* is truthy and the rest is falsy. |
+| an operand of `&&` or `and` that is a comparison or a logical operator | `true` | A test where *operand* is falsy and the rest is truthy. |
+
+A comparison is `==`, `!=`, `<`, `<=`, `>`, or `>=`, written as an operator. `<=>` isn't one, because its result isn't a truth value. A logical operator is `&&`, `||`, `and`, or `or`. Parentheses around one statement are ignored: in `if (a == b)` and in `x || (a == b)`, the comparison is the condition and the operand, and it gets the mutants of one.
+
+A condition of `if` or `unless` can be any expression, as in StrykerJS, so `if order` gets both mutants. A loop's condition becomes only the value that stops the loop at once, as in StrykerJS: the other value never ends the loop, so the run would end in a `Timeout` and cost its whole time limit. For `while` that value is `false`, and for `until` it is `true`.
+
+An operand of `||` gets only `false`, and an operand of `&&` only `true`, as StrykerJS does. `true || y` is `true`, the mutant that the whole condition already gets, and `false && y` is `false`, the other one.
+
+A condition that is already `true` or `false` gets no mutant of these, because one of its two mutants is the original, and `BooleanLiteral` already makes the other. A comparison of the form `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME` gets none either, wherever it stands, and neither does a node that has such a comparison as its condition or operand: an `if`, `unless`, `elsif`, `while`, `until`, or ternary whose condition it is, an `&&`, `||`, `and`, or `or` with it as an operand, and a `!` or `not` of it (see [Sites that get no mutant](#sites-that-get-no-mutant)). The mutants inside such a node, in its body or in an operand that isn't the comparison, are made.
 
 ### `EqualityOperator`
 
@@ -233,7 +254,7 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 | Comments, magic comments such as `# frozen_string_literal: true`, and the data after `__END__` | They aren't code that Prism gives a mutator. The instrumenter keeps them byte for byte ([Splicing into the original bytes](mutant-placement.md#splicing-into-the-original-bytes)). |
 | `freeze` | No mutator removes a call to `freeze`, or the `-` or `+` before a string literal. The receiver behaves the same unfrozen unless some code changes it, and only a test that expects `FrozenError` would kill the mutant, so it would survive on every frozen constant. |
 | The comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round, wherever it stands | A mutant that makes the comparison true, such as `true` in its place or `!=` for `==`, runs the file's script code inside the test process, where it does whatever the script does. The comparison gets none whether it is a condition or a value. |
-| A node whose condition or operand is that comparison, with any parentheses around the comparison ignored: an `if`, `unless`, `elsif`, `while`, `until`, or ternary condition, an operand of `&&`, `\|\|`, `and`, or `or`, and the operand of `!` or `not` | A mutator that changes such a node makes no mutant of it, `LogicalOperator` and `BooleanLiteral` among them, because each mutant would change whether the comparison decides, and run the file's script code inside the test process, as `true` in place of the comparison does. `__FILE__ == $0 and main`, `unless __FILE__ == $0`, and `!(__FILE__ == $0)` get none, as the bare `if __FILE__ == $0` gets none. The mutants inside such a node, in its body or in an operand that isn't the comparison, are made. |
+| A node whose condition or operand is that comparison, with any parentheses around the comparison ignored: an `if`, `unless`, `elsif`, `while`, `until`, or ternary condition, an operand of `&&`, `\|\|`, `and`, or `or`, and the operand of `!` or `not` | A mutator that changes such a node makes no mutant of it, `LogicalOperator`, `BooleanLiteral`, and `ConditionalExpression` among them, because each mutant would change whether the comparison decides, and run the file's script code inside the test process, as `true` in place of the comparison does. `__FILE__ == $0 and main`, `unless __FILE__ == $0`, and `!(__FILE__ == $0)` get none, as the bare `if __FILE__ == $0` gets none. The mutants inside such a node, in its body or in an operand that isn't the comparison, are made. |
 | A call with no receiver to `sig` with a block, and everything inside the block | It is a [Sorbet](https://sorbet.org) type signature, the counterpart of the type annotations that StrykerJS never mutates. The block is out of every mutator's reach, so no mutator makes a mutant of a call, a literal, or an operator inside it. |
 | Code inside `BEGIN { }`, and a mutant with no one-line form | See [Mutant placement](mutant-placement.md#sites-that-get-no-mutant). |
 
@@ -249,7 +270,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, and a body that is already empty or `nil`.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, and a condition that is already `true` or `false`.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
 

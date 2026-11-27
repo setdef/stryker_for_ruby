@@ -1,0 +1,43 @@
+module Stryker
+  module Mutators
+    # Where a node stands in the code around it: the node that holds it, and
+    # the node in the place. Parentheses around one statement are no place of
+    # their own, so the statement stands where the parentheses stand.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("run if (ready)").value
+    # node = tree.statements.body.first
+    # parentheses = node.predicate
+    # statement = parentheses.body.body.first
+    # ancestors = [tree, tree.statements, node, parentheses, parentheses.body]
+    # Stryker::Mutators::Place.of(statement, ancestors).parent.class
+    # # => Prism::IfNode
+    # ```
+    class Place < Data
+      # The node that holds the place, or nil for the root of the file.
+      attr_reader parent: Prism::node?
+
+      # The node in the place: the node itself, or the outermost parentheses
+      # around it.
+      attr_reader child: Prism::node
+
+      # Builds the place.
+      #
+      # - `parent`: Prism::node, or nil at the root, the node that holds it.
+      # - `child`: Prism::node, the node in the place.
+      def self.new: (parent: Prism::node?, child: Prism::node) -> instance
+                  | (Prism::node? parent, Prism::node child) -> instance
+
+      # Where `node` stands.
+      #
+      # - `node`: Prism::node, the node.
+      # - `ancestors`: Array of Prism::node, the nodes above `node`, from the
+      #   root of the file to its parent.
+      def self.of: (Prism::node node, Array[Prism::node] ancestors) -> Place
+
+      private def self.parenthesized?: (Array[Prism::node] chain) -> bool
+    end
+  end
+end

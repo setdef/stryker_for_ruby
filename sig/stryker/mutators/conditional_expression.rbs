@@ -1,0 +1,68 @@
+module Stryker
+  module Mutators
+    # Replaces a condition with `true` or `false`, to find the tests that never
+    # take one of a condition's two ways. It makes these mutants:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | the condition of `if`, `elsif`, `unless`, a ternary, `x if c`, or `in pattern if c` | `true` and `false` |
+    # | the condition of `while`, `x while c`, or `begin ... end while c` | `false` |
+    # | the condition of `until`, `x until c`, or `begin ... end until c` | `true` |
+    # | `a == b`, `a < b`, `a && b`, and the other comparisons and logical operators, anywhere else | `true` and `false` |
+    # | an operand of `\|\|` or `or` that is a comparison or a logical operator | `false` |
+    # | an operand of `&&` or `and` that is a comparison or a logical operator | `true` |
+    #
+    # The edit covers the whole condition or operand. A condition can be any
+    # expression, so `if order` gets both mutants. A loop's condition becomes
+    # only the value that ends the loop at once. A comparison is `==`, `!=`,
+    # `<`, `<=`, `>`, or `>=` written as an operator, and a logical operator is
+    # `&&`, `||`, `and`, or `or`. Parentheses around one statement are ignored:
+    # the statement stands where the parentheses stand.
+    #
+    # It makes no mutant of a condition that is already `true` or `false`, and
+    # none of the comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`,
+    # or of a node whose condition or operand it is, because a mutant that
+    # changes whether it decides would run the file's script code inside the
+    # test process. The mutants inside such a node, in its body or in an
+    # operand that isn't the comparison, are made.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#conditionalexpression)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("run if ready").value
+    # node = tree.statements.body.first
+    # Stryker::Mutators::ConditionalExpression.edits(node.predicate, [tree, tree.statements, node]).map(&:replacement)
+    # # => ["true", "false"]
+    # ```
+    module ConditionalExpression
+      # The mutator's name in the report: `"ConditionalExpression"`.
+      def self.name: () -> String
+
+      # The edits at `node`: `true` and `false`, or one of them, when `node` is
+      # a condition, or a comparison or a logical operator, and none for any
+      # other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   of the file to its parent. The mutator reads them to tell a condition
+      #   or an operand from other nodes.
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+
+      COMPARISONS: Array[Symbol]
+
+      ANYWHERE: Array[String]
+
+      private def self.replacements: (Prism::node node, Array[Prism::node] ancestors) -> Array[String]
+
+      private def self.skipped?: (Prism::node node) -> bool
+
+      private def self.literal?: (Prism::node node) -> bool
+
+      private def self.parenthesized?: (Prism::node node) -> bool
+
+      private def self.operator?: (Prism::node node) -> bool
+    end
+  end
+end

@@ -4,6 +4,7 @@ require_relative "mutators/arithmetic_operator"
 require_relative "mutators/array_declaration"
 require_relative "mutators/block_statement"
 require_relative "mutators/boolean_literal"
+require_relative "mutators/conditional_expression"
 require_relative "mutators/equality_operator"
 require_relative "mutators/logical_operator"
 require_relative "mutators/object_literal"
@@ -17,6 +18,7 @@ module Stryker
       ArrayDeclaration,
       BlockStatement,
       BooleanLiteral,
+      ConditionalExpression,
       EqualityOperator,
       LogicalOperator,
       ObjectLiteral,

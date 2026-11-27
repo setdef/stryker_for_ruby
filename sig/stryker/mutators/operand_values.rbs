@@ -1,0 +1,28 @@
+module Stryker
+  module Mutators
+    # The value that `Stryker::Mutators::ConditionalExpression` puts in the
+    # place of an operand of `||`, `or`, `&&`, or `and`: `false` for the first
+    # two, and `true` for the others. `true || y` is `true`, the mutant that
+    # the whole condition already gets, and `false && y` is `false`, the other
+    # one.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("a || b == 1").value
+    # node = tree.statements.body.first
+    # place = Stryker::Mutators::Place.of(node.right, [tree, tree.statements, node])
+    # Stryker::Mutators::OperandValues.of(place)
+    # # => ["false"]
+    # ```
+    module OperandValues
+      # The values for the node in `place`, or nil when it isn't an operand of
+      # one of those operators.
+      #
+      # - `place`: Stryker::Mutators::Place, where the node stands.
+      def self.of: (Place place) -> Array[String]?
+
+      VALUES: Hash[Class, Array[String]]
+    end
+  end
+end
