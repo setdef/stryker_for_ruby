@@ -39,10 +39,12 @@ module Stryker
         end
 
         def test_a_run_past_its_time_limit_times_out
-          result = isolated_one(SampleProject::HARMLESS, :passes, :hangs, timeout_ms: 15_000).to_h
-          expected = { status: "Timeout", status_reason: "Timeout of 15000 ms exceeded.", tests_completed: 1 }
+          # Only a test that hangs, so the verdict is the same whether the
+          # limit ends while the process is starting or while the test hangs.
+          result = isolated_one(SampleProject::HARMLESS, :hangs, timeout_ms: 500).to_h
+          expected = { status: "Timeout", status_reason: "Timeout of 500 ms exceeded." }
 
-          assert_equal(expected, result.slice(:status, :status_reason, :tests_completed))
+          assert_equal(expected, result.slice(:status, :status_reason))
         end
 
         def test_each_run_gives_one_result_with_its_mutant_and_time

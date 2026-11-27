@@ -54,6 +54,13 @@ class VerdictTest < Minitest::Test
     )
   end
 
+  def test_a_timed_out_run_counts_the_tests_that_finished_before_its_time_ended
+    said = messages(sample_test, sample_result("passed"), sample_test("test_hangs"))
+    result = judged(said, killed_by_signal(timed_out: true))
+
+    assert_equal(["Timeout", 1], [result.status, result.tests_completed])
+  end
+
   def test_a_run_that_ended_with_every_test_passed_and_a_clean_exit_survives
     result = judged(messages(sample_test, sample_result("passed"), :ended), ending)
 

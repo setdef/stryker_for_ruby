@@ -11,12 +11,21 @@ class WatchesTest < Minitest::Test
 
   parallelize_me!
 
-  def watches(scripts, timeout_ms: 30_000)
+  # Each time limit starts once its process has written a line or ended, so
+  # how long Ruby takes to start never counts against the limit. With +ended+,
+  # it starts once the process has ended, and a pipe that another process
+  # holds open is what keeps the watch going.
+  def watches(scripts, timeout_ms: 30_000, ended: false)
     Stryker::Isolation::Watches.new.tap do |set|
       scripts.each do |subject, script|
         pid, reader = scripted("$stdout.sync = true; #{script}")
+        child = Stryker::Isolation::Child.new(pid)
+        # No timeout here: a script that writes nothing and never ends keeps
+        # the test waiting.
+        reader.wait_readable
+        child.end_within(60) if ended
         timer = Stryker::Isolation::Timer.new(timeout_ms)
-        set.add(Stryker::Isolation::Watch.new(subject, Stryker::Isolation::Child.new(pid), reader, timer))
+        set.add(Stryker::Isolation::Watch.new(subject, child, reader, timer))
       end
     end
   end
@@ -51,17 +60,18 @@ class WatchesTest < Minitest::Test
   end
 
   def test_a_process_past_its_time_is_killed_and_timed_out
-    lines, endings = watched(watches({ slow: "puts 'before'; sleep" }, timeout_ms: 15_000))
+    lines, endings = watched(watches({ slow: "puts 'before'; sleep" }, timeout_ms: 300))
     ending = endings[:slow]
 
     assert_equal([["before\n"], true], [lines[:slow], ending.timed_out])
-    assert_operator(ending.duration_ms, :>=, 15_000)
+    assert_operator(ending.duration_ms, :>=, 300)
   end
 
   def test_a_process_whose_pipe_another_holds_ends_without_timing_out
-    # The grandchild inherits the pipe and outlives the process.
+    # The grandchild inherits the pipe and outlives the process, so the pipe
+    # stays open until the time limit ends.
     script = "Process.spawn(RbConfig.ruby, '-e', 'sleep 8'); puts 'done'; exit!(0)"
-    lines, endings = watched(watches({ parent: script }, timeout_ms: 15_000))
+    lines, endings = watched(watches({ parent: script }, timeout_ms: 300, ended: true))
 
     assert_equal([["done\n"], 0, false], [lines[:parent], endings[:parent].exit_status, endings[:parent].timed_out])
   end
