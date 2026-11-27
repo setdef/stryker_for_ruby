@@ -22,13 +22,13 @@ Each Stryker tool reports the same names, so a report from **Stryker (for Ruby)*
 | Stryker.NET | Short names in its configuration, and display names in its report | `Arithmetic`, "Arithmetic mutation" | Stryker.NET reports one name for a mutator and accepts another in its configuration. |
 | Stryker4s | Group names, close to StrykerJS's | `RegularExpression` | StrykerJS's `Regex` is the spelling that the shared page and Stryker.NET also use. |
 
-A mutator for a Ruby construct that no Stryker tool mutates follows the organization's naming rule, from the thread behind the shared page ([stryker-handbook#11](https://github.com/stryker-mutator/stryker-handbook/issues/11)): a name follows the construct, is language-neutral and singular, and ends in a category word, one of Operator, Literal, Expression, Statement, or Declaration. `RangeOperator`, which swaps `..` and `...`, is the one name that no Stryker tool has, because no Stryker tool mutates a range. Every name is letters only, because StrykerJS's disable-comment grammar accepts only letters, commas, and spaces in its list of names.
+A mutator for a Ruby construct that no Stryker tool mutates follows the organization's naming rule, from the thread behind the shared page ([stryker-handbook#11](https://github.com/stryker-mutator/stryker-handbook/issues/11)): a name follows the construct, is language-neutral and singular, and ends in a category word, one of Operator, Literal, Expression, Statement, or Declaration. StrykerJS's `OptionalChaining` is a name in the catalog that ends in none of them. `RangeOperator`, which swaps `..` and `...`, is the one name that no Stryker tool has, because no Stryker tool mutates a range. Every name is letters only, because StrykerJS's disable-comment grammar accepts only letters, commas, and spaces in its list of names.
 
 Where the sources disagree on the pairs, the catalog follows StrykerJS's code, because the name in `mutatorName` is StrykerJS's: a reader who knows what StrykerJS's `EqualityOperator` makes finds the same pairs here. Each place where the catalog departs from StrykerJS's pairs gives its reason.
 
 ## The catalog
 
-Twelve mutators make up the catalog. Eleven have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Thirteen mutators make up the catalog. Twelve have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -41,6 +41,7 @@ Twelve mutators make up the catalog. Eleven have the names of Stryker mutators, 
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
 | `ObjectLiteral` | Hash literals | `HashNode` | StrykerJS `ObjectLiteral` |
+| `OptionalChaining` | Safe navigation, `&.` | `CallNode` and the call write nodes with the safe-navigation flag | StrykerJS `OptionalChaining` |
 | `RangeOperator` | `..` and `...` | `RangeNode` | none |
 | `StringLiteral` | String literals, interpolated strings, and heredocs | `StringNode`, `InterpolatedStringNode` | StrykerJS `StringLiteral` |
 | `UnaryOperator` | Unary `-`, `+`, `~`, and signed numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
@@ -206,6 +207,19 @@ StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"`
 
 A Ruby hash literal is the counterpart of a JavaScript object literal, so it takes StrykerJS's name. Keyword arguments, such as `Discount.new(rate: 0.1)`, are a `KeywordHashNode` and get no mutant: emptying them changes the call's arguments, and the call raises `ArgumentError` for a required keyword. An empty hash gets no mutant, as in StrykerJS.
 
+### `OptionalChaining`
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `order&.total` | `order.total` | A test where *receiver* is `nil`. |
+| `order&.total = 0`, `order&.total += 1`, `order&.total \|\|= 0` | the same with `.` | A test where *receiver* is `nil`. |
+
+Each `&.` in a chain such as `customer&.address&.city` gets a separate mutant.
+
+The mutation goes from `&.` to `.` only, never from `.` to `&.`. A forgotten nil check is the mistake that `&.` exists to prevent, and a survivor of `&.` to `.` shows that no test passes `nil` there. A mutant from `.` to `&.` turns a `NoMethodError` on `nil` into a `nil` result, and only a test that expects the error would kill it. Few projects write such tests, so those survivors would be everywhere and show little.
+
+It makes no mutant when the receiver can never be `nil`: `self`, or a literal other than `nil`. The literals are numbers, strings, commands, symbols, regexps, arrays, hashes, `true`, `false`, lambdas, `__FILE__`, `__LINE__`, and `__ENCODING__`. A literal in parentheses doesn't count: Prism makes it a `ParenthesesNode`, the same as any other expression in parentheses.
+
 ### `RangeOperator`
 
 | Original | Mutant | Kills it |
@@ -269,6 +283,7 @@ Each of these was left out of the catalog because its survivors would rarely be 
 | `nil` | `nil` and `false` behave the same in a condition, and any other replacement raises at once. |
 | Symbols, `&:sym` | A symbol is the name of a method, key, or option, and a symbol nobody defines raises `NoMethodError`, `KeyError`, or `ArgumentError` at the first test that reaches it, which shows nothing that coverage doesn't. |
 | Number literals | No Stryker tool mutates them. The boundary mutants of `EqualityOperator` and `RangeOperator` test the values where off-by-one mistakes matter. |
+| `.` to `&.` | See [`OptionalChaining`](#optionalchaining). |
 | `case`/`in` patterns, flip-flops, `defined?`, `yield`, `super` | No Stryker tool has a counterpart, and their mutants mostly raise or change nothing a test sees. Their bodies and guards still get mutants. |
 
 ## Defaults
@@ -308,7 +323,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, a condition that is already `true` or `false`, and an endless range.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, a condition that is already `true` or `false`, an endless range, and `&.` on `self` or a literal.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
 

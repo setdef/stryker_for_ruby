@@ -1,0 +1,45 @@
+module Stryker
+  module Mutators
+    # Takes the nil check out of a safe navigation, to find the tests that
+    # never pass `nil` there. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `order&.total` | `order.total` |
+    # | `order&.total = 0`, `order&.total += 1`, `order&.total \|\|= 0` | the same with `.` |
+    #
+    # The edit covers the whole call or assignment. Each `&.` in a chain such
+    # as `customer&.address&.city` gets a mutant of its own.
+    #
+    # The mutation goes from `&.` to `.` only, never from `.` to `&.`. A
+    # forgotten nil check is the mistake that `&.` exists to prevent, and a
+    # survivor of `&.` to `.` shows that no test passes `nil` there. A mutant
+    # from `.` to `&.` turns a `NoMethodError` on `nil` into a `nil` result,
+    # and only a test that expects the error would kill it.
+    #
+    # It makes no mutant when the receiver can never be `nil`: `self`, or a
+    # literal other than `nil`.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#optionalchaining)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("order&.total").value.statements.body.first
+    # Stryker::Mutators::OptionalChaining.edits(node, []).map(&:replacement)
+    # # => ["order.total"]
+    # ```
+    module OptionalChaining
+      # The mutator's name in the report: `"OptionalChaining"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a call or an attribute assignment written
+      # with `&.` whose receiver can be `nil`, and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+    end
+  end
+end

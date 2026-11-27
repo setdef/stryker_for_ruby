@@ -1,0 +1,45 @@
+module Stryker
+  module Mutators
+    # A call, or the assignment to an attribute, written with safe navigation:
+    # `order&.total`, `order&.total = 0`, `order&.total += 1`, or
+    # `order&.total ||= 0`. It holds the receiver and where the `&.` is
+    # written.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("order&.total").value.statements.body.first
+    # Stryker::Mutators::SafeNavigation.of(node).nil_possible?
+    # # => true
+    # ```
+    class SafeNavigation < Data
+      # The receiver.
+      attr_reader receiver: Prism::node?
+
+      # Where the `&.` is written.
+      attr_reader operator_loc: Prism::Location
+
+      # Builds the safe navigation.
+      #
+      # - `receiver`: Prism::node, or nil, the receiver.
+      # - `operator_loc`: Prism::Location, where the `&.` is written.
+      def self.new: (receiver: Prism::node?, operator_loc: Prism::Location) -> instance
+                  | (Prism::node? receiver, Prism::Location operator_loc) -> instance
+
+      # The safe navigation that `node` is, or nil when it isn't a call or an
+      # attribute assignment written with `&.`.
+      #
+      # - `node`: Prism::node, the node.
+      def self.of: (Prism::node node) -> SafeNavigation?
+
+      # Whether the receiver can be `nil`: it is not `self`, and not a literal
+      # such as a number, a string, a symbol, a regexp, an array, a hash,
+      # `true`, `false`, or a lambda. `nil` itself can be `nil`. A literal in
+      # parentheses is a `ParenthesesNode`, which can't be told from any other
+      # expression in parentheses, so it counts as one that can.
+      def nil_possible?: () -> bool
+
+      NEVER_NIL: Array[singleton(Prism::Node)]
+    end
+  end
+end
