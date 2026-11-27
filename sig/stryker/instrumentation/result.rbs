@@ -8,7 +8,7 @@ module Stryker
     #
     # ```ruby
     # Stryker::Runtime::Cache.write(directory, result.sources)
-    # Stryker::Plan.new(dry_run_result, config).call(result.mutants)
+    # result.planned(Stryker::Plan.new(dry_run_result, config)).runs
     # ```
     class Result < Data
       # Each file's instrumented source, by the file's absolute path, as the
@@ -26,6 +26,13 @@ module Stryker
       #
       # - `files`: Array of Stryker::Instrumentation::InstrumentedFile.
       def self.of: (Array[InstrumentedFile] files) -> Result
+
+      # The event of `plan`'s decision for the live mutants, with the results
+      # of the mutants that aren't valid Ruby before those of the mutants
+      # that no test reached.
+      #
+      # - `plan`: Stryker::Plan, built from the dry run.
+      def planned: (Plan plan) -> Events::PlanReady
 
       # Builds the result.
       #

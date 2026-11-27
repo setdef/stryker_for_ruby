@@ -1,0 +1,48 @@
+module Stryker
+  class Pipeline
+    # The two isolation adapters of a run, and the rule that sends each run
+    # to one of them: a static mutant's run needs a fresh process, because
+    # its switch runs only while its file loads, and every other run goes
+    # to the adapter that runs the dry run.
+    class Isolations < Data
+      # The adapter for the dry run and the runtime mutants' runs.
+      attr_reader runtime: _DryRunIsolation
+
+      # The adapter for the static mutants' runs.
+      attr_reader static: _Isolation
+
+      # Builds the pair.
+      #
+      # - `runtime`: Stryker::_DryRunIsolation, the adapter for the dry run
+      #   and the runtime mutants.
+      # - `static`: Stryker::_Isolation, the adapter for the static mutants.
+      def self.new: (runtime: _DryRunIsolation, static: _Isolation) -> instance
+                  | (_DryRunIsolation runtime, _Isolation static) -> instance
+
+      # Starts both adapters with `config`, runs the block, and stops both,
+      # however the block ends, and when a start raises. Gives the block's
+      # value.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      def open: [T] (Config config) { () -> T } -> T
+
+      # Runs the dry run through the runtime adapter.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      def dry_run: (Config config) -> DryRunResult
+
+      # Runs every runtime mutant's run through the runtime adapter, and
+      # then every static mutant's run through the static adapter, and
+      # yields each result as it arrives.
+      #
+      # - `runs`: Array of Stryker::MutantRun, the runs of the plan.
+      def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+
+      private
+
+      # Stops the runtime adapter, and the static adapter even when that
+      # raises.
+      def stop: () -> void
+    end
+  end
+end

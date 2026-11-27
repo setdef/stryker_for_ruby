@@ -42,6 +42,22 @@ module Stryker
     def stop: () -> void
   end
 
+  # An isolation adapter that also runs the dry run, between `start` and
+  # `stop`: every test once, with no mutant active, as
+  # [The dry run](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-dry-run)
+  # specifies. `Stryker::Isolation::ForkPerRun` is one, whose dry run runs
+  # in a child of the parent that every runtime mutant's run forks from.
+  interface _DryRunIsolation
+    include _Isolation
+
+    # Runs the dry run and returns what it found. Raises
+    # `Stryker::Isolation::DryRunError` when a test failed, the loading check
+    # failed, the dry run's process crashed, or the tests ran past
+    # `config.dry_run_timeout_minutes`, and `Stryker::Isolation::Error` for a
+    # fault of **Stryker (for Ruby)**.
+    def dry_run: (Config config) -> DryRunResult
+  end
+
   # The adapters of the `Stryker::_Isolation` port, and the code that runs
   # each mutant run in a clean process.
   # [Isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#isolation)

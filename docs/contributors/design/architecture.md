@@ -10,24 +10,33 @@ A run goes through these stages, in order. Each stage takes values from the one 
 
 ```mermaid
 flowchart TB
-  C["Configure"] --> P["Parse and find sites"]
+  C["Configure"] --> F["Find files"]
+  F --> P["Parse and find sites"]
   P --> I["Instrument"]
   I --> L["Load"]
   L --> D["Dry run"]
   D --> PL["Plan mutant runs"]
+  PL --> R["Run each mutant in isolation"]
+  R --> RE["Report"]
 ```
 
 - **Configure.** A config source adapter reads `stryker.config.json` or `stryker.config.yml`, and `Configure.call` merges the file with the command line's options and the defaults, checks every option, and returns one `Config` value. [Configuration](../../configuration.md) lists the options, their defaults, and the checks.
-- **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog).
-- **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
+- **Find files.** `SourceFiles` selects the files that the `mutate` patterns match, applying the patterns in order, as StrykerJS applies them, and gives each file's path from the project's root. [`mutate`](../../configuration.md#mutate) describes the patterns.
+- **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog). The mutants of a run are numbered from 1, file after file, so each ID is unique in the run.
+- **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and the pipeline writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A mutant whose plain mutant doesn't parse gets no switch, and its result has the status `CompileError`. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
 - **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
 - **Dry run.** Every test runs once with no mutant active, in a child forked from the parent that loaded the project, and the switches record which tests reach which mutants. The dry run fails, and no mutant runs, when a test fails, when an instrumented file loaded without going through the hook, or when its tests take longer than `dryRunTimeoutMinutes`. `Isolation::ForkPerRun#dry_run` returns what it found as a `DryRunResult`. [The dry run](coverage.md#the-dry-run) explains where it runs and why, and [Coverage](coverage.md) specifies the hits and buckets.
-- **Plan mutant runs.** From what a dry run of every test found, a `DryRunResult`, the plan gives each mutant the status `NoCoverage`, a static run, or a runtime run of the tests that reached it, with a time limit taken from the dry-run times of those tests. It publishes `Events::PlanReady`. [The plan](coverage.md#the-plan) explains the rules and the time limit.
+- **Plan mutant runs.** From what a dry run of every test found, a `DryRunResult`, the plan gives each mutant the status `NoCoverage`, a static run, or a runtime run of the tests that reached it, with a time limit taken from the dry-run times of those tests. [The plan](coverage.md#the-plan) explains the rules and the time limit.
 - **Run each mutant in isolation.** An isolation adapter runs each mutant run in a clean process: a child forked from a loaded parent for a runtime mutant on Linux and macOS, or a fresh process for a static mutant on every system. [Loading and isolation](loading-and-isolation.md#isolation) specifies it.
+- **Report.** Each reporter receives every domain event of the run, and one that needs every result builds its output when the run completes ([Values and events](#values-and-events)).
+
+`Stryker::Pipeline` runs every stage after Configure, and owns what a run starts, for exactly as long as the run lasts. It writes the cache to a directory that it makes with `Dir.mktmpdir`, starts two isolation adapters, sends the dry run and each runtime mutant's run to one of them and each static mutant's run to the other, and then stops both adapters and deletes the directory. It does that last part in `ensure` clauses, so it happens however the run ends: when it finishes, when a stage raises, and when INT or TERM arrives. Ruby raises a `SignalException` in the main thread for either signal, so the same clauses run, and the command then exits with 128 plus the signal's number. A second signal during that cleanup ends the cleanup, as a second signal ends a StrykerJS run at once. The fork parent then ends its children and itself, because the orchestrator's exit closes the parent's standard input.
+
+The pipeline holds no code for a system or a report format: its caller builds the isolation adapters and the reporters and hands them to it.
 
 ## Two kinds of process
 
-A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Parse and find sites, Instrument, and Plan mutant runs. A project process loads the project's code, and it runs Load and the dry run. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
+A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Find files, Parse and find sites, Instrument, Plan mutant runs, and Report. A project process loads the project's code, and it runs Load and the dry run. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
 
 ```mermaid
 flowchart LR
@@ -60,6 +69,7 @@ flowchart TB
     subgraph ports["Ports: RBS interfaces only"]
       TR["_TestRunner"]
       ISO["_Isolation"]
+      DRI["_DryRunIsolation"]
       REPP["_Reporter"]
       CS["_ConfigSource"]
     end
@@ -68,11 +78,18 @@ flowchart TB
     MT["TestRunners::MinitestRunner"]
     JC["ConfigSources::JsonFile"]
     YC["ConfigSources::YamlFile"]
+    FP["Isolation::ForkPerRun"]
+    FR["Isolation::FreshProcesses"]
+    JR["Reporters::JsonReport"]
+    CX["Reporters::ClearText"]
   end
   CT["stryker/testing: contract tests"]
-  PIPE --> TR & CS
+  PIPE --> TR & CS & ISO & DRI & REPP
   MT -. implements .-> TR
   JC & YC -. implements .-> CS
+  FP -. implements .-> DRI
+  FR -. implements .-> ISO
+  JR & CX -. implements .-> REPP
   CT -. verifies .-> MT & JC & YC
 ```
 
@@ -121,6 +138,14 @@ module Stryker
     def stop: () -> void
   end
 
+  # An isolation adapter that also runs the dry run, between start and stop.
+  interface _DryRunIsolation
+    include _Isolation
+
+    # Runs every test once with no mutant active, and returns what it found.
+    def dry_run: (Config config) -> DryRunResult
+  end
+
   # Receives each domain event of a run, in the order the run publishes them.
   interface _Reporter
     def call: (event event) -> void
@@ -144,6 +169,7 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
 - **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapters are `Isolation::ForkPerRun` and `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
+- **`_DryRunIsolation`** is an `_Isolation` that also runs the dry run, in the kind of process that its mutant runs start from. Its adapter is `Isolation::ForkPerRun`, whose dry run is a child of the parent that forks every runtime mutant's run ([The dry run](coverage.md#the-dry-run)).
 - **`_Reporter`** receives each domain event of a run. Its adapters are `Reporters::JsonReport` and `Reporters::ClearText`, which [Configuration](../../configuration.md#reporters) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
 - **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../../configuration.md#the-configuration-file) says how to use.
 
@@ -184,8 +210,11 @@ Stages never call a reporter directly, so adding a reporter changes no stage.
 | Reading the configuration file | the config source adapter for its format |
 | Merging command-line options and checking every option's name and type | Configure |
 | Keeping every path inside the project's root | Configure, for the `mutate` patterns, and every adapter that builds a path |
+| Selecting the files to mutate | Find files |
 | Deciding what each mutant changes | the mutator that finds its site |
-| Producing instrumented source | the instrumenter |
+| Giving each mutant of a run its ID | Parse and find sites |
+| Producing instrumented source, and the `CompileError` result of each mutant that isn't valid Ruby | the instrumenter |
+| Keeping the cache and every process of a run for exactly as long as the run lasts, sending each run to the adapter for its kind of mutant, and handing each event to every reporter | the pipeline |
 | Serving instrumented source to Ruby, and checking that every loaded instrumented file came through the hook | the loader |
 | Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework ([Test runners](test-runners.md)) |
 | Recording which tests reach which mutants | the hit recorder in the Stryker runtime |

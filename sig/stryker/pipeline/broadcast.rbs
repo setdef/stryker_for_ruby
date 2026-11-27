@@ -1,0 +1,22 @@
+module Stryker
+  class Pipeline
+    # Hands each event to every reporter, in the order of the `reporters`
+    # option, so that no stage calls a reporter and adding a reporter
+    # changes no stage. It is a reporter itself. A reporter that raises
+    # stops the run: the error reaches the caller, and the reporters after
+    # it don't receive the event.
+    class Broadcast
+      @reporters: Array[_Reporter]
+
+      # Builds the broadcast.
+      #
+      # - `reporters`: Array of Stryker::_Reporter.
+      def initialize: (Array[_Reporter] reporters) -> void
+
+      # Hands `event` to every reporter, in order.
+      #
+      # - `event`: Stryker::event, the event the run published.
+      def call: (event event) -> nil
+    end
+  end
+end

@@ -1,0 +1,30 @@
+module Stryker
+  class Pipeline
+    # Every result of a run, as each arrives: it publishes
+    # `Stryker::Events::MutantTested` for each one it is given.
+    class Results
+      @broadcast: Broadcast
+
+      @collected: Array[MutantResult]
+
+      # Builds an empty collection.
+      #
+      # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
+      #   to every reporter.
+      def initialize: (Broadcast broadcast) -> void
+
+      # Keeps `result`, and publishes it.
+      #
+      # - `result`: Stryker::MutantResult, one mutant's result.
+      def add: (MutantResult result) -> nil
+
+      # Keeps and publishes each of `results`, in order.
+      #
+      # - `results`: Array of Stryker::MutantResult.
+      def add_all: (Array[MutantResult] results) -> nil
+
+      # Every result kept, in the order of the mutants' IDs.
+      def to_a: () -> Array[MutantResult]
+    end
+  end
+end

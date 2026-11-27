@@ -1,0 +1,43 @@
+module Stryker
+  class Pipeline
+    # The stages that need the project's processes: the dry run, the plan,
+    # and the mutant runs, from the adapters' start to their stop. It
+    # publishes `Stryker::Events::DryRunCompleted` when the dry run passes,
+    # `Stryker::Events::PlanReady` when every mutant has a status or a run,
+    # and `Stryker::Events::MutantTested` for each result: first for each
+    # mutant that won't run, as StrykerJS reports them, and then for each
+    # run as it ends. A trial tests one run's mutants, once.
+    class Trial
+      @config: Config
+
+      @broadcast: Broadcast
+
+      @results: Results
+
+      # Builds the trial.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
+      #   to every reporter.
+      def initialize: (Config config, Broadcast broadcast) -> void
+
+      # Tests the mutants of `instrumented` with the started `isolations`,
+      # and returns every mutant's result, in the order of the mutants' IDs.
+      #
+      # - `isolations`: Stryker::Pipeline::Isolations, both adapters,
+      #   started.
+      # - `instrumented`: Stryker::Instrumentation::Result, the live mutants
+      #   and the results of the mutants that aren't valid Ruby.
+      def call: (Isolations isolations, Instrumentation::Result instrumented) -> Array[MutantResult]
+
+      private
+
+      # Runs the dry run, publishes what it found, and returns it.
+      def dry_run: (Isolations isolations) -> DryRunResult
+
+      # Publishes the result of each mutant that won't run, runs the others,
+      # and returns every result.
+      def tested: (Isolations isolations, Events::PlanReady ready) -> Array[MutantResult]
+    end
+  end
+end

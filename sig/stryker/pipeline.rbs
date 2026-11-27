@@ -1,0 +1,65 @@
+module Stryker
+  # The stages of a run after Configure, composed as
+  # [the pipeline](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-pipeline)
+  # describes them, and the owner of what a run starts. It holds no code for
+  # a particular system or report format: it is given the isolation
+  # adapters and the reporters.
+  #
+  # `call` finds the files that `mutate` selects, finds their mutants and
+  # instruments them, writes the instrumented source to a cache in a
+  # temporary directory of its own, starts both isolation adapters, runs the
+  # dry run, plans each mutant, runs the runtime mutants' runs through one
+  # adapter and the static mutants' runs through the other, and stops both
+  # adapters. It hands each domain event to every reporter as it happens,
+  # and returns the run's mutation score.
+  #
+  # The cache and every process exist only while `call` runs, however it
+  # ends: when it returns, when a stage raises, and when a signal such as
+  # INT or TERM raises `SignalException` in it, it stops both adapters,
+  # which end every process they started, and deletes the cache before the
+  # exception leaves. A second signal during that cleanup ends it.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # isolations = ->(cache) { [Stryker::Isolation::ForkPerRun.new(cache, root), Stryker::Isolation::FreshProcesses.new(cache, root)] }
+  # reporters = [Stryker::Reporters::JsonReport.new(config:, root:)]
+  # Stryker::Pipeline.new(root, isolations, reporters).call(config)
+  # # => 83.33333333333333
+  # ```
+  class Pipeline
+    # What starts the name of the cache's directory. Private.
+    CACHE: String
+
+    @root: String
+
+    @isolations: ^(String cache) -> [_DryRunIsolation, _Isolation]
+
+    @broadcast: Broadcast
+
+    # Builds the pipeline.
+    #
+    # - `root`: String, the project's root.
+    # - `isolations`: responds to `call(cache)`, with the cache's
+    #   directory, and returns the two isolation adapters that read it,
+    #   neither started: the one that runs the dry run and the runtime
+    #   mutants' runs, and the one that runs the static mutants' runs.
+    # - `reporters`: Array of Stryker::_Reporter, which receive every event.
+    def initialize: (String root, ^(String cache) -> [_DryRunIsolation, _Isolation] isolations, Array[_Reporter] reporters) -> void
+
+    # Runs mutation testing as `config` says, and returns the mutation score
+    # of every mutant, as Stryker::Metrics gives it, or nil when no mutant
+    # was valid. Raises what a stage raises, such as
+    # Stryker::UnsupportedError for an ERB template and
+    # `Stryker::Isolation::DryRunError` for a dry run that failed, after it
+    # has stopped every process and deleted the cache.
+    #
+    # - `config`: Stryker::Config, the checked options of the run.
+    def call: (Config config) -> Float?
+
+    private
+
+    # Writes the cache, and tests the mutants with the adapters for it.
+    def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Array[MutantResult]
+  end
+end
