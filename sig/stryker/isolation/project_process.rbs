@@ -30,9 +30,6 @@ module Stryker
       # mutant's run.
       MODES: Hash[String, singleton(ForkParent) | singleton(StaticRun)]
 
-      # The test runner adapters, by the name in the `testRunner` option.
-      RUNNERS: Hash[String, singleton(TestRunners::MinitestRunner)]
-
       # Runs the process from `argv`. It takes every argument out of
       # `argv` before the project's code loads, so Minitest, which parses
       # `ARGV` as its options, sees none. It installs the loader from the

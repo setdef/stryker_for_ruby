@@ -5,5 +5,9 @@ module Stryker
   # [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/test-runners.md)
   # specifies them.
   module TestRunners
+    # The adapters, by the name that the `testRunner` option gives. The
+    # orchestrator reads it to refuse a name that no adapter has before a
+    # run starts, and a project process to build its adapter.
+    BY_NAME: Hash[String, singleton(MinitestRunner)]
   end
 end
