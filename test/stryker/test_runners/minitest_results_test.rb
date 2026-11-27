@@ -41,8 +41,18 @@ class MinitestResultsTest < Minitest::Test
       def test_never = flunk("Minitest runs no test after its before_all hook raises.")
     end
   RUBY
+  SKIPPING_HOOK = { "test/skipping_hook_test.rb": <<~RUBY }.freeze
+    require "minitest/hooks/test"
+
+    class SkipsInAfterAllTest < Minitest::Test
+      include Minitest::Hooks
+
+      def after_all = skip
+      def test_passes = assert(true)
+    end
+  RUBY
   TIMED = { "test/timed_test.rb": "class TimedTest < Minitest::Test; def test_t = pass; end\n" }.freeze
-  private_constant(:ABSTRACT, :BROKEN_HOOK, :SKIP_THEN_TEARDOWN, :TEARDOWN, :TIMED)
+  private_constant(:ABSTRACT, :BROKEN_HOOK, :SKIP_THEN_TEARDOWN, :SKIPPING_HOOK, :TEARDOWN, :TIMED)
 
   def test_a_test_that_passes_and_then_raises_in_teardown_fails
     result = run_ids(loaded(TEARDOWN), "TeardownRaisesTest#test_passes").first
@@ -61,6 +71,12 @@ class MinitestResultsTest < Minitest::Test
     assert_equal("failed", result.status)
     assert_includes(result.failure_message, "Raised in before_all.")
     refute_includes(result.failure_message, "Minitest runs no test")
+  end
+
+  def test_a_test_that_passes_is_passed_when_a_hook_around_the_class_skips
+    result = run_ids(loaded(SKIPPING_HOOK), "SkipsInAfterAllTest#test_passes").first
+
+    assert_equal(["passed", nil], [result.status, result.failure_message])
   end
 
   def test_a_test_of_an_abstract_test_case_that_minitest_never_runs_is_skipped
