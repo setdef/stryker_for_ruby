@@ -14,6 +14,7 @@ SimpleCov.start do
   cover("tasks/changelog.rb")
   cover("tasks/commit_runs.rb")
   cover("tasks/critic_faults.rb")
+  cover("tasks/critic_faults/*.rb")
   cover("tasks/github_api.rb")
   cover("tasks/github_api/*.rb")
   cover("tasks/json_reader.rb")

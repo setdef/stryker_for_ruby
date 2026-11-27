@@ -46,6 +46,8 @@ target :tasks do
   check "tasks/build_cop_step.rb"
   check "tasks/changelog.rb"
   check "tasks/commit_runs.rb"
+  check "tasks/critic_faults.rb"
+  check "tasks/critic_faults"
   check "tasks/github_api.rb"
   check "tasks/github_api"
   check "tasks/json_reader.rb"

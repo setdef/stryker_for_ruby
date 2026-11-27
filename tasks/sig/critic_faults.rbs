@@ -1,0 +1,52 @@
+class CriticFaults
+  class Malformed < StandardError
+  end
+
+  def self.in_report: (String json) -> Array[String]
+
+  class Location < Data
+    attr_reader path: String
+
+    attr_reader line: Integer
+
+    def self.new: (path: String, line: Integer) -> instance
+
+    def self.from_report: (Hash[String, JSONReader::json] object) -> Location
+
+    def to_s: () -> String
+  end
+
+  class Smell < Data
+    LOCATIONS_SHOWN: Integer
+
+    attr_reader locations: Array[Location]
+
+    attr_reader context: String
+
+    attr_reader message: String
+
+    attr_reader type: String
+
+    def self.new: (locations: Array[Location], context: String, message: String, type: String) -> instance
+
+    def self.from_report: (Hash[String, JSONReader::json] object) -> Smell
+
+    def fault: () -> String
+  end
+
+  class AnalysedModule < Data
+    RATING: String
+
+    attr_reader path: String
+
+    attr_reader rating: String
+
+    attr_reader smells: Array[Smell]
+
+    def self.new: (path: String, rating: String, smells: Array[Smell]) -> instance
+
+    def self.from_report: (Hash[String, JSONReader::json] object) -> AnalysedModule
+
+    def faults: () -> Array[String]
+  end
+end
