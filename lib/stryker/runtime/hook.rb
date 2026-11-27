@@ -1,10 +1,15 @@
 # frozen_string_literal: true
 
+require_relative "path_key"
+
 module Stryker
   module Runtime
     module Hook
       def load_iseq(path)
-        ::Stryker::Active.load_began(path)
+        # The stack check compares the path with the absolute path of each
+        # frame, and Ruby gives a file that a load finds in the working
+        # directory as it was written.
+        ::Stryker::Active.load_began(PathKey.located(path))
         # Ruby defines no load_iseq, so a bare super raises
         # NoMethodError when no module behind this one defines one.
         ::Stryker::Runtime::Loader.serve(path) || (defined?(super) ? super : nil)

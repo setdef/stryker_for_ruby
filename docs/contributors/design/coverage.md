@@ -51,7 +51,7 @@ A static hit goes into the static bucket.
 
 ### Files whose load began
 
-The hook (see [The `load_iseq` hook](loading-and-isolation.md#the-load_iseq-hook)) sees every file that Ruby compiles from disk, instrumented or not. It records the path of each file whose load begins while a test runs, so the recorder holds, for the current test, the paths of the files that began to load in it. A file outside `mutate` that loads inside a test is recorded like an instrumented one, so a hit that its top-level code causes in the project's code counts as static.
+The hook (see [The `load_iseq` hook](loading-and-isolation.md#the-load_iseq-hook)) sees every file that Ruby compiles from disk, instrumented or not. It records the absolute path of each file whose load begins while a test runs, so the recorder holds, for the current test, the paths of the files that began to load in it. A file outside `mutate` that loads inside a test is recorded like an instrumented one, so a hit that its top-level code causes in the project's code counts as static.
 
 ### The stack check
 

@@ -27,7 +27,8 @@ module Stryker
       # `path` (`Stryker::Runtime::Loader.serve`). For any other file it is
       # what the next `load_iseq` behind this one returns, or nil when none
       # is behind it, so Ruby compiles the file itself. Either way it first
-      # calls `::Stryker::Active.load_began(path)`, so the recorder learns
+      # calls `::Stryker::Active.load_began` with `path` made absolute, as
+      # `Stryker::Runtime::PathKey.located` gives it, so the recorder learns
       # of every file whose load begins during a test.
       #
       # - `path`: String, the file's path, as Ruby resolved it.

@@ -89,6 +89,17 @@ class LoaderPathsProcessTest < Minitest::Test
     assert_equal("true\n", run_program(program).first)
   end
 
+  # The stack check compares the recorded path with the absolute path of each
+  # frame, so a path as written, relative, never matches.
+  def test_a_hit_in_a_file_first_loaded_inside_a_test_by_a_path_relative_to_the_working_directory_is_static
+    lib, cache = project(FILES, { "line.rb": "Stryker::Active.hit(5)\nLINE = :instrumented\n" })
+    program = "require 'stryker/runtime'\nStryker::Runtime::Loader.install(#{cache.inspect})\n" \
+      "Dir.chdir(#{lib.inspect})\nStryker::Runtime::RECORDER.test_started(:first)\nload 'line.rb'\n" \
+      "p [Stryker::Runtime::RECORDER.static, Stryker::Runtime::RECORDER.tests[:first]]"
+
+    assert_equal("[Set[5], Set[]]\n", run_program(program).first)
+  end
+
   # A program that Ruby starts with the C locale reads each path from the file
   # system as bytes tagged US-ASCII, where the cache holds the same bytes
   # tagged UTF-8, so a project in a folder with a letter outside ASCII, such
