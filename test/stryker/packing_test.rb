@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require_relative("../../test_helper")
-require "stryker/instrumenter/packing"
+require_relative("../test_helper")
+require "stryker/packing"
 
 # Checks that bytes go through a JSON string and come back as they were.
 class PackingTest < Minitest::Test
-  Packing = Stryker::Instrumenter::Packing
+  Packing = Stryker::Packing
   private_constant(:Packing)
 
   def test_bytes_that_are_not_valid_text_come_back

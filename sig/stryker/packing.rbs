@@ -1,0 +1,26 @@
+module Stryker
+  # Turns bytes into text that a JSON string holds, and back. JSON holds
+  # only Unicode text, and the bytes of a project's file, or of a mutant's
+  # replacement, are in the file's encoding, which may be any. The text is
+  # Base64 with no line breaks.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # Stryker::Packing.pack("\xFF".b)
+  # # => "/w=="
+  # Stryker::Packing.unpack("/w==")
+  # # => "\xFF"
+  # ```
+  module Packing
+    # The text that holds `bytes`.
+    #
+    # - `bytes`: String, bytes in any encoding.
+    def self.pack: (String bytes) -> String
+
+    # The bytes that `text` holds, as binary.
+    #
+    # - `text`: String, a text that `pack` made.
+    def self.unpack: (String text) -> String
+  end
+end
