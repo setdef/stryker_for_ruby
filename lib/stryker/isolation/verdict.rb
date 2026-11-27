@@ -10,7 +10,7 @@ module Stryker
         @run = run
         @messages = messages
         @ending = ending
-        @failure = messages.results.find { |result| result.status == "failed" }
+        @failure = messages.failure
       end
 
       def result

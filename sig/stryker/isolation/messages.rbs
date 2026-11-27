@@ -24,17 +24,9 @@ module Stryker
       # - `text`: String, the lines the process wrote.
       def self.parse: (String text) -> Messages
 
-      # The tests that started, in order.
-      @tests: Array[Test]
-
-      # The results of the tests that finished, in order.
-      @results: Array[TestResult]
-
-      # The errors the process wrote.
-      @errors: Array[String]
-
-      # Whether the process said that its run ended.
-      @ended: bool
+      # The value of each message, up to the first object that is no
+      # message.
+      @values: Array[Message::value]
 
       # Reads the messages.
       #
@@ -42,7 +34,10 @@ module Stryker
       def initialize: (Array[JsonValue::json_value] objects) -> void
 
       # Each finished test's result, in order.
-      attr_reader results: Array[TestResult]
+      def results: () -> Array[TestResult]
+
+      # The result of the first test that failed, or nil.
+      def failure: () -> TestResult?
 
       # Whether the process said that its run ended.
       def ended?: () -> bool
@@ -58,9 +53,9 @@ module Stryker
 
       private
 
-      # Keeps `value` with the messages of its kind, and returns nil when it
-      # is no message's value.
-      def sort: (Message::value? value) -> (Array[Test] | Array[TestResult] | Array[String] | bool | nil)
+      # Keeps `value` and returns true, or returns false when it is no
+      # message's value, which ends the messages.
+      def kept?: (Message::value? value) -> bool
     end
   end
 end

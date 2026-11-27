@@ -14,44 +14,45 @@ module Stryker
       end
 
       def initialize(objects)
-        @tests = []
-        @results = []
-        @errors = []
-        @ended = false
+        @values = []
         # The messages up to the first one that isn't a message, because
         # nothing after it can be trusted to be what the run's process wrote.
-        objects.all? { |object| sort(Message.read(object)) }
+        objects.all? { |object| kept?(Message.read(object)) }
       end
 
-      attr_reader :results
+      def results
+        @values.filter_map { |value| value.is_a?(TestResult) && value }
+      end
+
+      def failure
+        results.find { |result| result.status == "failed" }
+      end
 
       def ended?
-        @ended
+        @values.include?(true)
       end
 
       def tests_started?
-        !@tests.empty?
+        @values.any?(Test)
       end
 
       def error
-        @errors.first
+        errors = @values.filter_map { |value| value.is_a?(String) && value }
+        errors.first
       end
 
       def unfinished
-        started = @tests.last
-        started unless @results.any? { |result| result.test == started }
+        tests = @values.filter_map { |value| value.is_a?(Test) && value }
+        started = tests.last
+        started unless results.any? { |result| result.test == started }
       end
 
-      private def sort(value)
-        case value
-        when Test then @tests << value
-        when TestResult then @results << value
-        when String then @errors << value
-        when true then @ended = true
-        end
-      end
+      private def kept?(value)
+        return false unless value
 
-      # @dynamic results
+        @values << value
+        true
+      end
     end
   end
 end
