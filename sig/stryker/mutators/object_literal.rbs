@@ -1,0 +1,37 @@
+module Stryker
+  module Mutators
+    # Empties a hash, to find the tests that never check what a hash holds. It
+    # makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `{ rate: 0.1, cap: 50 }` | `{}` |
+    #
+    # The edit covers the whole hash. Keyword arguments, such as
+    # `Discount.new(rate: 0.1)`, are not a hash literal and get no mutant:
+    # emptying them changes the call's arguments, and the call raises
+    # `ArgumentError` for a required keyword. An empty hash gets none either.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#objectliteral)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("{ rate: 0.1 }").value.statements.body.first
+    # Stryker::Mutators::ObjectLiteral.edits(node, []).map(&:replacement)
+    # # => ["{}"]
+    # ```
+    module ObjectLiteral
+      # The mutator's name in the report: `"ObjectLiteral"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a hash literal with at least one element,
+      # and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+    end
+  end
+end

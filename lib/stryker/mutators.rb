@@ -5,6 +5,7 @@ require_relative "mutators/array_declaration"
 require_relative "mutators/boolean_literal"
 require_relative "mutators/equality_operator"
 require_relative "mutators/logical_operator"
+require_relative "mutators/object_literal"
 require_relative "mutators/string_literal"
 require_relative "mutators/unary_operator"
 
@@ -16,6 +17,7 @@ module Stryker
       BooleanLiteral,
       EqualityOperator,
       LogicalOperator,
+      ObjectLiteral,
       StringLiteral,
       UnaryOperator,
     ].freeze

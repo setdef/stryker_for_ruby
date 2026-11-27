@@ -28,7 +28,7 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Seven mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Eight mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -37,6 +37,7 @@ Seven mutators make up the catalog, and each has the name of a Stryker mutator. 
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
+| `ObjectLiteral` | Hash literals | `HashNode` | StrykerJS `ObjectLiteral` |
 | `StringLiteral` | String literals, interpolated strings, and heredocs | `StringNode`, `InterpolatedStringNode` | StrykerJS `StringLiteral` |
 | `UnaryOperator` | Unary `-`, `+`, `~`, and signed numeric literals | `CallNode`, `IntegerNode`, `FloatNode`, `RationalNode`, `ImaginaryNode` | StrykerJS `UnaryOperator` |
 
@@ -129,6 +130,14 @@ An operator that has the comparison `__FILE__ == $0` as an operand gets no mutan
 
 StrykerJS also turns `a ?? b` into `a && b`. Ruby has no `??`: `name || "Guest"` is the idiom for a default, and it takes the `||` pair.
 
+### `ObjectLiteral`
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `{ rate: 0.1, cap: 50 }` | `{}` | A test that checks the hash's entries. |
+
+A Ruby hash literal is the counterpart of a JavaScript object literal, so it takes StrykerJS's name. Keyword arguments, such as `Discount.new(rate: 0.1)`, are a `KeywordHashNode` and get no mutant: emptying them changes the call's arguments, and the call raises `ArgumentError` for a required keyword. An empty hash gets no mutant, as in StrykerJS.
+
 ### `StringLiteral`
 
 | Original | Mutant | Kills it |
@@ -213,7 +222,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, and `-0i`, and `Array.new` given no argument or `[]`.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, and an empty hash.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
 
