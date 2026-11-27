@@ -1,0 +1,93 @@
+class GitHubAPI
+  type json = String | Integer | Float | bool | nil | Array[json] | Hash[String, json]
+
+  type query_value = String | Integer | bool
+
+  class Error < StandardError
+  end
+
+  PER_PAGE: Integer
+  ATTEMPTS: Integer
+
+  @repository: String
+  @token: String
+  @api: String
+  @pause: Integer
+
+  def initialize: (repository: String, token: String, ?api: String, ?pause: Integer) -> void
+
+  def runs: (String workflow, since: String, **query_value query) -> Array[Run]
+
+  def jobs: (Run run) -> Array[Job]
+
+  def all: (String path, String key, **query_value query) -> Array[Hash[String, json]]
+
+  def get: (String path, **query_value query) -> Hash[String, json]
+
+  class Run < Data
+    def self.from_api: (Hash[String, json] object) -> Run
+
+    def self.identity: (Reader reader) -> { id: Integer, event: String, head_sha: String, head_branch: String?, html_url: String? }
+
+    def self.progress: (Reader reader) -> { status: String?, conclusion: String?, run_attempt: Integer }
+
+    def self.new: (id: Integer, event: String, head_sha: String, head_branch: String?, status: String?, conclusion: String?, run_attempt: Integer, html_url: String?) -> instance
+
+    attr_reader id: Integer
+
+    attr_reader event: String
+
+    attr_reader head_sha: String
+
+    attr_reader head_branch: String?
+
+    attr_reader status: String?
+
+    attr_reader conclusion: String?
+
+    attr_reader run_attempt: Integer
+
+    attr_reader html_url: String?
+  end
+
+  class Job < Data
+    def self.from_api: (Hash[String, json] object) -> Job
+
+    def self.new: (name: String, conclusion: String?, run_attempt: Integer) -> instance
+
+    attr_reader name: String
+
+    attr_reader conclusion: String?
+
+    attr_reader run_attempt: Integer
+  end
+
+  class Reader
+    @object: Hash[String, json]
+    @what: String
+
+    def initialize: (Hash[String, json] object, String what) -> void
+
+    def string: (String key) -> String
+
+    def string_or_nil: (String key) -> String?
+
+    def optional_string: (String key) -> String?
+
+    def integer: (String key) -> Integer
+
+    def objects: (String key) -> Array[Hash[String, json]]
+
+    private
+
+    def value: (String key) -> json
+
+    def refuse: (String key, json value, String expected) -> bot
+  end
+
+  private
+
+  def ask: (URI::Generic uri) -> Net::HTTPResponse
+
+  def request: (URI::Generic uri) -> Net::HTTPResponse
+end

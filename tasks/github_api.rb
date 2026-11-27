@@ -3,6 +3,8 @@
 require "json"
 require "net/http"
 require "uri"
+require_relative "github_api/job"
+require_relative "github_api/run"
 
 # Reads one repository's part of GitHub's REST API, as a workflow's steps
 # can, with Net::HTTP alone.
@@ -35,14 +37,35 @@ class GitHubAPI
     @pause = pause
   end
 
+  # The runs of the workflow file +workflow+ created on or after +since+, a
+  # date as YYYY-MM-DD, other than a pull request's, and narrowed by +query+,
+  # as GitHub's API takes it: <tt>branch: "trunk"</tt>. Raises Error for an
+  # answer with a run that lacks a member or holds one of another kind.
+  def runs(workflow, since:, **query)
+    path = "actions/workflows/#{workflow}/runs"
+    all(path, "workflow_runs", created: ">=#{since}", exclude_pull_requests: true, **query).map do |object|
+      Run.from_api(object)
+    end
+  end
+
+  # The jobs of +run+, from its latest attempt. Raises Error for an answer
+  # with a job that lacks a member or holds one of another kind.
+  def jobs(run)
+    all("actions/runs/#{run.id}/jobs", "jobs", filter: "latest").map { |object| Job.from_api(object) }
+  end
+
   # Every item under +key+ on every page of the API's answer at +path+.
   def all(path, key, **query)
+    # @type var items: Array[Hash[String, json]]
     items = []
-    (1..).each do |page|
-      answer = get(path, **query, per_page: PER_PAGE, page:)
-      batch = answer[key]
+    page = 1
+    loop do
+      answer = Reader.new(get(path, **query, per_page: PER_PAGE, page:), "the answer at #{path}")
+      batch = answer.objects(key)
       items.concat(batch)
-      return items if batch.size < PER_PAGE || items.size >= answer["total_count"]
+      return items if batch.size < PER_PAGE || items.size >= answer.integer("total_count")
+
+      page += 1
     end
   end
 
@@ -55,15 +78,19 @@ class GitHubAPI
       raise(Error, "GitHub's API answered #{response.code} for GET #{uri}: #{response.body}")
     end
 
-    JSON.parse(response.body)
+    answer = JSON.parse(response.body)
+    return answer if answer.is_a?(Hash)
+
+    raise(Error, "GitHub's API answered something other than a JSON object for GET #{uri}: #{response.body}")
   end
 
   private def ask(uri)
-    response = nil
-    ATTEMPTS.times do |attempt|
-      sleep(@pause * (2 ** (attempt - 1))) if attempt.positive?
+    response = request(uri)
+    attempt = 1
+    while attempt < ATTEMPTS && response.code.start_with?("5")
+      sleep(@pause * (1 << (attempt - 1)))
       response = request(uri)
-      break unless response.is_a?(Net::HTTPServerError)
+      attempt += 1
     end
     response
   end
@@ -73,6 +100,7 @@ class GitHubAPI
     request["Accept"] = "application/vnd.github+json"
     request["Authorization"] = "Bearer #{@token}"
     request["X-GitHub-Api-Version"] = "2022-11-28"
-    Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
+    # Net::HTTP::Get.new refuses a URI with no host, so +host+ is a String.
+    Net::HTTP.start(uri.host.to_s, uri.port, use_ssl: uri.scheme == "https") { |http| http.request(request) }
   end
 end
