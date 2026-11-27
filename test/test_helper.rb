@@ -14,6 +14,7 @@ SimpleCov.start do
   cover("tasks/commit_runs.rb")
   cover("tasks/critic_faults.rb")
   cover("tasks/github_api.rb")
+  cover("tasks/release.rb")
   cover("tasks/ruby_doc_comments.rb")
   enable_coverage(:branch)
   minimum_coverage(line: 100, branch: 100)
