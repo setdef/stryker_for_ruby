@@ -40,23 +40,7 @@ end
 
 target :tasks do
   signature "tasks/sig"
-  check "tasks/build_cop.rb"
-  check "tasks/build_cop_blame.rb"
-  check "tasks/build_cop_fast.rb"
-  check "tasks/build_cop_step.rb"
-  check "tasks/changelog.rb"
-  check "tasks/commit_runs.rb"
-  check "tasks/critic_faults.rb"
-  check "tasks/critic_faults"
-  check "tasks/github_api.rb"
-  check "tasks/github_api"
-  check "tasks/json_reader.rb"
-  check "tasks/release.rb"
-  check "tasks/release_assets.rb"
-  check "tasks/release_command.rb"
-  check "tasks/release_commit.rb"
-  check "tasks/trunk_reverts.rb"
-  check "tasks/ruby_doc_comments.rb"
+  check "tasks"
 
   configure_code_diagnostics(Steep::Diagnostic::Ruby.all_error)
 

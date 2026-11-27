@@ -1,0 +1,30 @@
+class Lint
+  class Allowance < Data
+    attr_reader location: String
+
+    attr_reader lint: String?
+
+    attr_reader reason: String
+
+    def self.new: (location: String, lint: String?, reason: String) -> instance
+  end
+
+  @path: String
+  @allowances: Array[Allowance]
+
+  def self.load: (String path) -> Lint
+
+  def initialize: (String path) -> void
+
+  def allow: (String path, reason: String, ?line: Integer?, ?lines: Array[Integer]?, ?lint: String?) -> void
+
+  def enforce!: (glob: String, pattern: Regexp, violation_name: String, ?reject_pattern: Regexp?) -> void
+
+  def violations: (glob: String, pattern: Regexp, ?reject_pattern: Regexp?) -> Array[String]
+
+  def unapproved?: (String file, Integer number, String line, Regexp pattern, Regexp? reject_pattern) -> bool
+
+  def include?: (String location) -> bool
+
+  def to_a: () -> Array[String]
+end
