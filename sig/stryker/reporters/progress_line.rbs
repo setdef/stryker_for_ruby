@@ -1,0 +1,68 @@
+module Stryker
+  module Reporters
+    # The one line of text that shows how far a run has got, in the two forms
+    # that StrykerJS's progress reporters write. `bar` is the form for a
+    # terminal, with a bar that fills as the run goes, and `plain` is the form
+    # for a log, without one. Both give the percent of the work done, the time
+    # so far and the time left, how many mutants are tested, and how many of
+    # those survived or timed out.
+    #
+    # With the ink on, the filled part of the bar is green, a count of survivors
+    # above zero is red, and a count of timeouts above zero is yellow.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # ink = Stryker::Reporters::Ink.new(enabled: false)
+    # line = Stryker::Reporters::ProgressLine.new(tally, elapsed: 75.0, ink:)
+    # line.plain
+    # # => "Mutation testing 50% (elapsed: ~1m, remaining: ~1m) 5/10 tested (1 survived, 0 timed out)"
+    # ```
+    class ProgressLine
+      @tally: ProgressTally
+
+      @elapsed: Float
+
+      @ink: Ink
+
+      # The widest the bar gets. Private.
+      BAR_WIDTH: Integer
+
+      # The ink that paints nothing, for measuring the text. Private.
+      NO_INK: Ink
+
+      # Builds the line.
+      #
+      # - `tally`: Stryker::Reporters::ProgressTally, what the run has done.
+      # - `elapsed`: Float, the seconds since the run started.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text or doesn't.
+      def initialize: (ProgressTally tally, elapsed: Float, ink: Ink) -> void
+
+      # The form with a bar. The bar is 50 characters wide, or as wide as the
+      # rest of the line leaves room for in `columns`, and it has no width when
+      # the rest of the line fills `columns`.
+      #
+      # - `columns`: Integer, the width of the terminal.
+      def bar: (Integer columns) -> String
+
+      # The text of the bar form around `bar`.
+      #
+      # - `bar`: String, the bar.
+      def frame: (String bar) -> String
+
+      # The form without a bar.
+      def plain: () -> String
+
+      private
+
+      # A bar `width` characters wide, filled to the fraction that is done.
+      def filled: (Integer width) -> String
+
+      # The counts of survivors and of timeouts, painted when above zero.
+      def counts: () -> String
+
+      # One count with its label, painted `color` when it is above zero.
+      def flag: (Symbol color, Integer count, String label) -> String
+    end
+  end
+end

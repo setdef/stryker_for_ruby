@@ -1,0 +1,33 @@
+module Stryker
+  module Reporters
+    # Shows progress where nobody watches an animation, such as a log file or a
+    # CI job: it appends a line at most once in ten seconds of the run, as
+    # StrykerJS's `progress-append-only` reporter does.
+    class ProgressLog
+      @io: ProgressAnimation::_Writer
+
+      @ink: Ink
+
+      @last: Float | Integer
+
+      # The seconds of the run between two lines. Private.
+      INTERVAL_SECONDS: Integer
+
+      # Builds a log on a stream.
+      #
+      # - `io`: an object with `write`.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text or doesn't.
+      def initialize: (ProgressAnimation::_Writer io, Ink ink) -> void
+
+      # Writes the plain form of the line when ten seconds of the run have gone
+      # since the last line, and does nothing otherwise.
+      #
+      # - `tally`: Stryker::Reporters::ProgressTally, what the run has done.
+      # - `elapsed`: Float, the seconds since the run started.
+      def update: (ProgressTally tally, Float elapsed) -> void
+
+      # Does nothing: a log has no line to end.
+      def finish: () -> nil
+    end
+  end
+end

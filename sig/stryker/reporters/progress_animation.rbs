@@ -1,0 +1,43 @@
+module Stryker
+  module Reporters
+    # Shows progress on a terminal: each update draws the line over the last
+    # one, and finishing ends the line, so the next output starts below it.
+    class ProgressAnimation
+      # The part of a stream that the animation and the log use.
+      interface _Writer
+        # Writes `text`.
+        def write: (String text) -> Integer
+      end
+
+      @io: _Writer
+
+      @columns: Integer
+
+      @ink: Ink
+
+      @drawn: bool
+
+      # Moves the cursor to the start of the line. Private.
+      REDRAW: String
+
+      # Clears the line after the cursor. Private.
+      CLEAR_REST_OF_LINE: String
+
+      # Builds an animation on a stream.
+      #
+      # - `io`: an object with `write`, the terminal.
+      # - `columns`: Integer, the width of the terminal.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text or doesn't.
+      def initialize: (_Writer io, Integer columns, Ink ink) -> void
+
+      # Draws the bar form of the line.
+      #
+      # - `tally`: Stryker::Reporters::ProgressTally, what the run has done.
+      # - `elapsed`: Float, the seconds since the run started.
+      def update: (ProgressTally tally, Float elapsed) -> void
+
+      # Ends the line it drew, and does nothing when it drew none.
+      def finish: () -> void
+    end
+  end
+end

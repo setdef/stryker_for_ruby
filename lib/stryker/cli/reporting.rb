@@ -3,15 +3,15 @@
 require_relative("../reporters/clear_text")
 require_relative("../reporters/json_report")
 require_relative("choice")
+require_relative("console")
 require_relative("unbuilt_reporters")
 
 module Stryker
   class CLI
     class Reporting
-      CLEAR_TEXT = "clear-text"
-      NAMES = [CLEAR_TEXT, "json"].freeze
+      NAMES = %w[clear-text progress json].freeze
       CHOICE = Choice.new("reporters", "reporter", NAMES)
-      private_constant(:CLEAR_TEXT, :NAMES, :CHOICE)
+      private_constant(:NAMES, :CHOICE)
 
       def initialize(config, root)
         @config = config
@@ -19,7 +19,14 @@ module Stryker
       end
 
       def reporters(streams, color)
-        names(streams.stderr).map { |name| (name == CLEAR_TEXT) ? clear_text(streams.stdout, color) : json }
+        available = built(streams, color)
+        names(streams.stderr).map { |name| available[name] }
+      end
+
+      private def built(streams, color)
+        stderr = streams.stderr
+        progress = Console.new(stderr).progress(color.enabled_for?(stderr))
+        NAMES.zip([clear_text(streams.stdout, color), progress, json]).to_h
       end
 
       private def names(stderr)

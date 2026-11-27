@@ -1,0 +1,22 @@
+module Stryker
+  module Reporters
+    # Measures the seconds since it started, on a clock that it is given, so a
+    # test can set the time.
+    class Stopwatch
+      @clock: ^() -> Float
+
+      @started: Float
+
+      # Builds a stopwatch that starts now.
+      #
+      # - `clock`: a callable that returns the seconds of a clock that never goes back.
+      def initialize: (^() -> Float clock) -> void
+
+      # Starts again from now.
+      def restart: () -> Float
+
+      # The seconds since it started.
+      def elapsed: () -> Float
+    end
+  end
+end

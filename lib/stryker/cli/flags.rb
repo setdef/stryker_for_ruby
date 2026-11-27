@@ -10,7 +10,7 @@ module Stryker
       FLAGS = [
         Flag.new("mutate", "PATTERNS", :list, "Files to mutate, as globs"),
         Flag.new("testRunner", "NAME", :text, "Test runner: minitest"),
-        Flag.new("reporters", "NAMES", :list, "Reporters to run: clear-text, json"),
+        Flag.new("reporters", "NAMES", :list, "Reporters to run: clear-text, progress, json"),
         Flag.new("concurrency", "N", :number, "Processes at once: a whole number, or a percentage such as 50%"),
         Flag.new("thresholds.high", "SCORE", :number, "Score at or above which a score is high"),
         Flag.new("thresholds.low", "SCORE", :number, "Score below which a score is low"),

@@ -1,0 +1,26 @@
+module Stryker
+  module Reporters
+    # Counts the results of a run that have been tested, and how many of them
+    # survived or timed out.
+    class StatusCounts
+      @by_status: Hash[String, Integer]
+
+      # How many results it has counted.
+      def tested: () -> Integer
+
+      # How many of them have the status `Survived`.
+      def survived: () -> Integer
+
+      # How many of them have the status `Timeout`.
+      def timed_out: () -> Integer
+
+      # Builds counts that are all zero.
+      def initialize: () -> void
+
+      # Counts one result.
+      #
+      # - `status`: String, the status of the result.
+      def add: (String status) -> void
+    end
+  end
+end

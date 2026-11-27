@@ -2,12 +2,10 @@ module Stryker
   class CLI
     # The reporters that the `reporters` option names, built for one run:
     # `clear-text` writes to standard output, with color when standard
-    # output may have it, and `json` writes its file under the project's
-    # root.
+    # output may have it, `progress` writes to standard error, with color
+    # when standard error may have it, and `json` writes its file under the
+    # project's root.
     class Reporting
-      # The name of the `clear-text` reporter. Private.
-      CLEAR_TEXT: String
-
       # The name of every reporter that the gem has. Private.
       NAMES: Array[String]
 
@@ -31,12 +29,16 @@ module Stryker
       # warning on standard error (Stryker::CLI::UnbuiltReporters).
       #
       # - `streams`: Stryker::CLI::Streams, whose standard output
-      #   `clear-text` writes to, and whose standard error gets the warning.
+      #   `clear-text` writes to, and whose standard error gets the warning
+      #   and the output of `progress`.
       # - `color`: Stryker::CLI::Color, which says whether that stream may
       #   have color.
       def reporters: (Streams streams, Color color) -> Array[_Reporter]
 
       private
+
+      # Every reporter that the gem has, by name.
+      def built: (Streams streams, Color color) -> Hash[String, _Reporter]
 
       # The names to build: those the user wrote, or the default's.
       def names: (IO | StringIO stderr) -> Array[String]

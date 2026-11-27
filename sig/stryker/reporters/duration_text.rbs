@@ -1,0 +1,19 @@
+module Stryker
+  module Reporters
+    # Writes a number of seconds as the rough time that StrykerJS's progress
+    # reporters show: `~1h 5m` from an hour on, `~5m` from a minute on, and
+    # `<1m` below a minute.
+    module DurationText
+      # Seconds in an hour. Private.
+      SECONDS_IN_HOUR: Integer
+
+      # Seconds in a minute. Private.
+      SECONDS_IN_MINUTE: Integer
+
+      # The time as text, with the minutes rounded down.
+      #
+      # - `seconds`: Integer, a whole number of seconds that isn't negative.
+      def self.of: (Integer seconds) -> String
+    end
+  end
+end

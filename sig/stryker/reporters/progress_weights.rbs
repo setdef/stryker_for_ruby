@@ -1,0 +1,32 @@
+module Stryker
+  module Reporters
+    # How much work each mutant run is, as StrykerJS weighs it: the time of the
+    # tests that run against the mutant in the dry run, plus the dry run's
+    # overhead when the run starts a fresh process, which is a static run. A
+    # test that the dry run didn't list takes no time.
+    class ProgressWeights
+      @durations: Hash[String, Float]
+
+      @overhead: Float
+
+      # Weights that know no test: every run weighs nothing.
+      def self.none: () -> ProgressWeights
+
+      # The weights from the times of a dry run.
+      #
+      # - `dry_run`: Stryker::DryRunResult, the result of the dry run.
+      def self.of: (DryRunResult dry_run) -> ProgressWeights
+
+      # Builds weights.
+      #
+      # - `durations`: Hash, the milliseconds of each test by the test's ID.
+      # - `overhead`: Float, the milliseconds that a fresh process adds.
+      def initialize: (Hash[String, Float] durations, Float overhead) -> void
+
+      # The weight of a run.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      def of: (MutantRun run) -> Float
+    end
+  end
+end

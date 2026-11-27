@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative("../test_helper")
+require_relative("../support/mutation_testing_run")
 require "stringio"
 require "stryker/cli/color"
 require "stryker/cli/mutation_testing"
@@ -13,38 +13,7 @@ require "tmpdir"
 # isolation adapters and reporters it hands the pipeline, and what it
 # refuses before any file is read.
 class CLIMutationTestingTest < Minitest::Test
-  # Stands in for Stryker::Pipeline: records what it was built with, and
-  # gives a score.
-  class Pipeline
-    class << self
-      attr_reader :built, :config
-    end
-
-    def initialize(root, isolations, reporters)
-      self.class.instance_variable_set(:@built, [root, isolations, reporters])
-    end
-
-    def call(config)
-      self.class.instance_variable_set(:@config, config)
-      75.0
-    end
-  end
-
-  # Stands in for a terminal.
-  class Terminal < StringIO
-    def tty?
-      true
-    end
-  end
-
-  def config(**)
-    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", **)
-  end
-
-  def run_with(forks: true, stdout: StringIO.new, stderr: StringIO.new, **)
-    testing = Stryker::CLI::MutationTesting.new("/project", forks:, pipeline: Pipeline)
-    testing.call(config(**), Stryker::CLI::Streams.new(stdout, stderr), Stryker::CLI::Color.new(false))
-  end
+  include MutationTestingRun
 
   def test_the_templates_that_only_the_default_selects_are_left_out_of_the_patterns_the_pipeline_gets
     Dir.mktmpdir do |root|
@@ -97,28 +66,34 @@ class CLIMutationTestingTest < Minitest::Test
 
   def test_a_reporter_that_the_user_names_and_the_gem_does_not_have_stops_the_run_with_the_names_of_those_it_has
     error = assert_raises(Stryker::ConfigError) do
-      run_with(reporters: %w[clear-text progress html], given: [:reporters])
+      run_with(reporters: %w[clear-text dots html], given: [:reporters])
     end
 
     assert_equal(
-      'Stryker (for Ruby) has no reporter named "progress" or "html". ' \
-        'The reporters option takes "clear-text" and "json".',
+      'Stryker (for Ruby) has no reporter named "dots" or "html". ' \
+        'The reporters option takes "clear-text", "progress", and "json".',
       error.message
     )
   end
 
   def test_default_reporters_that_the_gem_does_not_have_are_left_out_with_one_warning_on_standard_error
-    stdout = StringIO.new
     stderr = StringIO.new
-    run_with(stdout:, stderr:)
+    run_with(stderr:)
 
-    assert_equal([[Stryker::Reporters::ClearText], ""], [Pipeline.built.last.map(&:class), stdout.string])
+    assert_equal([Stryker::Reporters::ClearText, Stryker::Reporters::Progress], Pipeline.built.last.map(&:class))
     assert_equal(
-      "Warning: this run leaves out the default reporters \"progress\" and \"html\", because " \
-        "Stryker (for Ruby) hasn't built them yet. Name the reporters you want, as in " \
+      "Warning: this run leaves out the default reporter \"html\", because " \
+        "Stryker (for Ruby) hasn't built it yet. Name the reporters you want, as in " \
         "--reporters clear-text,json, to choose your own.\n",
       stderr.string
     )
+  end
+
+  def test_two_default_reporters_that_the_gem_does_not_have_are_named_in_the_plural
+    stderr = StringIO.new
+    run_with(reporters: %w[json html dots], stderr:)
+
+    assert_includes(stderr.string, 'default reporters "html" and "dots", because')
   end
 
   def test_one_default_reporter_that_the_gem_does_not_have_is_named_in_the_singular

@@ -95,9 +95,9 @@ A dry run fails, and no mutant runs, when a test fails with no mutant active, wh
 
 #### Output
 
-Help, the version, and the report of a run go to standard output. Errors go to standard error, and so does the overview that `stryker` writes when it has no words, so `stryker run > report.txt` holds the report and nothing else. The output of the project's tests goes to files in a temporary folder, and to neither stream.
+Help, the version, and the report of a run go to standard output. Errors go to standard error, and so does the overview that `stryker` writes when it has no words, and so does the [`progress`](#the-progress-reporter) reporter's text, so `stryker run > report.txt` holds the report and nothing else. The output of the project's tests goes to files in a temporary folder, and to neither stream.
 
-Output has no color when standard output isn't a terminal, when the `NO_COLOR` environment variable has a value, when `TERM` is `dumb`, and with `--no-color`. A report that goes to a file has no color.
+Output has no color when its stream isn't a terminal, when the `NO_COLOR` environment variable has a value, when `TERM` is `dumb`, and with `--no-color`. Each stream is judged on its own: with standard output sent to a file and standard error on a terminal, the report has no color and the `progress` text has. A report that goes to a file has no color.
 
 ## Checks
 
@@ -190,16 +190,16 @@ With no value, the project's folders choose it: `minitest` when the project has 
 
 ### `reporters`
 
-A list of reporter names. The default is `clear-text`, `progress`, and `html`, as in StrykerJS. The reporters are `clear-text` and `json`. A name that you give, in the file or on the command line, and that isn't one of them stops the run before it reads any file:
+A list of reporter names. The default is `clear-text`, `progress`, and `html`, as in StrykerJS. The reporters are `clear-text`, `progress`, and `json`. A name that you give, in the file or on the command line, and that isn't one of them stops the run before it reads any file:
 
 ```text
-Stryker (for Ruby) has no reporter named "progress" or "html". The reporters option takes "clear-text" and "json".
+Stryker (for Ruby) has no reporter named "html". The reporters option takes "clear-text", "progress", and "json".
 ```
 
-The default holds `progress` and `html`, which aren't built. A run with the default leaves them out, runs `clear-text`, and writes one warning to standard error before it reads any file:
+The default holds `html`, which isn't built. A run with the default leaves them out, runs `clear-text`, and writes one warning to standard error before it reads any file:
 
 ```text
-Warning: this run leaves out the default reporters "progress" and "html", because Stryker (for Ruby) hasn't built them yet. Name the reporters you want, as in --reporters clear-text,json, to choose your own.
+Warning: this run leaves out the default reporter "html", because Stryker (for Ruby) hasn't built it yet. Name the reporters you want, as in --reporters clear-text,json, to choose your own.
 ```
 
 Set the option to the reporters you want, as in `stryker run --reporters clear-text,json`, to run `json` too and to stop the warning. Each reporter runs once, even when the list holds its name twice.
@@ -213,6 +213,30 @@ Writes a summary of the run to standard output, once, when the run ends. It foll
 3. A table of the [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) of all files, of each folder, and of each file, with the counts of killed, timed-out, surviving, uncovered, and errored mutants. The folders that every file shares are left out of the names. Folders come before files, and each group is in the order of the names. The `total` column is the score of all valid mutants, and the `covered` column leaves out the mutants that no test reached. A score is `n/a` when no mutant is valid. A mutant with the status `Ignored` is in no count and in neither score, and no part of the summary describes it. The `json` report lists it.
 
 The reporter paints the file and location, the lines with `-` and `+`, and each score with ANSI colors: a score at or above [`thresholds.high`](#thresholdshigh) is green, one at or above [`thresholds.low`](#thresholdslow) is yellow, a lower one is red, and `n/a` is gray. It paints nothing when standard output isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`.
+
+#### The `progress` reporter
+
+Shows how far the run has got, on standard error, while the mutants run. It follows StrykerJS's `progress` reporter, and its `progress-append-only` reporter where nobody watches. It counts the mutants that run tests. A mutant that has no run isn't in the count: one that no test reaches (`NoCoverage`), one that has no switch (`Ignored`), and one that isn't valid Ruby (`CompileError`). A run with no mutant to run shows nothing.
+
+On a terminal, it draws one line at the start of the run and draws it again after each mutant, so the line changes in place, and it ends the line when the run ends:
+
+```text
+Mutation testing  [=========================                         ] 50% (elapsed: ~2m, remaining: ~2m) 5/10 Mutants tested (1 survived, 0 timed out)
+```
+
+Where standard error isn't a terminal, such as a CI log or a file, it draws no animation. It appends a line, without the bar, once ten seconds of the run have gone since the last line, and the first comes after ten seconds. A run of less than ten seconds writes none:
+
+```text
+Mutation testing 50% (elapsed: ~2m, remaining: ~2m) 5/10 tested (1 survived, 0 timed out)
+```
+
+The percent counts work, not mutants. The work of a mutant is the time that the tests which run against it took in the dry run, so a mutant that runs a slow test moves the percent further than one that runs a fast test. A mutant that runs in a fresh process, a static mutant, also adds the time that the dry run spent besides its tests. When no test took any time, each mutant counts the same. A mutant that times out counts as done.
+
+The time is rough, in whole minutes rounded down: `<1m` below a minute, `~5m`, and `~1h 5m` from an hour on. The time left is the time so far, per unit of work done, times the work that is left. It is `n/a` before the first mutant is tested, and when no work is left.
+
+On a terminal, the bar is 50 characters wide, or as wide as the rest of the line leaves room for in the width that the terminal gives, and it has no width on a terminal too narrow for the rest of the line. The filled part of the bar is green, a count of survivors above zero is red, and a count of timeouts above zero is yellow. The reporter paints nothing when standard error isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`, and it still animates on a terminal in those cases.
+
+A run that stops before it ends leaves the last line drawn, and the message that stops it follows on the same line.
 
 #### The `json` reporter
 

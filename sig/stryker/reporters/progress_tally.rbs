@@ -1,0 +1,72 @@
+module Stryker
+  module Reporters
+    # What the progress reporters know about how far a run has got: how many
+    # mutants it has tested, how many of those survived or timed out, and how
+    # much of the run's work is done. The work of a mutant is its weight, as
+    # StrykerJS weights it: the time its tests took in the dry run, so a mutant
+    # that runs a slow test moves the bar further than one that runs a fast
+    # one. When every weight is zero, each mutant weighs the same.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tally = Stryker::Reporters::ProgressTally.new({ 1 => 30.0, 2 => 10.0 })
+    # tally.record(result_of_mutant_1)
+    # tally.fraction            # => 0.75
+    # tally.seconds_left(60.9)  # => 20
+    # ```
+    class ProgressTally
+      @weights: Hash[Integer, Float]
+
+      @total: Float
+
+      @done: Float
+
+      @counts: StatusCounts
+
+      # How many mutants the run tests.
+      def mutants: () -> Integer
+
+      # How many of them have a result.
+      def tested: () -> Integer
+
+      # How many of the tested mutants survived.
+      def survived: () -> Integer
+
+      # How many of the tested mutants timed out.
+      def timed_out: () -> Integer
+
+      # Builds the tally of a run that has tested nothing.
+      #
+      # - `weights`: Hash, the weight of each mutant that the run tests, by the mutant's ID.
+      def initialize: (Hash[Integer, Float] weights) -> void
+
+      # Counts the result of a mutant, and returns the weight that the mutant
+      # adds to the work done. Returns nil and counts nothing for a mutant that
+      # the run doesn't test, such as one that no test reaches.
+      #
+      # - `result`: Stryker::MutantResult, the result.
+      def record: (MutantResult result) -> Float?
+
+      # How much of the work is done, from 0.0 to 1.0. It is 1.0 once every
+      # mutant has a result.
+      def fraction: () -> Float
+
+      # The whole percent of the work that is done.
+      def percent: () -> Integer
+
+      # The time so far, and the time left, as the progress line shows them:
+      # `elapsed: <1m, remaining: n/a`.
+      #
+      # - `elapsed`: Float, the seconds since the run started.
+      def times: (Float elapsed) -> String
+
+      # The estimate of the seconds that the rest of the run takes, as StrykerJS
+      # makes it: the seconds so far, per unit of work done, times the work left.
+      # Returns nil when no work is done or none is left.
+      #
+      # - `elapsed`: Float, the seconds since the run started.
+      def seconds_left: (Float elapsed) -> Integer?
+    end
+  end
+end

@@ -1,0 +1,86 @@
+module Stryker
+  module Reporters
+    # The `progress` reporter. While the run goes, it shows how many of the
+    # mutants that the run tests are done, how many of those survived or timed
+    # out, how much time has gone, and an estimate of how much is left. It
+    # follows StrykerJS's `progress` reporter on a terminal and its
+    # `progress-append-only` reporter elsewhere.
+    #
+    # On a terminal it draws one line and redraws it after each mutant. Where
+    # the stream isn't a terminal, it appends a line when ten seconds have gone
+    # since the last. It counts only the mutants that the plan runs: one with
+    # the status `NoCoverage`, `Ignored`, or `CompileError` has no run, so it
+    # isn't part of the work. It weighs a mutant by the time of the tests that
+    # run against it in the dry run, and adds the dry run's overhead to a mutant
+    # that runs in a fresh process. It shows nothing for a run with no mutant
+    # to test.
+    #
+    # It writes to the stream it is given, which is standard error in a run, and
+    # never to standard output. It reads time from the clock it is given, so it
+    # starts no thread and never sleeps. With `color` true it paints the filled
+    # bar and the counts above zero; the caller decides, because it knows
+    # whether the stream is a terminal and whether the user wants color.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # reporter = Stryker::Reporters::Progress.animated(io: $stderr, columns: 120, color: true)
+    # events.each { |event| reporter.call(event) }
+    # ```
+    class Progress
+      @display: ProgressAnimation | ProgressLog
+
+      @weights: ProgressWeights
+
+      @tally: ProgressTally
+
+      @watch: Stopwatch
+
+      # The clock that a reporter reads when it isn't given one: the seconds of
+      # the system's monotonic clock.
+      MONOTONIC: ^() -> Float
+
+      # Builds a reporter that redraws one line on a terminal, and reads
+      # `MONOTONIC`.
+      #
+      # - `io`: an object with `write`, the terminal.
+      # - `columns`: Integer, the width of the terminal, which limits the bar.
+      # - `color`: bool, whether to paint the text.
+      def self.animated: (io: ProgressAnimation::_Writer, columns: Integer, color: bool) -> Progress
+
+      # Builds a reporter that appends a line every ten seconds, for a stream
+      # that nobody watches as an animation.
+      #
+      # - `io`: an object with `write`, such as a file or a StringIO.
+      # - `color`: bool, whether to paint the text.
+      def self.logged: (io: ProgressAnimation::_Writer, color: bool) -> Progress
+
+      # Builds a reporter that shows its progress on `display`.
+      #
+      # - `display`: Stryker::Reporters::ProgressAnimation or Stryker::Reporters::ProgressLog.
+      # - `clock`: a callable that returns the seconds of a clock that never goes back.
+      def initialize: (display: ProgressAnimation | ProgressLog, clock: ^() -> Float) -> void
+
+      # Receives one event: the dry run's times, the plan's mutants, a result
+      # that moves the progress on, or the end of the run. It does nothing for
+      # any other event.
+      #
+      # - `event`: Stryker::event, the event the run published.
+      def call: (event event) -> void
+
+      private
+
+      # Keeps the dry run's times as the weights of the mutants.
+      def timed: (Events::DryRunCompleted event) -> void
+
+      # Counts a result, and shows the progress when the result moved it on.
+      def tested: (Events::MutantTested event) -> void
+
+      # Starts the clock, and weighs the mutants that the plan runs.
+      def planned: (Events::PlanReady event) -> void
+
+      # Shows the progress so far.
+      def show: () -> void
+    end
+  end
+end
