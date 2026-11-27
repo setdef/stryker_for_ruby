@@ -93,16 +93,15 @@ class DryRunVerdictTest < Minitest::Test
     )
   end
 
-  def test_the_dry_runs_flight_gives_what_it_found_once_it_lands
-    landed = Stryker::Isolation::DryRunVerdict.awaited(Stryker::Isolation::DryRun.within(5)) do |flight|
-      relayed(*passing).each { |message| flight.receive({ message: }.transform_keys(&:to_s)) }
-      flight.land(ending)
+  def test_the_dry_run_gives_what_it_found_once_it_lands
+    landed = Stryker::Isolation::DryRunVerdict.awaited(Stryker::Isolation::DryRun.within(5)) do |landing|
+      landing.call(messages(*passing), ending)
     end
 
     assert_equal(found, landed)
   end
 
-  def test_a_dry_run_whose_flight_never_lands_is_an_error
+  def test_a_dry_run_that_never_lands_is_an_error
     assert_raises(Stryker::Isolation::Error) { Stryker::Isolation::DryRunVerdict.awaited(Stryker::Isolation::DryRun.within(5)) { nil } }
   end
 end

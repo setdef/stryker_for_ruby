@@ -13,20 +13,24 @@ module Stryker
     # ```ruby
     # Stryker::Isolation::DryRunVerdict.new(dry_run:, messages:, ending:).result.static_bucket
     # # => [1]
-    # found = Stryker::Isolation::DryRunVerdict.awaited(dry_run) { |flight| flights.run([flight]) }
+    # found = Stryker::Isolation::DryRunVerdict.awaited(dry_run) do |landing|
+    #   flights.run([Stryker::Isolation::Flight.new(dry_run, &landing)])
+    # end
     # ```
     class DryRunVerdict < Data
-      # The text of the error for a block that landed no flight.
+      # The text of the error for a block that never called the landing.
       UNLANDED: String
 
-      # Yields the flight of `dry_run`, whose landing judges the dry run, and
-      # returns what the dry run found once the block has landed the flight.
-      # Raises `Stryker::Isolation::DryRunError` from the landing when the
-      # dry run didn't pass, and `Stryker::Isolation::Error` when the block
-      # returns without landing the flight.
+      # Yields the landing of `dry_run`, which judges the dry run from its
+      # process's messages and ending, and returns what the dry run found
+      # once the block has called it, as the flight of a forked child or a
+      # fresh run calls it when the process ended. Raises
+      # `Stryker::Isolation::DryRunError` from the landing when the dry run
+      # didn't pass, and `Stryker::Isolation::Error` when the block returns
+      # without calling it.
       #
       # - `dry_run`: Stryker::Isolation::DryRun, the dry run.
-      def self.awaited: (DryRun dry_run) { (Flight flight) -> void } -> DryRunResult
+      def self.awaited: (DryRun dry_run) { (^(Messages messages, Ending ending) -> void landing) -> void } -> DryRunResult
 
       # The dry run.
       attr_reader dry_run: DryRun

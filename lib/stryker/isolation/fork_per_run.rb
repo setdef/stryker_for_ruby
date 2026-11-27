@@ -34,7 +34,8 @@ module Stryker
       end
 
       def dry_run(config)
-        DryRunVerdict.awaited(DryRun.within(config.dry_run_timeout_minutes)) { |flight| fly([flight]) }
+        dry_run = DryRun.within(config.dry_run_timeout_minutes)
+        DryRunVerdict.awaited(dry_run) { |landing| fly([Flight.new(dry_run, &landing)]) }
       end
 
       def stop
