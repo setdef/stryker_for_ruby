@@ -34,7 +34,7 @@ module Stryker
       # - `run`: what the child runs, such as a Stryker::MutantRun.
       # - `work`: what the child does with it, such as a
       #   Stryker::Isolation::ForkedRun.
-      def start: (MutantRun run, _ForkedWork work) -> [Integer, IO]
+      def start: (forked run, _ForkedWork work) -> [Integer, IO]
 
       # What the child does right after the fork: it leads a new process
       # group, so killing the group ends what its tests start too; changes
@@ -45,10 +45,10 @@ module Stryker
       # - `run`: what the child runs.
       # - `work`: what the child does with it.
       # - `writer`: IO, the child's end of its pipe.
-      def child: (MutantRun run, _ForkedWork work, IO writer) -> void
+      def child: (forked run, _ForkedWork work, IO writer) -> void
 
       # The last lines of the standard error of the child that ran `run`.
-      def errors: (MutantRun run) -> String
+      def errors: (forked run) -> String
 
       private
 

@@ -21,7 +21,7 @@ module Stryker
       @relay: Relay
 
       # The children still running.
-      @watches: Watches[MutantRun]
+      @watches: Watches[forked]
 
       # Builds the children's set, with none in it.
       #
@@ -35,7 +35,7 @@ module Stryker
       #
       # - `run`: what the child runs, such as a Stryker::MutantRun.
       # - `work`: what the child does with it.
-      def start: (MutantRun run, _ForkedWork work) -> nil
+      def start: (forked run, _ForkedWork work) -> nil
 
       # Waits until `commands` or a child's pipe can be read, or until the
       # first child's time is up, relays what the children wrote and how

@@ -20,7 +20,8 @@ class ForkParentTest < Minitest::Test
     end
 
     def start(run, _work)
-      @test.scripted(run.test_ids.first)
+      # The dry run has no tests of its own, so its child just ends.
+      @test.scripted(run.is_a?(Stryker::Isolation::DryRun) ? "exit!(0)" : run.test_ids.first)
     end
 
     def errors(_run)
@@ -93,6 +94,14 @@ class ForkParentTest < Minitest::Test
     assert_equal({ ready: true }, lines.first)
     assert_equal(7, lines.dig(1, :mutant))
     assert_kind_of(Integer, lines.dig(1, :forked))
+  end
+
+  def test_the_parent_forks_a_child_for_the_dry_run_and_relays_its_lines_under_its_own_key
+    lines, = served([Stryker::Isolation::DryRun.within(5)], lines: 3)
+
+    assert_equal([true, true], lines[1, 2].map { |line| line[:dry_run] })
+    assert_equal(%i[dry_run forked], lines[1].keys)
+    assert_equal(0, lines.dig(2, :exited, :exit_status))
   end
 
   def test_the_parent_relays_each_line_a_child_writes_and_how_it_ended

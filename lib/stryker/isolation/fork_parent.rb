@@ -43,9 +43,9 @@ module Stryker
       end
 
       private def ready(commands)
-        @runner.load_tests
+        tests = @runner.load_tests
         @relay.ready
-        Orders.new(commands, @runner, @children)
+        Orders.new(commands, @runner, @children, tests)
       end
     end
   end

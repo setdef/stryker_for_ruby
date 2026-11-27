@@ -1,6 +1,7 @@
 module Stryker
   module Isolation
-    # Writes what happens in one mutant run, in the run's own process: a
+    # Writes what happens in one mutant run or the dry run, in the run's
+    # own process: a
     # line when each test starts, a line with its result when it finishes,
     # and a last line when the run ends. It is the run's test observer, so
     # each result crosses to the orchestrator as soon as its test finishes,
@@ -27,6 +28,12 @@ module Stryker
       # - `result`: Stryker::TestResult, the result of the test that
       #   finished.
       def test_finished: (TestResult result) -> nil
+
+      # Writes `{"result":...}` with what a dry run found, the dry run's
+      # last line before `{"ended":true}`.
+      #
+      # - `result`: Stryker::DryRunResult, what the dry run found.
+      def found: (DryRunResult result) -> nil
     end
   end
 end

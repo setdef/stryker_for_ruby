@@ -42,12 +42,16 @@ module ProjectSideStandIns
     end
   end
 
-  # Records the mutant it makes active.
+  # Records the mutant it makes active, and whether it started a dry run.
   class Runtime
-    attr_reader :active
+    attr_reader :active, :dry_run
 
     def activate_mutant(id)
       @active = id
+    end
+
+    def start_dry_run
+      @dry_run = true
     end
   end
 
@@ -77,12 +81,23 @@ module ProjectSideStandIns
     end
   end
 
-  # A loader that records the cache's directory it installs from.
+  # A loader that records the cache's directory it installs from, and
+  # whether it ran the loading check, which raises +error+ when one is given.
   class Loader
-    attr_reader :installed
+    attr_reader :installed, :checked
+
+    def initialize(error = nil)
+      @error = error
+      @checked = false
+    end
 
     def install(directory)
       @installed = directory
+    end
+
+    def check
+      @checked = true
+      raise(@error) if @error
     end
   end
 end

@@ -1,0 +1,49 @@
+module Stryker
+  module Runtime
+    # The tests of a dry run: it runs each test once, in order, through a
+    # `Stryker::Runtime::DryRunObserver`, stopping after the first that
+    # fails, then runs the loading check, and returns what the dry run
+    # found. It runs in the dry run's process, after
+    # `Stryker::Runtime.start_dry_run`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # found = Stryker::Runtime::DryRunTests.new(runner, test_ids).call(report)
+    # found.static_bucket
+    # # => [1]
+    # ```
+    class DryRunTests
+      # The test runner adapter, whose tests are loaded.
+      @runner: _TestRunner
+
+      # The IDs of the tests to run, in order.
+      @test_ids: Array[String]
+
+      # The recorder whose buckets the tests fill.
+      @recorder: Recorder
+
+      # The loader, whose check the run ends with.
+      @loader: singleton(Loader)
+
+      # Builds the tests.
+      #
+      # - `runner`: Stryker::_TestRunner, the adapter, with its tests loaded.
+      # - `test_ids`: Array of String, the IDs of every test, in order.
+      # - `recorder`: Stryker::Runtime::Recorder, the process's own,
+      #   `Stryker::Runtime::RECORDER`, by default.
+      # - `loader`: `Stryker::Runtime::Loader`, or a stand-in in a test.
+      def initialize: (_TestRunner runner, Array[String] test_ids, ?Recorder recorder, ?singleton(Loader) loader) -> void
+
+      # Runs every test, passing each start and result on to `observer` as it
+      # happens, checks that every instrumented file that loaded came
+      # through the hook, and returns what the dry run found. Raises
+      # `Stryker::Runtime::LoadingError` when the check fails, and lets
+      # through what the test runner adapter raises.
+      #
+      # - `observer`: Stryker::_TestObserver, the observer that hears each
+      #   start and result.
+      def call: (_TestObserver observer) -> DryRunResult
+    end
+  end
+end

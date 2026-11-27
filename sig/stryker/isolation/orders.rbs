@@ -14,12 +14,14 @@ module Stryker
     # The lines that the orchestrator gives the parent that forks, on the
     # parent's standard input. It reads each into what the parent runs and
     # the work its child does with it, and starts that child. Each line is a
-    # run, as `Stryker::MutantRun#to_json` writes it.
+    # mutant run, as `Stryker::MutantRun#to_json` writes it, or the dry run,
+    # as `Stryker::Isolation::DryRun#to_json` writes it, whose child runs
+    # every test that the parent loaded.
     #
     # ## Examples
     #
     # ```ruby
-    # orders = Stryker::Isolation::Orders.new(Stryker::Isolation::LineReader.new(input), runner, children)
+    # orders = Stryker::Isolation::Orders.new(Stryker::Isolation::LineReader.new(input), runner, children, runner.load_tests)
     # orders.serve
     # # returns once the orchestrator closed the parent's standard input
     # ```
@@ -33,6 +35,9 @@ module Stryker
       # The parent's children.
       @children: Children
 
+      # The IDs of the tests that the parent loaded, in order.
+      @test_ids: Array[String]
+
       # Builds the orders.
       #
       # - `commands`: Stryker::Isolation::LineReader, the reader of the
@@ -41,7 +46,9 @@ module Stryker
       #   loaded.
       # - `children`: Stryker::Isolation::Children, the parent's children,
       #   which start each child.
-      def initialize: (LineReader commands, _TestRunner runner, Children children) -> void
+      # - `tests`: Array of Stryker::Test, the tests that the parent loaded,
+      #   which the dry run runs.
+      def initialize: (LineReader commands, _TestRunner runner, Children children, Array[Test] tests) -> void
 
       # Starts a child for each line as it comes, while the parent's
       # children run, and returns once the orchestrator closed the parent's
@@ -62,7 +69,8 @@ module Stryker
       # closed it.
       def open?: () -> bool
 
-      # Starts a child for the run on `line`, with the work its child does,
+      # Starts a child for the mutant run or the dry run on `line`, with the
+      # work its child does,
       # as `Stryker::Isolation::Children#start` does.
       #
       # - `line`: String, one line from the orchestrator.

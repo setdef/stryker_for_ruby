@@ -1,0 +1,71 @@
+module Stryker
+  module Isolation
+    # What the parent that forks runs in a child: a mutant run, or the dry
+    # run.
+    type forked = MutantRun | DryRun
+
+    # The dry run, as the orchestrator gives it to the parent that forks:
+    # every test that the parent loaded, run once in a forked child with no
+    # mutant active, within a time limit. The parent knows the dry run's
+    # lines by its relay key, `{"dry_run" => true}`, where a mutant run's
+    # have the mutant's ID, and its child's output files are named
+    # `dry-run`.
+    #
+    # A dry run is a value: two with equal limits are equal. On the
+    # parent's standard input, it is one line,
+    # `{"dry_run":{"timeout_ms":N}}`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # dry_run = Stryker::Isolation::DryRun.within(5)
+    # dry_run.timeout_ms
+    # # => 300000
+    # dry_run.to_json
+    # # => "{\"dry_run\":{\"timeout_ms\":300000}}"
+    # Stryker::Isolation::DryRun.from_line(dry_run.to_json) == dry_run
+    # # => true
+    # ```
+    class DryRun < Data
+      # The key of the dry run in the lines of the protocol: `"dry_run"`.
+      KEY: String
+
+      # The time limit of the dry run's tests in milliseconds, from the
+      # start of the first test, as `dryRunTimeoutMinutes` gives it.
+      attr_reader timeout_ms: Integer
+
+      # Builds the dry run.
+      #
+      # - `timeout_ms`: Integer, the time limit in milliseconds.
+      def self.new: (timeout_ms: Integer) -> instance
+                  | (Integer timeout_ms) -> instance
+
+      # The dry run with a limit of `minutes`, in whole milliseconds,
+      # rounded up, so that the limit is never shorter than the option says.
+      # A limit of 0 minutes is 0 milliseconds.
+      #
+      # - `minutes`: Integer or Float, `dryRunTimeoutMinutes`.
+      def self.within: (Integer | Float minutes) -> DryRun
+
+      # The dry run that `line` holds, as `to_json` writes it, or nil when
+      # `line` holds something else, such as a mutant run. Raises
+      # `JSON::ParserError` for a line that isn't JSON, and ArgumentError or
+      # TypeError for a dry run with no whole time limit.
+      #
+      # - `line`: String, one line from the orchestrator.
+      def self.from_line: (String line) -> DryRun?
+
+      # The key that the parent puts on each line about the dry run:
+      # `{"dry_run" => true}`.
+      def relay_key: () -> Hash[String, bool]
+
+      # The name of the files of the dry run's child's standard output and
+      # standard error: `"dry-run"`.
+      def output_name: () -> String
+
+      # The line that gives the parent the dry run,
+      # `{"dry_run":{"timeout_ms":N}}`.
+      def to_json: (*Object) -> String
+    end
+  end
+end

@@ -28,23 +28,23 @@ module Stryker
 
       # Writes the ID of the child that runs `run`.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - `pid`: Integer, the child's process ID.
-      def forked: (MutantRun run, Integer pid) -> nil
+      def forked: (forked run, Integer pid) -> nil
 
       # Writes the message on `line` from the child that runs `run`, or
       # null when the line isn't JSON, which ends what the orchestrator
       # trusts of the run's messages.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - `line`: String, a whole line the child wrote.
-      def message: (MutantRun run, String line) -> nil
+      def message: (forked run, String line) -> nil
 
       # Writes how the child that ran `run` ended.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - `ending`: Stryker::Isolation::Ending, how its process ended.
-      def exited: (MutantRun run, Ending ending) -> nil
+      def exited: (forked run, Ending ending) -> nil
     end
   end
 end

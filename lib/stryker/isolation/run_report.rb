@@ -12,6 +12,10 @@ module Stryker
       def test_finished(result)
         write(finished: result)
       end
+
+      def found(result)
+        write(result:)
+      end
     end
   end
 end
