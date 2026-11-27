@@ -10,7 +10,7 @@ module Stryker
       end
 
       def pad(text)
-        text.ljust(width)
+        text + (" " * (width - CodeUnits.width(text)))
       end
     end
   end

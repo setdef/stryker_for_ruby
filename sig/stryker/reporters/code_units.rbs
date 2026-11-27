@@ -1,7 +1,7 @@
 module Stryker
   module Reporters
     # Cuts a String at a count of UTF-16 code units, as JavaScript cuts a string,
-    # because the report counts columns in them. A character outside the Basic
+    # because the report counts columns in them, and measures it in them. A character outside the Basic
     # Multilingual Plane, such as an emoji, takes two.
     #
     # ## Examples
@@ -24,6 +24,21 @@ module Stryker
       # - `text`: String, the text to cut.
       # - `count`: Integer, how many code units to leave out.
       def self.tail: (String text, Integer count) -> String
+
+      # How many UTF-16 code units `text` takes, with each emoji counted as two,
+      # as StrykerJS counts the width of a name in its table. A character outside
+      # the Basic Multilingual Plane takes two, and so does an emoji made of
+      # several characters, such as a flag or a family.
+      #
+      # - `text`: String, the text to measure.
+      def self.width: (String text) -> Integer
+
+      # Matches a pictograph, with its skin tone. Private.
+      PICTOGRAPH: Regexp
+
+      # Matches an emoji: a pictograph, several joined by a zero-width joiner, a
+      # flag, or a keycap. Private.
+      EMOJI: Regexp
 
       # Turns UTF-16 bytes into a UTF-8 String. Private.
       def self.decoded: (String? bytes) -> String

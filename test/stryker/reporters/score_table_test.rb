@@ -79,6 +79,14 @@ class ScoreTableTest < Minitest::Test
     assert_includes(first_row(["a.rb", %w[Ignored]], color: true), "|\e[90m    n/a \e[39m|\e[90m     n/a \e[39m|")
   end
 
+  def test_measures_a_file_name_in_utf_16_code_units_as_stryker_js_does
+    lines = table(["lib/\u{1F600}\u{1F600}\u{1F600}\u{1F600}.rb", %w[Killed]]).lines
+
+    names = [lines[4], lines[5]].map { |line| line[/\A.*?\|/] }
+
+    assert_equal(["All files    |", " \u{1F600}\u{1F600}\u{1F600}\u{1F600}.rb |"], names)
+  end
+
   def test_draws_only_the_root_row_for_a_run_with_no_files
     assert_equal(
       "All files |    n/a |     n/a |        0 |         0 |          0 |        0 |        0 |\n",

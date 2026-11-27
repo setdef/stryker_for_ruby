@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "code_units"
+
 module Stryker
   module Reporters
     class TableColumn
@@ -7,7 +9,7 @@ module Stryker
         @header = header
         @color = color
         @content = content
-        @net = [header.length, *rows.map { |row| yield(row).length }].max
+        @net = [header.length, *rows.map { |row| CodeUnits.width(yield(row)) }].max
       end
 
       def gap
@@ -31,7 +33,7 @@ module Stryker
       end
 
       def pad(text)
-        "#{' ' * (@net - text.length)} #{text} "
+        "#{' ' * (@net - CodeUnits.width(text))} #{text} "
       end
 
       def cell(row)
