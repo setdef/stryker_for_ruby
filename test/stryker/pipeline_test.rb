@@ -184,7 +184,7 @@ class PipelineTest < Minitest::Test
     assert_equal([[1, false], [2, true]], plan.runs.map { |run| [run.mutant.id, run.static] })
   end
 
-  def test_the_cache_is_written_before_the_adapters_start_and_is_gone_after_the_run
+  def test_the_cache_is_gone_after_the_run
     isolations = Isolations.new(found:)
     run_pipeline(isolations)
 
