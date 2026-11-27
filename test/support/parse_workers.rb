@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../test_helper")
+require_relative("child_processes")
 require "rbconfig"
 require "stryker/instrumenter"
 require "tmpdir"
@@ -8,6 +9,8 @@ require "tmpdir"
 # Starts parse workers that stand in for the real one, and finds which of
 # the processes they started are still running.
 module ParseWorkers
+  include ChildProcesses
+
   LIB = File.expand_path("../../lib", __dir__)
 
   # Each stand-in writes a file named for its process ID in the folder that
@@ -66,13 +69,6 @@ module ParseWorkers
     ensure
       assert_none_running(started(folder))
     end
-  end
-
-  def running?(pid)
-    Process.kill(0, pid)
-    true
-  rescue Errno::ESRCH
-    false
   end
 
   def assert_none_running(pids)
