@@ -39,10 +39,22 @@ class ProjectSideTest < Minitest::Test
     process = FakeProcess.new
     pid, reader = Stryker::Isolation::Forking.new(nil, nil, process).start(sample_run)
 
-    assert_equal([FakeProcess::PID, [[:fork]]], [pid, process.calls])
+    # The child's own setpgid may run after a KILL, which then finds no group,
+    # so the parent puts the child in its group too.
+    assert_equal([FakeProcess::PID, [[:fork], [:setpgid, FakeProcess::PID, FakeProcess::PID]]], [pid, process.calls])
     assert_kind_of(IO, reader)
   ensure
     reader&.close
+  end
+
+  def test_forking_a_child_that_has_ended_already_is_no_error
+    [Errno::ESRCH, Errno::EACCES, Errno::EPERM].each do |error|
+      process = FakeProcess.new(setpgid_error: error)
+      pid, reader = Stryker::Isolation::Forking.new(nil, nil, process).start(sample_run)
+
+      assert_equal(FakeProcess::PID, pid)
+      reader.close
+    end
   end
 
   def test_a_forked_child_leads_a_group_changes_its_streams_and_runs_its_run

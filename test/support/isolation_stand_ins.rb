@@ -20,9 +20,10 @@ module IsolationStandIns
 
     attr_reader :calls
 
-    def initialize(kill_error: nil)
+    def initialize(kill_error: nil, setpgid_error: nil)
       @calls = []
       @kill_error = kill_error
+      @setpgid_error = setpgid_error
     end
 
     # Takes the child's block, and never runs it.
@@ -38,6 +39,7 @@ module IsolationStandIns
 
     def setpgid(*arguments)
       @calls << [:setpgid, *arguments]
+      raise(@setpgid_error) if @setpgid_error
     end
 
     def kill(*arguments)

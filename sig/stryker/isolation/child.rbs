@@ -8,7 +8,7 @@ module Stryker
     #
     # ```ruby
     # child = Stryker::Isolation::Child.new(pid)
-    # child.running_after?(1.5)
+    # child.end_within(1.5)
     # # => false, when it ended within 1.5 seconds
     # child.status
     # # => #<Process::Status: pid 4242 exit 0>
