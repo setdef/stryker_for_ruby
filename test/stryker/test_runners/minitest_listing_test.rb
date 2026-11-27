@@ -55,10 +55,7 @@ class MinitestListingTest < Minitest::Test
     "support/thing_support.rb": "THING_SUPPORT = true\n",
   }.freeze
   LAZY = { "test/lazy_test.rb": "class LazyLoadTest < Minitest::Test; def test_l = pass; end\n" }.freeze
-  SEEDLESS = { "test/seed_set_test.rb": "class SeedSetTest < Minitest::Test; end\n" }.freeze
-  SEEDED = { "test/seed_kept_test.rb": "class SeedKeptTest < Minitest::Test; end\n" }.freeze
-  private_constant(:ELSEWHERE, :HELPED, :LAZY, :LISTED, :NAMELESS, :SEEDED, :SEEDLESS)
-  private_constant(:SOURCELESS, :SPEC, :TWICE, :WHERE)
+  private_constant(:ELSEWHERE, :HELPED, :LAZY, :LISTED, :NAMELESS, :SOURCELESS, :SPEC, :TWICE, :WHERE)
 
   def test_a_spec_test_has_its_describe_block_and_its_method_in_its_id
     runner = loaded(SPEC)
@@ -115,18 +112,5 @@ class MinitestListingTest < Minitest::Test
     runner = Stryker::TestRunners::MinitestRunner.new(minitest_project(LAZY))
 
     assert_equal(%w[passed], run_ids(runner, "LazyLoadTest#test_l").map(&:status))
-  end
-
-  def test_minitests_seed_is_kept_when_the_project_set_one_and_fixed_when_none_did
-    seed = Minitest.seed
-    loaded(SEEDED)
-
-    assert_equal(seed, Minitest.seed)
-    Minitest.seed = nil
-    loaded(SEEDLESS)
-
-    assert_equal(0, Minitest.seed)
-  ensure
-    Minitest.seed = seed
   end
 end

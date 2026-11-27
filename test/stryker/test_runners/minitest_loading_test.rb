@@ -18,7 +18,9 @@ class MinitestLoadingTest < Minitest::Test
     "test/precedence_test.rb": "require \"precedence_probe\"\n",
   }.freeze
   UNDUPLICATED = { "test/unduplicated_test.rb": "class UnduplicatedTest < Minitest::Test; end\n" }.freeze
-  private_constant(:CROSSED, :PRECEDENCE, :UNDUPLICATED)
+  SEEDLESS = { "test/seed_set_test.rb": "class SeedSetTest < Minitest::Test; end\n" }.freeze
+  SEEDED = { "test/seed_kept_test.rb": "class SeedKeptTest < Minitest::Test; end\n" }.freeze
+  private_constant(:CROSSED, :PRECEDENCE, :SEEDED, :SEEDLESS, :UNDUPLICATED)
 
   def test_files_that_two_patterns_match_load_in_the_order_of_their_paths_across_the_patterns
     ids = loaded(CROSSED).load_tests.map(&:id).grep(/\ACrossed/)
@@ -48,5 +50,26 @@ class MinitestLoadingTest < Minitest::Test
     assert_equal(1, $LOAD_PATH.count(lib))
   ensure
     $LOAD_PATH.delete(lib)
+  end
+
+  def test_minitests_seed_is_kept_when_the_project_set_one
+    seed = Minitest.seed
+    # Not 0, so that a seed the adapter fixes shows whatever the order of the tests.
+    Minitest.seed = 4242
+    loaded(SEEDED)
+
+    assert_equal(4242, Minitest.seed)
+  ensure
+    Minitest.seed = seed
+  end
+
+  def test_minitests_seed_is_fixed_when_no_project_set_one
+    seed = Minitest.seed
+    Minitest.seed = nil
+    loaded(SEEDLESS)
+
+    assert_equal(0, Minitest.seed)
+  ensure
+    Minitest.seed = seed
   end
 end
