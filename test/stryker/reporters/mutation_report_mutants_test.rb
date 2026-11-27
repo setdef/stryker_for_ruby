@@ -41,6 +41,23 @@ class MutationReportMutantsTest < Minitest::Test
     assert_equal(where.merge(outcome), mutant)
   end
 
+  def test_holds_the_description_of_a_mutant_that_has_one
+    described = Run.survivor.mutant.with(description: "Quantifier \"+\" was removed at offset 2.")
+    mutant = mutants_of(report { [Run.survivor.with(mutant: described)] }).first
+
+    assert_equal("Quantifier \"+\" was removed at offset 2.", mutant[:description])
+  end
+
+  def test_validates_against_the_report_schema_with_a_description
+    described = Run.survivor.mutant.with(description: "Anchor \"^\" was removed at offset 0.")
+
+    assert_valid_report(JSON.parse(report_json { [Run.survivor.with(mutant: described)] }))
+  end
+
+  def test_leaves_out_the_description_of_a_mutant_that_has_none
+    refute_includes(mutants_of(report { [Run.survivor] }).first, :description)
+  end
+
   def test_holds_every_field_of_a_killed_mutant_with_its_reason_and_killer
     mutant = mutants_of(report { [Run.killed] }).first
 

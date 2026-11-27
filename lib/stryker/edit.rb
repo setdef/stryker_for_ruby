@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
 module Stryker
-  class Edit < Data.define(:start_offset, :end_offset, :replacement)
-    def self.over(span, replacement)
-      new(start_offset: span.start_offset, end_offset: span.end_offset, replacement:)
+  class Edit < Data.define(:start_offset, :end_offset, :replacement, :description)
+    def self.over(span, replacement, description = nil)
+      new(start_offset: span.start_offset, end_offset: span.end_offset, replacement:, description:)
     end
 
-    # @dynamic start_offset, end_offset, replacement, to_h
+    def initialize(description: nil, **)
+      super
+    end
+
+    # @dynamic start_offset, end_offset, replacement, description, to_h
   end
 end

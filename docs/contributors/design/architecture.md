@@ -185,7 +185,7 @@ Every value that passes between stages is a `Data.define` class: immutable and c
 | - | - |
 | [`Config`](../../../sig/stryker/config.rbs) | The options of the run, after the file and the command line are merged, from Configure to every stage after it. |
 | [`Location`](../../../sig/stryker/location.rbs) | The stretch of a file that a mutant changes, as the report schema gives it. |
-| [`Mutant`](../../../sig/stryker/mutant.rbs) | One change to a file: its ID, its mutator's name, and its text edit, from Parse and find sites to Instrument. |
+| [`Mutant`](../../../sig/stryker/mutant.rbs) | One change to a file: its ID, its mutator's name, its text edit, and, for some mutators, a description of the change, from Parse and find sites to Instrument. |
 | [`Test`](../../../sig/stryker/test.rbs) | One test of the project, from the test runner adapter to the stages that run tests. |
 | [`TestResult`](../../../sig/stryker/test_result.rbs) | What happened when one test ran, from the test runner adapter to the stages that judge it. |
 | [`DryRunResult`](../../../sig/stryker/dry_run_result.rbs) | What a dry run of every test found, which says which tests reach which mutants. |
@@ -197,7 +197,7 @@ A round trip through JSON gives an equal value. A project's files can be in any 
 | Fields | How they cross JSON |
 | - | - |
 | `Mutant#file`, `Mutant#replacement`, `Test#file`, and each path in `DryRunResult#files_loaded_in_tests` | Bytes and encoding name |
-| `TestResult#failure_message` and `MutantResult#status_reason` | Valid UTF-8 |
+| `TestResult#failure_message`, `MutantResult#status_reason`, and `Mutant#description` | Valid UTF-8 |
 | Every other String, such as IDs, names, and the keys of `DryRunResult#buckets` | Valid UTF-8 |
 
 A run publishes domain events, each also a `Data.define` value ([`Stryker::Events`](../../../sig/stryker/events.rbs)), and the core hands each event to every reporter:

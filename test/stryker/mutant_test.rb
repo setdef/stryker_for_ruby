@@ -18,7 +18,40 @@ class MutantTest < Minitest::Test
   end
 
   def test_holds_its_members
-    assert_equal(members, Stryker::Mutant.new(**members).to_h)
+    assert_equal({ **members, description: nil }, Stryker::Mutant.new(**members).to_h)
+  end
+
+  def test_holds_a_description_when_given_one
+    text = "Anchor \"^\" was removed at offset 0."
+
+    assert_equal(text, mutant(description: text).description)
+  end
+
+  def test_has_no_description_unless_given_one
+    assert_nil(mutant.description)
+  end
+
+  def test_mutants_with_different_descriptions_differ
+    refute_equal(mutant(description: "a"), mutant(description: "b"))
+  end
+
+  def test_a_description_survives_a_round_trip_through_json
+    described = mutant(description: "Quantifier \"+\" was removed at offset 2.")
+
+    assert_equal(described, Stryker::Mutant.from_json(described.to_json))
+  end
+
+  def test_a_mutant_that_has_no_description_reads_from_json_that_has_none_either
+    json = JSON.generate(Stryker::Mutant.new(**members).as_json.except("description"))
+
+    assert_nil(Stryker::Mutant.from_json(json).description)
+  end
+
+  def test_a_description_crosses_json_as_valid_utf8
+    described = mutant(description: "Anchor \"\xFF\" was removed".b)
+    crossed = Stryker::Mutant.from_json(described.to_json).description
+
+    assert_equal(["Anchor \"\u{FFFD}\" was removed", Encoding::UTF_8], [crossed, crossed.encoding])
   end
 
   def test_mutants_with_equal_members_are_equal

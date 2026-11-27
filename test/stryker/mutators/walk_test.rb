@@ -32,6 +32,14 @@ class WalkTest < Minitest::Test
     assert_equal([expected], walk("x = 1\n", integers("Nines", "9")))
   end
 
+  def test_gives_a_mutant_the_description_of_its_edit
+    described = FakeMutator.new("Described") do |node, _ancestors|
+      node.is_a?(Prism::IntegerNode) ? [Stryker::Edit.over(node.location, "9", "One became nine.")] : []
+    end
+
+    assert_equal(["One became nine."], walk("x = 1\n", described).map(&:description))
+  end
+
   def test_makes_no_mutant_where_no_mutator_has_an_edit
     assert_empty(walk("x = a\n", integers("Nines", "9")))
   end

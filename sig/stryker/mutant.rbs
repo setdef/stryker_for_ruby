@@ -24,7 +24,8 @@ module Stryker
   #
   # A mutant is a value: two mutants with equal members are equal. It checks
   # none of its members against the file. It converts to and from JSON, as
-  # `Stryker::JsonValue` says.
+  # `Stryker::JsonValue` says. The report holds a mutant's description as the
+  # report schema's mutant `description`.
   #
   # ## Examples
   #
@@ -69,6 +70,12 @@ module Stryker
     # the source, which can be any, or hold bytes that no encoding accepts.
     attr_reader replacement: String
 
+    # A sentence that says what the mutant changed, as the report shows it, or
+    # `nil` when the mutator gives none. Only the `Regex` mutator gives one. It
+    # holds text for a reader, so it crosses JSON as valid UTF-8, with each
+    # byte that isn't valid replaced by U+FFFD.
+    attr_reader description: String?
+
     # The names of the members that cross JSON as their bytes and their
     # encoding's name: `file` and `replacement`. `mutator_name` holds a name,
     # so it doesn't.
@@ -84,8 +91,13 @@ module Stryker
     # - `end_offset`: Integer, the offset of the byte just after the last one
     #   the edit replaces.
     # - `replacement`: String, the text that takes the place of those bytes.
-    def self.new: (id: Integer, file: String, mutator_name: String, start_offset: Integer, end_offset: Integer, replacement: String) -> instance
-                | (Integer id, String file, String mutator_name, Integer start_offset, Integer end_offset, String replacement) -> instance
+    # - `description`: String or nil, what the mutant changed. It is `nil`
+    #   when omitted.
+    def self.new: (id: Integer, file: String, mutator_name: String, start_offset: Integer, end_offset: Integer, replacement: String, ?description: String?) -> instance
+                | (Integer id, String file, String mutator_name, Integer start_offset, Integer end_offset, String replacement, ?String? description) -> instance
+
+    # Builds the mutant, with no description when `description` is omitted.
+    def initialize: (?description: String?, **Object members) -> void
 
     # `text` with the edit applied, as binary. `text` is a stretch of the
     # file that starts at byte `offset` and holds the whole edit, or the

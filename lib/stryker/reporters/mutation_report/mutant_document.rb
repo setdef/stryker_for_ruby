@@ -20,6 +20,7 @@ module Stryker
             id: mutant.id.to_s,
             mutatorName: mutant.mutator_name,
             replacement: mutant.replacement,
+            description: mutant.description,
             location: Span.new(@location).to_h,
           }
         end

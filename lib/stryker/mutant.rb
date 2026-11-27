@@ -3,11 +3,15 @@
 require_relative "json_value"
 
 module Stryker
-  class Mutant < Data.define(:id, :file, :mutator_name, :start_offset, :end_offset, :replacement)
+  class Mutant < Data.define(:id, :file, :mutator_name, :start_offset, :end_offset, :replacement, :description)
     include JsonValue
 
     def self.byte_members
       %i[file replacement]
+    end
+
+    def initialize(description: nil, **)
+      super
     end
 
     def edit(text, offset = 0)
@@ -23,6 +27,6 @@ module Stryker
       start_offset <= span.start_offset && span.end_offset <= end_offset
     end
 
-    # @dynamic id, file, mutator_name, start_offset, end_offset, replacement
+    # @dynamic id, file, mutator_name, start_offset, end_offset, replacement, description
   end
 end
