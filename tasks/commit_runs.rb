@@ -18,6 +18,16 @@ class CommitRuns
   EVENTS = %w[push workflow_dispatch].freeze
   private_constant(:EVENTS)
 
+  # The conclusions of a run or a job that count as a failure. A conclusion of
+  # canceled, skipped, or neutral is not one, and action_required is a run that
+  # has not finished: it waits for a person's approval.
+  FAILURES = %w[failure timed_out].freeze
+  private_constant(:FAILURES)
+
+  # The conclusion of a run or a job that waits for a person's approval.
+  APPROVAL = "action_required"
+  private_constant(:APPROVAL)
+
   # The branch whose runs are trunk's.
   TRUNK = "trunk"
   private_constant(:TRUNK)
@@ -39,18 +49,18 @@ class CommitRuns
 
   # The newest run on trunk for +commit+ that failed, or nil.
   def red_run(commit)
-    trunk_runs(commit).find { |run| run["conclusion"] == "failure" }
+    trunk_runs(commit).find { |run| failed?(run) }
   end
 
   # The names of the jobs that failed in +run+.
   def failed_jobs(run)
-    jobs(run).filter_map { |job| job["name"] if job["conclusion"] == "failure" }
+    jobs(run).filter_map { |job| job["name"] if failed?(job) }
   end
 
   # Whether a job of +run+ named in +names+ failed on a second attempt or
   # later, which tells a failure from a flake.
   def failed_again?(run, names)
-    jobs(run).any? { |job| names.include?(job["name"]) && job["conclusion"] == "failure" && job["run_attempt"] > 1 }
+    jobs(run).any? { |job| names.include?(job["name"]) && failed?(job) && job["run_attempt"] > 1 }
   end
 
   # The Verdict for +commit+'s newest run that was not canceled, by the jobs
@@ -70,10 +80,10 @@ class CommitRuns
   end
 
   private def state(run, failed)
-    return :pending unless run["status"] == "completed"
+    return :pending if unfinished?(run)
 
     mine = jobs(run).select { |job| failed.include?(job["name"]) }
-    return :bad if mine.any? { |job| job["conclusion"] == "failure" }
+    return :bad if mine.any? { |job| failed?(job) }
     return :good if passed?(mine, failed)
 
     :unknown
@@ -91,8 +101,21 @@ class CommitRuns
   end
 
   private def trunk_runs(commit)
-    runs = @by_commit.fetch(commit, []).select { |run| run["head_branch"] == TRUNK && run["status"] == "completed" }
+    runs = @by_commit.fetch(commit, []).select { |run| run["head_branch"] == TRUNK && finished?(run) }
     runs.sort_by { |run| -run["id"] }
+  end
+
+  private def failed?(run_or_job)
+    FAILURES.include?(run_or_job["conclusion"])
+  end
+
+  private def finished?(run)
+    run["status"] == "completed" && run["conclusion"] != APPROVAL
+  end
+
+  # A run that is going, or that has a job waiting for a person's approval.
+  private def unfinished?(run)
+    !finished?(run) || jobs(run).any? { |job| job["conclusion"] == APPROVAL }
   end
 
   private def jobs(run)
