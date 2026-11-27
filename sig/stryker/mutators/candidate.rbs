@@ -3,7 +3,8 @@ module Stryker
     # An edit that a mutator made at a node, with the node, so that a walk
     # can put a mutator's edits in the order of the file and tell which edits
     # lie inside a node. The `Stryker::Mutators::Roster` turns the ones it
-    # keeps into mutants.
+    # keeps into mutants. A candidate is live, or it is ignored for a reason,
+    # and the reason becomes its mutant's `statusReason`.
     #
     # ## Examples
     #
@@ -23,13 +24,22 @@ module Stryker
       # The edit.
       attr_reader edit: Edit
 
+      # Why the candidate's mutant is `Ignored`, or nil when the candidate is
+      # live.
+      attr_reader reason: String?
+
       # Builds the candidate.
       #
       # - `mutator`: Stryker::_Mutator, the mutator that made the edit.
       # - `site`: Prism::node, the node the edit is for.
       # - `edit`: Stryker::Edit, the edit.
-      def self.new: (mutator: _Mutator, site: Prism::node, edit: Edit) -> instance
-                  | (_Mutator mutator, Prism::node site, Edit edit) -> instance
+      # - `reason`: String or nil, why the candidate is ignored. Nil by
+      #   default, for a live candidate.
+      def self.new: (mutator: _Mutator, site: Prism::node, edit: Edit, ?reason: String?) -> instance
+                  | (_Mutator mutator, Prism::node site, Edit edit, ?String? reason) -> instance
+
+      # Builds the candidate, live when `reason` is omitted.
+      def initialize: (?reason: String?, **Object members) -> void
 
       # The candidates that `mutator` makes at `node`, one for each of its
       # edits, in the order the mutator gives them.
@@ -47,6 +57,23 @@ module Stryker
       # - `candidates`: Array of Stryker::Mutators::Candidate, the candidates
       #   to sort, in the order a walk found them.
       def self.in_order: (Array[Candidate] candidates) -> Array[Candidate]
+
+      # Whether the candidate's mutant is live, which it is when the
+      # candidate has no reason to be ignored.
+      def live?: () -> bool
+
+      # The result of the candidate's mutant when the candidate is ignored:
+      # the mutant with the status `Ignored` and the reason as its
+      # `status_reason`.
+      #
+      # - `file`: String, the path of the file.
+      # - `id`: Integer, the mutant's ID.
+      def result: (String file, Integer id) -> MutantResult
+
+      # The same candidate, ignored for `reason`.
+      #
+      # - `reason`: String or nil, the reason, or nil for a live candidate.
+      def ignored_because: (String? reason) -> Candidate
 
       # The mutant of the edit, in `file`, with `id`.
       #

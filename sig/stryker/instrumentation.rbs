@@ -9,11 +9,12 @@ module Stryker
   # The mutants of a run have the IDs 1, 2, 3, and so on, in the order of the
   # files and, in each file, in the order of `Stryker::Mutators::Walk`. A
   # mutant whose plain mutant doesn't parse gets no switch, and its result
-  # has the status `CompileError`. A mutant with no place for a switch, or
-  # no form on one line, gets no switch either, and its result has the
-  # status `Ignored`, with a `status_reason` that says why. Every other
-  # mutant is live: its switch is in its file's instrumented source, and a
-  # run can make it active.
+  # has the status `CompileError`. A mutant of a mutator that
+  # `mutator.excludedMutations` lists, a mutant with no place for a switch,
+  # and a mutant with no form on one line get no switch either, and each
+  # result has the status `Ignored`, with a `status_reason` that says why.
+  # Every other mutant is live: its switch is in its file's instrumented
+  # source, and a run can make it active.
   #
   # The instrumenter loads Prism and refract, so this stage runs only in the
   # orchestrator. It starts no process that outlives `call`: the pool of
@@ -40,14 +41,16 @@ module Stryker
 
     @concurrency: Integer
 
+    @policy: Mutators::Policy
+
     @mutators: Array[_Mutator]
 
     # Builds the stages.
     #
     # - `root`: String, the project's root.
     # - `config`: Stryker::Config, whose `excluded_mutations` name the
-    #   mutators that make no mutant, and whose `concurrency` is the most
-    #   parse workers that run at once.
+    #   mutators whose mutants are `Ignored`, and whose `concurrency` is the
+    #   most parse workers that run at once.
     # - `mutators`: Array of Stryker::_Mutator, the mutators in the order of
     #   the catalog, `Stryker::Mutators::ALL` by default.
     def initialize: (String root, Config config, ?Array[_Mutator] mutators) -> void

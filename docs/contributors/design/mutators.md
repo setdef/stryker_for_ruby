@@ -8,6 +8,8 @@ Every rule here serves one aim: each mutant that survives should be worth acting
 
 - **Mutator:** the part of the instrumenter that finds one kind of site and makes its mutants.
 - **Mutator name:** the name in the report's `mutatorName` field, and that `mutator.excludedMutations` accepts.
+- **Ignored mutant:** a mutant that the run makes and reports with the status `Ignored`, and that gets no switch and never runs. `mutator.excludedMutations` makes mutants ignored, and so do the sites that can't hold a switch ([Mutant placement](mutant-placement.md#sites-that-cant-hold-a-switch)).
+- **Live mutant:** a mutant that isn't `Ignored`, so it gets a switch and runs.
 - **Pair:** an original construct and the mutant a mutator makes from it, such as `a < b` and `a <= b`.
 - **Edit:** the byte range a mutant changes and the text that replaces it ([The text edit](mutant-placement.md#the-text-edit)).
 - **Fallback mutator:** a mutator whose mutant at a site is made only where no other mutator's mutant is, on the site or inside it. `CallExpression` is the one fallback mutator.
@@ -159,7 +161,7 @@ A call whose value something reads gets no mutant: an argument, a receiver, a co
 
 `CallExpression` is a fallback mutator: it makes no mutant where another mutator makes one on the call, such as `MethodExpression`'s `items.sort!` to `items`, or anywhere inside it, in its receiver, its arguments, or its block, at any depth. StrykerJS removes a call only under the same condition: it keeps its `CallExpression` mutant only when that mutant is the only one at the call and inside it, and Stryker.NET drops a block's removal in the same way when another mutant lies inside the block. A mutant inside already shows whether any test checks that code. `notify("Saved")` gets `notify("")`, and when no test checks what `notify` does, that mutant survives too, so removing the call would add a second survivor that shows the same thing, and a second run of the tests. Without the rule, `CallExpression` would make nearly twice as many mutants: 236 instead of 125 in Ruby 4.0.10's `resolv.rb`, which gets 1,689 from the other mutators, and 349 instead of 214 in the `lib` folder of rake 13.4.2, which gets 2,386.
 
-"Inside" follows the tree and not the bytes, so the body of a heredoc that the call takes is inside the call, though its bytes come after the call's. Only the mutators that run count: a mutator that [`mutator.excludedMutations`](../../configuration.md#mutatorexcludedmutations) lists makes no mutant, so it keeps no call from being removed. The walk counts every mutant that a mutator makes inside the call, also one that the instrumenter can't place.
+"Inside" follows the tree and not the bytes, so the body of a heredoc that the call takes is inside the call, though its bytes come after the call's. Only live mutants count: a mutator that [`mutator.excludedMutations`](../../configuration.md#mutatorexcludedmutations) lists makes only ignored mutants, so it keeps no call from being removed ([Turning mutators off](#turning-mutators-off)). The walk counts every live mutant that a mutator makes inside the call, also one that the instrumenter can't place.
 
 It makes no mutant of:
 
@@ -399,6 +401,36 @@ Each of these was left out of the catalog because its survivors would rarely be 
 | `.` to `&.` | See [`OptionalChaining`](#optionalchaining). |
 | `case`/`in` patterns, flip-flops, `defined?`, `yield`, `super` | No Stryker tool has a counterpart, and their mutants mostly raise or change nothing a test sees. Their bodies and guards still get mutants. |
 
+## Turning mutators off
+
+List a mutator in `mutator.excludedMutations` to turn it off for the whole run. The option has StrykerJS's name and form: an array of mutator names, in the configuration file or as a flag, with `[]` as its default.
+
+```json
+{
+  "mutator": {
+    "excludedMutations": ["StringLiteral", "Regex"]
+  }
+}
+```
+
+A name matches exactly, with letter case, as in StrykerJS. Each mutant of an excluded mutator is still made and reported, with the status `Ignored` and the `statusReason` `Ignored because of excluded mutation "StringLiteral"`, StrykerJS's text. It gets no switch and never runs. An `Ignored` mutant counts toward the total but not toward the mutation score, as the [shared metrics](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) define. It takes an ID like any other mutant, in the order of the catalog.
+
+A name that isn't a mutator name is a configuration error, and the run stops before it parses any file, with an error that lists the valid names ([Configuration](../../configuration.md#checks)). StrykerJS accepts an unknown name and ignores it, so a misspelled name would leave its mutator running with no warning. Stryker.NET stops with an `InputException` (`Invalid excluded mutation ...`) that lists the valid names, and Stryker4s stops with a configuration error that lists them. The run stops as they do.
+
+```json
+{
+  "mutator": {
+    "excludedMutations": ["Equality"]
+  }
+}
+```
+
+The run stops, because `Equality` is Stryker.NET's short name, and the name here is `EqualityOperator`.
+
+### Ignored mutants and the fallback mutator
+
+An ignored mutant holds nothing back. `CallExpression`'s mutant is made where no other *live* mutant is, on its site or inside it, so a call whose only other mutants are ignored still gets its removal. The reason is the one that [`CallExpression`](#callexpression) gives for the rule: a mutant inside shows whether any test checks that code, and an ignored mutant shows nothing, because no test runs against it. With `StringLiteral` excluded, `notify("Saved")` keeps its removal, where the removal would otherwise give way to the string's mutant, which never runs. `CallExpression` itself is ignored when it is excluded, and then it is made, as an ignored mutant, only where it would be made if it were live.
+
 ## Defaults
 
 Every mutator in the catalog runs when nothing is configured, as every StrykerJS and Stryker4s mutator does. The catalog leaves out the pairs whose survivors wouldn't be worth acting on, so there is no second list of mutators that are off by default to learn. Stryker.NET's mutation levels, which leave some mutators off to save run time, have no counterpart: the configuration takes StrykerJS's option names ([#3](https://github.com/setdef/stryker_for_ruby/issues/3)), and StrykerJS has no levels.
@@ -435,8 +467,8 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 ### Mutants the mutators don't make
 
-- **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `def save` with the single statement `write` as its body, `BlockStatement` and `CallExpression` both replace `write` with `nil`, and the run keeps `BlockStatement`'s. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
-- **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
+- **Identical mutants.** When two live mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `def save` with the single statement `write` as its body, `BlockStatement` and `CallExpression` both replace `write` with `nil`, and the run keeps `BlockStatement`'s. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one. The run compares only live mutants, so an `Ignored` mutant never removes a live one: with `BlockStatement` excluded, the run keeps `CallExpression`'s mutant of `write`. Two ignored mutants that give the same text are both reported.
+- **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, ignored or live, such as `x <=> x` swapped.
 - **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, a condition that is already `true` or `false`, an endless range, and `&.` on `self` or a literal.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
@@ -446,6 +478,6 @@ A mutant whose equivalence depends on a value's class or range at run time is ma
 - It doesn't detect equivalent mutants beyond the ones the source text proves.
 - It doesn't use a value's class: `MethodExpression` and the operator mutators match by name and syntax alone.
 - It doesn't remove a call whose value something reads, and it doesn't remove a call where another mutant is.
-- It has no mutation levels: every mutator runs.
+- It has no mutation levels: every mutator runs unless `mutator.excludedMutations` lists it.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
 - It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.

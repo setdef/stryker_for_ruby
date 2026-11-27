@@ -29,8 +29,9 @@ class WalkFallbacksTest < Minitest::Test
     end
   end
 
-  def walk(source, *mutators, **)
-    Stryker::Mutators::Walk.new(file: "lib/a.rb", result: Prism.parse(source), mutators:, **).mutants
+  def walk(source, *mutators, fallbacks:)
+    policy = Stryker::Mutators::Policy.new(fallbacks:)
+    Stryker::Mutators::Walk.new(file: "lib/a.rb", result: Prism.parse(source), mutators:, policy:).mutants
   end
 
   def default_walk(source)

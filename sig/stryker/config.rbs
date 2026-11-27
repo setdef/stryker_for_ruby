@@ -97,7 +97,8 @@ module Stryker
     # default, 5.
     attr_reader dry_run_timeout_minutes: Numeric
 
-    # The names of the mutators that make no mutant. By default, none.
+    # The names of the mutators whose mutants are `Ignored`. By default,
+    # none.
     attr_reader excluded_mutations: Array[String]
 
     # Whether to store results in a file and use it to speed up the next run.
@@ -142,7 +143,8 @@ module Stryker
     # - `timeout_factor`: Float, the factor on the dry-run time.
     # - `dry_run_timeout_minutes`: Numeric, the dry run's time limit in
     #   minutes.
-    # - `excluded_mutations`: Array of String, the mutators that make nothing.
+    # - `excluded_mutations`: Array of String, the mutators whose mutants are
+    #   ignored.
     # - `incremental`: bool, whether to store and reuse results.
     # - `given`: Array of Symbol, the fields that a file or a flag gave.
     def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool, ?given: Array[Symbol]) -> instance

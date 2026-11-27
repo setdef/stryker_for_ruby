@@ -7,14 +7,14 @@ module Stryker
     class Occupancy
       def initialize(candidates)
         @counts = Hash.new(0).compare_by_identity
-        candidates.each { |candidate| @counts[candidate.site] += 1 }
+        candidates.each { |candidate| @counts[candidate.site] += 1 if candidate.live? }
       end
 
       def alone?(candidate)
         # The tree, and not the bytes, says what lies inside a site, because a
         # heredoc's body lies after the last byte of the call that holds it.
         site = candidate.site
-        @counts[site] == 1 && Sites.children(site).none? { |child| held?(child) }
+        @counts[site] == (candidate.live? ? 1 : 0) && Sites.children(site).none? { |child| held?(child) }
       end
 
       private def held?(node)

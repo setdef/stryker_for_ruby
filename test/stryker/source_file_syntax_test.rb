@@ -12,8 +12,8 @@ class SourceFileSyntaxTest < Minitest::Test
   def instrumented(source)
     Dir.mktmpdir("stryker-source-file-") do |root|
       File.binwrite(File.join(root, "broken.rb"), source)
-      file = Stryker::Instrumentation::SourceFile.new(root, "broken.rb")
-      Stryker::Instrumenter::ParsePool.open(1) { |pool| file.instrumented(pool, Stryker::Mutators::ALL, 1) }
+      file = Stryker::Instrumentation::SourceFile.new(root, "broken.rb", 1)
+      Stryker::Instrumenter::ParsePool.open(1) { |pool| file.instrumented(pool, Stryker::Mutators::ALL, Stryker::Mutators::Policy.new) }
     end
   end
 

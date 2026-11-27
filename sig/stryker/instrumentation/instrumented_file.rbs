@@ -2,17 +2,19 @@ module Stryker
   class Instrumentation
     # What instrumenting one file gave.
     class InstrumentedFile < Data
-      # What instrumenting the file at `path` with `mutants` gave: each
+      # What instrumenting the file at `path` with its live mutants gave: each
       # mutant that `result` skipped has no switch and a result that says
       # why: `CompileError` when it isn't valid Ruby, and `Ignored` when its
-      # site can't hold a switch or its text has no form on one line.
+      # site can't hold a switch or its text has no form on one line. Each
+      # ignored mutant of `made` has no switch either.
       #
       # - `path`: String, the file's absolute path.
-      # - `mutants`: Array of Stryker::Mutant, every mutant the mutators made
-      #   in the file.
+      # - `made`: Stryker::Mutators::Made, the file's live mutants and the
+      #   results of its ignored mutants, which have no switch and use IDs of
+      #   the file's.
       # - `result`: Stryker::Instrumenter::Result, what the instrumenter gave
-      #   for them.
-      def self.of: (String path, Array[Mutant] mutants, Instrumenter::Result result) -> InstrumentedFile
+      #   for the live mutants.
+      def self.of: (String path, Mutators::Made made, Instrumenter::Result result) -> InstrumentedFile
 
       # The ID of the first mutant of the file after `files`, which used the
       # IDs from 1 in turn.
@@ -31,7 +33,8 @@ module Stryker
       attr_reader mutants: Array[Mutant]
 
       # The result of each of the file's mutants that got no switch: its
-      # `CompileError` or `Ignored` status.
+      # `CompileError` or `Ignored` status. The ignored mutants of the
+      # file's excluded mutators come with them.
       attr_reader unrun: Array[MutantResult]
 
       # How many mutants the mutators made in the file, with or without a

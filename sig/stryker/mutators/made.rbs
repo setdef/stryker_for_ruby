@@ -1,0 +1,36 @@
+module Stryker
+  module Mutators
+    # The mutants of one file, in the order of
+    # `Stryker::Mutators::Walk`: the live ones, which get a switch, and the
+    # results of the ignored ones, which get none. They share the file's IDs.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # made = Stryker::Mutators::Walk.new(file: "lib/invoice.rb", result:).made
+    # made.mutants.map(&:id)
+    # # => [8, 9]
+    # made.ignored.map(&:status)
+    # # => ["Ignored"]
+    # ```
+    class Made < Data
+      # The live mutants.
+      attr_reader mutants: Array[Mutant]
+
+      # The result of each ignored mutant, with the status `Ignored` and its
+      # reason.
+      attr_reader ignored: Array[MutantResult]
+
+      # Builds the value.
+      #
+      # - `mutants`: Array of Stryker::Mutant, the live mutants.
+      # - `ignored`: Array of Stryker::MutantResult, the results of the
+      #   ignored mutants.
+      def self.new: (mutants: Array[Mutant], ignored: Array[MutantResult]) -> instance
+                  | (Array[Mutant] mutants, Array[MutantResult] ignored) -> instance
+
+      # How many IDs the mutants use: the live ones and the ignored ones.
+      def size: () -> Integer
+    end
+  end
+end

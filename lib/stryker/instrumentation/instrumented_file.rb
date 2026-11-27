@@ -3,14 +3,14 @@
 module Stryker
   class Instrumentation
     class InstrumentedFile < Data.define(:path, :source, :mutants, :unrun, :mutant_count)
-      def self.of(path, mutants, result)
+      def self.of(path, made, result)
         skipped = result.skipped
         new(
           path:,
           source: result.source,
-          mutants: mutants - skipped.map(&:mutant),
-          unrun: skipped.map(&:result),
-          mutant_count: mutants.size
+          mutants: made.mutants - skipped.map(&:mutant),
+          unrun: skipped.map(&:result) + made.ignored,
+          mutant_count: made.size
         )
       end
 

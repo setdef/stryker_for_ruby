@@ -7,8 +7,11 @@ module Stryker
     # The mutants come in the order of the catalog's table: each mutator's
     # mutants in turn, in the order of the list given, and each mutator's own
     # in the order its sites start in the file. The edits of one site stay in
-    # the order the mutator gave them. A fallback mutator's mutant is made
-    # only where no other mutant is, on its site or inside it.
+    # the order the mutator gave them. A mutator that the policy excludes
+    # still makes its mutants, and each of them is `Ignored`, with
+    # `Stryker::Mutators::Policy`'s reason, and has an ID like any other. A
+    # fallback mutator's mutant is made only where no other live mutant is,
+    # on its site or inside it, so an ignored mutant holds no removal back.
     # `Stryker::Mutators::Roster` leaves out the mutants that would show
     # nothing and numbers the rest, and `Stryker::Mutators::Traversal` leaves
     # out the sites that no mutator makes a mutant of. A mutator that can't
@@ -27,6 +30,17 @@ module Stryker
     # walk.mutants.map { |mutant| [mutant.id, mutant.mutator_name, mutant.replacement] }
     # # => [[8, "ArithmeticOperator", "a - b"]]
     # ```
+    #
+    # The same file with `ArithmeticOperator` excluded:
+    #
+    # ```ruby
+    # policy = Stryker::Mutators::Policy.new(excluded: ["ArithmeticOperator"])
+    # walk = Stryker::Mutators::Walk.new(file: "lib/invoice.rb", result:, policy:)
+    # walk.mutants
+    # # => []
+    # walk.ignored.map(&:status_reason)
+    # # => ["Ignored because of excluded mutation \"ArithmeticOperator\""]
+    # ```
     class Walk
       # Prepares to walk the file.
       #
@@ -35,23 +49,36 @@ module Stryker
       #   raises ArgumentError.
       # - `mutators`: Array of Stryker::_Mutator, the mutators to ask, in the
       #   order of the catalog's table. By default, `Stryker::Mutators::ALL`.
-      # - `fallbacks`: Array of Stryker::_Mutator, the mutators whose mutants
-      #   yield to every other mutant. By default,
-      #   `Stryker::Mutators::FALLBACKS`.
       # - `first_id`: Integer, the ID of the first mutant.
-      def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?fallbacks: Array[_Mutator], ?first_id: Integer) -> void
+      # - `policy`: Stryker::Mutators::Policy, which mutators are fallbacks
+      #   and which are excluded. By default, the fallbacks of
+      #   `Stryker::Mutators::FALLBACKS` and no exclusions.
+      def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?first_id: Integer, ?policy: Policy) -> void
 
-      # The file's mutants, in the order above.
+      # The file's live mutants, in the order above, which get a switch.
       def mutants: () -> Array[Mutant]
+
+      # The results of the file's ignored mutants, in the order above. Each
+      # has the status `Ignored` and its reason.
+      def ignored: () -> Array[MutantResult]
+
+      # The file's live mutants and the results of its ignored mutants
+      # together.
+      def made: () -> Made
 
       private
 
       @search: Search
       @mutators: Array[_Mutator]
-      @fallbacks: Array[_Mutator]
+      @policy: Policy
       @roster: Roster
+      @made: Made
 
-      def made: (Array[Candidate] candidates) -> Array[Candidate]
+      def found_by: (_Mutator mutator) -> Array[Candidate]
+
+      def judged: (Array[Candidate] candidates) -> Array[Candidate]
+
+      def chosen: (Array[Candidate] candidates) -> Array[Candidate]
     end
   end
 end

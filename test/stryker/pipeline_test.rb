@@ -12,9 +12,10 @@ require "tmpdir"
 class PipelineTest < Minitest::Test
   include SampleValues
 
-  # Mutant 1 is in a method, mutant 2 in a constant's value, and mutant 3 in
-  # a method that no test calls.
-  SOURCE = "def total(a, b) = a + b\nRATE = true\ndef off = false\n"
+  # Only ArithmeticOperator and BooleanLiteral have sites here: mutant 1 is
+  # in the first constant's value, mutant 2 in the second's, and mutant 3 in
+  # the third's.
+  SOURCE = "TOTAL = PRICE + FEE\nRATE = true\nOFF = false\n"
   TEST = "Shop::DiscountTest#test_rate"
   private_constant(:SOURCE, :TEST)
 
@@ -116,11 +117,8 @@ class PipelineTest < Minitest::Test
     FileUtils.remove_entry(@root)
   end
 
-  # Every mutator but two of the catalog is excluded, so that the mutants
-  # stay the same as the catalog grows.
   def config
-    excluded_mutations = Stryker::Mutators::ALL.map(&:name) - %w[ArithmeticOperator BooleanLiteral]
-    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency: 1, excluded_mutations:)
+    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency: 1)
   end
 
   def found

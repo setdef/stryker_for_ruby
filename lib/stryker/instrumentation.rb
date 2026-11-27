@@ -4,6 +4,7 @@ require_relative "instrumentation/result"
 require_relative "instrumentation/source_file"
 require_relative "instrumenter"
 require_relative "mutators"
+require_relative "mutators/policy"
 require_relative "unsupported_error"
 
 module Stryker
@@ -14,10 +15,10 @@ module Stryker
     private_constant(:TEMPLATE, :TEMPLATES)
 
     def initialize(root, config, mutators = Mutators::ALL)
-      excluded = config.excluded_mutations
       @root = root
       @concurrency = config.concurrency
-      @mutators = mutators.reject { |mutator| excluded.include?(mutator.name) }
+      @policy = Mutators::Policy.new(excluded: config.excluded_mutations)
+      @mutators = mutators
     end
 
     def call(paths)
@@ -29,7 +30,7 @@ module Stryker
 
     private def instrument(paths, pool)
       files = paths.each_with_object([]) do |path, done|
-        done << SourceFile.new(@root, path).instrumented(pool, @mutators, InstrumentedFile.next_id(done))
+        done << SourceFile.new(@root, path, InstrumentedFile.next_id(done)).instrumented(pool, @mutators, @policy)
       end
       Result.of(files)
     end

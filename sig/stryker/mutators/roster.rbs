@@ -6,19 +6,21 @@ module Stryker
     # says:
     #
     # - a candidate whose file is the same as the original's, and
-    # - a candidate whose file is the same as an earlier candidate's, so that
-    #   of two identical mutants the first one stays. In `!!ready`, removing
-    #   either `!` gives `!ready`.
+    # - a live candidate whose file is the same as an earlier live
+    #   candidate's, so that of two identical mutants the first one stays. In
+    #   `!!ready`, removing either `!` gives `!ready`.
     #
-    # It compares each candidate's whole file by a SHA-256 digest. It reads no
-    # disable comment, so it treats every candidate as live. The IDs count up
-    # from the first ID in the order of the candidates, with none left out.
+    # It compares each candidate's whole file by a SHA-256 digest. An ignored
+    # candidate is compared with the original only, so an ignored mutant never
+    # removes a live one, and two ignored mutants that give the same file
+    # both stay. The IDs count up from the first ID in the order of the
+    # candidates, with none left out.
     #
     # ## Examples
     #
     # ```ruby
     # roster = Stryker::Mutators::Roster.new(file: "lib/invoice.rb", source: "total = a + b\n", first_id: 8)
-    # roster.mutants(candidates).map(&:id)
+    # roster.made(candidates).mutants.map(&:id)
     # # => [8, 9]
     # ```
     class Roster
@@ -29,17 +31,22 @@ module Stryker
       # - `first_id`: Integer, the ID of the first mutant.
       def initialize: (file: String, source: String, first_id: Integer) -> void
 
-      # The mutants of `candidates`, in their order, less the ones above.
+      # The mutants of `candidates`, in their order, less the candidates above.
+      # A live candidate's mutant is among the mutants, and an ignored
+      # candidate's result is among the ignored.
       #
       # - `candidates`: Array of Stryker::Mutators::Candidate, in the order
       #   the mutants come in.
-      def mutants: (Array[Candidate] candidates) -> Array[Mutant]
+      def made: (Array[Candidate] candidates) -> Made
 
       private
 
       @file: String
+      @original: String
       @source: String
       @first_id: Integer
+
+      def distinct: (Array[Candidate] candidates) -> Array[Candidate]
     end
   end
 end

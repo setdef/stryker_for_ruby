@@ -1,0 +1,45 @@
+module Stryker
+  module Mutators
+    # What a walk does with the mutators of a run: which of them are
+    # fallback mutators, and which are excluded. An excluded mutator's
+    # mutants are still made, and each is `Ignored`, with StrykerJS's text as
+    # its reason, as
+    # [Turning mutators off](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#turning-mutators-off)
+    # specifies.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # policy = Stryker::Mutators::Policy.new(excluded: ["StringLiteral"])
+    # policy.reason(candidate)
+    # # => "Ignored because of excluded mutation \"StringLiteral\""
+    # ```
+    class Policy
+      # The reason text of an excluded mutator. Private.
+      EXCLUDED: String
+
+      @fallbacks: Array[_Mutator]
+      @excluded: Array[String]
+
+      # Builds the policy.
+      #
+      # - `fallbacks`: Array of Stryker::_Mutator, the mutators whose mutants
+      #   yield to every other live mutant. By default,
+      #   `Stryker::Mutators::FALLBACKS`.
+      # - `excluded`: Array of String, the names of the excluded mutators,
+      #   matched exactly, with their letter case. Empty by default.
+      def initialize: (?fallbacks: Array[_Mutator], ?excluded: Array[String]) -> void
+
+      # Whether `candidate`'s mutator is a fallback mutator.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, the candidate.
+      def fallback?: (Candidate candidate) -> bool
+
+      # The reason `candidate`'s mutant is `Ignored`, or nil when the mutant
+      # is live.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, the candidate.
+      def reason: (Candidate candidate) -> String?
+    end
+  end
+end
