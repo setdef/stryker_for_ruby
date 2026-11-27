@@ -1,5 +1,7 @@
 # Stryker (for Ruby)
 
+[![Forum: Discussion](https://img.shields.io/badge/forum-discussion-5865F2.svg?logo=discourse)](https://forum.setdef.com/tags/c/stryker-for-ruby/16/discussion) [![Forum: Bug Reports](https://img.shields.io/badge/forum-bug_reports-4954d5.svg?logo=discourse)](https://forum.setdef.com/tags/c/stryker-for-ruby/16/bug) [![Forum: Announcements](https://img.shields.io/badge/forum-announcements-3b44ac.svg?logo=discourse)](https://forum.setdef.com/tags/c/stryker-for-ruby/16/announcement)
+
 Mutation testing for Ruby projects that test with Minitest.
 
 > [!NOTE]
@@ -192,9 +194,11 @@ The mutants that the comment covers have the status `Ignored`, count toward no s
 
 ## Reporting problems
 
-Open an issue in [the issue tracker](https://github.com/setdef/stryker_for_ruby/issues). Include the command you ran, what it printed, your Ruby version, and your operating system. When **Stryker (for Ruby)** stops because of an error in its code, it prints a backtrace and the address to report it at: include the backtrace.
+Ask questions and report problems on the [**Stryker (for Ruby)** forum](https://forum.setdef.com/c/stryker-for-ruby). Include the command you ran, what it printed, your Ruby version, and your operating system. When **Stryker (for Ruby)** stops because of an error in its code, it prints a backtrace: include it. GitHub Issues are open to the project's collaborators only.
 
-Report a security problem privately, as [SECURITY.md](SECURITY.md) says, never in the Discussions.
+Report a security problem privately, as [SECURITY.md](SECURITY.md) says, never on the forum.
+
+To send a patch, post it on the forum, or email it with `git send-email` to `replies+stryker-for-ruby@forum.setdef.com`. [git-send-email.io](https://git-send-email.io) shows how to set that up.
 
 ## Contributing
 
