@@ -62,11 +62,12 @@ module BuildCopCase
     [ci_run(green, 1, "success"), ci_run("f", 2, "failure")]
   end
 
-  # The cop's step for COMMITS, newest first, with +runs+ served.
-  def cop(*runs)
+  # The cop's step for COMMITS, newest first, with +runs+ served and +reverts+
+  # as pairs of the commit that reverts and the commit it reverts.
+  def cop(*runs, reverts: [])
     serve(*runs) do
       cop = BuildCop.new(repository: REPOSITORY, token: "secret", api: FakeGitHub::API, pause: 0, now: NOW)
-      cop.call(COMMITS.reverse)
+      cop.call(COMMITS.reverse, reverts)
     end
   end
 

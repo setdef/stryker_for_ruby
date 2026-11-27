@@ -88,6 +88,11 @@ module BuildCopScriptCase
     bad
   end
 
+  # The file of reverts that the script gave the task.
+  def reverts_seen
+    File.read(File.join(@dir, "reverts.seen"))
+  end
+
   def gh_log
     path = File.join(@dir, "gh.log")
     File.exist?(path) ? File.read(path) : ""
@@ -103,12 +108,16 @@ module BuildCopScriptCase
     Open3.capture2e(variables(GIT_ENV, pushes_by_token, { PATH: path }, env), "bash", SCRIPT, chdir: @work)
   end
 
-  # The task's reason is the repository that the script gave it.
+  # The task's reason is the repository that the script gave it, and it keeps
+  # the file of reverts that the script gave it in reverts.seen.
   private def task_saying(commit, action)
     fields = { action:, commit:, run: 1 }.map { |name, value| "#{name}=#{value}" }
     <<~RUBY
       class BuildCop
-        def self.main(_path) = puts(#{fields.inspect}, "reason=\#{ENV['GITHUB_REPOSITORY']}")
+        def self.main(_path, reverts)
+          File.write(#{File.join(@dir, 'reverts.seen').inspect}, File.read(reverts))
+          puts(#{fields.inspect}, "reason=\#{ENV['GITHUB_REPOSITORY']}")
+        end
       end
     RUBY
   end

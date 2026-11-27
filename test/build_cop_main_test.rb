@@ -20,6 +20,17 @@ class BuildCopMainTest < Minitest::Test
     )
   end
 
+  # E's run is red and F reverts D, which E's run covers: the file of reverts
+  # says so, as the script writes it.
+  def test_reads_the_reverts_among_the_commits_from_its_file
+    out = StringIO.new
+    serve(ci_run("a", 1, "success"), ci_run("e", 2, "failure")) do
+      run_main({}, out:, reverts: "#{commit('f')} #{commit('d')}\n")
+    end
+
+    assert_match(/\Aaction=none\n.*settled/m, out.string)
+  end
+
   # No route answers 404 to every request.
   def test_ends_the_run_with_the_message_of_a_failure_of_the_api
     assert_match(/\AGitHub's API answered 404/, failing_main({}))
@@ -36,12 +47,14 @@ class BuildCopMainTest < Minitest::Test
     err
   end
 
-  private def run_main(extra, out: StringIO.new)
+  private def run_main(extra, out: StringIO.new, reverts: "")
     env = { GITHUB_REPOSITORY: "setdef/stryker_for_ruby", GH_TOKEN: "secret", GITHUB_API_URL: FakeGitHub::API }
     Dir.mktmpdir do |dir|
       path = File.join(dir, "commits.txt")
       File.write(path, "#{COMMITS.reverse.join("\n")}\n\n")
-      BuildCop.main(path, env: env.merge(extra).transform_keys(&:to_s), out:, now: NOW)
+      reverts_path = File.join(dir, "reverts.txt")
+      File.write(reverts_path, reverts)
+      BuildCop.main(path, reverts_path, env: env.merge(extra).transform_keys(&:to_s), out:, now: NOW)
     end
   end
 end

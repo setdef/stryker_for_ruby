@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # build-cop.yml's one step, described at the top of that file. Asks
 # tasks/build_cop.rb what to do next about the oldest red full run on trunk
-# after its newest green one, and does it:
+# after its newest green one that is not settled (see build-cop.yml), and does
+# it:
 #
 #   none    nothing is red: deletes the bisect/* branches left over
 #   wait    a run it needs has not finished
@@ -31,7 +32,13 @@ bot=(-c user.name="github-actions[bot]" -c user.email="41898282+github-actions[b
 mkdir -p tmp
 git fetch --quiet origin trunk
 git rev-list --first-parent --max-count=300 FETCH_HEAD >tmp/build-cop-commits.txt
-ruby -r ./tasks/build_cop -e 'BuildCop.main(ARGV.fetch(0))' tmp/build-cop-commits.txt >tmp/build-cop.txt
+# The commits that say they revert one, as "REVERT REVERTED" lines: a red run
+# stops blocking the cop once a commit it covers has been reverted.
+git log --first-parent --max-count=300 --format=%H --grep='^This reverts commit [0-9a-f]\{40\}' FETCH_HEAD |
+  while read -r revert; do
+    git log -1 --format=%B "$revert" | sed -n "s/^This reverts commit \([0-9a-f]\{40\}\).*/$revert \1/p"
+  done >tmp/build-cop-reverts.txt
+ruby -r ./tasks/build_cop -e 'BuildCop.main(ARGV.fetch(0), ARGV.fetch(1))' tmp/build-cop-commits.txt tmp/build-cop-reverts.txt >tmp/build-cop.txt
 cat tmp/build-cop.txt >>"$output"
 field() { sed -n "s/^$1=//p" tmp/build-cop.txt; }
 action=$(field action)

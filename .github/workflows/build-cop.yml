@@ -16,7 +16,10 @@
 # tasks/build_cop.rb for the next step and takes it. The task keeps no state:
 # it reads the runs of ci.yml of the last three days from GitHub's API and
 # trunk's first-parent commits from git, and works on the oldest red run on
-# trunk after its newest green one, a run that passed every job. The jobs that
+# trunk after its newest green one, a run that passed every job, that is not
+# settled. A red run is settled once a commit that it covers has been reverted
+# on trunk by a newer commit, which any commit that says "This reverts commit"
+# and a hash is, or a newer run on trunk passed. The jobs that
 # failed in that run are the failure. Each commit between the green run's head
 # and the red run's head is judged by its newest run that was not canceled,
 # on any branch, by those jobs alone: bad when one of them failed, good when
@@ -38,8 +41,8 @@
 #           message that says why. It fails the cop's run when the commit
 #           does not revert cleanly, which calls a person. It never reverts a
 #           revert; it names that commit in a warning.
-#   none    Nothing on trunk is red after its newest green run: the
-#           bisect/* branches are deleted.
+#   none    No run on trunk is red and unsettled after its newest green
+#           run: the bisect/* branches are deleted.
 #   stuck   It says why, for a person.
 #
 # When it runs. It runs when a run of CI ends on trunk or on a bisect branch,

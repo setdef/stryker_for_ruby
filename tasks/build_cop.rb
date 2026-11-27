@@ -4,6 +4,7 @@ require_relative "build_cop_blame"
 require_relative "build_cop_step"
 require_relative "commit_runs"
 require_relative "github_api"
+require_relative "trunk_reverts"
 
 # Finds the commit that turned trunk's full run red, one step at a time, from
 # GitHub's API alone.
@@ -13,6 +14,9 @@ require_relative "github_api"
 # after a green one, any of its commits may be the one at fault. This class
 # bisects the batch with full runs of single commits, started on branches
 # <tt>bisect/SHA</tt>, and judges each by the jobs that failed in the red run.
+# It judges the oldest red run on trunk that is not settled: a run is settled
+# once a commit it covers has been reverted on trunk, or a newer run on trunk
+# has passed.
 # BuildCopBlame decides about the first bad commit, which it names to revert
 # once the commit's failed jobs have failed twice and its parent has passed
 # them.
@@ -21,12 +25,13 @@ require_relative "github_api"
 # next, so .github/workflows/build-cop.yml can call it whenever a run ends and
 # on a schedule, and a call that finds the work in progress says to wait.
 #
-#   ruby -r ./tasks/build_cop -e "BuildCop.main(ARGV[0])" COMMITS
+#   ruby -r ./tasks/build_cop -e "BuildCop.main(ARGV[0], ARGV[1])" COMMITS REVERTS
 #
 # reads trunk's commits, newest first, one per line, from the file COMMITS
-# (git rev-list --first-parent), and prints what to do as lines +action=+,
-# +commit=+, +run=+, and +reason=+, for GITHUB_OUTPUT. It reads
-# GITHUB_REPOSITORY, GITHUB_API_URL, and GH_TOKEN.
+# (git rev-list --first-parent), and the reverts among them from the file
+# REVERTS, one per line, as a commit and the commit it reverts. It prints what
+# to do as lines +action=+, +commit=+, +run=+, and +reason=+, for
+# GITHUB_OUTPUT. It reads GITHUB_REPOSITORY, GITHUB_API_URL, and GH_TOKEN.
 class BuildCop
   # The workflow bisected.
   WORKFLOW = "ci.yml"
@@ -44,15 +49,17 @@ class BuildCop
   DAYS = 3
   private_constant(:DAYS)
 
-  # Prints the next step for the commits listed in the file at +path+, as
-  # +to_output+ gives it, from the repository and token that +env+ names
-  # (GITHUB_REPOSITORY, GH_TOKEN, and GITHUB_API_URL when it is not GitHub's).
-  # When GitHub's API fails, it ends the run with the failure's message, as an
+  # Prints the next step for the commits listed in the file at +path+, and the
+  # reverts listed in the file at +reverts_path+, as +to_output+ gives it, from
+  # the repository and token that +env+ names (GITHUB_REPOSITORY, GH_TOKEN, and
+  # GITHUB_API_URL when it is not GitHub's). When GitHub's API fails, it ends the run with the failure's message, as an
   # error annotation inside GitHub Actions.
-  def self.main(path, env: ENV, out: $stdout, now: Time.now)
+  def self.main(path, reverts_path, env: ENV, out: $stdout, now: Time.now)
     api = env.fetch("GITHUB_API_URL", "https://api.github.com")
     cop = new(repository: env["GITHUB_REPOSITORY"], token: env["GH_TOKEN"], api:, now:)
-    out.print(cop.call(File.readlines(path, chomp: true).reject(&:empty?)).to_output)
+    commits = File.readlines(path, chomp: true).reject(&:empty?)
+    reverts = File.readlines(reverts_path, chomp: true).map(&:split)
+    out.print(cop.call(commits, reverts).to_output)
   rescue GitHubAPI::Error => e
     abort("#{'::error::' if env['GITHUB_ACTIONS']}#{e.message}")
   end
@@ -64,21 +71,40 @@ class BuildCop
   end
 
   # The next BuildCopStep for trunk's +commits+, newest first.
-  def call(commits)
+  def call(commits, reverts)
     path = "actions/workflows/#{WORKFLOW}/runs"
     runs = @github.all(path, "workflow_runs", created: ">=#{@since}", exclude_pull_requests: true)
     @runs = CommitRuns.new(runs, @github)
-    step(commits)
+    step(commits, TrunkReverts.new(commits, reverts))
   end
 
-  private def step(commits)
+  private def step(commits, reverts)
     good = commits.index { |commit| @runs.green_on_trunk?(commit) }
     return BuildCopStep.of(:none, "no commit of the last #{DAYS} days has a green run on trunk") unless good
 
-    bad = commits.take(good).rindex { |commit| @runs.red_run(commit) }
-    return BuildCopStep.of(:none, "no run on trunk since #{commits[good]}'s green one is red") unless bad
+    oldest_unsettled(commits, reverts, good)
+  end
 
-    judge(@runs.red_run(commits[bad]), commits[bad..good].reverse)
+  # Judges the oldest red run on trunk since the green one at +good+ that no
+  # revert has settled.
+  private def oldest_unsettled(commits, reverts, good)
+    red = red_indexes(commits, good)
+    bad = red.reverse.find { |index| !reverts.settled?(index, good) }
+    return judge(@runs.red_run(commits[bad]), commits[bad..good].reverse) if bad
+
+    BuildCopStep.of(:none, quiet(commits[good], red))
+  end
+
+  # The indexes of the commits newer than the one at +good+ that have a red
+  # run on trunk.
+  private def red_indexes(commits, good)
+    (0...good).select { |index| @runs.red_run(commits[index]) }
+  end
+
+  private def quiet(green, red)
+    return "no run on trunk since #{green}'s green one is red" if red.empty?
+
+    "every red run on trunk since #{green}'s green one is settled by a revert of a commit it covers"
   end
 
   private def judge(red, commits)
