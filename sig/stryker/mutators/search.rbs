@@ -1,6 +1,7 @@
 module Stryker
   module Mutators
-    # Finds the candidates that one mutator makes in a parsed file, and tells
+    # Finds the candidates that one mutator makes in a parsed file. A file
+    # that doesn't parse has no sites, so it raises ArgumentError. It tells
     # the person who runs Stryker (for Ruby) about each site the mutator can't
     # read. The warning goes to standard error, with the file and the line of
     # the site, and the site gets no candidate.
@@ -8,17 +9,18 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # tree = Prism.parse("x = 1 + 2").value
-    # search = Stryker::Mutators::Search.new(tree, "lib/a.rb")
+    # result = Prism.parse("x = 1 + 2")
+    # search = Stryker::Mutators::Search.new(result, "lib/a.rb")
     # search.candidates_of(Stryker::Mutators::ArithmeticOperator).size
     # # => 1
     # ```
     class Search
       # Prepares to search the file.
       #
-      # - `tree`: Prism::ProgramNode, the file's tree.
-      # - `file`: String, the file's path, which a warning gives.
-      def initialize: (Prism::ProgramNode tree, String file) -> void
+      # - `result`: Prism::ParseResult, the file parsed. A result with errors
+      #   raises ArgumentError.
+      # - `file`: String, the file's path, which a warning and the error give.
+      def initialize: (Prism::ParseResult result, String file) -> void
 
       # The candidates of `mutator` in the file, in the order of the tree.
       #

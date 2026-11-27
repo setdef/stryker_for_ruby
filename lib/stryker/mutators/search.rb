@@ -8,8 +8,10 @@ require_relative "unreadable"
 module Stryker
   module Mutators
     class Search
-      def initialize(tree, file)
-        @tree = tree
+      def initialize(result, file)
+        raise(ArgumentError, "#{file} doesn't parse, so it has no sites") unless result.success?
+
+        @tree = result.value
         @file = file
       end
 

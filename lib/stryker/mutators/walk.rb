@@ -11,9 +11,7 @@ module Stryker
   module Mutators
     class Walk
       def initialize(file:, result:, mutators: ALL, first_id: 1, policy: Policy.new)
-        raise(ArgumentError, "#{file} doesn't parse, so it has no sites") unless result.success?
-
-        @search = Search.new(result.value, file)
+        @search = Search.new(result, file)
         @mutators = mutators
         @policy = policy
         @roster = Roster.new(file:, source: result.source.source, first_id:)
