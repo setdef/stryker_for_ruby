@@ -21,10 +21,7 @@ module Stryker
       end
 
       def call(id, stdout = $stdout, stderr = $stderr)
-        # Without the parent's write end of the pipe to the orchestrator, the
-        # orchestrator sees that pipe end when the parent ends, even while a
-        # child lives on.
-        @results.close
+        leave_results
         out, err = @outputs.paths(id)
         ForkedStreams.reopen(stdout, out)
         ForkedStreams.reopen(stderr, err)
@@ -33,6 +30,15 @@ module Stryker
 
       def tail(id)
         @outputs.tail(id)
+      end
+
+      private def leave_results
+        # Without the parent's write end of the pipe to the orchestrator, the
+        # orchestrator sees that pipe end when the parent ends, even while a
+        # child lives on. Close leaves the descriptor open while autoclose is
+        # off, as it is for an IO made from a descriptor number.
+        @results.autoclose = true
+        @results.close
       end
     end
   end

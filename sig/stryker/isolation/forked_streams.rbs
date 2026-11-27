@@ -45,6 +45,12 @@ module Stryker
       # The last lines of the standard error of the child that ran mutant
       # `id`.
       def tail: (Integer id) -> String
+
+      private
+
+      # Closes `results` for good, so that no process of the child's holds
+      # the pipe's write end open.
+      def leave_results: () -> void
     end
   end
 end

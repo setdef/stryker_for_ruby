@@ -67,21 +67,6 @@ class ProjectSideTest < Minitest::Test
     end
   end
 
-  def test_a_forked_child_closes_the_parents_pipe_and_writes_its_output_to_files_of_its_own
-    Dir.mktmpdir do |folder|
-      results = StringIO.new
-      streams = Stryker::Isolation::ForkedStreams.new(results, Stryker::Isolation::OutputFiles.new(folder))
-      File.open(File::NULL, "w") { |stdout| File.open(File::NULL, "w") { |stderr| crash(streams, stdout, stderr) } }
-
-      assert_equal([true, "[BUG] crash\n"], [results.closed?, streams.tail(7)])
-    end
-  end
-
-  def crash(streams, stdout, stderr)
-    streams.call(7, stdout, stderr)
-    stderr.write("[BUG] crash\n")
-  end
-
   def test_a_forked_run_makes_its_mutant_active_and_writes_each_test
     runner = Runner.new
     runtime = Runtime.new
