@@ -58,6 +58,13 @@ push() {
   git push --quiet "https://x-access-token:${BUILD_COP_PUSH_TOKEN}@${server#https://}/$repository" "$@"
 }
 
+# The commit at +$1+ that says it reverts +$2+, if there is one. Not a pipe
+# into grep -q: with pipefail, grep leaving early makes git log die of
+# SIGPIPE, and the test then says "not reverted".
+reverted_on() {
+  git log -1 --format=%H --grep="^This reverts commit $2" "$1"
+}
+
 # Deletes every bisect/* branch, which only this script writes.
 clean() {
   git ls-remote --heads origin 'bisect/*' | while read -r _ ref; do
@@ -116,9 +123,7 @@ rerun)
   gh run rerun "$run" --failed || echo "::warning::GitHub would not run the failed jobs of run $run again: $reason"
   ;;
 revert)
-  # Not a pipe into grep -q: with pipefail, grep leaving early makes git log
-  # die of SIGPIPE, and the test then says "not reverted".
-  already=$(git log -1 --format=%H --grep="^This reverts commit $commit" FETCH_HEAD)
+  already=$(reverted_on FETCH_HEAD "$commit")
   if [ -n "$already" ]; then
     echo "$commit is reverted on trunk already as $already; trunk's next green run ends this." | tee -a "$summary"
     exit 0
@@ -140,6 +145,14 @@ revert)
   for _ in 1 2 3; do
     git fetch --quiet origin trunk
     git checkout --quiet --detach FETCH_HEAD
+    # A push is refused when trunk moved, and what moved it may be a revert of
+    # this commit, a person's or another call's, which a second revert would
+    # undo.
+    already=$(reverted_on FETCH_HEAD "$commit")
+    if [ -n "$already" ]; then
+      echo "$commit is reverted on trunk already as $already, which landed first; trunk's next green run ends this." | tee -a "$summary"
+      exit 0
+    fi
     if ! git "${bot[@]}" revert --no-edit --no-commit "$commit"; then
       git revert --abort || true
       echo "::error::$commit does not revert cleanly on trunk: $reason"
