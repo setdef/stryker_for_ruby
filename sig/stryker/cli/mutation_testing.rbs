@@ -45,7 +45,10 @@ module Stryker
       # mutation score, or nil when no mutant was valid. Before it reads any
       # file, it raises Stryker::UnsupportedError where the system has no
       # `fork`, and Stryker::ConfigError when `testRunner` or a name in
-      # `reporters` names nothing that the gem has.
+      # `reporters` that the user wrote names nothing that the gem has. It
+      # leaves out the default reporters that the gem hasn't built, and the
+      # ERB templates that only the default `mutate` patterns select, each
+      # with one warning on standard error.
       #
       # - `config`: Stryker::Config, the checked options of the run.
       # - `streams`: Stryker::CLI::Streams, whose standard output the
