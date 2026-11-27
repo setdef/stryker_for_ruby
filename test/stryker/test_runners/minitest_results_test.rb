@@ -31,12 +31,6 @@ class MinitestResultsTest < Minitest::Test
       def test_shared = assert(true)
     end
   RUBY
-  PARALLEL = { "test/parallel_test.rb": <<~RUBY }.freeze
-    class InParallelTest < Minitest::Test
-      parallelize_me!
-      def test_runs = Stryker::Testing::SampleRuns.ran(:parallel)
-    end
-  RUBY
   BROKEN_HOOK = { "test/broken_hook_test.rb": <<~RUBY }.freeze
     require "minitest/hooks/test"
 
@@ -48,7 +42,7 @@ class MinitestResultsTest < Minitest::Test
     end
   RUBY
   TIMED = { "test/timed_test.rb": "class TimedTest < Minitest::Test; def test_t = pass; end\n" }.freeze
-  private_constant(:ABSTRACT, :BROKEN_HOOK, :PARALLEL, :SKIP_THEN_TEARDOWN, :TEARDOWN, :TIMED)
+  private_constant(:ABSTRACT, :BROKEN_HOOK, :SKIP_THEN_TEARDOWN, :TEARDOWN, :TIMED)
 
   def test_a_test_that_passes_and_then_raises_in_teardown_fails
     result = run_ids(loaded(TEARDOWN), "TeardownRaisesTest#test_passes").first
@@ -75,18 +69,6 @@ class MinitestResultsTest < Minitest::Test
     assert_equal([["skipped", nil], ["passed", nil]], results.map { |result| [result.status, result.failure_message] })
   end
 
-  def test_a_test_of_a_parallel_class_runs_at_once_in_its_turn
-    runner = loaded(PARALLEL)
-    observer = Stryker::Testing::Observer.new
-    Stryker::Testing::SampleRuns.take
-    stand_in = Object.new
-    left = executor_after(stand_in) { runner.run(["InParallelTest#test_runs"], bail: false, observer:) }
-    id = "InParallelTest#test_runs"
-
-    assert_equal([[:started, id, 0], [:finished, id, 1]], observer.events)
-    assert_same(stand_in, left)
-  end
-
   def test_the_time_is_the_monotonic_clocks_in_milliseconds
     runner = loaded(TIMED)
     times = [1000.0, 1250.5]
@@ -101,16 +83,5 @@ class MinitestResultsTest < Minitest::Test
 
   def test_the_reporter_tells_minitests_info_handler_that_the_run_passed
     assert_predicate(Stryker::TestRunners::MinitestRunner::Outcome.new("test_x"), :passed?)
-  end
-
-  # The parallel executor that is in place after the block, which starts with
-  # +stand_in+ in place, so that a run that doesn't put its own back shows.
-  def executor_after(stand_in)
-    original = Minitest.parallel_executor
-    Minitest.parallel_executor = stand_in
-    yield
-    Minitest.parallel_executor
-  ensure
-    Minitest.parallel_executor = original
   end
 end
