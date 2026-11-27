@@ -18,16 +18,9 @@ The [contract tests](architecture.md#contract-tests) hold every adapter to this,
 
 ### Loading the tests
 
-The adapter takes the project's root, the path of its test helper, the patterns of its test files, and the folders to put on `$LOAD_PATH`. The defaults are `test/test_helper.rb`, and `Minitest::TestTask`'s defaults for the rest: the files `test/**/test_*.rb` and `test/**/*_test.rb`, and the folders `lib`, `test`, and the root. `load_tests`:
+The adapter's constructor, its defaults, and the tests' IDs, files, and locations are in the [RBS documentation of `MinitestRunner`](../../../sig/stryker/test_runners/minitest_runner.rbs). This section keeps the reasons behind them.
 
-1. puts the folders on `$LOAD_PATH`, as `rake test` does;
-2. requires the helper, when the file exists, and then each test file, in the order of their paths, so a file that each test file also requires loads once;
-3. lists every test of every class in `Minitest::Runnable.runnables` whose `runnable_methods` returns at least one method name, in the order the classes were defined, each class's tests sorted by name;
-4. empties `Minitest::Runnable.runnables`.
-
-A test's ID is its class's name and its method's name, `Shop::DiscountTest#test_rate`, as Minitest prints a test in its output. A test in a `describe` block has the block's name as its class's name: `Shop::Discount#test_0001_applies the rate`. Its file is its method's file, from the project's root, and it has no location, because Ruby gives a method's first line and no end.
-
-Two cases raise `Stryker::UnsupportedError`, because an ID must stand for exactly one test in every process: a test class with tests and no name, such as one made with `Class.new(Minitest::Test)` and never assigned to a constant, and two tests with the same ID, such as two `describe` blocks with the same name. A project whose files never load Minitest raises `NameError` for `Minitest`.
+Everything `load_tests` returns must be the same in every process, because each mutant run is given its tests by the IDs from the dry run. So the helper and the test files load in the order of their paths, which fixes the order that the classes are defined in, and so the order of the tests. An ID is the class's name and the method's name, as Minitest prints a test, and it must stand for exactly one test. The adapter raises `Stryker::UnsupportedError` for a test class with tests and no name, and for two tests with the same ID, such as two `describe` blocks with the same name, instead of giving a test an ID that stands for two tests, or for none that another process could find.
 
 `Minitest::Test.runnable_methods` seeds Ruby's random numbers with `Minitest.seed`, and raises `TypeError` while it is nil. `Minitest.run` sets it, and the adapter never calls `Minitest.run`, so the adapter sets it to 0 when the project hasn't set it. A class in Minitest's default random order seeds them each time `run_suite` runs it, so each of its tests starts with the same random numbers in every process.
 
@@ -42,26 +35,13 @@ The block still runs, and prints Minitest's summary of a run of 0 tests to stand
 
 ### Running one test
 
-For each test, the adapter tells the observer that the test started, calls `run_suite` on the test's class with a filter that matches only the test's method, and tells the observer that it finished. That is how Minitest runs a class when you run it with `--include`, so every hook that the project or a plugin adds runs as it would there:
+The adapter runs a test at the level where Minitest runs a class when you pass `--include`: a class's `run_suite`, with a filter that matches only the test's method. Every hook that the project or a plugin adds runs as it would there, whether it wraps a class's run (minitest-hooks' `before_all` and `after_all`), changes a class's `run` (`abstract_test_case!`, which is why an abstract class runs nothing), or wraps a test's `run`, setup, or teardown (minitest-retry). [Ways to run a chosen test](#ways-to-run-a-chosen-test) shows what each other level lost.
 
-| Where the hook is | Examples | What the adapter does |
-| - | - | - |
-| Around a class's run (`run_suite`, `with_info_handler`) | minitest-hooks' `before_all` and `after_all` | Runs it around the one test. |
-| A class's `run`, which runs one method | `abstract_test_case!`, `parallelize_me!` | Calls it, so an abstract class runs nothing. |
-| A test's `run`, setup, and teardown | minitest-retry, a class's `setup` | Calls it. |
+A class that calls `parallelize_me!` hands its tests to `Minitest.parallel_executor` instead of running them. Minitest's executor runs them only in threads that `Minitest.run` starts, so such a test would run later or never, outside its turn and its bucket. For the one test, the adapter puts an executor in its place that runs each job at once, in the same thread.
 
-A class that calls `parallelize_me!` hands its tests to `Minitest.parallel_executor` instead of running them. Minitest's executor runs them only in threads that `Minitest.run` starts, so such a test would run later or never, outside its turn and its bucket. While a test runs, the adapter puts a stand-in in `Minitest.parallel_executor` that runs each test it's handed at once, in the same thread, with `Minitest::Runnable.run`, and puts the original back after.
+Minitest records more than one result during a test: one for the test, and one for each hook around the class that fails, under the hook's name. A reporter that kept only the test's result would miss a failing `before_all`, so the adapter's reporter keeps every result, and a test fails when any of them did. Minitest counts a result by its first failure, so a test that skips and then raises in `teardown` is skipped.
 
-The adapter passes `run_suite` a reporter it defines, `Outcome`, which keeps every result that Minitest records during the test. Minitest records one for the test, and one for a hook around the class that fails, under the hook's name. The test's result comes from all of them:
-
-| What Minitest recorded | Status | Message |
-| - | - | - |
-| Any result that failed an assertion or raised, the test's or a hook's | `failed` | Each such result, as Minitest prints it |
-| The test's result, with a skip as its first failure | `skipped` | none |
-| Nothing for the test, as for a test of an abstract class | `skipped` | none |
-| The test's result, passed | `passed` | none |
-
-A test that skips and then raises in `teardown` is skipped, because Minitest counts a result by its first failure. An exception that Minitest lets through, such as `SystemExit` from a test that calls `exit`, leaves `run` at once, after the observer heard the test start and before it hears the test finish. [How a run's outcome becomes a status](loading-and-isolation.md#how-a-runs-outcome-becomes-a-status) says how the orchestrator judges such a run.
+An exception that Minitest lets through, such as `SystemExit` from a test that calls `exit`, leaves `run` at once, after the observer heard the test start and before it hears the test finish. [How a run's outcome becomes a status](loading-and-isolation.md#how-a-runs-outcome-becomes-a-status) says how the orchestrator judges such a run.
 
 ### Retries
 
