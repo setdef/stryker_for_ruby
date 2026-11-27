@@ -2,9 +2,7 @@ module Stryker
   module Isolation
     # What one run's process said, as the orchestrator reads it: each
     # test's start and result, the end of the run, and the error that
-    # stopped it. A message is a JSON object with one key: `"started"` with
-    # a `Stryker::Test`, `"finished"` with a `Stryker::TestResult`,
-    # `"ended"`, or `"error"` with a String.
+    # stopped it, each read as `Stryker::Isolation::Message` reads it.
     #
     # It keeps the messages up to the first object that is no message, and
     # nothing after it, because nothing after it can be trusted to be what
@@ -20,35 +18,11 @@ module Stryker
     # # => true
     # ```
     class Messages
-      # What a message holds once it is read: a test that started, a test's
-      # result, `true` for the end of the run, or the error that stopped it.
-      type value = Test | TestResult | String | bool
-
-      # How each kind of message reads its value.
-      READERS: Hash[String, Proc]
-
       # The messages of the lines of `text`. A last line with no line break
       # is one the process didn't finish writing, and is left out.
       #
       # - `text`: String, the lines the process wrote.
       def self.parse: (String text) -> Messages
-
-      # The object that `line` holds as JSON, or `line` itself when it
-      # isn't JSON, which is no message.
-      #
-      # - `line`: String, one line.
-      def self.object: (String line) -> JsonValue::json_value
-
-      # Whether `line` is a whole line, with its line break, that says a
-      # test started. Its run's time limit starts with that line.
-      #
-      # - `line`: String, one line a run's process wrote.
-      def self.started?: (String line) -> bool
-
-      # The value of the message `object`, or nil when it is no message.
-      #
-      # - `object`: what one line holds.
-      def self.read: (JsonValue::json_value object) -> value?
 
       # The tests that started, in order.
       @tests: Array[Test]
@@ -86,7 +60,7 @@ module Stryker
 
       # Keeps `value` with the messages of its kind, and returns nil when it
       # is no message's value.
-      def sort: (value? value) -> (Array[Test] | Array[TestResult] | Array[String] | bool | nil)
+      def sort: (Message::value? value) -> (Array[Test] | Array[TestResult] | Array[String] | bool | nil)
     end
   end
 end

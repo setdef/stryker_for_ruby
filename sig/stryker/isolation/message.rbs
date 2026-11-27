@@ -1,0 +1,43 @@
+module Stryker
+  module Isolation
+    # One line that a run's process wrote, as the orchestrator reads it. A
+    # message is a JSON object with one key: `"started"` with a
+    # `Stryker::Test`, `"finished"` with a `Stryker::TestResult`, `"ended"`,
+    # or `"error"` with a String. `Stryker::Isolation::Messages` holds a
+    # run's messages.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::Message.read(Stryker::Isolation::Message.object("{\"ended\":true}\n"))
+    # # => true
+    # Stryker::Isolation::Message.started?("{\"started\":{...}}\n")
+    # # => true
+    # ```
+    module Message
+      # What a message holds once it is read: a test that started, a test's
+      # result, `true` for the end of the run, or the error that stopped it.
+      type value = Test | TestResult | String | bool
+
+      # How each kind of message reads its value.
+      READERS: Hash[String, Proc]
+
+      # The object that `line` holds as JSON, or `line` itself when it
+      # isn't JSON, which is no message.
+      #
+      # - `line`: String, one line.
+      def self.object: (String line) -> JsonValue::json_value
+
+      # Whether `line` is a whole line, with its line break, that says a
+      # test started. Its run's time limit starts with that line.
+      #
+      # - `line`: String, one line a run's process wrote.
+      def self.started?: (String line) -> bool
+
+      # The value of the message `object`, or nil when it is no message.
+      #
+      # - `object`: what one line holds.
+      def self.read: (JsonValue::json_value object) -> value?
+    end
+  end
+end

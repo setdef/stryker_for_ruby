@@ -59,7 +59,7 @@ class FreshWatchesTest < Minitest::Test
     end
 
     def started?
-      File.exist?(@path) && Stryker::Isolation::Messages.started?(File.read(@path))
+      File.exist?(@path) && Stryker::Isolation::Message.started?(File.read(@path))
     end
 
     def result(ending)

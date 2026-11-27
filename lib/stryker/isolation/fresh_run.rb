@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "tmpdir"
+require_relative "message"
 require_relative "messages"
 require_relative "output_files"
 require_relative "verdict"
@@ -34,7 +35,7 @@ module Stryker
         # The first line the process writes is its first test's start, so
         # that line is all this reads.
         first = File.open(results_path, "rb", &:gets) if File.exist?(results_path)
-        first ? Messages.started?(first) : false
+        first ? Message.started?(first) : false
       end
 
       def result(ending)
