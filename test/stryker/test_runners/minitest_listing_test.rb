@@ -54,8 +54,15 @@ class MinitestListingTest < Minitest::Test
     RUBY
     "support/thing_support.rb": "THING_SUPPORT = true\n",
   }.freeze
+  BASE = { "test/base_test.rb": <<~RUBY }.freeze
+    Class.new(Minitest::Test)
+
+    class AfterTheNamelessBaseTest < Minitest::Test
+      def test_after = pass
+    end
+  RUBY
   LAZY = { "test/lazy_test.rb": "class LazyLoadTest < Minitest::Test; def test_l = pass; end\n" }.freeze
-  private_constant(:ELSEWHERE, :HELPED, :LAZY, :LISTED, :NAMELESS, :SOURCELESS, :SPEC, :TWICE, :WHERE)
+  private_constant(:BASE, :ELSEWHERE, :HELPED, :LAZY, :LISTED, :NAMELESS, :SOURCELESS, :SPEC, :TWICE, :WHERE)
 
   def test_a_spec_test_has_its_describe_block_and_its_method_in_its_id
     runner = loaded(SPEC)
@@ -74,6 +81,12 @@ class MinitestListingTest < Minitest::Test
     error = assert_raises(Stryker::UnsupportedError) { loaded(NAMELESS) }
 
     assert_includes(error.message, "test_nameless")
+  end
+
+  def test_a_test_class_with_no_name_and_no_tests_is_left_out_without_raising
+    runner = loaded(BASE)
+
+    refute_nil(listed(runner, "AfterTheNamelessBaseTest#test_after"))
   end
 
   def test_load_tests_takes_the_classes_out_of_minitests_list
