@@ -68,10 +68,9 @@ module Stryker
       # `run_all` says. Raises `Stryker::Isolation::Error` before `start`.
       def fly: [R] (Array[R] runs) { (R run) -> FreshRun } -> void
 
-      # Starts the processes of the fresh runs that the block gives for
-      # `waiting`, while fewer than `concurrency` run, and finishes each
-      # that ended, or the next to end, which lands its run.
-      def step: [R] (Array[R] waiting, Config config) { (R run) -> FreshRun } -> void
+      # What starts the process of the fresh run that `fresh` gives for a
+      # run, with the test runner named `runner`.
+      def launcher: [R] (String runner, ^(R run) -> FreshRun fresh) -> ^(R run) -> FreshWatch
     end
   end
 end

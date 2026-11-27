@@ -25,6 +25,14 @@ module Stryker
         @watches.empty?
       end
 
+      def run(runs, window)
+        waiting = runs.dup
+        until waiting.empty? && empty?
+          add(yield(waiting.shift)) while size < window && waiting.any?
+          finish
+        end
+      end
+
       def finish
         @watches.each(&:check)
         pause if @watches.none?(&:done?)

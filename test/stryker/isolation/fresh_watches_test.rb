@@ -103,6 +103,18 @@ class FreshWatchesTest < Minitest::Test
     assert_equal([Stryker::Isolation::FreshWatches::POLL_SECONDS], soon.waits)
   end
 
+  def test_a_run_starts_at_most_the_window_of_watches_at_once_and_finishes_every_one
+    set = Stryker::Isolation::FreshWatches.new
+    names = []
+    running = []
+    set.run(%i[one two three], 2) do |name|
+      running << set.size
+      Watch.new(name, ended: true).finished_into(names)
+    end
+
+    assert_equal([%i[one two three], [0, 1, 0], 0], [names, running, set.size])
+  end
+
   def test_an_empty_set_finishes_nothing_and_waits_for_nothing
     assert_equal([[], 0], finished)
   end

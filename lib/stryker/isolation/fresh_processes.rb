@@ -33,15 +33,12 @@ module Stryker
 
       private def fly(runs, &fresh)
         config = @config or raise(Error, UNSTARTED)
-        waiting = runs.dup
-        StopOnRaise.around(self) { step(waiting, config, &fresh) until waiting.empty? && @running.empty? }
+        launching = launcher(config.test_runner, fresh)
+        StopOnRaise.around(self) { @running.run(runs, config.concurrency, &launching) }
       end
 
-      private def step(waiting, config)
-        while @running.size < config.concurrency && waiting.any?
-          @running.add(@launch.call(yield(waiting.shift), config.test_runner))
-        end
-        @running.finish
+      private def launcher(runner, fresh)
+        -> (run) { @launch.call(fresh.call(run), runner) }
       end
     end
   end

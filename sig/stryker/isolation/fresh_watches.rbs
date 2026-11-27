@@ -33,6 +33,14 @@ module Stryker
       # Whether the set waits on no process.
       def empty?: () -> bool
 
+      # Starts a watch for each of `runs`, from the block, while fewer than
+      # `window` watches are in the set, and finishes them, as `finish`
+      # does, until every run has started and every watch has finished.
+      #
+      # - `runs`: Array, the runs, in the order they start.
+      # - `window`: Integer, the most watches in the set at once.
+      def run: [R] (Array[R] runs, Integer window) { (R run) -> FreshWatch } -> void
+
       # Starts the time limit of each run whose first test has started, then
       # finishes each process that has ended or run out of time, which lands
       # its run, and drops it from the set. With none of them, it first waits
