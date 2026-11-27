@@ -64,7 +64,7 @@ class BuildCop
   # error annotation inside GitHub Actions.
   def self.main(path, reverts_path, env: ENV, out: $stdout, now: Time.now)
     api = env.fetch("GITHUB_API_URL", "https://api.github.com")
-    cop = new(repository: env["GITHUB_REPOSITORY"], token: env["GH_TOKEN"], api:, now:)
+    cop = new(repository: env.fetch("GITHUB_REPOSITORY", ""), token: env.fetch("GH_TOKEN", ""), api:, now:)
     commits = File.readlines(path, chomp: true).reject(&:empty?)
     reverts = File.readlines(reverts_path, chomp: true).map(&:split)
     out.print(cop.call(commits, reverts).to_output)
@@ -106,17 +106,21 @@ class BuildCop
   # Judges the oldest red run on trunk since the green one at +good+ that no
   # revert has settled.
   private def oldest_unsettled(commits, reverts, good)
-    red = red_indexes(commits, good)
-    bad = red.reverse.find { |index| !reverts.settled?(index, good) }
-    return judge(@runs.red_run(commits[bad]), commits[bad..good].reverse) if bad
+    red = red_runs(commits, good)
+    bad = red.keys.reverse.find { |index| !reverts.settled?(index, good) }
+    return judge(red[bad], commits.take(good + 1).drop(bad).reverse!) if bad
 
     BuildCopStep.of(:none, quiet(commits[good], red))
   end
 
-  # The indexes of the commits newer than the one at +good+ that have a red
-  # run on trunk.
-  private def red_indexes(commits, good)
-    (0...good).select { |index| @runs.red_run(commits[index]) }
+  # The red run on trunk of each commit newer than the one at +good+ that has
+  # one, by the commit's index.
+  private def red_runs(commits, good)
+    pairs = (0...good).filter_map do |index|
+      run = @runs.red_run(commits[index])
+      [index, run] if run
+    end
+    pairs.to_h
   end
 
   private def quiet(green, red)
@@ -140,7 +144,7 @@ class BuildCop
     high = verdicts.index { |verdict| verdict.state == :bad }
     return BuildCopStep.of(:wait, "the run of #{commits.last} is running again") unless high
 
-    low = verdicts.take(high).rindex { |verdict| verdict.state == :good }
+    low = verdicts.take(high).rindex { |verdict| verdict.state == :good } || 0
     return blame(commits, verdicts, failed, high) if high - low == 1
 
     halve(commits, verdicts, failed, low..high)

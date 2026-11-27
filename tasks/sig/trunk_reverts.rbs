@@ -1,0 +1,14 @@
+class TrunkReverts
+  @commits: Array[String]
+  @newest: Hash[String, Integer]
+
+  def initialize: (Array[String] commits, Array[Array[String]] pairs) -> void
+
+  def settled?: (Integer index, Integer good) -> bool
+
+  private
+
+  def newest: (Array[Array[String]] reverts) -> Integer
+
+  def position: (String commit) -> Integer
+end

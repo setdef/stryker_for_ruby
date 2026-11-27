@@ -1,0 +1,57 @@
+class CommitRuns
+  type judgment = :good | :bad | :pending | :unknown | :none
+
+  class Verdict < Data
+    attr_reader state: judgment
+
+    attr_reader run: GitHubAPI::Run?
+
+    def self.new: (state: judgment, run: GitHubAPI::Run?) -> instance
+                | (judgment state, GitHubAPI::Run? run) -> instance
+
+    def run!: () -> GitHubAPI::Run
+  end
+
+  EVENTS: Array[String]
+  FAILURES: Array[String]
+  APPROVAL: String
+  TRUNK: String
+
+  @by_commit: Hash[String, Array[GitHubAPI::Run]]
+  @github: GitHubAPI
+  @jobs: Hash[[Integer, Integer], Array[GitHubAPI::Job]]
+
+  def initialize: (Array[GitHubAPI::Run] runs, GitHubAPI github) -> void
+
+  def green_on_trunk?: (String commit) -> bool
+
+  def red_run: (String commit) -> GitHubAPI::Run?
+
+  def failed_jobs: (GitHubAPI::Run run) -> Array[String]
+
+  def failed_again?: (GitHubAPI::Run run, Array[String] names) -> bool
+
+  def verdict: (String commit, Array[String] failed, ?only: String?) -> Verdict
+
+  def state_on_trunk: (String commit) -> judgment
+
+  private
+
+  def newest: (String commit, String? only) -> GitHubAPI::Run?
+
+  def state: (GitHubAPI::Run run, Array[String] failed) -> judgment
+
+  def passed?: (Array[GitHubAPI::Job] jobs, Array[String] names) -> bool
+
+  def green?: (GitHubAPI::Run run) -> bool
+
+  def trunk_runs: (String commit) -> Array[GitHubAPI::Run]
+
+  def failed?: (GitHubAPI::Run | GitHubAPI::Job run_or_job) -> bool
+
+  def finished?: (GitHubAPI::Run run) -> bool
+
+  def unfinished?: (GitHubAPI::Run run) -> bool
+
+  def jobs: (GitHubAPI::Run run) -> Array[GitHubAPI::Job]
+end

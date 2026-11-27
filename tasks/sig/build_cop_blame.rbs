@@ -1,0 +1,18 @@
+class BuildCopBlame
+  @runs: CommitRuns
+  @prefix: String
+
+  def initialize: (CommitRuns runs, String prefix) -> void
+
+  def call: (String commit, GitHubAPI::Run run, Array[String] failed, String parent) -> BuildCopStep
+
+  private
+
+  def rerun: (String commit, GitHubAPI::Run run, Array[String] failed) -> BuildCopStep
+
+  def bisect_parent: (String commit, GitHubAPI::Run run, Array[String] failed, String parent) -> BuildCopStep
+
+  def revert: (String commit, GitHubAPI::Run run, Array[String] failed, GitHubAPI::Run parent_run) -> BuildCopStep
+
+  def outside: (String commit, Array[String] failed, String parent, GitHubAPI::Run parent_run) -> BuildCopStep
+end

@@ -1,0 +1,23 @@
+class BuildCopFast
+  @runs: CommitRuns
+
+  def initialize: (CommitRuns runs) -> void
+
+  def call: (Array[String] commits, TrunkReverts reverts) -> BuildCopStep
+
+  private
+
+  def oldest_unsettled: (Array[String] commits, TrunkReverts reverts, Integer good) -> [Integer, GitHubAPI::Run]?
+
+  def judge: (String commit, String parent, GitHubAPI::Run run) -> BuildCopStep
+
+  def judge_parent: (String commit, String parent, GitHubAPI::Run run, Array[String] failed) -> BuildCopStep
+
+  def rerun: (GitHubAPI::Run run, String commit, Array[String] failed) -> BuildCopStep
+
+  def revert: (GitHubAPI::Run run, String commit, Array[String] failed) -> BuildCopStep
+
+  def wait: (String commit, String parent, CommitRuns::judgment state) -> BuildCopStep
+
+  def stuck: (GitHubAPI::Run run, String commit, String because) -> BuildCopStep
+end

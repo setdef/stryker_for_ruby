@@ -1,0 +1,51 @@
+class BuildCop
+  interface _Environment
+    def []: (String name) -> String?
+
+    def fetch: (String name, String default) -> String
+  end
+
+  interface _Printer
+    def print: (String text) -> void
+  end
+
+  WORKFLOW: String
+  FAST: String
+  BISECT: String
+  GOOD: CommitRuns::Verdict
+  DAYS: Integer
+
+  @github: GitHubAPI
+  @since: String
+  @runs: CommitRuns
+
+  def self.main: (String path, String reverts_path, ?env: _Environment, ?out: _Printer, ?now: Time) -> void
+
+  def initialize: (repository: String, token: String, ?api: String, ?pause: Integer, ?now: Time) -> void
+
+  def call: (Array[String] commits, Array[Array[String]] reverts) -> BuildCopStep
+
+  private
+
+  def read: (String workflow, **String query) -> Array[GitHubAPI::Run]
+
+  def step: (Array[String] commits, TrunkReverts reverts) -> BuildCopStep
+
+  def oldest_unsettled: (Array[String] commits, TrunkReverts reverts, Integer good) -> BuildCopStep
+
+  def red_runs: (Array[String] commits, Integer good) -> Hash[Integer, GitHubAPI::Run]
+
+  def quiet: (String green, Hash[Integer, GitHubAPI::Run] red) -> String
+
+  def judge: (GitHubAPI::Run red, Array[String] commits) -> BuildCopStep
+
+  def narrow: (Array[String] commits, Array[String] failed) -> BuildCopStep
+
+  def blame: (Array[String] commits, Array[CommitRuns::Verdict] verdicts, Array[String] failed, Integer high) -> BuildCopStep
+
+  def halve: (Array[String] commits, Array[CommitRuns::Verdict] verdicts, Array[String] failed, Range[Integer] range) -> BuildCopStep
+
+  def pending: (Array[CommitRuns::Verdict] verdicts, Range[Integer] range) -> Integer?
+
+  def between: (Array[String] commits, Array[String] failed, Range[Integer] range) -> String
+end

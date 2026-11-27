@@ -1,0 +1,21 @@
+class BuildCopStep < Data
+  type action = :none | :wait | :bisect | :rerun | :revert | :stuck
+
+  attr_reader action: action
+
+  attr_reader commit: String?
+
+  attr_reader run: Integer?
+
+  attr_reader reason: String
+
+  def self.new: (action: action, commit: String?, run: Integer?, reason: String) -> instance
+
+  def self.of: (action action, String reason, ?commit: String?, ?run: Integer?) -> BuildCopStep
+
+  def self.unsettled: (String commit, GitHubAPI::Run run, Array[String] failed) -> BuildCopStep
+
+  def acts?: () -> bool
+
+  def to_output: () -> String
+end

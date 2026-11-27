@@ -9,6 +9,7 @@ SimpleCov.start do
   cover("lib/**/*.rb")
   cover("tasks/build_cop.rb")
   cover("tasks/build_cop_blame.rb")
+  cover("tasks/build_cop_fast.rb")
   cover("tasks/build_cop_step.rb")
   cover("tasks/changelog.rb")
   cover("tasks/commit_runs.rb")
@@ -20,6 +21,7 @@ SimpleCov.start do
   cover("tasks/release_command.rb")
   cover("tasks/release_commit.rb")
   cover("tasks/ruby_doc_comments.rb")
+  cover("tasks/trunk_reverts.rb")
   enable_coverage(:branch)
   minimum_coverage(line: 100, branch: 100)
   coverage(:line) { minimum(100, per: :file) }

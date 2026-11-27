@@ -24,18 +24,21 @@ class BuildCopFast
     good = commits.index { |commit| @runs.green_on_trunk?(commit) }
     return BuildCopStep.of(:none, "no commit has a green run of Fast on trunk") unless good
 
-    bad = oldest_unsettled(commits, reverts, good)
-    return BuildCopStep.of(:none, "no red run of Fast on trunk since #{commits[good]} is unsettled") unless bad
+    found = oldest_unsettled(commits, reverts, good)
+    return BuildCopStep.of(:none, "no red run of Fast on trunk since #{commits[good]} is unsettled") unless found
 
-    judge(commits[bad], commits[bad + 1], @runs.red_run(commits[bad]))
+    bad, run = found
+    judge(commits[bad], commits[bad + 1], run)
   end
 
   # The index of the oldest commit newer than the one at +good+ whose run is
-  # red, and that no newer commit has reverted.
+  # red, and that no newer commit has reverted, with that run.
   private def oldest_unsettled(commits, reverts, good)
-    (0...good).reverse_each.find do |index|
-      @runs.red_run(commits[index]) && !reverts.settled?(index, index + 1)
+    (0...good).reverse_each do |index|
+      run = @runs.red_run(commits[index])
+      return [index, run] if run && !reverts.settled?(index, index + 1)
     end
+    nil
   end
 
   private def judge(commit, parent, run)

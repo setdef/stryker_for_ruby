@@ -32,4 +32,6 @@ class BuildCopStep < Data.define(:action, :commit, :run, :reason)
   def to_output
     "action=#{action}\ncommit=#{commit}\nrun=#{run}\nreason=#{reason}\n"
   end
+
+  # @dynamic action, commit, run, reason
 end
