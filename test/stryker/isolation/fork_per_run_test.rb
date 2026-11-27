@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative("../../support/child_processes")
 require_relative("../../support/isolation_stand_ins")
 require "stryker/config"
 require "stryker/isolation"
@@ -8,6 +9,7 @@ require "tmpdir"
 # What the fork adapter does in the orchestrator, against a stand-in parent:
 # a Ruby process, on every system, that answers each run with scripted lines.
 class ForkPerRunTest < Minitest::Test
+  include ChildProcesses
   include IsolationStandIns
 
   parallelize_me!
@@ -38,25 +40,36 @@ class ForkPerRunTest < Minitest::Test
 
   # Starts the stand-in parent in place of the real one, and keeps the folder
   # for the parent's output. With `interrupted`, the wait for the parent to
-  # load raises Interrupt, as a signal that arrives then does.
+  # load raises Interrupt, as a signal that arrives then does. With
+  # `signaled`, an Interrupt is waiting for the launching thread when the
+  # launch returns, as a signal that arrives while the launch runs leaves it.
   class Launch
-    attr_reader :folder
+    attr_reader :folder, :pid
 
-    def initialize(test, argument = "ready", interrupted: false)
+    def initialize(test, argument = "ready", interrupted: false, signaled: false)
       @test = test
       @argument = argument
       @interrupted = interrupted
+      @signaled = signaled
     end
 
     def call(_runner)
       input, commands = IO.pipe
       results, output = IO.pipe
-      pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
+      @pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
       [input, output].each(&:close)
       @folder = Dir.mktmpdir
-      parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], @folder)
+      parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(@pid), [commands, results], @folder)
       parent.define_singleton_method(:await_ready) { |*| raise(Interrupt) } if @interrupted
+      signal if @signaled
       parent
+    end
+
+    # Queues an Interrupt for the launching thread, as a signal does. The
+    # thread raises it at once, unless a mask defers it, so the signal always
+    # arrives before the launch returns, and never depends on timing.
+    private def signal
+      Thread.current.raise(Interrupt)
     end
   end
   private_constant(:Launch)
@@ -137,6 +150,13 @@ class ForkPerRunTest < Minitest::Test
 
     assert_raises(Interrupt) { Stryker::Isolation::ForkPerRun.new("/cache", "/project", launch).start(config) }
     refute(Dir.exist?(launch.folder))
+  end
+
+  def test_a_signal_during_the_launch_waits_for_the_adapter_to_hold_the_parent_and_then_ends_the_parent
+    launch = Launch.new(self, signaled: true)
+
+    assert_raises(Interrupt) { Stryker::Isolation::ForkPerRun.new("/cache", "/project", launch).start(config) }
+    assert_equal([false, false], [Dir.exist?(launch.folder), running?(launch.pid)])
   end
 
   def test_the_adapter_needs_starting_first
