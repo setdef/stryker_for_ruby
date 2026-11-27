@@ -10,7 +10,7 @@ module Stryker
     #
     # ```ruby
     # streams = Stryker::Isolation::ForkedStreams.new(results, Stryker::Isolation::OutputFiles.new(folder))
-    # streams.call(7)
+    # streams.call("7")
     # # $stdout and $stderr now write to <folder>/7.out and <folder>/7.err
     # ```
     class ForkedStreams
@@ -28,12 +28,13 @@ module Stryker
       def initialize: (IO results, OutputFiles outputs) -> void
 
       # Closes `results`, and reopens `stdout` and `stderr` onto the files
-      # of the child that runs mutant `id`.
+      # named `name`.
       #
-      # - `id`: Integer, the run's mutant's ID.
+      # - `name`: String, the run's output name, as
+      #   `Stryker::MutantRun#output_name` gives it.
       # - `stdout`: IO, `$stdout` unless a test passes another.
       # - `stderr`: IO, `$stderr` unless a test passes another.
-      def call: (Integer id, ?IO stdout, ?IO stderr) -> nil
+      def call: (String name, ?IO stdout, ?IO stderr) -> nil
 
       # Reopens `io` onto the file at `path`, in sync mode, so that what the
       # child writes there survives its `exit!`.
@@ -42,9 +43,9 @@ module Stryker
       # - `path`: String, the file's path.
       def self.reopen: (IO io, String path) -> nil
 
-      # The last lines of the standard error of the child that ran mutant
-      # `id`.
-      def tail: (Integer id) -> String
+      # The last lines of the standard error of the child whose files are
+      # named `name`.
+      def tail: (String name) -> String
 
       private
 

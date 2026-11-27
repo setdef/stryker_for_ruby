@@ -46,6 +46,10 @@ class MutantRunTest < Minitest::Test
     assert_equal(run, Stryker::MutantRun.from_json(run.to_json))
   end
 
+  def test_a_run_is_known_to_the_fork_parent_by_its_mutants_id
+    assert_equal([{ mutant: 7 }.transform_keys(&:to_s), "7"], [mutant_run.relay_key, mutant_run.output_name])
+  end
+
   def test_a_missing_mutant_is_refused
     object = { static: false, test_ids: [], covered_by: [], timeout_ms: 1500 }.transform_keys(&:to_s)
 

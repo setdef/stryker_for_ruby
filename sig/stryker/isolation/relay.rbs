@@ -3,7 +3,8 @@ module Stryker
     # Writes what the parent that forks tells the orchestrator, on the pipe
     # the orchestrator reads: that it loaded the tests, which child runs
     # each mutant, each line that child wrote, and how the child ended.
-    # Every line about a run holds its mutant's ID under `"mutant"`. The
+    # Every line about a run starts with the run's relay key, such as
+    # `"mutant":7`, as `Stryker::MutantRun#relay_key` gives it. The
     # parent writes from one thread, and the lock keeps lines whole anyway.
     #
     # ## Examples

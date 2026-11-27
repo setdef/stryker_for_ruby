@@ -36,8 +36,8 @@ module Stryker
       # Writes `message` as one line of JSON, as `Stryker::JsonValue.plain`
       # converts it, and returns nil.
       #
-      # - `message`: Hash, the message, with Symbol keys.
-      def write: (Hash[Symbol, JsonValue::member] message) -> nil
+      # - `message`: Hash, the message, with Symbol or String keys.
+      def write: (Hash[Symbol | String, JsonValue::member] message) -> nil
     end
   end
 end

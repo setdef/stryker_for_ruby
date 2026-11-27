@@ -34,18 +34,20 @@ module Stryker
       end
 
       private def dispatch(run)
-        @flights[run.mutant.id] = Flight.new(run)
+        @flights[run.relay_key] = Flight.new(run)
         @parent.give(run)
       end
 
       private def receive
         object = @parent.receive or raise(Error, format(ENDED, count: @flights.size))
-        id = object.delete("mutant")
-        flight(id, object).receive(object)&.tap { @flights.delete(id) }
+        # The kinds of line that a flight takes, and the rest is the key of
+        # the run that the line is about.
+        key = object.except(*Flight::KINDS)
+        flight(key, object).receive(object.slice(*Flight::KINDS))&.tap { @flights.delete(key) }
       end
 
-      private def flight(id, object)
-        @flights[id] or raise(Error, "The fork parent wrote #{object.inspect} for mutant #{id.inspect}.")
+      private def flight(key, object)
+        @flights[key] or raise(Error, "The fork parent wrote #{object.inspect}, about no run in flight.")
       end
     end
   end

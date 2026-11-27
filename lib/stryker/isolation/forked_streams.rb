@@ -20,16 +20,16 @@ module Stryker
         @outputs = outputs
       end
 
-      def call(id, stdout = $stdout, stderr = $stderr)
+      def call(name, stdout = $stdout, stderr = $stderr)
         leave_results
-        out, err = @outputs.paths(id)
+        out, err = @outputs.paths(name)
         ForkedStreams.reopen(stdout, out)
         ForkedStreams.reopen(stderr, err)
         nil
       end
 
-      def tail(id)
-        @outputs.tail(id)
+      def tail(name)
+        @outputs.tail(name)
       end
 
       private def leave_results

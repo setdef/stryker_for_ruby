@@ -16,7 +16,7 @@ class ForkedStreamsTest < Minitest::Test
   end
 
   def crash(streams, stdout, stderr)
-    streams.call(7, stdout, stderr)
+    streams.call("7", stdout, stderr)
     stderr.write("[BUG] crash\n")
   end
 
@@ -28,7 +28,7 @@ class ForkedStreamsTest < Minitest::Test
 
       # End of file on the read end means no process holds the write end, as
       # the orchestrator needs when the parent ends while a child lives on.
-      assert_equal([nil, "[BUG] crash\n"], [reader.read_nonblock(1, exception: false), streams.tail(7)])
+      assert_equal([nil, "[BUG] crash\n"], [reader.read_nonblock(1, exception: false), streams.tail("7")])
     end
   ensure
     reader&.close

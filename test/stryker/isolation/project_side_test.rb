@@ -63,7 +63,7 @@ class ProjectSideTest < Minitest::Test
     forked_run = Calls.new
     Stryker::Isolation::Forking.new(streams, forked_run, process).child(sample_run(7), :writer)
 
-    assert_equal([[[:setpgid, 0, 0]], [[7]]], [process.calls, streams.calls])
+    assert_equal([[[:setpgid, 0, 0]], [["7"]]], [process.calls, streams.calls])
     assert_equal([[sample_run(7), :writer]], forked_run.calls)
   end
 

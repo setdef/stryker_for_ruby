@@ -24,8 +24,8 @@ module Stryker
       # How many runs may be in the parent at once.
       @window: Integer
 
-      # Each flight, by its mutant's ID.
-      @flights: Hash[Integer, Flight]
+      # Each flight, by its run's relay key.
+      @flights: Hash[Hash[String, JsonValue::json_value], Flight]
 
       # Builds the set, with no run in flight.
       #
@@ -37,7 +37,7 @@ module Stryker
       # Gives the parent every run of `runs`, at most the window's number at
       # once, and yields each result as the parent says how its child
       # ended. Raises `Stryker::Isolation::Error` when the parent ends, or
-      # writes a line about a mutant that isn't in flight.
+      # writes a line about a run that isn't in flight.
       #
       # - `runs`: Array of Stryker::MutantRun, the runs.
       def run: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
@@ -56,8 +56,10 @@ module Stryker
       # finishes, or nil.
       def receive: () -> MutantResult?
 
-      # The flight of mutant `id`.
-      def flight: (JsonValue::json_value id, Hash[String, JsonValue::json_value] object) -> Flight
+      # The flight of the run whose relay key is `key`. Raises
+      # `Stryker::Isolation::Error`, naming the parent's line `object`, when
+      # no such run is in flight.
+      def flight: (Hash[String, JsonValue::json_value] key, Hash[String, JsonValue::json_value] object) -> Flight
     end
   end
 end

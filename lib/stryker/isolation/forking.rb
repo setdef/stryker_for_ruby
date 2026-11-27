@@ -21,12 +21,12 @@ module Stryker
         # run's tests started too. The parent does the same for the child, in
         # start, and whichever runs first wins.
         @process.setpgid(0, 0)
-        @streams.call(run.mutant.id)
+        @streams.call(run.output_name)
         @forked_run.call(run, writer)
       end
 
       def errors(run)
-        @streams.tail(run.mutant.id)
+        @streams.tail(run.output_name)
       end
 
       private def grouped(pid)

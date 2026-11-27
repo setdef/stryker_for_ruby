@@ -18,15 +18,15 @@ module Stryker
       end
 
       def forked(run, pid)
-        write(mutant: run.mutant.id, forked: pid)
+        write(run.relay_key.merge(forked: pid))
       end
 
       def message(run, line)
-        write(mutant: run.mutant.id, message: Relay.parse(line))
+        write(run.relay_key.merge(message: Relay.parse(line)))
       end
 
       def exited(run, ending)
-        write(mutant: run.mutant.id, exited: ending)
+        write(run.relay_key.merge(exited: ending))
       end
     end
   end

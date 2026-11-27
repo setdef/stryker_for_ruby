@@ -14,6 +14,11 @@ module Stryker
     # # => #<data Stryker::MutantResult ...>
     # ```
     class Flight
+      # The kinds of line that the parent writes about a run, each the key
+      # of its line beside the run's relay key: `"forked"`, `"message"`, and
+      # `"exited"`.
+      KINDS: Array[String]
+
       # The run.
       @run: MutantRun
 
@@ -33,7 +38,7 @@ module Stryker
       # that. Raises `Stryker::Isolation::Error` for a line of a kind it
       # doesn't know, or an ending that isn't one.
       #
-      # - `object`: Hash, the line without its mutant's ID, whose one key is
+      # - `object`: Hash, the line without its run's relay key, whose one key is
       #   `"forked"`, `"message"`, or `"exited"`.
       def receive: (Hash[String, JsonValue::json_value] object) -> MutantResult?
 

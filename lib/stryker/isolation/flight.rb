@@ -9,6 +9,9 @@ require_relative "verdict"
 module Stryker
   module Isolation
     class Flight
+      KINDS = %w[forked message exited].freeze
+      public_constant(:KINDS)
+
       def initialize(run)
         @run = run
         @pid = nil
