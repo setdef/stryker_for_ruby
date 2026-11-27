@@ -1,0 +1,7 @@
+module Prism
+  # Prism's signatures declare `deconstruct_keys` on each node class and not on
+  # `Prism::Node`, which every node class inherits it from.
+  class Node
+    def deconstruct_keys: (Array[Symbol]? keys) -> Hash[Symbol, untyped]
+  end
+end

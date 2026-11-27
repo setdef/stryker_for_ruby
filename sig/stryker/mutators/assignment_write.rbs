@@ -1,0 +1,57 @@
+module Stryker
+  module Mutators
+    # An operator assignment, such as `count += 1`, `@total ||= compute`,
+    # `order.total *= 2`, or `cache[key] &&= value`: the node, where its
+    # operator is written, and its right side. The target can be a local,
+    # instance, class, or global variable, a constant, an attribute, or an
+    # index.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("count += 1").value.statements.body.first
+    # Stryker::Mutators::AssignmentWrite.of(node).operator
+    # # => "+="
+    # ```
+    class AssignmentWrite < Data
+      # The assignment.
+      attr_reader node: Prism::node
+
+      # Where the operator is written, such as `+=` or `||=`.
+      attr_reader operator_loc: Prism::Location
+
+      # The right side.
+      attr_reader value: Prism::node
+
+      # Builds the assignment.
+      #
+      # - `node`: Prism::node, the assignment.
+      # - `operator_loc`: Prism::Location, where its operator is written.
+      # - `value`: Prism::node, its right side.
+      def self.new: (node: Prism::node, operator_loc: Prism::Location, value: Prism::node) -> instance
+                  | (Prism::node node, Prism::Location operator_loc, Prism::node value) -> instance
+
+      # The assignment that `node` is, or nil when it isn't an operator
+      # assignment, `||=` and `&&=` included. A plain assignment such as
+      # `x = 1` and a multiple assignment aren't.
+      #
+      # - `node`: Prism::node, the node.
+      def self.of: (Prism::node node) -> AssignmentWrite?
+
+      # The operator as written, such as `"+="`.
+      def operator: () -> String
+
+      # Whether the right side is a string literal, as
+      # `Stryker::Mutators::Strings.literal?` defines it, and the operator is
+      # not `||=` or `&&=`.
+      def string_value?: () -> bool
+
+      # The text of the assignment with its operator replaced.
+      #
+      # - `replacement`: String, the new operator, such as `"-="`.
+      def with_operator: (String replacement) -> String
+
+      LOGICAL: Array[String]
+    end
+  end
+end

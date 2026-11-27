@@ -28,12 +28,13 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Ten mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Eleven mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
 | `ArithmeticOperator` | `+`, `-`, `*`, `/`, `%` between two operands | `CallNode` | StrykerJS `ArithmeticOperator` |
 | `ArrayDeclaration` | Array literals and `Array.new` | `ArrayNode`, `CallNode` | StrykerJS `ArrayDeclaration` |
+| `AssignmentOperator` | `+=`, `-=`, and the other operator assignments, `\|\|=`, `&&=` | the `OperatorWrite`, `OrWrite`, and `AndWrite` nodes | StrykerJS `AssignmentOperator` |
 | `BlockStatement` | The body of a method, block, lambda, branch, loop, `when`, `in`, `begin`, `rescue`, or `ensure` | `StatementsNode` | StrykerJS `BlockStatement` |
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
 | `ConditionalExpression` | Conditions of `if`, `unless`, `elsif`, ternaries, `while`, `until`, and `in` guards, and comparisons and `&&`/`\|\|` elsewhere | the condition's node, `CallNode`, `AndNode`, `OrNode` | StrykerJS `ConditionalExpression` |
@@ -74,6 +75,30 @@ Ruby's `**`, `<<`, and `>>` get no mutant, as in StrykerJS. `<<` is mostly appen
 | `Array.new(3, 0)` | `Array.new` | A test that checks the array's elements. |
 
 The replacement text for an empty array is StrykerJS's. An array with no brackets, the right side of `a, b = 1, 2`, gets no mutant: `a, b = []` reads as a different assignment, not as an emptied array. StrykerJS turns `new Array()` into `new Array([])`, but in Ruby `Array.new([])` and `Array.new` both give an empty array, so `Array.new` with no arguments, or with `[]`, gets no mutant. The `[]` inside `Array.new([])` still gets its own mutant.
+
+### `AssignmentOperator`
+
+It mutates an operator assignment to any target: a local, instance, class, or global variable, a constant, an attribute (`a.b += 1`), or an index (`h[k] ||= []`).
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `x += y` | `x -= y` | A test that reads *target* afterwards, with *value* not zero. |
+| `x -= y` | `x += y` | A test that reads *target* afterwards, with *value* not zero. |
+| `x *= y` | `x /= y` | A test that reads *target* afterwards. |
+| `x /= y` | `x *= y` | A test that reads *target* afterwards. |
+| `x %= y` | `x *= y` | A test that reads *target* afterwards. |
+| `x <<= y` | `x >>= y` | A test that reads *target* afterwards. |
+| `x >>= y` | `x <<= y` | A test that reads *target* afterwards. |
+| `x &= y` | `x \|= y` | A test that reads *target* afterwards. |
+| `x \|= y` | `x &= y` | A test that reads *target* afterwards. |
+| `x \|\|= y` | `x &&= y` | A test that reads *target* when it starts as `nil` or `false`. |
+| `x &&= y` | `x \|\|= y` | A test that reads *target* when it starts truthy. |
+
+Ruby has no `++` or `--`, so `count += 1` is the idiom that StrykerJS's `UpdateOperator` covers in JavaScript, and it takes the `+=` pair here. The shared page says StrykerJS has no assignment mutator, but StrykerJS's code has `AssignmentOperator`, with the `&&=` and `||=` pairs that the page leaves out, so the catalog follows the code. `**=` and `^=` get no mutant, as no pair is listed for them.
+
+`||=` becomes `&&=`, as in StrykerJS, and not `=`. The common mistake with `@total ||= compute` is a memoized value that is `nil` or `false`, and `&&=` leaves the target as it started, so a test that reads the value once kills it. The mutant `@total = compute` gives the same value on every call and differs only in how often `compute` runs, so it would survive wherever the value is right, and its reader learns nothing about the value.
+
+It makes no mutant when the right side is a string literal (`StringNode`, `InterpolatedStringNode`, `XStringNode`, or `InterpolatedXStringNode`), for every operator except `||=` and `&&=`, as StrykerJS skips it. `||=` and `&&=` keep their pairs, which swap one for the other whatever the right side holds.
 
 ### `BlockStatement`
 
@@ -220,6 +245,7 @@ It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those 
 
 | Stryker mutator | Why the catalog has no counterpart |
 | - | - |
+| `UpdateOperator` (`++`, `--`) | Ruby has no `++` or `--`. `count += 1` takes `AssignmentOperator`'s pair. |
 | `ArrowFunction` | Ruby's blocks and lambdas always have a body of statements, which `BlockStatement` empties. |
 
 ## Constructs that get no mutator

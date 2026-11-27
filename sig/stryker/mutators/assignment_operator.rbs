@@ -1,0 +1,53 @@
+module Stryker
+  module Mutators
+    # Changes an operator assignment to the one a programmer could have written
+    # by mistake. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `x += y` | `x -= y` |
+    # | `x -= y` | `x += y` |
+    # | `x *= y` | `x /= y` |
+    # | `x /= y` | `x *= y` |
+    # | `x %= y` | `x *= y` |
+    # | `x <<= y` | `x >>= y` |
+    # | `x >>= y` | `x <<= y` |
+    # | `x &= y` | `x \|= y` |
+    # | `x \|= y` | `x &= y` |
+    # | `x \|\|= y` | `x &&= y` |
+    # | `x &&= y` | `x \|\|= y` |
+    #
+    # The target can be a local, instance, class, or global variable, a
+    # constant, an attribute, or an index. The edit covers the whole
+    # assignment. `||=` becomes `&&=` and not `=`: a memoized value that is
+    # `nil` or `false` is the common mistake, and `&&=` leaves the target as
+    # it started.
+    #
+    # It makes no mutant when the right side is a string literal, for every
+    # operator except `||=` and `&&=`. It makes none for `**=` or `^=`.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#assignmentoperator)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("count += 1").value.statements.body.first
+    # Stryker::Mutators::AssignmentOperator.edits(node, []).map(&:replacement)
+    # # => ["count -= 1"]
+    # ```
+    module AssignmentOperator
+      # The mutator's name in the report: `"AssignmentOperator"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for an operator assignment that has a pair,
+      # and none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+
+      SWAPS: Hash[Symbol, String]
+    end
+  end
+end
