@@ -30,17 +30,12 @@ module Stryker
         values = given
         Config.new(mutate: Types.strings(values.fetch(:mutate, MUTATE)), test_runner: runner(values)).with(
           **values,
-          concurrency: concurrency(values[:concurrency]),
-          **factor(values)
+          concurrency: concurrency(values[:concurrency])
         )
       end
 
       private def given
-        @settings.to_h { |name, setting| [Config::OPTIONS[name], setting.value] }
-      end
-
-      private def factor(values)
-        values.slice(:timeout_factor).transform_values { |value| Float(value.to_s) }
+        @settings.to_h { |name, setting| [Config::OPTIONS[name], Types::KINDS[name].convert(setting.value)] }
       end
 
       private def runner(values)

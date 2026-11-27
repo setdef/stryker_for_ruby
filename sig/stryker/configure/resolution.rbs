@@ -1,7 +1,7 @@
 module Stryker
   class Configure
     # Turns checked settings into a `Stryker::Config`: it fills in what the
-    # project decides, and converts a percentage and a whole-number factor.
+    # project decides, and converts a percentage.
     class Resolution
       # The patterns of `mutate` when no setting gives any: the Ruby and ERB
       # files in `lib` and `app`, leaving out the `test` and `spec` folders
@@ -30,13 +30,9 @@ module Stryker
 
       private
 
-      # Returns the settings' values, keyed by the config's field names.
+      # Returns the settings' values, each converted as its option's kind
+      # converts it, keyed by the config's field names.
       def given: () -> Hash[Symbol, Object?]
-
-      # Returns the factor on the dry-run time as a Float, when a setting
-      # gives one, as a hash for `with`: a whole number in a file is
-      # a valid factor that `Stryker::Config` holds as a Float.
-      def factor: (Hash[Symbol, Object?] values) -> Hash[Symbol, Float]
 
       # Returns the test runner that the settings name, or the one that the
       # project's folders pick.

@@ -3,12 +3,22 @@
 module Stryker
   class Configure
     module Types
-      class Kind < Data.define(:description, :test)
+      AS_GIVEN = -> (value) { value }
+
+      class Kind < Data.define(:description, :test, :conversion)
+        def initialize(description:, test:, conversion: AS_GIVEN)
+          super
+        end
+
         def accepts?(value)
           test.call(value)
         end
 
-        # @dynamic description, test
+        def convert(value)
+          conversion.call(value)
+        end
+
+        # @dynamic description, test, conversion
       end
 
       PERCENT = /\A(?:100|[1-9]?[0-9])%\z/
@@ -17,10 +27,11 @@ module Stryker
         Kind.new("an array of #{what}, written as strings", -> (value) { value.is_a?(Array) && value.all?(String) })
       end
 
-      def self.number(description, range)
+      def self.number(description, range, conversion = AS_GIVEN)
         Kind.new(
           description,
-          -> (value) { value.is_a?(Numeric) && value.finite? && range.cover?(value) && Float(value.to_s).finite? }
+          -> (value) { value.is_a?(Numeric) && value.finite? && range.cover?(value) && Float(value.to_s).finite? },
+          conversion
         )
       end
 
@@ -41,7 +52,7 @@ module Stryker
         'a whole number of 1 or more, or a percentage of the processors such as "50%"',
         -> (value) { (value.is_a?(Integer) && value >= 1) || (value.is_a?(String) && PERCENT.match?(value)) }
       )
-      factor = number("a number of 0 or more", 0..)
+      factor = number("a number of 0 or more", 0.., -> (value) { Float(value.to_s) })
 
       anything = Kind.new("anything", -> (_value) { true })
 
@@ -60,7 +71,7 @@ module Stryker
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
       }
       KINDS = Hash.new(anything).merge!(options.transform_keys(&:to_s)).freeze
-      public_constant(:PERCENT, :KINDS)
+      public_constant(:AS_GIVEN, :PERCENT, :KINDS)
     end
   end
 end

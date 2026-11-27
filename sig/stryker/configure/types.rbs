@@ -3,7 +3,8 @@ module Stryker
     # The type that each option takes, as a check and as a phrase for an
     # error message.
     module Types
-      # One type: what to call it in a message, and the check for a value.
+      # One type: what to call it in a message, the check for a value, and how
+      # to turn a checked value into the one that `Stryker::Config` holds.
       class Kind < Data
         # The type as a phrase that follows "takes", such as `a string`.
         attr_reader description: String
@@ -11,13 +12,27 @@ module Stryker
         # The check: true for a value of the type.
         attr_reader test: ^(Object? value) -> bool
 
-        # Builds a kind.
-        def self.new: (description: String, test: ^(Object? value) -> bool) -> instance
-                    | (String description, ^(Object? value) -> bool test) -> instance
+        # The conversion of a checked value: for a kind that holds the value
+        # as it was given, the identity.
+        attr_reader conversion: ^(Object? value) -> Object?
+
+        # Builds a kind. Without `conversion`, the kind holds a value as it
+        # was given.
+        def initialize: (description: String, test: ^(Object? value) -> bool, ?conversion: ^(Object? value) -> Object?) -> void
+
+        def self.new: (description: String, test: ^(Object? value) -> bool, ?conversion: ^(Object? value) -> Object?) -> instance
+                    | (String description, ^(Object? value) -> bool test, ?^(Object? value) -> Object? conversion) -> instance
 
         # Returns whether `value` has the type.
         def accepts?: (Object? value) -> bool
+
+        # Returns `value`, which the type accepts, as `Stryker::Config` holds
+        # it.
+        def convert: (Object? value) -> Object?
       end
+
+      # The conversion of a kind that holds a value as it was given.
+      AS_GIVEN: ^(Object? value) -> Object?
 
       # The form of a percentage for `concurrency`: 0 to 100, with a percent
       # sign.
@@ -38,7 +53,9 @@ module Stryker
       # Returns the type of a finite number in a range, a whole number or a
       # fraction. A whole number too big to be a Float isn't finite as a
       # Float, so it isn't in the type.
-      def self.number: (String description, Range[Numeric?] range) -> Kind
+      # The value is converted with `conversion`, which holds it as given when
+      # it is left out.
+      def self.number: (String description, Range[Numeric?] range, ?^(Object? value) -> Object? conversion) -> Kind
     end
   end
 end
