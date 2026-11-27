@@ -4,8 +4,8 @@ require_relative("../support/sample_values")
 require_relative("../test_helper")
 
 # Checks that a dry run result holds each test's result and bucket, the static
-# bucket, and the files first loaded during a test, compares by value, and
-# survives a round trip through JSON.
+# bucket, the files first loaded during a test, and its time, compares by value,
+# and survives a round trip through JSON.
 class DryRunResultTest < Minitest::Test
   include SampleValues
 
@@ -23,6 +23,10 @@ class DryRunResultTest < Minitest::Test
     )
   end
 
+  def test_holds_the_time_its_tests_took
+    assert_in_delta(1.75, dry_run_result.duration_ms)
+  end
+
   def test_results_with_equal_members_are_equal
     assert_equal(dry_run_result, Stryker::DryRunResult.new(*dry_run_result.to_h.values))
   end
@@ -36,13 +40,15 @@ class DryRunResultTest < Minitest::Test
   end
 
   def test_a_dry_run_of_no_tests_survives_a_round_trip
-    result = Stryker::DryRunResult.new(results: [], buckets: {}, static_bucket: [], files_loaded_in_tests: [])
+    result = Stryker::DryRunResult.new(
+      results: [], buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0
+    )
 
     assert_equal(result, Stryker::DryRunResult.from_json(result.to_json))
   end
 
   def test_a_missing_list_of_results_is_refused
-    object = { buckets: {}, static_bucket: [], files_loaded_in_tests: [] }.transform_keys(&:to_s)
+    object = { buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0 }.transform_keys(&:to_s)
 
     assert_raises(ArgumentError) { Stryker::DryRunResult.from_h(object) }
   end

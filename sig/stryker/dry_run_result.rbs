@@ -1,7 +1,7 @@
 module Stryker
   # What the dry run found: each test's result, the mutants each test
-  # reached, the mutants reached outside any test, and the files first loaded
-  # during a test. The dry run runs every test once with no mutant active,
+  # reached, the mutants reached outside any test, the files first loaded
+  # during a test, and how long its tests took. The dry run runs every test once with no mutant active,
   # and the plan turns this value into each mutant's status or run
   # ([#26](https://github.com/setdef/stryker_for_ruby/issues/26)).
   #
@@ -22,7 +22,8 @@ module Stryker
   #   results: [test_result],
   #   buckets: { "Shop::DiscountTest#test_rate" => [3, 4] },
   #   static_bucket: [1],
-  #   files_loaded_in_tests: ["lib/shop/tax.rb"]
+  #   files_loaded_in_tests: ["lib/shop/tax.rb"],
+  #   duration_ms: 1.75
   # )
   # Stryker::DryRunResult.from_json(result.to_json) == result
   # # => true
@@ -48,6 +49,12 @@ module Stryker
     # rest on the rule for such files.
     attr_reader files_loaded_in_tests: Array[String]
 
+    # The milliseconds from the start of the first test to the end of the
+    # last, which leaves out the time the process took to start and to load
+    # the tests. It is at least the sum of the tests' `duration_ms`, and the
+    # rest is the test runner's time between tests.
+    attr_reader duration_ms: Float
+
     # Builds the dry run result.
     #
     # - `results`: Array of Stryker::TestResult, the result of each test.
@@ -55,8 +62,10 @@ module Stryker
     # - `static_bucket`: Array of Integer, the IDs of the static mutants.
     # - `files_loaded_in_tests`: Array of String, the files first loaded
     #   during a test.
-    def self.new: (results: Array[TestResult], buckets: Hash[String, Array[Integer]], static_bucket: Array[Integer], files_loaded_in_tests: Array[String]) -> instance
-                | (Array[TestResult] results, Hash[String, Array[Integer]] buckets, Array[Integer] static_bucket, Array[String] files_loaded_in_tests) -> instance
+    # - `duration_ms`: Float, the milliseconds from the start of the first
+    #   test to the end of the last.
+    def self.new: (results: Array[TestResult], buckets: Hash[String, Array[Integer]], static_bucket: Array[Integer], files_loaded_in_tests: Array[String], duration_ms: Float) -> instance
+                | (Array[TestResult] results, Hash[String, Array[Integer]] buckets, Array[Integer] static_bucket, Array[String] files_loaded_in_tests, Float duration_ms) -> instance
 
     # The readers of the members of a dry run result that hold another value, as
     # `Stryker::JsonValue::Reading#readers` describes: `results` reads an Array of Hashes into an Array of `Stryker::TestResult`.

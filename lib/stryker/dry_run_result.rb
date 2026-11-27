@@ -4,7 +4,7 @@ require_relative "json_value"
 require_relative "test_result"
 
 module Stryker
-  class DryRunResult < Data.define(:results, :buckets, :static_bucket, :files_loaded_in_tests)
+  class DryRunResult < Data.define(:results, :buckets, :static_bucket, :files_loaded_in_tests, :duration_ms)
     include JsonValue
 
     def self.readers
@@ -15,6 +15,6 @@ module Stryker
       values.map { |value| TestResult.from_h(value) }
     end
 
-    # @dynamic results, buckets, static_bucket, files_loaded_in_tests
+    # @dynamic results, buckets, static_bucket, files_loaded_in_tests, duration_ms
   end
 end

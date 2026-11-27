@@ -58,7 +58,9 @@ module Stryker
         def self.dry_run_completed
           results = tests.map { |test| TestResult.new(test:, status: "passed", failure_message: nil, duration_ms: 1.0) }
           Events::DryRunCompleted.new(
-            result: DryRunResult.new(results:, buckets: {}, static_bucket: Array.new(0, 0), files_loaded_in_tests: %w[])
+            result: DryRunResult.new(
+              results:, buckets: {}, static_bucket: Array.new(0, 0), files_loaded_in_tests: %w[], duration_ms: 2.0
+            )
           )
         end
 

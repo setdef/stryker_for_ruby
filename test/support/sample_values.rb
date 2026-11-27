@@ -34,7 +34,8 @@ module SampleValues
       results: [test_result, test_result(status: "passed", failure_message: nil)],
       buckets: { "Shop::DiscountTest#test_rate": [3, 4] }.transform_keys(&:to_s),
       static_bucket: [1],
-      files_loaded_in_tests: ["lib/shop/tax.rb"]
+      files_loaded_in_tests: ["lib/shop/tax.rb"],
+      duration_ms: 1.75
     )
   end
 
