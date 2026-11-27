@@ -1,0 +1,40 @@
+module Stryker
+  module Mutators
+    # Swaps the inclusive and the exclusive range operator, to find the tests
+    # that never check a range's end value. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `a..b`, `..b` | `a...b`, `...b` |
+    # | `a...b`, `...b` | `a..b`, `..b` |
+    #
+    # The edit covers the whole range. The end of a range is where Ruby code
+    # has its off-by-one mistakes, such as `(0..items.size)` for
+    # `(0...items.size)`. An endless range, `a..` or `a...`, gets no mutant:
+    # the two forms iterate, slice, and test membership the same way. A
+    # flip-flop, a range in a condition, is a `Prism::FlipFlopNode` and gets
+    # none either. No Stryker tool has this mutator.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#rangeoperator)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # node = Prism.parse("(0..items.size)").value.statements.body.first.body.body.first
+    # Stryker::Mutators::RangeOperator.edits(node, []).map(&:replacement)
+    # # => ["0...items.size"]
+    # ```
+    module RangeOperator
+      # The mutator's name in the report: `"RangeOperator"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a range that has an end, and none for any
+      # other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `_ancestors`: Array of Prism::node, the nodes above it, which this
+      #   mutator doesn't read.
+      def self.edits: (Prism::node node, Array[Prism::node] _ancestors) -> Array[Edit]
+    end
+  end
+end

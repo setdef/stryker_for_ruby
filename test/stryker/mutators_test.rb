@@ -17,6 +17,7 @@ class MutatorsTest < Minitest::Test
     EqualityOperator
     LogicalOperator
     ObjectLiteral
+    RangeOperator
     StringLiteral
     UnaryOperator
   ].freeze
