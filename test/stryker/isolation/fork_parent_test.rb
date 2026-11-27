@@ -32,14 +32,15 @@ class ForkParentTest < Minitest::Test
 
   # A test runner that loads no test, or raises when it loads.
   class Runner
-    def initialize(error = nil)
+    def initialize(error = nil, tests: [])
       @error = error
+      @tests = tests
     end
 
     def load_tests
       raise(@error) if @error
 
-      []
+      @tests
     end
   end
   private_constant(:Runner)
@@ -128,10 +129,24 @@ class ForkParentTest < Minitest::Test
     assert_equal([[{ ended: true }], 0], [lines.drop(2), code])
   end
 
-  def test_a_parent_that_cannot_load_the_tests_says_why_in_place_of_ready
+  def test_a_parent_whose_tests_raise_while_they_load_says_so_before_it_ends
     lines, code = served([], runner: Runner.new(NameError.new("uninitialized constant Minitest")))
 
-    assert_equal([[{ error: "NameError: uninitialized constant Minitest" }], 1], [lines, code])
+    said = "NameError: uninitialized constant Minitest"
+
+    assert_equal([[{ load_error: said }, { error: said }], 1], [lines, code])
+  end
+
+  def test_a_parent_whose_tests_exit_while_they_load_says_so_before_it_ends
+    lines, code = served([], runner: Runner.new(SystemExit.new(1, "abort")))
+
+    assert_equal([[{ load_error: "SystemExit: abort" }, { error: "SystemExit: abort" }], 1], [lines, code])
+  end
+
+  def test_a_parent_that_fails_after_the_tests_loaded_says_error_and_not_that_they_failed_to_load
+    lines, code = served([], runner: Runner.new(tests: [Object.new]))
+
+    assert_equal([%i[ready error], 1], [lines.map { |line| line.keys.first }, code])
   end
 
   def test_the_parent_gives_its_children_nothing_on_standard_input

@@ -2,7 +2,7 @@ module Stryker
   class CLI
     # Turns the ways a run can fail into an exit status and a message on
     # standard error: a configuration error, a file that doesn't parse, an
-    # unsupported case, a dry run that failed, a signal, and an unexpected
+    # unsupported case, a dry run that failed, tests that failed to load, a signal, and an unexpected
     # error.
     class Failures
       include Rescued
@@ -16,8 +16,9 @@ module Stryker
 
       # Returns the block's value, or 2 after writing the message of a
       # Stryker::ConfigError, a Stryker::SourceError, a
-      # Stryker::UnsupportedError, or a Stryker::Isolation::DryRunError,
-      # which are the project's or the user's to fix, 128 plus the signal's number after a signal, or 2
+      # Stryker::UnsupportedError, a Stryker::Isolation::DryRunError, or a
+      # Stryker::Isolation::TestsLoadError, which are the project's or the
+      # user's to fix, 128 plus the signal's number after a signal, or 2
       # after an unexpected error's report.
       def guard: () { () -> Integer } -> Integer
 

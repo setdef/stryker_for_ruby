@@ -21,6 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 ### Fixed
 
 - A mutant that no test can run with is now in the JSON report with the status `Ignored` and a `statusReason` that says why, where the report left it out. That covers a mutant whose site can't hold a switch, as inside `BEGIN { }`, and one whose text has no form on one line. An `Ignored` mutant is in no mutation score.
+- `stryker run` stops with status 2 and a plain message when the project's test helper or test files raise while they load, such as a failing `Bundler.require`, where it said that **Stryker (for Ruby)** had a bug. The message says that the tests failed to load, gives the class and message of what they raised, and gives the last lines of the standard error of the process that loaded them.
 - A JSON configuration file that holds bytes that aren't valid UTF-8 is now an error that names the file and the line, where it used to load with the bytes as they were.
 
 ## [0.1.0] - 2026-11-27

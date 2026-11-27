@@ -1,0 +1,37 @@
+module Stryker
+  module Isolation
+    # What the parent that forks said in place of `{"ready":true}`, or that
+    # it said nothing before it ended, and the error that this is.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # NotReady.new({ "load_error" => "NameError: Shop" }, "").error
+    # # => a Stryker::Isolation::TestsLoadError
+    # NotReady.new(nil, "boom\n").error
+    # # => a Stryker::Isolation::Error
+    # ```
+    class NotReady < Data
+      # The text of the error for a parent that ended before it was ready.
+      ENDED: String
+
+      # The parent's first line, parsed, or nil when it ended without one.
+      attr_reader said: Hash[String, JsonValue::json_value]?
+
+      # The last lines of the parent's standard error.
+      attr_reader errors: String
+
+      # Builds the value.
+      #
+      # - `said`: the parent's first line, parsed, or nil.
+      # - `errors`: String, the last lines of the parent's standard error.
+      def self.new: (Hash[String, JsonValue::json_value]? said, String errors) -> instance
+
+      # A `Stryker::Isolation::TestsLoadError` when the parent said that the
+      # project's tests raised while it loaded them, and else a
+      # `Stryker::Isolation::Error` with what the parent said, or that it
+      # said nothing, and the last lines of its standard error.
+      def error: () -> (Error | TestsLoadError)
+    end
+  end
+end

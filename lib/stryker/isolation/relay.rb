@@ -17,6 +17,10 @@ module Stryker
         write(ready: true)
       end
 
+      def unloaded(error)
+        write(load_error: "#{error.class}: #{error}")
+      end
+
       def forked(run, pid)
         write(run.relay_key.merge(forked: pid))
       end

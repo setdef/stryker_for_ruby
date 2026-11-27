@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 require_relative "children"
 require_relative "finisher"
 require_relative "forked_streams"
@@ -43,9 +44,19 @@ module Stryker
       end
 
       private def ready(commands)
-        tests = @runner.load_tests
+        tests = loaded_tests
         @relay.ready
         Orders.new(commands, @runner, @children, tests)
+      end
+
+      private def loaded_tests
+        @runner.load_tests
+      rescue StandardError, ScriptError, SystemExit
+        # The tests are the project's, so what they raise is the project's to
+        # fix, and the orchestrator must be able to tell it from a fault of
+        # this code. The failure then ends the process as any other does.
+        @relay.unloaded(_ = $ERROR_INFO)
+        raise
       end
     end
   end
