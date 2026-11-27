@@ -3,5 +3,7 @@
 source "https://rubygems.org"
 
 # Bundler resolves this against the installed gems, and then raises
-# Bundler::GemRequireError, because Minitest has no file of this name.
-gem "minitest", ">= 5", require: "no_such_file_in_minitest"
+# Bundler::GemRequireError, because Rake has no file of this name. Rake needs
+# no other gem: a gem that needs Prism would take the newest Prism, and the
+# run that started the test may have activated another version of it.
+gem "rake", ">= 13", require: "no_such_file_in_rake"
