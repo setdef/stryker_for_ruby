@@ -1,0 +1,37 @@
+module Stryker
+  class CLI
+    # Turns the text of a flag's value into the value of its option, as the
+    # configuration stage takes it. Text that no rule here turns into the
+    # right type stays text, so that the configuration check rejects it and
+    # names the flag.
+    module FlagText
+      # The text of a number: whole, decimal, or with an exponent.
+      NUMBER: Regexp
+
+      # The text of a whole number.
+      WHOLE: Regexp
+
+      # The word that clears an option that can be null.
+      NONE: String
+
+      # A comma that is not inside braces.
+      OUTSIDE_BRACES: Regexp
+
+      # Returns the text as it is.
+      def self.text: (String word) -> String
+
+      # Returns an Integer for whole-number text such as `"80"` or `"-5"`, a
+      # Float for decimal or exponent text such as `"80.5"` or `"1e3"`, and
+      # any other text unchanged, such as `"50%"` or `"0x10"`.
+      def self.number: (String word) -> (Integer | Float | String)
+
+      # Returns nil for the text `none`, and otherwise what `number` returns.
+      def self.number_or_none: (String word) -> (Integer | Float | String)?
+
+      # Splits the text at each comma that is outside braces, and leaves out
+      # empty items, so `"lib/{a,b}/*.rb,app/*.rb"` has two items. Empty text
+      # has none.
+      def self.list: (String word) -> Array[String]
+    end
+  end
+end

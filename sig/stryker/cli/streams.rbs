@@ -1,0 +1,16 @@
+module Stryker
+  class CLI
+    # The two streams that the command writes to: standard output for the
+    # primary output, and standard error for errors and progress.
+    class Streams < Data
+      # Where the primary output goes.
+      attr_reader stdout: IO | StringIO
+
+      # Where errors and progress go.
+      attr_reader stderr: IO | StringIO
+
+      # Builds the streams from standard output and standard error, in that order.
+      def self.new: (IO | StringIO stdout, IO | StringIO stderr) -> instance
+    end
+  end
+end

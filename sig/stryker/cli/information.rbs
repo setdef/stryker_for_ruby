@@ -1,0 +1,29 @@
+module Stryker
+  class CLI
+    # What the command says about itself: the overview, the version, and the
+    # error for a missing or unknown command.
+    class Information
+      @streams: Streams
+
+      # The names of the commands.
+      COMMANDS: Array[String]
+
+      # Builds the information for the streams.
+      #
+      # - `streams`: the Stryker::CLI::Streams it writes to.
+      def initialize: (Streams streams) -> void
+
+      # Writes the overview to standard output and returns 0, for no topic
+      # or the topic `help`. For any other topic, it is an unknown command.
+      def help: (String? topic) -> Integer
+
+      # Writes the version to standard output and returns 0.
+      def version: () -> Integer
+
+      # Writes the error for a command that doesn't exist, with the nearest
+      # command, to standard error and returns 2. With no command, it writes
+      # the overview instead.
+      def unknown: (String? command) -> Integer
+    end
+  end
+end

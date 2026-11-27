@@ -1,0 +1,31 @@
+module Stryker
+  class CLI
+    # Turns the ways a run can fail into an exit status and a message on
+    # standard error: a configuration error, an unsupported case, a signal,
+    # and an unexpected error.
+    class Failures
+      include Rescued
+
+      @stderr: IO | StringIO
+
+      # Builds the guard.
+      #
+      # - `stderr`: where the messages go.
+      def initialize: (IO | StringIO stderr) -> void
+
+      # Returns the block's value, or 2 after writing the message of a
+      # Stryker::ConfigError or Stryker::UnsupportedError, 128 plus the
+      # signal's number after a signal, or 2 after an unexpected error's
+      # report.
+      def guard: () { () -> Integer } -> Integer
+
+      private
+
+      # Writes that the signal stopped the run, and returns 128 plus its number.
+      def stopped: (SignalException signal) -> Integer
+
+      # Writes the message and returns the status.
+      def report: (String message, ?Integer status) -> Integer
+    end
+  end
+end

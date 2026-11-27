@@ -1,0 +1,46 @@
+module Stryker
+  class CLI
+    # The flags of `stryker run`: one for each option of Stryker::Config, in
+    # the kebab-case form of the option's name with its dots kept, and
+    # `--no-color`. It reads the words of a command line into the options
+    # that Configure takes.
+    #
+    # A flag takes its text as Stryker::CLI::FlagText describes. A list flag
+    # adds to the list each time it appears. A boolean option is a pair of
+    # switches, `--incremental` and `--no-incremental`. An abbreviation of a
+    # flag is not a flag.
+    class Flags
+      # The flag of each option.
+      FLAGS: Array[Flag]
+
+      @options: Hash[String, Object?]
+      @no_color: bool
+      @spellings: Array[String]
+      @parser: OptionParser
+
+      # The options the last `parse` read, keyed by option name such as
+      # `"thresholds.break"`.
+      attr_reader options: Hash[String, Object?]
+
+      # Whether the last `parse` read `--no-color`.
+      attr_reader no_color: bool
+
+      # Builds the parser.
+      def initialize: () -> void
+
+      # Reads the words, in any order, and returns the words that aren't
+      # flags, such as the configuration file. Raises OptionParser::ParseError
+      # for a flag that doesn't exist, that lacks its value, or that was given
+      # a value it doesn't take.
+      def parse: (Array[String] words) -> Array[String]
+
+      # Returns the lines that list the flags, each with its value and a
+      # summary.
+      def help: () -> String
+
+      # Returns the flag nearest to the unknown one, such as `--test-runner`
+      # for `--test-runnr`, or nil when none is near.
+      def suggest: (String flag) -> String?
+    end
+  end
+end

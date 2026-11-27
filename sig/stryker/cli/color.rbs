@@ -1,0 +1,25 @@
+module Stryker
+  class CLI
+    # Decides whether output to a stream may have color: not when the user
+    # asked for none with `--no-color`, not when the `NO_COLOR` environment
+    # variable has a value, not when `TERM` is `dumb`, and not when the
+    # stream isn't a terminal.
+    class Color
+      @off: bool
+
+      # Builds the decision for one run.
+      #
+      # - `env`: Hash of String to String, the environment.
+      # - `no_color_flag`: bool, whether the user passed `--no-color`.
+      def self.from: (Hash[String, String] env, bool no_color_flag) -> Color
+
+      # Builds a decision that is off or on for every terminal.
+      def initialize: (bool off) -> void
+
+      # Returns true when output to the stream may have color. It asks the
+      # stream, so the answer for standard output can differ from the answer
+      # for standard error.
+      def enabled_for?: (IO | StringIO stream) -> bool
+    end
+  end
+end

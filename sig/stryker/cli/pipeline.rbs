@@ -1,0 +1,17 @@
+module Stryker
+  class CLI
+    # What `stryker run` hands a checked config to: the stages that run
+    # mutation testing.
+    interface _Pipeline
+      # Runs mutation testing for the config, writing to the streams, and
+      # returns the run's mutation score as a percentage, or nil when no
+      # mutant was valid.
+      #
+      # - `config`: the checked Stryker::Config.
+      # - `stdout`, `stderr`: the streams to write to.
+      # - `color`: the Stryker::CLI::Color that says which stream may have
+      #   color.
+      def call: (Config config, stdout: IO | StringIO, stderr: IO | StringIO, color: Color) -> Numeric?
+    end
+  end
+end

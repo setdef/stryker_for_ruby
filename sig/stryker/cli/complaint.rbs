@@ -1,0 +1,26 @@
+module Stryker
+  class CLI
+    # The sentence for a flag that the parser refused: an unknown flag, with
+    # the nearest flag; a flag that lacks its value; or a flag that is
+    # given a value it doesn't take.
+    class Complaint
+      @error: OptionParser::ParseError
+      @flags: Flags
+      @flag: String
+
+      # Builds the sentence.
+      #
+      # - `error`: the error the parser raised.
+      # - `flags`: the Stryker::CLI::Flags that suggests the nearest flag.
+      def initialize: (Flags flags, OptionParser::ParseError error) -> void
+
+      # Returns the sentence.
+      def to_s: () -> String
+
+      private
+
+      # The sentence for an unknown flag.
+      def unknown: () -> String
+    end
+  end
+end

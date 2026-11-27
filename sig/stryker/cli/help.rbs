@@ -1,0 +1,25 @@
+module Stryker
+  class CLI
+    # The text of the help that the command prints.
+    module Help
+      # The address of the user documentation of the options.
+      DOCUMENTATION: String
+
+      # The usage and description at the top of the help of `run`.
+      RUN: String
+
+      # The line that lists the exit statuses.
+      EXITS: String
+
+      # The overview: what the command is, the commands, and where to read more.
+      OVERVIEW: String
+
+      # Returns the overview text, ending in a newline.
+      def self.overview: () -> String
+
+      # Returns the help of `stryker run`: its usage, the flags, the exit
+      # statuses, and where to read more.
+      def self.run: (Flags flags) -> String
+    end
+  end
+end

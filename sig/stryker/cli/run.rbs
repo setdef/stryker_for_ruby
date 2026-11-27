@@ -1,0 +1,42 @@
+module Stryker
+  class CLI
+    # One run of `stryker run`: configures, hands the config to the
+    # pipeline, and turns the way the run ends into an exit status.
+    #
+    # The exit status is 0 when the run finished and its score is at or
+    # above `thresholds.break` or no break is set, 1 when the score is
+    # below `thresholds.break`, 2 for a configuration error, a
+    # Stryker::UnsupportedError, or an unexpected error, and 128 plus the
+    # signal's number when a signal ended it.
+    class Run
+      @pipeline: _Pipeline
+      @streams: Streams
+      @env: Hash[String, String]
+      @root: String
+
+      # Builds the run.
+      #
+      # - `pipeline`: responds to `call(config, stdout:, stderr:, color:)`
+      #   and returns the run's mutation score as a Numeric, or nil when no
+      #   mutant was valid. `color` is a Stryker::CLI::Color.
+      # - `streams`: the Stryker::CLI::Streams that the pipeline and the run
+      #   write to.
+      # - `env`: Hash, the environment.
+      # - `root`: String, the project's root.
+      def initialize: (pipeline: _Pipeline, streams: Streams, env: Hash[String, String], root: String) -> void
+
+      # Runs and returns the exit status.
+      #
+      # - `options`: Hash, the options from the flags, as Configure takes them.
+      # - `file`: String or nil, the configuration file that the user named.
+      #   A name with a NUL byte is a configuration error.
+      # - `no_color`: bool, whether the user passed `--no-color`.
+      def call: (options: Hash[String, Object?], file: String?, no_color: bool) -> Integer
+
+      private
+
+      # Configures, calls the pipeline, and returns the status for its score.
+      def execute: (Hash[String, Object?] options, String? file, bool no_color) -> Integer
+    end
+  end
+end

@@ -1,0 +1,23 @@
+module Stryker
+  class CLI
+    # Decides the exit status that a run's score earns.
+    class Verdict
+      @limit: Numeric?
+
+      # Builds the verdict.
+      #
+      # - `limit`: Numeric or nil, the score below which the run fails.
+      def initialize: (Numeric? limit) -> void
+
+      # Returns 1 when the score is below the limit, and 0 when it is at or
+      # above it, when there is no limit, or when there is no score because
+      # no mutant was valid.
+      def status: (Numeric? score) -> Integer
+
+      private
+
+      # Whether the score is below the limit.
+      def broken?: (Numeric? score) -> bool
+    end
+  end
+end

@@ -22,7 +22,9 @@ Gem::Specification.new do |spec|
   spec.metadata["bug_tracker_uri"] = "#{spec.homepage}/issues"
   spec.metadata["changelog_uri"] = "#{spec.homepage}/blob/trunk/CHANGELOG.md"
 
-  spec.files = Dir["lib/**/*.rb", "sig/**/*.rbs", "README.md", "CHANGELOG.md", "LICENSE"]
+  spec.files = Dir["exe/*", "lib/**/*.rb", "sig/**/*.rbs", "README.md", "CHANGELOG.md", "LICENSE"]
+  spec.bindir = "exe"
+  spec.executables = ["stryker"]
   spec.require_paths = ["lib"]
 
   # Only the orchestrator loads these, never a process that loads the

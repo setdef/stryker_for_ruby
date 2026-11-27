@@ -1,0 +1,52 @@
+module Stryker
+  class CLI
+    # The flag of one option of Stryker::Config: the option's name, the name
+    # of its value in the help, how the flag's text becomes the option's
+    # value, and a summary for the help. `convert` is the name of a
+    # Stryker::CLI::FlagText method, `:list`, or `:switch` for a boolean.
+    class Flag < Data
+      # The short flag of each option that has one.
+      SHORT: Hash[Symbol, String]
+
+      # The option's name, such as `"thresholds.break"`.
+      attr_reader option: String
+
+      # The name of the flag's value in the help, or nil for a switch.
+      attr_reader argument: String?
+
+      # How the flag's text becomes the option's value.
+      attr_reader convert: Symbol
+
+      # The flag's line in the help.
+      attr_reader summary: String
+
+      # Builds the flag from the four fields above, in that order.
+      def self.new: (String option, String? argument, Symbol convert, String summary) -> instance
+
+      # Returns true for a boolean option, which is a pair of switches.
+      def switch?: () -> bool
+
+      # Returns the long form: `--test-runner` for `testRunner`.
+      def long_name: () -> String
+
+      # Returns the short form such as `-m`, or nil when there is none.
+      def short_name: () -> String?
+
+      # Returns each long form that the flag answers to: a switch has its
+      # `--no-` form too.
+      def spellings: () -> Array[String]
+
+      # Adds the flag to the parser. When the parser reads the flag, it
+      # records the option's value in `options`, keyed by the option's name.
+      def register: (OptionParser parser, Hash[String, Object?] options) -> void
+
+      # Returns the parser's description of the flag: its short form if it has
+      # one, its long form with the name of its value, and its summary.
+      def usage: () -> Array[String]
+
+      # Returns the option's value for the flag's text. A list flag adds the
+      # text's items to the items it had before (`earlier`).
+      def read: (String word, Object? earlier) -> Object?
+    end
+  end
+end

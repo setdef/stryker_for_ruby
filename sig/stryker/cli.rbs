@@ -1,0 +1,63 @@
+module Stryker
+  # The `stryker` command: it reads the words of a command line, does what
+  # they ask, and returns the exit status. `exe/stryker` passes it `ARGV` and
+  # exits with the status. The user documentation is in
+  # [the command line section of Configuration](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/configuration.md#the-command-line).
+  #
+  # The command writes only to the streams it is given, and never exits the
+  # process itself.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # Stryker::CLI.call(["--version"])
+  # # prints the version to standard output
+  # # => 0
+  # Stryker::CLI.call(["frobnicate"])
+  # # prints `Unknown command "frobnicate". Run "stryker help" for the commands.` to standard error
+  # # => 2
+  # ```
+  class CLI
+    @information: Information
+    @run: RunCommand
+
+    # Runs the command line and returns its exit status. It builds a CLI from
+    # the keywords, which are those of `new`, and calls it with `argv`.
+    def self.call: (Array[String] argv, **Object settings) -> Integer
+
+    # Builds a CLI.
+    #
+    # - `stdout`: where the primary output goes: help, the version, and the
+    #   run's report. It defaults to `$stdout`.
+    # - `stderr`: where errors and progress go. It defaults to `$stderr`.
+    # - `env`: Hash, the environment, for `NO_COLOR` and `TERM`. It defaults
+    #   to a copy of `ENV`.
+    # - `pipeline`: what `run` hands its config to, as
+    #   Stryker::CLI::RunCommand describes. It defaults to a pipeline that
+    #   says a run isn't built yet.
+    # - `root`: String, the project's root. It defaults to the current
+    #   directory.
+    def initialize: (?stdout: IO | StringIO, ?stderr: IO | StringIO, ?env: Hash[String, String], ?pipeline: _Pipeline, ?root: String) -> void
+
+    # Runs the words of a command line, without the program's name, and
+    # returns the exit status: 0 when it did what was asked, and 2 for a
+    # command line that names no command or an unknown one. `run` returns the
+    # statuses that Stryker::CLI::RunCommand lists.
+    #
+    # - `argv`: Array of String, the words after `stryker`.
+    #
+    # With no words, it writes the help to standard error. `help`, `-h`, and
+    # `--help` write the help to standard output, `help run` and `run --help`
+    # write the help of `run`, and `--version` writes the version.
+    def call: (Array[String] argv) -> Integer
+
+    private
+
+    # Runs the command that the first word names, with the words after it.
+    def dispatch: (?String? command, *String rest) -> Integer
+
+    # Writes the help for the topic: `run`'s help for `run`, and the overview
+    # for no topic.
+    def help: (String? topic) -> Integer
+  end
+end

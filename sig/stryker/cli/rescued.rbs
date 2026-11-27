@@ -1,0 +1,13 @@
+module Stryker
+  class CLI
+    # Gives a rescue clause the error it rescued, typed as the class that the
+    # clause names.
+    module Rescued
+      private
+
+      # Returns the error being handled. The caller's rescue clause
+      # guarantees its class, which the type `T` states.
+      def rescued: [T < Exception] () -> T
+    end
+  end
+end

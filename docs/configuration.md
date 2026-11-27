@@ -29,7 +29,64 @@ An empty YAML file has no options. A YAML file may hold only strings, numbers, b
 
 ### The command line
 
-Every option is also a flag. The flag is the kebab-case form of the option's name, with its dots kept: `testRunner` is `--test-runner`, `timeoutMS` is `--timeout-ms`, and `mutator.excludedMutations` is `--mutator.excluded-mutations`. `-m` is short for `--mutate` and `-c` for `--concurrency`.
+The `stryker` command takes these words:
+
+| Command line | What it does |
+| - | - |
+| `stryker run [configFile]` | Checks the configuration, then runs mutation testing. |
+| `stryker help [command]` | Writes the overview of the commands, or the help of one command, to standard output. |
+| `stryker -h`, `stryker --help` | The same as `stryker help`. After any command, `-h` or `--help` writes that command's help and does nothing else. |
+| `stryker --version` | Writes the version to standard output. |
+| `stryker` with no words | Writes the overview to standard error, and exits with status 2. |
+
+There is no `-v`, because other tools use it for both "verbose" and "version". A command that doesn't exist is an error that suggests the nearest command and exits with status 2:
+
+```text
+Unknown command "hlep". Did you mean "help"? Run "stryker help" for the commands.
+```
+
+Mutation runs aren't built yet. `stryker run` reads the file and the flags and runs every check, and with no problem it writes `A run isn't built yet: the command reads and checks the configuration, and then stops.` to standard error and exits with status 2.
+
+#### Flags
+
+Every option is also a flag. The flag is the kebab-case form of the option's name, with its dots kept: `testRunner` is `--test-runner`, `timeoutMS` is `--timeout-ms`, and `mutator.excludedMutations` is `--mutator.excluded-mutations`. `-m` is short for `--mutate` and `-c` for `--concurrency`. A flag takes its value as the next word or after an equals sign, so `--thresholds.break 80` and `--thresholds.break=80` are the same. Flags and the configuration file may come in any order. A flag must be written in full: `--test` is not short for `--test-runner`.
+
+Each flag writes its value as text, and the command turns the text into the type of the option:
+
+| Type of the option | Text of the flag |
+| - | - |
+| list of strings (`mutate`, `reporters`, `mutator.excludedMutations`) | Items separated by commas, such as `--reporters clear-text,json`. A comma inside braces belongs to the item, so `--mutate "lib/{a,b}/**/*.rb"` is one pattern. The flag adds to its list each time it appears, and empty text gives an empty list. |
+| whole number or number (`thresholds.high`, `timeoutMS`, `timeoutFactor`, and the others) | `80` is a whole number, and `80.5` or `1e3` is a decimal. |
+| `concurrency` | A whole number such as `4`, or a percentage such as `50%`. |
+| `thresholds.break` | A number, or `none` to clear a `thresholds.break` that the file sets. |
+| boolean (`incremental`) | `--incremental` for true and `--no-incremental` for false. |
+| string (`testRunner`) | The text as it is. |
+
+Text that isn't of the type, such as `--timeout-ms soon`, is an error like a wrong type in the file, and its line names the flag.
+
+A flag that doesn't exist is an error that suggests the nearest flag, and so is a flag that lacks its value:
+
+```text
+Unknown flag --test-runnr. Did you mean --test-runner? Run "stryker help run" for the flags.
+The flag --test-runner needs a value. Run "stryker help run" for the flags.
+```
+
+`stryker run` takes at most one configuration file. A file name with a NUL byte is an error that names the argument.
+
+#### Exit statuses
+
+| Status | When |
+| - | - |
+| 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. |
+| 1 | The run finished, and its score is below `thresholds.break`. |
+| 2 | The run couldn't finish: a command line, flag, or configuration error, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
+| 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. |
+
+#### Output and color
+
+Help, the version, and the report of a run go to standard output. Errors, warnings, and progress go to standard error, so `stryker run > report.txt` holds the report and nothing else.
+
+Output has no color when the stream isn't a terminal, when the `NO_COLOR` environment variable has a value, when `TERM` is `dumb`, and with `--no-color`. The command checks standard output and standard error alone, so a report that goes to a file has no color while progress on a terminal can have it.
 
 ## Checks
 

@@ -1,0 +1,38 @@
+module Stryker
+  class CLI
+    # `stryker run`: reads its flags, and hands the options and the
+    # configuration file to a Stryker::CLI::Run. It also writes the help of
+    # `run`, and the error for a flag that the parser refuses.
+    class RunCommand
+      include Rescued
+
+      @streams: Streams
+      @run: Run
+      @flags: Flags
+
+      # Builds the command.
+      #
+      # - `run`: the Stryker::CLI::Run that does the run.
+      # - `streams`: the Stryker::CLI::Streams the command writes to.
+      def initialize: (run: Run, streams: Streams) -> void
+
+      # Runs `stryker run` with the words after `run` and returns the exit
+      # status. With `-h` or `--help` among them, it writes the help to
+      # standard output and runs nothing. A flag that doesn't exist, that
+      # lacks its value, or that is given a value it doesn't take, and a
+      # second configuration file, are errors with status 2.
+      #
+      # - `words`: Array of String, the flags and at most one configuration
+      #   file.
+      def call: (Array[String] words) -> Integer
+
+      private
+
+      # Writes the help of `run`.
+      def help: () -> Integer
+
+      # Writes the message with a pointer to the help of `run`, and returns 2.
+      def usage_error: (String message) -> Integer
+    end
+  end
+end

@@ -1,0 +1,19 @@
+module Stryker
+  class CLI
+    # The sentence for a command that doesn't exist: it names the command and
+    # suggests the nearest one.
+    class UnknownCommand
+      @name: String
+      @commands: Array[String]
+
+      # Builds the sentence.
+      #
+      # - `name`: String, the word the user typed.
+      # - `commands`: Array of String, the names of the commands.
+      def initialize: (String name, Array[String] commands) -> void
+
+      # Returns the sentence.
+      def to_s: () -> String
+    end
+  end
+end

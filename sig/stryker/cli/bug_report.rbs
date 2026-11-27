@@ -1,0 +1,20 @@
+module Stryker
+  class CLI
+    # The text for an unexpected error: its class and message, its
+    # backtrace, and where to report it.
+    class BugReport
+      @error: StandardError
+
+      # Where to report an unexpected error.
+      ISSUES: String
+
+      # Builds the report.
+      #
+      # - `error`: the unexpected error.
+      def initialize: (StandardError error) -> void
+
+      # Returns the text, with no newline at its end.
+      def to_s: () -> String
+    end
+  end
+end

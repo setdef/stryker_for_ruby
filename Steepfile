@@ -27,6 +27,7 @@ target :lib do
   library "prism"
   library "psych"
   library "did_you_mean"
+  library "optparse"
 end
 
 target :tasks do
