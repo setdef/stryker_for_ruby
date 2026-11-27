@@ -47,8 +47,6 @@ module Stryker
       #   body from other statements.
       def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
 
-      OWNERS: Array[singleton(Prism::Node)]
-
       private def self.body?: (Prism::node node, Array[Prism::node] ancestors) -> bool
 
       private def self.guard_pattern?: (Array[Prism::node] ancestors) -> bool

@@ -1,13 +1,14 @@
 module Stryker
   module Mutators
-    # An edit that a mutator made at a node, with where the node starts, so
-    # that a walk can put a mutator's edits in the order of the file. The
-    # `Stryker::Mutators::Roster` turns the ones it keeps into mutants.
+    # An edit that a mutator made at a node, with the node, so that a walk
+    # can put a mutator's edits in the order of the file and tell which edits
+    # lie inside a node. The `Stryker::Mutators::Roster` turns the ones it
+    # keeps into mutants.
     #
     # ## Examples
     #
     # ```ruby
-    # candidate = Stryker::Mutators::Candidate.new(mutator:, site_start: 8, edit:)
+    # candidate = Stryker::Mutators::Candidate.new(mutator:, site: node, edit:)
     # candidate.mutant("lib/invoice.rb", 7).id
     # # => 7
     # ```
@@ -15,10 +16,9 @@ module Stryker
       # The mutator that made the edit.
       attr_reader mutator: _Mutator
 
-      # The offset, in bytes from the start of the file, of the node the edit
-      # is for. It differs from the edit's own start when the edit covers
-      # only a keyword.
-      attr_reader site_start: Integer
+      # The node the edit is for. Its start differs from the edit's when the
+      # edit covers only a keyword.
+      attr_reader site: Prism::node
 
       # The edit.
       attr_reader edit: Edit
@@ -26,10 +26,10 @@ module Stryker
       # Builds the candidate.
       #
       # - `mutator`: Stryker::_Mutator, the mutator that made the edit.
-      # - `site_start`: Integer, the offset of the start of the node.
+      # - `site`: Prism::node, the node the edit is for.
       # - `edit`: Stryker::Edit, the edit.
-      def self.new: (mutator: _Mutator, site_start: Integer, edit: Edit) -> instance
-                  | (_Mutator mutator, Integer site_start, Edit edit) -> instance
+      def self.new: (mutator: _Mutator, site: Prism::node, edit: Edit) -> instance
+                  | (_Mutator mutator, Prism::node site, Edit edit) -> instance
 
       # The candidates that `mutator` makes at `node`, one for each of its
       # edits, in the order the mutator gives them.

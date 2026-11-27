@@ -1,0 +1,29 @@
+module Stryker
+  module Mutators
+    # The kinds of node whose statements are a body, as
+    # [`BlockStatement`](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#blockstatement)
+    # defines one: a `def`, a block, a lambda, a branch of `if`, `unless`, or
+    # `case` (`else` included), a `while`, `until`, or `for` loop, a `when` or
+    # `in` clause, `begin`, `rescue`, and `ensure`. A class, a module, a
+    # singleton class, the top level of a file, parentheses, and an
+    # interpolation hold statements that aren't a body.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("def total = items.sum").value
+    # Stryker::Mutators::Bodies.owner?(tree.statements.body.first)
+    # # => true
+    # Stryker::Mutators::Bodies.owner?(tree)
+    # # => false
+    # ```
+    module Bodies
+      # Whether the statements that `node` holds are a body.
+      #
+      # - `node`: Prism::node, the node that holds the statements.
+      def self.owner?: (Prism::node? node) -> bool
+
+      OWNERS: Array[singleton(Prism::Node)]
+    end
+  end
+end

@@ -4,26 +4,31 @@ require "prism"
 
 module Stryker
   module Mutators
-    class Place < Data.define(:parent, :child)
+    class Place < Data.define(:parent, :child, :grandparent)
       def self.of(node, ancestors)
+        child, chain = unwrapped(node, ancestors)
+        grandparent, parent = [nil, *chain].last(2)
+        new(parent:, child:, grandparent:)
+      end
+
+      def self.unwrapped(child, chain)
         # Parentheses around one statement are not a place of their own: the
         # statement stands where the parentheses stand.
-        child = node
-        chain = ancestors
-        while parenthesized?(chain)
-          child = chain[-2]
-          chain = chain.take(chain.size - 2)
+        *outer, parentheses, statements = chain
+        if parentheses.is_a?(Prism::ParenthesesNode) && one_statement?(statements)
+          unwrapped(parentheses, outer)
+        else
+          [child, chain]
         end
-        new(parent: chain.last, child:)
       end
+      private_class_method(:unwrapped)
 
-      def self.parenthesized?(chain)
-        statements = chain.last
-        statements.is_a?(Prism::StatementsNode) && chain[-2].is_a?(Prism::ParenthesesNode) && statements.body.one?
+      def self.one_statement?(statements)
+        statements.is_a?(Prism::StatementsNode) && statements.body.one?
       end
-      private_class_method(:parenthesized?)
+      private_class_method(:one_statement?)
 
-      # @dynamic parent, child
+      # @dynamic parent, child, grandparent
     end
   end
 end

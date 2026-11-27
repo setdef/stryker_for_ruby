@@ -2,28 +2,11 @@
 
 require "prism"
 require_relative "../edit"
+require_relative "bodies"
 
 module Stryker
   module Mutators
     module BlockStatement
-      OWNERS = [
-        Prism::DefNode,
-        Prism::BlockNode,
-        Prism::LambdaNode,
-        Prism::IfNode,
-        Prism::UnlessNode,
-        Prism::ElseNode,
-        Prism::WhenNode,
-        Prism::InNode,
-        Prism::WhileNode,
-        Prism::UntilNode,
-        Prism::ForNode,
-        Prism::BeginNode,
-        Prism::RescueNode,
-        Prism::EnsureNode,
-      ].freeze
-      private_constant(:OWNERS)
-
       def self.name
         "BlockStatement"
       end
@@ -38,7 +21,7 @@ module Stryker
         # A class, module, or singleton class body isn't one, and neither is
         # the top level of a file: emptying one takes every method in it, so
         # every test that touches it fails and the survivor shows nothing new.
-        node.is_a?(Prism::StatementsNode) && OWNERS.include?(ancestors.last.class) && !nil_only?(node.body) &&
+        node.is_a?(Prism::StatementsNode) && Bodies.owner?(ancestors.last) && !nil_only?(node.body) &&
           !guard_pattern?(ancestors)
       end
       private_class_method(:body?)

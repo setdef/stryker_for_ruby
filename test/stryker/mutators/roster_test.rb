@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../test_helper")
+require "prism"
 require "stryker/edit"
 require "stryker/mutators/candidate"
 require "stryker/mutators/roster"
@@ -11,8 +12,12 @@ class RosterTest < Minitest::Test
   MUTATOR = FakeMutator.new("Edits") { [] }
   private_constant(:MUTATOR)
 
+  # The roster reads only the edit, so every candidate has the same site.
+  SITE = Prism.parse("x = 11\n").value
+  private_constant(:SITE)
+
   def candidate(start_offset, end_offset, replacement)
-    Stryker::Mutators::Candidate.new(MUTATOR, start_offset, Stryker::Edit.new(start_offset, end_offset, replacement))
+    Stryker::Mutators::Candidate.new(MUTATOR, SITE, Stryker::Edit.new(start_offset, end_offset, replacement))
   end
 
   def roster(source = "x = 11\n", first_id: 1)
