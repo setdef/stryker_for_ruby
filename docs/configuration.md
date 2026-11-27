@@ -45,6 +45,7 @@ Before it does anything else, **Stryker (for Ruby)** checks every option in the 
   "concurrency" in stryker.config.json takes a whole number of 1 or more, or a percentage of the processors such as "50%", but its value is 0.
   ```
 
+- **A `thresholds.high` below `thresholds.low`** is an error that names both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
 - **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
 
@@ -101,11 +102,11 @@ A whole number may be more than the number of processors. Each project process l
 
 ### `thresholds.high`
 
-The mutation score, as a percentage, at or above which the score counts as high. The default is `80`. Reports use it to color the score.
+The mutation score, as a percentage, at or above which the score counts as high. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
 
 ### `thresholds.low`
 
-The mutation score, as a percentage, below which the score counts as low. The default is `60`. Reports use it to color the score.
+The mutation score, as a percentage, below which the score counts as low. The default is `60`. Reports use it to color the score. It can't be above `thresholds.high`.
 
 ### `thresholds.break`
 

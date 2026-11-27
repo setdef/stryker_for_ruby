@@ -2,6 +2,7 @@
 
 require_relative("../config")
 require_relative("../config_sources")
+require_relative("default_origin")
 require_relative("origin")
 require_relative("setting")
 
@@ -30,6 +31,10 @@ module Stryker
 
       def self.merge(settings)
         settings.to_h { |setting| [setting.name, setting] }
+      end
+
+      def self.effective(merged, name)
+        merged[name] || Setting.new(name, Config::DEFAULTS[Config::OPTIONS[name]], DefaultOrigin.instance)
       end
     end
   end

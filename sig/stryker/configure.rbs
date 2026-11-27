@@ -21,8 +21,9 @@ module Stryker
   # suggests the nearest name), a value of the wrong type (the line gives the
   # option, the type it takes, and the value), a name in
   # `mutator.excludedMutations` that no mutator has (the line lists the valid
-  # names), or a pattern in `mutate` that resolves outside the project's
-  # root. Each line names the file or the flag that the value came from.
+  # names), a pattern in `mutate` that resolves outside the project's
+  # root, or a `thresholds.high` below `thresholds.low`. Each line says where
+  # the value came from: the file, the flag, or the default.
   #
   # Configure parses no `argv`: the `stryker` command does, and passes the
   # result as `options`.

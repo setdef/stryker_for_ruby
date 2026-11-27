@@ -35,7 +35,8 @@ class ConfigureTypesTest < Minitest::Test
   ].freeze
   RIGHT_VALUES = {
     :concurrency => [1, 16, "0%", "1%", "50%", "100%"],
-    :"thresholds.high" => [0, 100],
+    :"thresholds.high" => [60, 100],
+    :"thresholds.low" => [0, 80],
     :"thresholds.break" => [nil, 0, 100],
     :timeoutMS => [0, 5000],
     :timeoutFactor => [0, 1, 1.5],

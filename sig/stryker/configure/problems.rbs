@@ -4,7 +4,8 @@ module Stryker
     # text for a person. For each setting it runs the checks in
     # `Stryker::Configure::Checks` in order, and keeps the lines of the first
     # check that has any, so that a value of the wrong type is never checked
-    # for its content.
+    # for its content. It also runs `Checks::ThresholdOrder` once on the
+    # settings as merged, because that check compares two options.
     class Problems
       @settings: Array[Setting]
       @root: String

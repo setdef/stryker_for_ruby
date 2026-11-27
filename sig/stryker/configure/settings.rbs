@@ -31,6 +31,14 @@ module Stryker
       # later one wins, so a list of the file's settings followed by the
       # command line's gives the command line precedence.
       def self.merge: (Array[Setting] settings) -> Hash[String, Setting]
+
+      # Returns the setting that a run would use for an option: the merged
+      # one, or, when no file or flag gave the option, a setting that holds
+      # its default and `DefaultOrigin`.
+      #
+      # - `merged`: Hash, the settings by name, as `merge` returns them.
+      # - `name`: String, the name of an option in `Stryker::Config::OPTIONS`.
+      def self.effective: (Hash[String, Setting] merged, String name) -> Setting
     end
   end
 end

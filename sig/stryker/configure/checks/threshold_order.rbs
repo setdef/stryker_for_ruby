@@ -1,0 +1,38 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that `thresholds.high` isn't below `thresholds.low`, as
+      # StrykerJS does, after the file and the command line have been merged.
+      # An option that no file or flag gave counts with its default, so a
+      # `thresholds.high` of 50 alone is below the default `thresholds.low` of
+      # 60. The line names both options, each with where its value came from.
+      # It checks only two numbers: a value of the wrong type is
+      # `WrongType`'s to refuse.
+      class ThresholdOrder
+        HIGH: String
+        LOW: String
+
+        @high: Setting
+        @low: Setting
+
+        # Builds the check.
+        #
+        # - `merged`: Hash, the settings by name, as `Settings.merge`
+        #   returns them.
+        def initialize: (Hash[String, Setting] merged) -> void
+
+        # Returns the line for a high below the low, or none.
+        def to_a: () -> Array[String]
+
+        private
+
+        # Whether both values are numbers and the high one is below the low
+        # one.
+        def inverted?: () -> bool
+
+        # The line for a high threshold below the low one.
+        def message: () -> String
+      end
+    end
+  end
+end

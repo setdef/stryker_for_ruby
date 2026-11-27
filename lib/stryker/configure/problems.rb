@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require_relative("checks/outside_patterns")
+require_relative("checks/threshold_order")
 require_relative("checks/unknown_mutators")
 require_relative("checks/unknown_option")
 require_relative("checks/wrong_type")
+require_relative("settings")
 
 module Stryker
   class Configure
@@ -14,7 +16,7 @@ module Stryker
       end
 
       def to_a
-        @settings.flat_map { |setting| about(setting) }
+        @settings.flat_map { |setting| about(setting) } + Checks::ThresholdOrder.new(Settings.merge(@settings)).to_a
       end
 
       private def about(setting)

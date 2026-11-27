@@ -1,0 +1,18 @@
+module Stryker
+  class Configure
+    # Where a value comes from when no file or flag gave one: the option's
+    # default. Checks that compare two options use it to name a default as one
+    # of the two values.
+    class DefaultOrigin < Origin
+      # Returns the origin of the defaults.
+      def self.instance: () -> DefaultOrigin
+
+      # Returns `name` unchanged, because a default has no flag or file to
+      # spell it.
+      def spell: (String name) -> String
+
+      # Returns the name in quotes, followed by `by default`.
+      def mention: (String name) -> String
+    end
+  end
+end
