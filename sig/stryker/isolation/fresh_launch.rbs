@@ -1,16 +1,17 @@
 module Stryker
   module Isolation
     # Starts the fresh process of one run, in the project's folder, with
-    # `STRYKER_ACTIVE_MUTANT` set to the run's mutant before the process
-    # starts, its standard input on the null device, and its standard output
-    # and standard error on files in the run's own folder. Where the system
-    # has process groups, the process leads a group of its own.
+    # `STRYKER_ACTIVE_MUTANT` set to the run's active mutant, or unset,
+    # before the process starts, its standard input on the null device, and
+    # its standard output and standard error on files in the run's own
+    # folder. Where the system has process groups, the process leads a
+    # group of its own.
     #
     # ## Examples
     #
     # ```ruby
     # launch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root)
-    # watch = launch.call(run, "minitest")
+    # watch = launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, "minitest")
     # ```
     class FreshLaunch
       # The cache's directory.
@@ -29,12 +30,13 @@ module Stryker
       # - `process`: `Process`, or a stand-in in a test.
       def initialize: (String directory, String root, ?singleton(::Process) process) -> void
 
-      # Makes the run's folder, starts its process, and returns the watch
-      # over it, with the run's time limit starting now.
+      # Starts the process of `fresh`, with the mutant that its run needs
+      # active, and returns the watch over it, with the run's time limit
+      # starting now.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `fresh`: Stryker::Isolation::FreshRun, the run.
       # - `runner`: String, the test runner's name.
-      def call: (MutantRun run, String runner) -> FreshWatch
+      def call: (FreshRun fresh, String runner) -> FreshWatch
 
       private
 

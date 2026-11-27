@@ -29,11 +29,14 @@ class LeftoversTest < Minitest::Test
   end
   private_constant(:EndedProcess)
 
-  # What a run's folder is to a fresh process: it gives the result of the
-  # ending it is given.
+  # What a run's folder is to a fresh process: it keeps the ending it lands
+  # with.
   class Fresh
-    def result(ending)
-      ending.exit_status
+    attr_reader :ending
+
+    def land(ending)
+      @ending = ending
+      nil
     end
 
     def remove
@@ -80,8 +83,9 @@ class LeftoversTest < Minitest::Test
   def test_a_fresh_watch_ends_what_its_ended_process_left_in_its_group
     process = EndedProcess.new
     child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
-    result = Stryker::Isolation::FreshWatch.new(Fresh.new, child, Stryker::Isolation::Timer.new(30_000)).finish
+    fresh = Fresh.new
+    Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(30_000)).finish
 
-    assert_equal([0, [[:detach, FakeProcess::PID], *kills]], [result, process.calls])
+    assert_equal([0, [[:detach, FakeProcess::PID], *kills]], [fresh.ending.exit_status, process.calls])
   end
 end

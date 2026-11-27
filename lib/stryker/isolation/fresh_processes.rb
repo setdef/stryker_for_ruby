@@ -2,6 +2,7 @@
 
 require_relative "error"
 require_relative "fresh_launch"
+require_relative "fresh_run"
 require_relative "fresh_watches"
 require_relative "stop_on_raise"
 
@@ -23,19 +24,24 @@ module Stryker
       end
 
       def run_all(runs, &)
-        config = @config or raise(Error, UNSTARTED)
-        waiting = runs.dup
-        StopOnRaise.around(self) { step(waiting, config, &) until waiting.empty? && @running.empty? }
+        fly(runs) { |run| FreshRun.judged(run, &) }
       end
 
       def stop
         @running.stop
       end
 
-      private def step(waiting, config, &)
-        runner = config.test_runner
-        @running.add(@launch.call(waiting.shift, runner)) while @running.size < config.concurrency && waiting.any?
-        @running.finish(&)
+      private def fly(runs, &fresh)
+        config = @config or raise(Error, UNSTARTED)
+        waiting = runs.dup
+        StopOnRaise.around(self) { step(waiting, config, &fresh) until waiting.empty? && @running.empty? }
+      end
+
+      private def step(waiting, config)
+        while @running.size < config.concurrency && waiting.any?
+          @running.add(@launch.call(yield(waiting.shift), config.test_runner))
+        end
+        @running.finish
       end
     end
   end

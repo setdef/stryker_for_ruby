@@ -8,8 +8,8 @@ module Stryker
     #
     # ```ruby
     # watches = Stryker::Isolation::FreshWatches.new
-    # watches.add(launch.call(run, "minitest"))
-    # watches.finish { |result| puts(result.status) }
+    # watches.add(launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, "minitest"))
+    # watches.finish
     # ```
     class FreshWatches
       # The longest wait, in seconds, while a process hasn't started a test:
@@ -34,12 +34,12 @@ module Stryker
       def empty?: () -> bool
 
       # Starts the time limit of each run whose first test has started, then
-      # yields the result of each process that has ended or run out of time,
-      # and drops it from the set. With none of them, it first waits on the
-      # process whose time ends first, until that process ends or its time
-      # does, or for at most `POLL_SECONDS` while any run hasn't started a
-      # test, and may yield nothing.
-      def finish: () { (MutantResult result) -> void } -> void
+      # finishes each process that has ended or run out of time, which lands
+      # its run, and drops it from the set. With none of them, it first waits
+      # on the process whose time ends first, until that process ends or its
+      # time does, or for at most `POLL_SECONDS` while any run hasn't
+      # started a test, and may finish none.
+      def finish: () -> void
 
       # Waits, as `finish` says, for the process whose time ends first.
       def pause: () -> nil

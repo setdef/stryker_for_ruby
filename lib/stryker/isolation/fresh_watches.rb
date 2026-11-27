@@ -30,7 +30,7 @@ module Stryker
         pause if @watches.none?(&:done?)
         @watches.select(&:done?).each do |watch|
           @watches.delete(watch)
-          yield(watch.finish)
+          watch.finish
         end
       end
 

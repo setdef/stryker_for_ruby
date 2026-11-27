@@ -64,9 +64,14 @@ module Stryker
 
       private
 
-      # Starts processes from `waiting` while fewer than `concurrency` run,
-      # and yields the result of each that ended, or of the next to end.
-      def step: (Array[MutantRun] waiting, Config config) { (MutantResult result) -> void } -> void
+      # Runs the fresh run that the block gives for each of `runs`, as
+      # `run_all` says. Raises `Stryker::Isolation::Error` before `start`.
+      def fly: [R] (Array[R] runs) { (R run) -> FreshRun } -> void
+
+      # Starts the processes of the fresh runs that the block gives for
+      # `waiting`, while fewer than `concurrency` run, and finishes each
+      # that ended, or the next to end, which lands its run.
+      def step: [R] (Array[R] waiting, Config config) { (R run) -> FreshRun } -> void
     end
   end
 end

@@ -8,9 +8,10 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # watch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(run, "minitest")
-    # watch.finish.status
-    # # => "Survived"
+    # fresh = Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }
+    # watch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(fresh, "minitest")
+    # watch.finish
+    # # prints Survived
     # ```
     class FreshWatch
       # The run.
@@ -51,8 +52,8 @@ module Stryker
 
       # Waits for the process for what is left of its time, kills it if it
       # still runs, reaps it, kills what it left running in its group, and
-      # returns the run's result.
-      def finish: () -> MutantResult
+      # lands the run.
+      def finish: () -> nil
 
       # Kills the process while it runs, waits until it ended, and deletes
       # the run's folder.

@@ -12,8 +12,13 @@ module Stryker
     class FreshRun
       attr_reader :run
 
-      def initialize(run)
+      def self.judged(run)
+        new(run) { |messages, ending| yield(Verdict.new(run, messages, ending).result) }
+      end
+
+      def initialize(run, &landing)
         @run = run
+        @landing = landing
         @folder = Dir.mktmpdir("stryker-run-")
         @outputs = OutputFiles.new(@folder)
       end
@@ -38,8 +43,9 @@ module Stryker
         first ? Message.started?(first) : false
       end
 
-      def result(ending)
-        Verdict.new(@run, Messages.parse(results_text), ending.with(errors: @outputs.tail("process"))).result
+      def land(ending)
+        @landing.call(Messages.parse(results_text), ending.with(errors: @outputs.tail("process")))
+        nil
       ensure
         remove
       end

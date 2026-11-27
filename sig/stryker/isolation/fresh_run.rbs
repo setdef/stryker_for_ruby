@@ -1,23 +1,29 @@
 module Stryker
   module Isolation
     # One run in a fresh process, as the orchestrator keeps it: the run, and
-    # a temporary folder of the run's own, made with `Dir.mktmpdir`, which
-    # holds the file that holds the process's run, the file the process
-    # writes its messages to, and the files of its standard output and
-    # standard error. No name that the project chose becomes part of a path.
+    # a temporary folder of the run's own, made with `Dir.mktmpdir`, which holds the file that
+    # holds the process's run, the file the process writes its messages to,
+    # and the files of its standard output and standard error. No name that
+    # the project chose becomes part of a path. When it is told to land, it
+    # hands the process's messages and how the process ended to the block it
+    # was built with, which judges the run, as a `Stryker::Isolation::Flight`
+    # does for a forked child.
     #
     # ## Examples
     #
     # ```ruby
-    # fresh = Stryker::Isolation::FreshRun.new(run)
+    # fresh = Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }
     # fresh.paths
     # # => ["<folder>/run", "<folder>/results"]
-    # fresh.result(ending).status
-    # # => "Killed"
+    # fresh.land(ending)
+    # # prints Killed
     # ```
     class FreshRun
       # The run.
       attr_reader run: MutantRun
+
+      # What judges the run from its process's messages and ending.
+      @landing: ^(Messages messages, Ending ending) -> void
 
       # The run's folder.
       @folder: String
@@ -25,10 +31,18 @@ module Stryker
       # The files of the process's standard output and standard error.
       @outputs: OutputFiles
 
+      # The fresh run of the mutant run `run`, which yields the run's result, as `Stryker::Isolation::Verdict` gives it,
+      # when it lands.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      def self.judged: (MutantRun run) { (MutantResult result) -> void } -> FreshRun
+
       # Makes the run's folder.
       #
       # - `run`: Stryker::MutantRun, the run.
-      def initialize: (MutantRun run) -> void
+      # - the block: what judges the run, given the process's messages and
+      #   how the process ended, when the run lands.
+      def initialize: (MutantRun run) { (Messages messages, Ending ending) -> void } -> void
 
       # Writes the run's file, as JSON in binary mode, and returns its path
       # and the path of the results' file, for the process's arguments.
@@ -44,13 +58,14 @@ module Stryker
       # opened the file.
       def started?: () -> bool
 
-      # The run's result, from the results' file, `ending`, and the last
-      # lines of the process's standard error. Deletes the run's folder. A
-      # process that ended before it opened the results' file has no
-      # messages.
+      # Hands the messages in the results' file, and `ending` with the last
+      # lines of the process's standard error, to the block the run was
+      # built with, and deletes the run's folder, even when the block
+      # raises. A process that ended before it opened the results' file has
+      # no messages.
       #
       # - `ending`: Stryker::Isolation::Ending, how the process ended.
-      def result: (Ending ending) -> MutantResult
+      def land: (Ending ending) -> nil
 
       # Deletes the run's folder, if it is still there.
       def remove: () -> void

@@ -42,7 +42,7 @@ module Stryker
         status = @child.status
         # What its tests started dies with it.
         @child.kill_rest
-        @fresh.result(Ending.of(status, timed_out:, duration_ms: @timer.elapsed_ms))
+        @fresh.land(Ending.of(status, timed_out:, duration_ms: @timer.elapsed_ms))
       end
 
       def stop

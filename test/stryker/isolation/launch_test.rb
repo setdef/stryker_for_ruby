@@ -64,10 +64,8 @@ class LaunchTest < Minitest::Test
   # Launches a fresh process of mutant 7's static run with the stand-in, and
   # returns what it was asked to spawn with, the run's file, and the watch.
   def fresh_spawned
-    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(
-      sample_run(7, static: true),
-      "minitest"
-    )
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
+    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(fresh, "minitest")
     environment, argv, options = spawned
     [environment, argv[-2], options, watch]
   end
@@ -93,16 +91,18 @@ class LaunchTest < Minitest::Test
   end
 
   def test_a_fresh_run_whose_process_wrote_nothing_has_no_messages_and_leaves_no_folder
-    fresh = Stryker::Isolation::FreshRun.new(sample_run(7, static: true))
+    results = []
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { |result| results << result }
     folder = File.dirname(fresh.paths.first)
     ending = Stryker::Isolation::Ending.new(exit_status: 1, signal: nil, timed_out: false, duration_ms: 1.0, errors: "")
-    result = fresh.result(ending)
+    fresh.land(ending)
+    result, = results
 
     assert_equal(["RuntimeError", 0, false], [result.status, result.tests_completed, File.exist?(folder)])
   end
 
   def test_a_fresh_run_has_started_a_test_once_its_results_begin_with_a_whole_start
-    fresh = Stryker::Isolation::FreshRun.new(sample_run(7, static: true))
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
     results = fresh.paths.last
     started = [fresh.started?]
     File.binwrite(results, '{"started":')

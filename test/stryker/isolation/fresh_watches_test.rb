@@ -45,34 +45,42 @@ class FreshWatchesTest < Minitest::Test
     end
 
     def finish
-      name
+      @finished << name
+      nil
+    end
+
+    def finished_into(list)
+      @finished = list
+      self
     end
   end
   private_constant(:Watch)
 
   # What a run's folder is to a fresh process: a results file whose first
-  # line says whether a test started, and the ending it is given as the
-  # result.
+  # line says whether a test started, and a list that it adds whether the run
+  # timed out to when it lands.
   class Fresh
-    def initialize(path)
+    def initialize(path, landed)
       @path = path
+      @landed = landed
     end
 
     def started?
       File.exist?(@path) && Stryker::Isolation::Message.started?(File.read(@path))
     end
 
-    def result(ending)
-      ending.timed_out
+    def land(ending)
+      @landed << ending.timed_out
+      nil
     end
   end
   private_constant(:Fresh)
 
   def finished(*watches)
     set = Stryker::Isolation::FreshWatches.new
-    watches.each { |watch| set.add(watch) }
     names = []
-    set.finish { |name| names << name }
+    watches.each { |watch| set.add(watch.finished_into(names)) }
+    set.finish
     [names, set.size]
   end
 
@@ -113,10 +121,8 @@ class FreshWatchesTest < Minitest::Test
       # process's start can be (#85).
       script = "sleep 0.6; File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep 0.2; exit!(0)"
       pid, = scripted(script)
-      timer = Stryker::Isolation::Timer.new(500)
-      watch = Stryker::Isolation::FreshWatch.new(Fresh.new(results), Stryker::Isolation::Child.new(pid), timer)
 
-      assert_equal([false], drain(watch))
+      assert_equal([false], timed_out(results, pid, 500))
     end
   end
 
@@ -124,18 +130,19 @@ class FreshWatchesTest < Minitest::Test
     Dir.mktmpdir do |folder|
       results = File.join(folder, "results")
       pid, = scripted("File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep")
-      timer = Stryker::Isolation::Timer.new(300)
-      watch = Stryker::Isolation::FreshWatch.new(Fresh.new(results), Stryker::Isolation::Child.new(pid), timer)
 
-      assert_equal([true], drain(watch))
+      assert_equal([true], timed_out(results, pid, 300))
     end
   end
 
-  private def drain(watch)
+  # Watches the process +pid+, whose results file is +results+, with a time
+  # limit of +milliseconds+ until it lands, and gives whether it timed out.
+  private def timed_out(results, pid, milliseconds)
+    landed = []
+    timer = Stryker::Isolation::Timer.new(milliseconds)
     set = Stryker::Isolation::FreshWatches.new
-    set.add(watch)
-    timed_out = []
-    set.finish { |result| timed_out << result } until set.empty?
-    timed_out
+    set.add(Stryker::Isolation::FreshWatch.new(Fresh.new(results, landed), Stryker::Isolation::Child.new(pid), timer))
+    set.finish until set.empty?
+    landed
   end
 end

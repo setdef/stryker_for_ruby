@@ -2,7 +2,6 @@
 
 require_relative "child"
 require_relative "command"
-require_relative "fresh_run"
 require_relative "fresh_watch"
 require_relative "process_group"
 require_relative "timer"
@@ -16,9 +15,8 @@ module Stryker
         @process = process
       end
 
-      def call(run, runner)
-        fresh = FreshRun.new(run)
-        FreshWatch.new(fresh, Child.new(spawn(fresh, runner), @process), Timer.new(run.timeout_ms))
+      def call(fresh, runner)
+        FreshWatch.new(fresh, Child.new(spawn(fresh, runner), @process), Timer.new(fresh.run.timeout_ms))
       end
 
       private def spawn(fresh, runner)
