@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: proposed
 date: 2026-11-27
 deciders: "The project's architect, an AI agent, chose the rule ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)). The owner's scope rulings ([#1](https://github.com/setdef/stryker_for_ruby/issues/1), [#2](https://github.com/setdef/stryker_for_ruby/issues/2), [#3](https://github.com/setdef/stryker_for_ruby/issues/3), [#4](https://github.com/setdef/stryker_for_ruby/issues/4), [#5](https://github.com/setdef/stryker_for_ruby/issues/5), and [#6](https://github.com/setdef/stryker_for_ruby/issues/6)) set what the gem must do, and none of them mentions a dependency."
 ---
@@ -22,13 +22,13 @@ No other driver was recorded.
 
 ## Considered Options
 
-1. **Two kinds of process.** The orchestrator instruments, plans, and reports. It loads Prism and refract, and it starts the parse workers, which check that each mutant is valid Ruby and load Prism but neither refract nor the project's code. The processes that load the project's code load only **Stryker (for Ruby)**'s runtime, which uses nothing outside the standard library, and they read the instrumented source from a cache outside the project. The runtime holds the hook, the switch, the hit recorder and its collector, the test runner adapters, the entry point of a project process, the code that writes each test's result, and the part of each isolation adapter that runs in a project process.
+1. **Two kinds of process.** The orchestrator instruments, plans, and reports. It loads Prism and refract, and it starts the parse workers, which check that each mutant is valid Ruby and load Prism but neither refract nor the project's code. The processes that load the project's code load only **Stryker (for Ruby)**'s runtime, which uses nothing outside the standard library and the project's own test framework, and they read the instrumented source from a cache outside the project. The runtime holds the hook, the switch, the hit recorder and its collector, the test runner adapters, the entry point of a project process, the code that writes each test's result, and the part of each isolation adapter that runs in a project process.
 2. **One kind of process.** The instrumenter, with Prism and refract, loads in the processes that load the project's code.
 3. **Prism only,** with a printer for mutated Prism nodes written in this repository in place of refract.
 
 ## Decision Outcome
 
-Chosen: option 1, because every dependency resolves against the project's bundle, and under option 1 the processes that load the project's code load nothing for **Stryker (for Ruby)** outside the standard library. Option 2 lost on the same driver: it loads Prism, refract, and Zeitwerk beside the project's code. Option 3 lost to reusing refract, which already prints valid Ruby with precedence kept, and whose tests round-trip the standard library and installed gems ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)).
+Chosen: option 1, because every dependency resolves against the project's bundle, and under option 1 the processes that load the project's code load nothing for **Stryker (for Ruby)** outside the standard library and the project's own test framework. Option 2 lost on the same driver: it loads Prism, refract, and Zeitwerk beside the project's code. Option 3 lost to reusing refract, which already prints valid Ruby with precedence kept, and whose tests round-trip the standard library and installed gems ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)).
 
 A parse worker is not a process that loads the project's code, so the rule that those processes load only the runtime holds. How it works is in [docs/contributors/design/loading-and-isolation.md](../design/loading-and-isolation.md#two-kinds-of-process).
 
