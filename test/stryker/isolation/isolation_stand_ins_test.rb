@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
+require_relative("../../support/child_processes")
 require_relative("../../support/isolation_stand_ins")
 
 # That a test of the isolation code leaves no process running, whichever way
 # it ends.
 class IsolationStandInsTest < Minitest::Test
+  include ChildProcesses
+
   # A test that starts a stand-in that never ends by itself, and then does
   # what the block says.
   def leaking_tests(&ending)
@@ -25,13 +28,6 @@ class IsolationStandInsTest < Minitest::Test
     tests = leaking_tests(&)
     Minitest::Runnable.runnables.delete(tests)
     tests.new("test_it").tap(&:run).pid
-  end
-
-  def running?(pid)
-    Process.kill(0, pid)
-    true
-  rescue Errno::ESRCH
-    false
   end
 
   def test_a_process_ends_when_the_test_that_started_it_passes
