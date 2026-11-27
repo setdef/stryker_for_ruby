@@ -16,7 +16,7 @@ module Stryker
 
       # Builds the run.
       #
-      # - `pipeline`: responds to `call(config, stdout:, stderr:, color:)`
+      # - `pipeline`: responds to `call(config, streams, color)`
       #   and returns the run's mutation score as a Numeric, or nil when no
       #   mutant was valid. `color` is a Stryker::CLI::Color.
       # - `streams`: the Stryker::CLI::Streams that the pipeline and the run

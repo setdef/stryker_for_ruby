@@ -24,12 +24,7 @@ module Stryker
         raise(ConfigError, %(The configuration file #{file.inspect} has a NUL byte.)) if file&.include?("\0")
 
         config = Configure.call(options:, file:, root: @root)
-        score = @pipeline.call(
-          config,
-          stdout: @streams.stdout,
-          stderr: @streams.stderr,
-          color: Color.from(@env, no_color)
-        )
+        score = @pipeline.call(config, @streams, Color.from(@env, no_color))
         Verdict.new(config.threshold_break).status(score)
       end
     end

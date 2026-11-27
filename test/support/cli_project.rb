@@ -18,7 +18,7 @@ module CLIProject
       @raises = raises
     end
 
-    def call(config, color:, **)
+    def call(config, _streams, color)
       @config = config
       @color = color
       raise(@raises) if @raises

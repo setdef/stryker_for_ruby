@@ -8,10 +8,10 @@ module Stryker
       # mutant was valid.
       #
       # - `config`: the checked Stryker::Config.
-      # - `stdout`, `stderr`: the streams to write to.
+      # - `streams`: the Stryker::CLI::Streams to write to.
       # - `color`: the Stryker::CLI::Color that says which stream may have
       #   color.
-      def call: (Config config, stdout: IO | StringIO, stderr: IO | StringIO, color: Color) -> Numeric?
+      def call: (Config config, Streams streams, Color color) -> Numeric?
     end
   end
 end

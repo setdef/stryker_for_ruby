@@ -8,7 +8,7 @@ module Stryker
 
       # Raises Stryker::UnsupportedError with `MESSAGE`, so the command exits
       # with status 2.
-      def call: (Config config, **Object streams) -> Numeric?
+      def call: (Config config, Streams streams, Color color) -> Numeric?
     end
   end
 end

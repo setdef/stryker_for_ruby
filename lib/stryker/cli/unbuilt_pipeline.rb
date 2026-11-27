@@ -8,7 +8,7 @@ module Stryker
       MESSAGE = "A run isn't built yet: the command reads and checks the configuration, and then stops."
       public_constant(:MESSAGE)
 
-      def call(_config, **_streams)
+      def call(_config, _streams, _color)
         raise(UnsupportedError, MESSAGE)
       end
     end
