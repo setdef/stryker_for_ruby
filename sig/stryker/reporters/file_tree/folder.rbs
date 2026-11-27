@@ -1,0 +1,37 @@
+module Stryker
+  module Reporters
+    class FileTree
+      # A folder of the tree: its name and what it holds, folders before files.
+      class Folder
+        @name: String
+
+        @nodes: Array[Folder | FileNode]
+
+        # The folder `name` that holds `leaves`, with a folder for each name that
+        # more than one leaf starts with, or whose leaf has more names to place.
+        #
+        # - `name`: String, the folder's name.
+        # - `leaves`: Array of Stryker::Reporters::FileTree::Leaf, the files under the folder.
+        def self.of: (String name, Array[Leaf] leaves) -> Folder
+
+        # The nodes for the leaves that share the first name `name`: a file
+        # node for a lone file, and otherwise one folder. Private.
+        def self.nodes: (String name, Array[Leaf] group) -> Array[Folder | FileNode]
+
+        # Builds the folder.
+        #
+        # - `name`: String, the folder's name.
+        # - `nodes`: Array of Stryker::Reporters::FileTree::Folder or FileNode, what the folder holds.
+        def initialize: (String name, Array[Folder | FileNode] nodes) -> void
+
+        # The status of each mutant of the files under the folder.
+        def statuses: () -> Array[String]
+
+        # The folder's row at `depth`, then the rows under it.
+        #
+        # - `depth`: Integer, how many folders the folder is inside.
+        def rows: (Integer depth) -> Array[Row]
+      end
+    end
+  end
+end

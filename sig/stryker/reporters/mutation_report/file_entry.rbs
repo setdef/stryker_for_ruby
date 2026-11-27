@@ -7,13 +7,30 @@ module Stryker
       class FileEntry
         @file: ProjectFile
 
-        @results: Array[MutantResult]
+        # The entry of each mutant of the file.
+        attr_reader mutants: Array[MutantEntry]
 
         # Builds the entry.
         #
         # - `file`: Stryker::Reporters::ProjectFile, the mutated file.
         # - `results`: Array of Stryker::MutantResult, the results of the file's mutants.
         def initialize: (ProjectFile file, Array[MutantResult] results) -> void
+
+        # The file's path.
+        def path: () -> String
+
+        # The status of each mutant of the file.
+        def statuses: () -> Array[String]
+
+        # How many mutants the file has.
+        def mutant_count: () -> Integer
+
+        # The file's path and its entry as a Hash, as a pair for the `files` of
+        # the document.
+        def pair: () -> [String, Hash[Symbol, report_value]]
+
+        # How many tests finished in the runs of the file's mutants, in all.
+        def tests_completed: () -> Integer
 
         # The entry as a Hash with the schema's keys as Symbols.
         def to_h: () -> Hash[Symbol, report_value]

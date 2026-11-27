@@ -1,0 +1,24 @@
+module Stryker
+  module Reporters
+    # How the table of scores colors a score: green at or above the high
+    # threshold, yellow at or above the low one, red below it, and grey for a score
+    # that doesn't exist.
+    class ScoreStyle
+      @high: Numeric
+
+      @low: Numeric
+
+      # Builds the style.
+      #
+      # - `high`: Numeric, the score at or above which a score is green.
+      # - `low`: Numeric, the score at or above which a score is yellow.
+      def initialize: (high: Numeric, low: Numeric) -> void
+
+      # `:green` at or above `high`, `:yellow` at or above `low`, `:red` below
+      # it, and `:grey` for nil.
+      #
+      # - `score`: Float or nil, the score.
+      def color: (Float? score) -> Symbol
+    end
+  end
+end

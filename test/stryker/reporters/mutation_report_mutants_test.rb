@@ -27,7 +27,7 @@ class MutationReportMutantsTest < Minitest::Test
 
   def test_names_an_erb_template_as_erb
     Sample.create do |root|
-      File.write(File.join(root, "app.html.erb"), "<%= 1 + 1 %>\n")
+      File.binwrite(File.join(root, "app.html.erb"), "<%= 1 + 1 %>\n")
 
       assert_equal("erb", mutated(root, "app.html.erb", 7)[:files]["app.html.erb"][:language])
     end

@@ -1,0 +1,48 @@
+module Stryker
+  module Reporters
+    class FileTree
+      # One row of the table.
+      class Row < Data
+        # The name of the file or folder, or `All files`.
+        attr_reader name: String
+
+        # How many folders the row is inside, from 0 for `All files`.
+        attr_reader depth: Integer
+
+        # The file of the row, or nil for a folder and for `All files`.
+        attr_reader file: MutationReport::FileEntry?
+
+        # The counts of the mutants of the file, or of the files in the folder.
+        attr_reader metrics: Metrics
+
+        # Builds the row.
+        #
+        # - `name`: String, the name of the file or folder.
+        # - `depth`: Integer, how many folders the row is inside.
+        # - `file`: the file, or nil.
+        # - `metrics`: Stryker::Metrics, the counts.
+        def self.new: (name: String, depth: Integer, file: MutationReport::FileEntry?, metrics: Metrics) -> instance
+                    | (String name, Integer depth, MutationReport::FileEntry? file, Metrics metrics) -> instance
+
+        # The count of the metrics that `member` names.
+        #
+        # - `member`: Symbol, the name of the count, such as `:killed`.
+        def count: (Symbol member) -> Integer
+
+        # The `kind` of score of the row as text with two decimals, or `n/a` when
+        # the row has none.
+        #
+        # - `kind`: Symbol, `:mutation_score` or `:covered_score`.
+        def score_text: (Symbol kind) -> String
+
+        # How many mutants ended with an error: the runtime errors and the compile errors.
+        def errors: () -> Integer
+
+        # The `kind` of score of the row, `:mutation_score` or `:covered_score`.
+        #
+        # - `kind`: Symbol, the kind.
+        def score: (Symbol kind) -> Float?
+      end
+    end
+  end
+end

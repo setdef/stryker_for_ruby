@@ -1,0 +1,39 @@
+module Stryker
+  module Reporters
+    # The text of the clear-text report: two empty lines, the description of each
+    # mutant that no test caught, the average number of tests that ran for a
+    # mutant, and the table of scores. It ends with a newline.
+    #
+    # The average is the number of tests that finished, over all mutants, divided
+    # by the number of mutants, as StrykerJS writes it. For a run with no mutants
+    # it is `NaN`.
+    class Summary
+      @report: MutationReport
+
+      @ink: Ink
+
+      @high: Numeric
+
+      @low: Numeric
+
+      # Builds the summary.
+      #
+      # - `report`: Stryker::Reporters::MutationReport, the run's report.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text.
+      # - `high`: Numeric, the score at or above which a score is green.
+      # - `low`: Numeric, the score at or above which a score is yellow.
+      def initialize: (MutationReport report, ink: Ink, high: Numeric, low: Numeric) -> void
+
+      # The text.
+      def to_s: () -> String
+
+      private
+
+      # The descriptions of the undetected mutants of the files of `rows`.
+      def undetected: (Array[FileTree::Row] rows) -> Array[String]
+
+      # The line that says how many tests ran for a mutant on average.
+      def average: () -> String
+    end
+  end
+end

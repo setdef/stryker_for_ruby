@@ -1,0 +1,15 @@
+module Stryker
+  module Reporters
+    # The first column of the table of scores: it takes no space before its text,
+    # and aligns the text left.
+    class LeftColumn < TableColumn
+      # How many characters the column takes beyond its text: 1.
+      def gap: () -> Integer
+
+      # `text` set in the column, aligned left.
+      #
+      # - `text`: String, what to set.
+      def pad: (String text) -> String
+    end
+  end
+end

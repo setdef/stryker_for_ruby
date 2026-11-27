@@ -1,0 +1,53 @@
+module Stryker
+  module Reporters
+    # The `clear-text` reporter. When the run completes, it writes to its stream
+    # what StrykerJS's `clear-text` reporter writes: a description of each mutant
+    # that no test caught, the average number of tests that ran for a mutant, and
+    # a table of the mutation score of each file and of all files. It writes
+    # nothing before the run completes.
+    #
+    # A mutant that no test caught has the status `Survived` or `NoCoverage`. Its
+    # description gives the status and the mutator's name, the file with the line
+    # and column of the mutant, the original lines, and the lines with the mutant
+    # in place. A survivor also lists the first three tests that ran against it,
+    # and counts the rest. A static survivor says that every test ran. The other
+    # mutants, which a test killed or which ended without a verdict, stay out of
+    # the text, and count only in the table.
+    #
+    # With `color` true, the reporter paints the file and location, the original
+    # and the changed lines, and each score in the table with ANSI escape
+    # sequences. The caller decides, because it knows whether the stream is a
+    # terminal. The reporter raises `Errno::ENOENT` when a file that a mutant or a
+    # test names doesn't exist.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # reporter = Stryker::Reporters::ClearText.new(config:, root: Dir.pwd, io: $stdout, color: $stdout.tty?)
+    # events.each { |event| reporter.call(event) }
+    # ```
+    class ClearText < WholeRun
+      # The part of a stream that the reporter uses.
+      interface _Writer
+        # Writes `text`.
+        def write: (String text) -> Integer
+      end
+
+      @io: _Writer
+
+      @ink: Ink
+
+      @high: Numeric
+
+      @low: Numeric
+
+      # Builds a reporter that writes to `io`.
+      #
+      # - `config`: Stryker::Config, whose thresholds color the scores.
+      # - `root`: String, the project's root.
+      # - `io`: an object with `write`, such as `$stdout` or a StringIO, which gets the text once.
+      # - `color`: bool, whether to paint the text.
+      def initialize: (config: Config, root: String, io: _Writer, color: bool) -> void
+    end
+  end
+end

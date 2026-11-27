@@ -1,0 +1,54 @@
+module Stryker
+  module Reporters
+    # The columns of the table of scores, in groups: the file name, the two scores,
+    # and a count for each kind of mutant. Each column is as wide as its widest
+    # cell.
+    class ScoreColumns
+      @rows: Array[FileTree::Row]
+
+      @style: ScoreStyle
+
+      @ink: Ink
+
+      # The header of each count column that shows one count, by the count's name. Private.
+      COUNTS: Hash[Symbol, String]
+
+      # Builds the columns for `rows`.
+      #
+      # - `rows`: Array of Stryker::Reporters::FileTree::Row, the rows the table draws.
+      # - `high`: Numeric, the score at or above which a score is green.
+      # - `low`: Numeric, the score at or above which a score is yellow.
+      # - `ink`: Stryker::Reporters::Ink, which paints the scores.
+      def initialize: (Array[FileTree::Row] rows, high: Numeric, low: Numeric, ink: Ink) -> void
+
+      # The groups of columns, left to right.
+      def groups: () -> Array[ColumnGroup]
+
+      private
+
+      # A group of `columns` under the heading `name`.
+      def group: (String name, *TableColumn columns) -> ColumnGroup
+
+      # The group with the file column.
+      def file: () -> ColumnGroup
+
+      # The group with the two score columns.
+      def scores: () -> ColumnGroup
+
+      # The score column for `kind`, `:mutation_score` or `:covered_score`.
+      def score: (String header, Symbol kind) -> TableColumn
+
+      # The color of the `kind` of score of `row`.
+      def score_color: (FileTree::Row row, Symbol kind) -> Symbol
+
+      # A group for each count column that shows one count.
+      def counts: () -> Array[ColumnGroup]
+
+      # The group of the column of the count `member`, headed `header`.
+      def count: (Symbol member, String header) -> ColumnGroup
+
+      # The group of the column of errors: the runtime errors and the compile errors.
+      def errors: () -> ColumnGroup
+    end
+  end
+end

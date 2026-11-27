@@ -1,0 +1,44 @@
+module Stryker
+  module Reporters
+    class FileTree
+      # One file of the tree, with the names of the folders and file still to place.
+      class Leaf < Data
+        # The file.
+        attr_reader file: MutationReport::FileEntry
+
+        # The names of the folders and the file that are still to place.
+        attr_reader names: Array[String]
+
+        # Builds the leaf.
+        #
+        # - `file`: the file.
+        # - `names`: Array of String, the folders and file name.
+        def self.new: (file: MutationReport::FileEntry, names: Array[String]) -> instance
+                    | (MutationReport::FileEntry file, Array[String] names) -> instance
+
+        # The leaf of `file`, with the names of its path split at each slash or
+        # backslash.
+        #
+        # - `file`: the file.
+        def self.of: (MutationReport::FileEntry file) -> Leaf
+
+        # The statuses of the file's mutants.
+        def statuses: () -> Array[String]
+
+        # The leaf without its first name.
+        def below: () -> Leaf
+
+        # The leaf without its first `count` names.
+        #
+        # - `count`: Integer, how many names to drop.
+        def trim: (Integer count) -> Leaf
+
+        # The folders that are still to place, without the file's name.
+        def folders: () -> Array[String]
+
+        # Whether the file's name is all that is left to place.
+        def file?: () -> bool
+      end
+    end
+  end
+end

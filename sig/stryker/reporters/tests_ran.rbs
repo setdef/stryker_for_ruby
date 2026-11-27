@@ -1,0 +1,41 @@
+module Stryker
+  module Reporters
+    # What the clear-text report says about the tests that ran against a mutant
+    # that survived: the names of up to three of the tests that reached it, and
+    # how many more there were. It says that every test ran for a static mutant,
+    # and nothing for a mutant that didn't survive or that no listed test reached.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Reporters::TestsRan.new(mutant, { "T#a" => "a", "T#b" => "b" }).lines
+    # # => ["Tests ran:", "    a", "    b", ""]
+    # ```
+    class TestsRan
+      @mutant: MutationReport::MutantEntry
+
+      @names: Array[String]
+
+      # The most test names that it lists. Private.
+      MOST: Integer
+
+      # Builds the text.
+      #
+      # - `mutant`: Stryker::Reporters::MutationReport::MutantEntry, the mutant.
+      # - `test_names`: Hash, each test's name by its ID.
+      def initialize: (MutationReport::MutantEntry mutant, Hash[String, String] test_names) -> void
+
+      # The lines of text, none when there is nothing to say.
+      def lines: () -> Array[String]
+
+      private
+
+      # The line that counts the tests beyond the most, or nothing when there
+      # are no more.
+      def more: () -> Array[String]
+
+      # How many tests there are beyond the most.
+      def remaining: () -> Integer
+    end
+  end
+end

@@ -32,7 +32,7 @@ module Stryker
 
       @tests: Array[Test]
 
-      @results: Array[MutantResult]
+      @file_entries: Array[FileEntry]
 
       # The version of the report schema that the document follows. Private.
       SCHEMA_VERSION: String
@@ -44,6 +44,18 @@ module Stryker
       # - `tests`: Array of Stryker::Test, every test the dry run found.
       # - `results`: Array of Stryker::MutantResult, the result of every mutant.
       def initialize: (config: Config, root: String, tests: Array[Test], results: Array[MutantResult]) -> void
+
+      # The mutated files with their mutants, in the order of the results.
+      attr_reader file_entries: Array[FileEntry]
+
+      # The name of each test of the dry run, by its ID.
+      def test_names: () -> Hash[String, String]
+
+      # How many mutants the report has, whatever their status.
+      def mutant_count: () -> Integer
+
+      # How many tests finished in the runs of the mutants, in all.
+      def tests_completed: () -> Integer
 
       # The document, as nested hashes and arrays that convert to JSON. The
       # keys of the schema are Symbols and the file names are Strings.

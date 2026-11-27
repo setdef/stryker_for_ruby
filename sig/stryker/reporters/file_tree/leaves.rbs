@@ -1,0 +1,27 @@
+module Stryker
+  module Reporters
+    class FileTree
+      # What the tree asks of a list of leaves.
+      module Leaves
+        # How many folders every leaf starts with, which the table leaves out.
+        #
+        # - `leaves`: Array of Stryker::Reporters::FileTree::Leaf, the files.
+        def self.shared_folders: (Array[Leaf] leaves) -> Integer
+
+        # The leaves grouped by their first name, folders before files, each in
+        # the order of the names.
+        #
+        # - `leaves`: Array of Stryker::Reporters::FileTree::Leaf, the files.
+        def self.grouped: (Array[Leaf] leaves) -> Array[[String, Array[Leaf]]]
+
+        # Whether `group` is one file, not a folder.
+        #
+        # - `group`: Array of Stryker::Reporters::FileTree::Leaf, the leaves that share a name.
+        def self.file?: (Array[Leaf] group) -> bool
+
+        # Whether every list of folders has the same name at `depth`. Private.
+        def self.same_at?: (Array[Array[String]] folders, Integer depth) -> bool
+      end
+    end
+  end
+end

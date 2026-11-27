@@ -25,6 +25,9 @@ module Stryker
 
       @text: String?
 
+      # The file's path as it was given.
+      attr_reader name: String
+
       # Builds the file.
       #
       # - `root`: String, the project's root.

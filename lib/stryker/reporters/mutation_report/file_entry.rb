@@ -6,18 +6,38 @@ module Stryker
   module Reporters
     class MutationReport
       class FileEntry
+        attr_reader :mutants
+
         def initialize(file, results)
           @file = file
-          @results = results
+          @mutants = results.map { |result| MutantEntry.new(result, file) }
+        end
+
+        def path
+          @file.name
+        end
+
+        def statuses
+          @mutants.map(&:status)
+        end
+
+        def mutant_count
+          @mutants.size
+        end
+
+        def pair
+          [path, to_h]
+        end
+
+        def tests_completed
+          @mutants.sum(&:tests_completed)
         end
 
         def to_h
-          {
-            language: @file.language,
-            source: @file.source,
-            mutants: @results.map { |result| MutantEntry.new(result, @file).to_h },
-          }
+          { language: @file.language, source: @file.source, mutants: @mutants.map(&:to_h) }
         end
+
+        # @dynamic mutants
       end
     end
   end

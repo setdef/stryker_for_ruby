@@ -1,0 +1,34 @@
+module Stryker
+  module Reporters
+    # Paints text with the ANSI escape sequence of a color, or leaves it as it is
+    # when color is off. The colors are `:red`, `:green`, `:yellow`, `:cyan`, and
+    # `:grey`, and each ends with the sequence that resets the foreground color.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Reporters::Ink.new(enabled: true).paint(:red, "-   total")
+    # # => "\e[31m-   total\e[39m"
+    # Stryker::Reporters::Ink.new(enabled: false).paint(:red, "-   total")
+    # # => "-   total"
+    # ```
+    class Ink
+      @enabled: bool
+
+      # The code of each color's escape sequence. Private.
+      CODES: Hash[Symbol, Integer]
+
+      # Builds the ink.
+      #
+      # - `enabled`: bool, whether `paint` paints.
+      def initialize: (enabled: bool) -> void
+
+      # Returns `text` painted `color`, or `text` as it is when color is off.
+      # Raises ArgumentError for a color it doesn't have, even when color is off.
+      #
+      # - `color`: Symbol, one of the colors above.
+      # - `text`: String, what to paint.
+      def paint: (Symbol color, String text) -> String
+    end
+  end
+end

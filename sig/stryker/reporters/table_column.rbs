@@ -1,0 +1,60 @@
+module Stryker
+  module Reporters
+    # One column of the table of scores. Its width is that of its widest cell or
+    # its header. Each cell takes a space on each side.
+    class TableColumn
+      @header: String
+
+      @color: (^(FileTree::Row) -> Symbol?)?
+
+      @content: ^(FileTree::Row) -> String
+
+      @net: Integer
+
+      # Builds the column. The block gives each row's text.
+      #
+      # - `header`: String, the column's header.
+      # - `rows`: Array of Stryker::Reporters::FileTree::Row, the rows that set its width.
+      # - `color`: a lambda that gives a row's color, or nil for none.
+      def initialize: (String header, Array[FileTree::Row] rows, ?color: (^(FileTree::Row) -> Symbol?)?) { (FileTree::Row) -> String } -> void
+
+      # How many characters the column takes beyond its text: 2.
+      def gap: () -> Integer
+
+      # Makes the column `extra` characters wider.
+      #
+      # - `extra`: Integer, how many to add.
+      def widen: (Integer extra) -> Integer
+
+      # The width of the column with its spaces.
+      def width: () -> Integer
+
+      # A line of dashes as wide as the column.
+      def line: () -> String
+
+      # The header, set in the column.
+      def heading: () -> String
+
+      # `text` set in the column, aligned right.
+      #
+      # - `text`: String, what to set.
+      def pad: (String text) -> String
+
+      # The cell of `row`, set in the column.
+      #
+      # - `row`: Stryker::Reporters::FileTree::Row, the row.
+      def cell: (FileTree::Row row) -> String
+
+      # The color of the cell of `row`, or nil for none.
+      #
+      # - `row`: Stryker::Reporters::FileTree::Row, the row.
+      def color: (FileTree::Row row) -> Symbol?
+
+      # An empty column of the same kind, headed `name`, for the heading of a
+      # group.
+      #
+      # - `name`: String, the heading.
+      def label: (String name) -> TableColumn
+    end
+  end
+end

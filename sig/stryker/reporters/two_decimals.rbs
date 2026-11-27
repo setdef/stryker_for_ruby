@@ -1,0 +1,12 @@
+module Stryker
+  module Reporters
+    # Writes a number with two decimal places, as JavaScript's `toFixed(2)` does
+    # for the scores that StrykerJS writes: halves round up.
+    module TwoDecimals
+      # The number as text with two decimals, such as `"33.33"`. NaN is `"NaN"`.
+      #
+      # - `number`: Float, the number to write.
+      def self.of: (Float number) -> String
+    end
+  end
+end

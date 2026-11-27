@@ -1,0 +1,48 @@
+module Stryker
+  module Reporters
+    # Columns that share a heading in the table of scores, such as the two score
+    # columns under `% Mutation score`. It widens its first column when the heading
+    # is wider than the columns.
+    class ColumnGroup
+      @ink: Ink
+
+      @columns: Array[TableColumn]
+
+      @lead: TableColumn
+
+      @label: TableColumn
+
+      # Builds the group. Raises ArgumentError when it has no column.
+      #
+      # - `name`: String, the heading, which may be empty.
+      # - `ink`: Stryker::Reporters::Ink, which paints the cells that have a color.
+      # - `columns`: the group's columns, left to right.
+      def initialize: (String name, Ink ink, *TableColumn columns) -> void
+
+      # The heading, set in the width of the group.
+      def header: () -> String
+
+      # A line of dashes as wide as the group.
+      def line: () -> String
+
+      # The headers of the columns, set in their columns.
+      def headings: () -> String
+
+      # The dashes of the columns.
+      def lines: () -> String
+
+      # The cells of `row`, one for each column, painted where the column has a color.
+      #
+      # - `row`: Stryker::Reporters::FileTree::Row, the row.
+      def cells: (FileTree::Row row) -> String
+
+      private
+
+      # `text` painted `color`, or as it is for a nil color.
+      def paint: (Symbol? color, String text) -> String
+
+      # Widens the first column when the heading is wider than the columns.
+      def fit: (Integer title) -> void
+    end
+  end
+end

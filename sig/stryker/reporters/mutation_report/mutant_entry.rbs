@@ -1,13 +1,16 @@
 module Stryker
   module Reporters
     class MutationReport
-      # One mutant of the report: the schema's `MutantResult`. It holds where
-      # the mutant is and what it replaced, and what the run found out about it,
-      # and leaves out each field that has no value: a nil, or an empty list.
+      # One mutant of the report, as a reporter reads it: its file, status, mutator,
+      # location, and the lines it changes. `to_h` gives the schema's
+      # `MutantResult` of it.
       class MutantEntry
         @result: MutantResult
 
         @file: ProjectFile
+
+        # The statuses of a mutant that no test caught. Private.
+        UNDETECTED: Array[String]
 
         # Builds the entry.
         #
@@ -15,23 +18,44 @@ module Stryker
         # - `file`: Stryker::Reporters::ProjectFile, the file the mutant changes.
         def initialize: (MutantResult result, ProjectFile file) -> void
 
+        # The path of the file the mutant changes.
+        def path: () -> String
+
+        # The result's status.
+        def status: () -> String
+
+        # Whether the status is `Survived`.
+        def survived?: () -> bool
+
+        # Whether no test caught the mutant: its status is `Survived` or
+        # `NoCoverage`.
+        def undetected?: () -> bool
+
+        # The name of the mutator that made the mutant.
+        def mutator_name: () -> String
+
+        # The range the mutant replaces, with columns in UTF-16 code units.
+        def location: () -> Location
+
+        # The lines the mutant changes, as they are and as they become.
+        def excerpt: () -> MutantExcerpt
+
+        # The IDs of the tests that reached the mutant.
+        def covered_by: () -> Array[String]
+
+        # Whether the mutant was static.
+        def static?: () -> bool
+
+        # How many tests finished in the mutant's run, or 0 when it didn't run.
+        def tests_completed: () -> Integer
+
         # The entry as a Hash with the schema's keys as Symbols.
         def to_h: () -> Hash[Symbol, report_value]
 
         private
 
-        # The mutant's ID as a string, its mutator's name, its replacement, and
-        # the range it replaces, with columns in UTF-16 code units.
-        def where: () -> Hash[Symbol, report_value]
-
-        # The range the mutant replaces, as the schema's `Location`.
-        def location: () -> Hash[Symbol, report_value]
-
         # The result's mutant.
         def mutant: () -> Mutant
-
-        # The result's status and the fields that describe its run.
-        def outcome: () -> Hash[Symbol, report_value]
       end
     end
   end

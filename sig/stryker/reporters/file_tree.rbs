@@ -1,0 +1,35 @@
+module Stryker
+  module Reporters
+    # The rows of the table of scores: one for all files, and one for each folder
+    # and file under it, each with its score counts. A folder's counts add up its
+    # files.
+    #
+    # The tree leaves out the folders that every file shares, so a project whose
+    # files are all in `lib/shop` shows them by name. A folder comes before the
+    # files beside it, and each group is in the order of the names, by bytes. A
+    # folder that holds one file is still a folder. A backslash and a slash both
+    # separate folders, so a Windows path and a Unix path make the same tree.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Stryker::Reporters::FileTree.new(report.file_entries)
+    # tree.rows.map { |row| "#{' ' * row.depth}#{row.name}" }
+    # # => ["All files", " x", "  b.rb", " a.rb"]
+    # ```
+    class FileTree
+      @root: Folder
+
+      # The name of the row for all files. Private.
+      ROOT_NAME: String
+
+      # Builds the tree.
+      #
+      # - `files`: Array of Stryker::Reporters::MutationReport::FileEntry, the files to show.
+      def initialize: (Array[MutationReport::FileEntry] files) -> void
+
+      # The rows, each followed by the rows under it.
+      def rows: () -> Array[Row]
+    end
+  end
+end

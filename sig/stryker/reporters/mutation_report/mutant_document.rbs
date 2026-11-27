@@ -1,0 +1,35 @@
+module Stryker
+  module Reporters
+    class MutationReport
+      # One mutant as the schema's `MutantResult` holds it: where the mutant is,
+      # what it replaced, and what the run found out about it. It leaves out each
+      # field that has no value: a nil, or an empty list.
+      class MutantDocument
+        @result: MutantResult
+
+        @location: Location
+
+        # Builds the document.
+        #
+        # - `result`: Stryker::MutantResult, the mutant's result.
+        # - `location`: Stryker::Location, the range the mutant replaces.
+        def initialize: (MutantResult result, Location location) -> void
+
+        # The document as a Hash with the schema's keys as Symbols.
+        def to_h: () -> Hash[Symbol, report_value]
+
+        private
+
+        # The mutant's ID as a string, its mutator's name, its replacement, and
+        # the range it replaces.
+        def where: () -> Hash[Symbol, report_value]
+
+        # The result's mutant.
+        def mutant: () -> Mutant
+
+        # The result's status and the fields that describe its run.
+        def outcome: () -> Hash[Symbol, report_value]
+      end
+    end
+  end
+end

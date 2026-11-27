@@ -142,7 +142,7 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
 - **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapters are `Isolation::ForkPerRun` and `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
-- **`_Reporter`** receives each domain event of a run. Its adapter is `Reporters::JsonReport`, which [Configuration](../configuration.md#the-json-reporter) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
+- **`_Reporter`** receives each domain event of a run. Its adapters are `Reporters::JsonReport` and `Reporters::ClearText`, which [Configuration](../configuration.md#reporters) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
 - **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../configuration.md#the-configuration-file) says how to use.
 
 ### Contract tests

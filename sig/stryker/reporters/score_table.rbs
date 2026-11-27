@@ -1,0 +1,48 @@
+module Stryker
+  module Reporters
+    # The table of mutation scores in the clear-text report. It has a row for all
+    # files, and one for each folder and file, as `Stryker::Reporters::FileTree`
+    # gives them. The columns are the file's name, the score of all mutants, the
+    # score of the mutants that some test reached, and the counts of killed,
+    # timed-out, surviving, uncovered, and errored mutants. It is the table that
+    # StrykerJS draws, without emojis.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # rows = Stryker::Reporters::FileTree.new(report.file_entries).rows
+    # puts Stryker::Reporters::ScoreTable.new(rows, high: 80, low: 60, ink:).to_s
+    # # -------------|------------------|----------|-----------|------------|----------|----------|
+    # #              | % Mutation score |          |           |            |          |          |
+    # # File         |  total | covered | # killed | # timeout | # survived | # no cov | # errors |
+    # # ...
+    # ```
+    class ScoreTable
+      @rows: Array[FileTree::Row]
+
+      @groups: Array[ColumnGroup]
+
+      # Builds the table.
+      #
+      # - `rows`: Array of Stryker::Reporters::FileTree::Row, the rows to draw.
+      # - `high`: Numeric, the score at or above which a score is green.
+      # - `low`: Numeric, the score at or above which a score is yellow.
+      # - `ink`: Stryker::Reporters::Ink, which paints the scores.
+      def initialize: (Array[FileTree::Row] rows, high: Numeric, low: Numeric, ink: Ink) -> void
+
+      # The table, without a newline after its last line.
+      def to_s: () -> String
+
+      private
+
+      # The line of the table that joins what the block gives for each group.
+      def draw: () { (ColumnGroup) -> String } -> String
+
+      # The line of each row.
+      def body: () -> Array[String]
+
+      # The line of `row`.
+      def line_of: (FileTree::Row row) -> String
+    end
+  end
+end

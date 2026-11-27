@@ -25,7 +25,7 @@ module Stryker
     def mutation_score
       # SPDX-SnippetBegin
       # SPDX-License-Identifier: Apache-2.0
-      # SPDX-SnippetCopyrightText: 2018 Stryker Mutator contributors
+      # SPDX-SnippetCopyrightText: Stryker Mutator contributors
       # SPDX-SnippetComment: Ported from mutationScore in toMetrics in
       # packages/metrics/src/calculateMetrics.ts of mutation-testing-elements. The port returns nil
       # where the original returns NaN.
@@ -36,7 +36,7 @@ module Stryker
     def covered_score
       # SPDX-SnippetBegin
       # SPDX-License-Identifier: Apache-2.0
-      # SPDX-SnippetCopyrightText: 2018 Stryker Mutator contributors
+      # SPDX-SnippetCopyrightText: Stryker Mutator contributors
       # SPDX-SnippetComment: Ported from mutationScoreBasedOnCoveredCode in toMetrics in
       # packages/metrics/src/calculateMetrics.ts of mutation-testing-elements. The port returns nil
       # where the original returns NaN.

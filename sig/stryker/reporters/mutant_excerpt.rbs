@@ -1,0 +1,40 @@
+module Stryker
+  module Reporters
+    # The lines of a source file that a mutant changes, as they are and as they
+    # become: the whole lines, from the first line the mutant touches to the last,
+    # with the replacement in place of the range. The columns in the location
+    # count UTF-16 code units, as the report's do.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # excerpt = Stryker::Reporters::MutantExcerpt.new("a = b + c\n", location, "-")
+    # excerpt.original
+    # # => "a = b + c\n"
+    # excerpt.mutated
+    # # => "a = b - c\n"
+    # ```
+    class MutantExcerpt
+      @lines: Array[String]
+
+      @from: Integer
+
+      @to: Integer
+
+      @replacement: String
+
+      # Builds the excerpt.
+      #
+      # - `source`: String, the file's text.
+      # - `location`: Stryker::Location, the range the mutant replaces.
+      # - `replacement`: String, the text that replaces the range.
+      def initialize: (String source, Location location, String replacement) -> void
+
+      # The lines as the file has them.
+      def original: () -> String
+
+      # The lines with the replacement in place.
+      def mutated: () -> String
+    end
+  end
+end

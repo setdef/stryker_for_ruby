@@ -1,0 +1,31 @@
+module Stryker
+  module Reporters
+    # The clear-text descriptions of the mutants that no test caught: the ones
+    # with the status `Survived` or `NoCoverage`.
+    class UndetectedMutants
+      @test_names: Hash[String, String]
+
+      @ink: Ink
+
+      # Builds the descriptions.
+      #
+      # - `test_names`: Hash, each test's name by its ID.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text.
+      def initialize: (Hash[String, String] test_names, Ink ink) -> void
+
+      # The lines of the descriptions of the undetected mutants of `files`, in
+      # order.
+      #
+      # - `files`: Array of Stryker::Reporters::MutationReport::FileEntry, the files to describe.
+      def lines: (Array[MutationReport::FileEntry] files) -> Array[String]
+
+      private
+
+      # The lines of the undetected mutants of `file`.
+      def file_lines: (MutationReport::FileEntry file) -> Array[String]
+
+      # The description of `mutant`.
+      def text: (MutationReport::MutantEntry mutant) -> Array[String]
+    end
+  end
+end

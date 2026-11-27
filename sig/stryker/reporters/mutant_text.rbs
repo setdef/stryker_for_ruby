@@ -1,0 +1,33 @@
+module Stryker
+  module Reporters
+    # The clear-text description of one mutant that no test caught: its status
+    # and mutator, where it is, the lines before and after, and the tests that
+    # ran. It ends with an empty line.
+    class MutantText
+      @mutant: MutationReport::MutantEntry
+
+      @tests_ran: TestsRan
+
+      @ink: Ink
+
+      # Builds the description.
+      #
+      # - `mutant`: Stryker::Reporters::MutationReport::MutantEntry, the mutant.
+      # - `tests_ran`: Stryker::Reporters::TestsRan, what to say about the tests.
+      # - `ink`: Stryker::Reporters::Ink, which paints the text.
+      def initialize: (MutationReport::MutantEntry mutant, TestsRan tests_ran, Ink ink) -> void
+
+      # The lines of the description.
+      def lines: () -> Array[String]
+
+      private
+
+      # The path, line, and column, painted.
+      def where: () -> String
+
+      # `text` as lines that start with `sign`, painted `color`, without the
+      # empty ones.
+      def quoted: (String sign, Symbol color, String text) -> Array[String]
+    end
+  end
+end

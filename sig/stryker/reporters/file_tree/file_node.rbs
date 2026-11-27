@@ -1,0 +1,26 @@
+module Stryker
+  module Reporters
+    class FileTree
+      # A file of the tree.
+      class FileNode
+        @name: String
+
+        @leaf: Leaf
+
+        # Builds the node.
+        #
+        # - `name`: String, the file's name.
+        # - `leaf`: Stryker::Reporters::FileTree::Leaf, the file.
+        def initialize: (String name, Leaf leaf) -> void
+
+        # The status of each mutant of the file.
+        def statuses: () -> Array[String]
+
+        # The file's row at `depth`.
+        #
+        # - `depth`: Integer, how many folders the file is inside.
+        def rows: (Integer depth) -> Array[Row]
+      end
+    end
+  end
+end

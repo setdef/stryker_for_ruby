@@ -5,6 +5,8 @@ require_relative "../source_text"
 module Stryker
   module Reporters
     class ProjectFile
+      attr_reader :name
+
       def initialize(root, name)
         @path = File.expand_path(name, root)
         @name = name
@@ -25,6 +27,8 @@ module Stryker
       private def text
         @text ||= File.binread(@path).force_encoding(Encoding::UTF_8)
       end
+
+      # @dynamic name
     end
   end
 end
