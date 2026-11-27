@@ -36,11 +36,16 @@ class ForkPerRunTest < Minitest::Test
   RUBY
   private_constant(:PARENT)
 
-  # Starts the stand-in parent in place of the real one.
+  # Starts the stand-in parent in place of the real one, and keeps the folder
+  # for the parent's output. With `interrupted`, the wait for the parent to
+  # load raises Interrupt, as a signal that arrives then does.
   class Launch
-    def initialize(test, argument = "ready")
+    attr_reader :folder
+
+    def initialize(test, argument = "ready", interrupted: false)
       @test = test
       @argument = argument
+      @interrupted = interrupted
     end
 
     def call(_runner)
@@ -48,7 +53,10 @@ class ForkPerRunTest < Minitest::Test
       results, output = IO.pipe
       pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
       [input, output].each(&:close)
-      Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], Dir.mktmpdir)
+      @folder = Dir.mktmpdir
+      parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], @folder)
+      parent.define_singleton_method(:await_ready) { |*| raise(Interrupt) } if @interrupted
+      parent
     end
   end
   private_constant(:Launch)
@@ -122,6 +130,13 @@ class ForkPerRunTest < Minitest::Test
 
     assert_includes(error.message, "0.5 seconds")
     assert_includes(error.message, "test/test_helper.rb")
+  end
+
+  def test_an_interrupt_while_the_parent_loads_ends_the_parent_and_deletes_its_output
+    launch = Launch.new(self, "silent", interrupted: true)
+
+    assert_raises(Interrupt) { Stryker::Isolation::ForkPerRun.new("/cache", "/project", launch).start(config) }
+    refute(Dir.exist?(launch.folder))
   end
 
   def test_the_adapter_needs_starting_first

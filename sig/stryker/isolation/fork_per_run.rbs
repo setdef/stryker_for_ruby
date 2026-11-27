@@ -54,7 +54,9 @@ module Stryker
       # Starts the parent, and waits until it has loaded the tests, for at
       # most `Stryker::Isolation::ParentProcess::LOAD_SECONDS`. Raises
       # `Stryker::Isolation::Error` when it ends first or takes longer, as
-      # `Stryker::Isolation::ParentProcess#await_ready` says.
+      # `Stryker::Isolation::ParentProcess#await_ready` says. Whatever ends
+      # the wait early, an error or a signal, the parent has ended and its
+      # output is deleted before the exception leaves.
       def start: (Config config) -> nil
 
       # Runs every run, and yields each result as it arrives. Raises
@@ -89,6 +91,9 @@ module Stryker
       def stop: () -> nil
 
       private
+
+      # Keeps `parent`'s flights, so that `stop` reaches it, and returns it.
+      def hold: (ParentProcess parent, Config config) -> ParentProcess
 
       # Lands every flight of `list` through the flights, and calls `stop`
       # when that raises. Raises `Stryker::Isolation::Error` before `start`.

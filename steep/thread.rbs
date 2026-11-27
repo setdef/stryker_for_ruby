@@ -1,0 +1,6 @@
+# RBS's core signature of Thread.handle_interrupt takes no block, though Ruby
+# runs the block and returns its value. This adds that form.
+class Thread
+  def self.handle_interrupt: [T] (Hash[Module, Symbol] hash) { () -> T } -> T
+                           | ...
+end

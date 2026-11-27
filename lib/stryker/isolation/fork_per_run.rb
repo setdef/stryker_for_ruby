@@ -22,10 +22,12 @@ module Stryker
       end
 
       def start(config)
-        parent = @launch.call(config.test_runner)
-        parent.await_ready
-        @flights = Flights.new(parent, config.concurrency)
-        nil
+        StopOnRaise.around(self) do
+          # A signal waits until the adapter holds the parent it launched, so
+          # that stop reaches the parent however the start ends.
+          parent = Thread.handle_interrupt(Object => :never) { hold(@launch.call(config.test_runner), config) }
+          parent.await_ready
+        end
       end
 
       def run_all(runs, &)
@@ -43,6 +45,11 @@ module Stryker
         flights = @flights or return
         @flights = nil
         flights.stop
+      end
+
+      private def hold(parent, config)
+        @flights = Flights.new(parent, config.concurrency)
+        parent
       end
 
       private def fly(list)
