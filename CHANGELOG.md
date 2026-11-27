@@ -1,8 +1,9 @@
 # Changelog
 
-Every change that people who use **Stryker (for Ruby)** will see is listed here.
+All notable changes to this project will be documented in this file.
 
-The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Releases are numbered with [Semantic Versioning](https://semver.org/), as `0.X.Y` until 1.0.0. Each is a GitHub release, and nothing is published outside GitHub before 1.0.0. A release's section is dated and filled in after its tag, so [Unreleased] lists every change that no release holds yet.
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
@@ -35,3 +36,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 
 - `Stryker::VERSION`, the version of the gem.
 - The `stryker` command, with `stryker run [configFile]`, `stryker help [command]`, `-h`, `--help`, and `--version`, a flag for every option, and the exit statuses 0, 1, 2, and 128 plus the signal's number. `stryker run` checks the configuration and then stops with status 2, because a run isn't built yet.
+
+[Unreleased]: https://github.com/setdef/stryker_for_ruby/compare/v0.2.0...HEAD
+[0.1.0]: https://github.com/setdef/stryker_for_ruby/releases/tag/v0.1.0
