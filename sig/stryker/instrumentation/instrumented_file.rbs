@@ -1,0 +1,54 @@
+module Stryker
+  class Instrumentation
+    # What instrumenting one file gave.
+    class InstrumentedFile < Data
+      # The reason of a skipped mutant that isn't valid Ruby. Private.
+      INVALID: Instrumenter::Skip::reason
+
+      # What instrumenting the file at `path` with `mutants` gave: each
+      # mutant that `result` skipped has no switch, and each of those that
+      # isn't valid Ruby has the result `CompileError`.
+      #
+      # - `path`: String, the file's absolute path.
+      # - `mutants`: Array of Stryker::Mutant, every mutant the mutators made
+      #   in the file.
+      # - `result`: Stryker::Instrumenter::Result, what the instrumenter gave
+      #   for them.
+      def self.of: (String path, Array[Mutant] mutants, Instrumenter::Result result) -> InstrumentedFile
+
+      # The ID of the first mutant of the file after `files`, which used the
+      # IDs from 1 in turn.
+      #
+      # - `files`: Array of Stryker::Instrumentation::InstrumentedFile, the
+      #   files instrumented so far.
+      def self.next_id: (Array[InstrumentedFile] files) -> Integer
+
+      # The file's absolute path.
+      attr_reader path: String
+
+      # The file's instrumented source.
+      attr_reader source: String
+
+      # The file's mutants that got a switch.
+      attr_reader mutants: Array[Mutant]
+
+      # The `CompileError` result of each of the file's mutants whose plain
+      # mutant doesn't parse.
+      attr_reader unrun: Array[MutantResult]
+
+      # How many mutants the mutators made in the file, with or without a
+      # switch, which is how many IDs the file used.
+      attr_reader mutant_count: Integer
+
+      # Builds the value.
+      #
+      # - `path`: String, the file's absolute path.
+      # - `source`: String, its instrumented source.
+      # - `mutants`: Array of Stryker::Mutant, its live mutants.
+      # - `unrun`: Array of Stryker::MutantResult, its `CompileError` results.
+      # - `mutant_count`: Integer, how many mutants the mutators made in it.
+      def self.new: (path: String, source: String, mutants: Array[Mutant], unrun: Array[MutantResult], mutant_count: Integer) -> instance
+                  | (String path, String source, Array[Mutant] mutants, Array[MutantResult] unrun, Integer mutant_count) -> instance
+    end
+  end
+end

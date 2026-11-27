@@ -1,0 +1,69 @@
+module Stryker
+  # The stages Parse and find sites, and Instrument, of
+  # [the pipeline](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-pipeline):
+  # for each file that Find files selected, the mutators find its mutants,
+  # and the instrumenter puts each of them behind a switch, as
+  # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutant-placement.md)
+  # specifies.
+  #
+  # The mutants of a run have the IDs 1, 2, 3, and so on, in the order of the
+  # files and, in each file, in the order of `Stryker::Mutators::Walk`. A
+  # mutant whose plain mutant doesn't parse gets no switch, and its result
+  # has the status `CompileError`. A mutant with no place for a switch, or
+  # no form on one line, gets no switch either, and has no result: the
+  # report doesn't list it. Every other mutant is live: its switch is in its
+  # file's instrumented source, and a run can make it active.
+  #
+  # The instrumenter loads Prism and refract, so this stage runs only in the
+  # orchestrator. It starts no process that outlives `call`: the pool of
+  # parse workers that the files share ends before `call` returns, or
+  # raises.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # result = Stryker::Instrumentation.new(Dir.pwd, config).call(["lib/cart.rb"])
+  # result.mutants.map { |mutant| [mutant.id, mutant.replacement] }
+  # # => [[1, "a - b"]]
+  # result.sources.keys
+  # # => ["/home/dev/shop/lib/cart.rb"]
+  # ```
+  class Instrumentation
+    # The extension of an ERB template, in any letter case. Private.
+    TEMPLATE: String
+
+    # The message of the error for an ERB template. Private.
+    TEMPLATES: String
+
+    @root: String
+
+    @concurrency: Integer
+
+    @mutators: Array[_Mutator]
+
+    # Builds the stages.
+    #
+    # - `root`: String, the project's root.
+    # - `config`: Stryker::Config, whose `excluded_mutations` name the
+    #   mutators that make no mutant, and whose `concurrency` is the most
+    #   parse workers that run at once.
+    # - `mutators`: Array of Stryker::_Mutator, the mutators in the order of
+    #   the catalog, `Stryker::Mutators::ALL` by default.
+    def initialize: (String root, Config config, ?Array[_Mutator] mutators) -> void
+
+    # Finds the mutants of the files at `paths`, and instruments each file.
+    # Raises Stryker::UnsupportedError, before it reads any file, when a
+    # path is an ERB template, because the instrumenter reads only Ruby.
+    # Raises `Stryker::Instrumenter::Error` when the instrumenter or a parse
+    # worker fails.
+    #
+    # - `paths`: Array of String, the files' paths from the root, as
+    #   Stryker::SourceFiles gives them.
+    def call: (Array[String] paths) -> Result
+
+    private
+
+    # Instruments each file in turn, with the parse workers of `pool`.
+    def instrument: (Array[String] paths, Instrumenter::ParsePool pool) -> Result
+  end
+end

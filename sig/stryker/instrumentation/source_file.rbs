@@ -1,0 +1,27 @@
+module Stryker
+  class Instrumentation
+    # One file that Find files selected, on its way to the cache.
+    class SourceFile
+      @path: String
+
+      @absolute: String
+
+      # Builds the file.
+      #
+      # - `root`: String, the project's root.
+      # - `path`: String, the file's path from the root.
+      def initialize: (String root, String path) -> void
+
+      # Reads the file, finds its mutants with `mutators`, numbered from
+      # `first_id`, and instruments it with the parse workers of `pool`. The
+      # file's bytes are read as they are, tagged UTF-8, as Ruby reads a
+      # source file. Each mutant names the file by its path from the root.
+      #
+      # - `pool`: Stryker::Instrumenter::ParsePool, which parses the plain
+      #   mutants.
+      # - `mutators`: Array of Stryker::_Mutator, the mutators to run.
+      # - `first_id`: Integer, the ID of the file's first mutant.
+      def instrumented: (Instrumenter::ParsePool pool, Array[_Mutator] mutators, Integer first_id) -> InstrumentedFile
+    end
+  end
+end

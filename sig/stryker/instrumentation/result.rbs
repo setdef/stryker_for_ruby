@@ -1,0 +1,40 @@
+module Stryker
+  class Instrumentation
+    # What the instrumentation of a run's files gives: the instrumented
+    # source of each file for the cache, the live mutants for the plan, and
+    # a result for each mutant that won't run because it isn't valid Ruby.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Runtime::Cache.write(directory, result.sources)
+    # Stryker::Plan.new(dry_run_result, config).call(result.mutants)
+    # ```
+    class Result < Data
+      # Each file's instrumented source, by the file's absolute path, as the
+      # cache takes it.
+      attr_reader sources: Hash[String, String]
+
+      # Every mutant that got a switch, in the order of its ID.
+      attr_reader mutants: Array[Mutant]
+
+      # The result, with the status `CompileError`, of each mutant that got
+      # no switch because its plain mutant doesn't parse.
+      attr_reader unrun: Array[MutantResult]
+
+      # Joins what each file gave, in the order of the files.
+      #
+      # - `files`: Array of Stryker::Instrumentation::InstrumentedFile.
+      def self.of: (Array[InstrumentedFile] files) -> Result
+
+      # Builds the result.
+      #
+      # - `sources`: Hash of String to String, each file's instrumented
+      #   source by its absolute path.
+      # - `mutants`: Array of Stryker::Mutant, the live mutants.
+      # - `unrun`: Array of Stryker::MutantResult, the `CompileError` results.
+      def self.new: (sources: Hash[String, String], mutants: Array[Mutant], unrun: Array[MutantResult]) -> instance
+                  | (Hash[String, String] sources, Array[Mutant] mutants, Array[MutantResult] unrun) -> instance
+    end
+  end
+end
