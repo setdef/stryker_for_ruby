@@ -15,11 +15,11 @@ module Stryker
         @watches = Watches.new
       end
 
-      def start(run)
+      def start(run, work)
         # The hits that the project's Ractors made while it loaded go into
         # the static bucket that the child inherits.
         Runtime::RECORDER.drain
-        pid, reader = @forking.start(run)
+        pid, reader = @forking.start(run, work)
         @relay.forked(run, pid)
         @watches.add(Watch.new(run, Child.new(pid), reader, Timer.new(run.timeout_ms)))
       end

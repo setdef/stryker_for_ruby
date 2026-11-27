@@ -8,12 +8,15 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # Stryker::Isolation::ForkedRun.new(runner).call(run, writer)
+    # Stryker::Isolation::ForkedRun.new(runner, run).call(writer)
     # # the child ends here
     # ```
     class ForkedRun
       # The test runner adapter, with the tests loaded in the parent.
       @runner: _TestRunner
+
+      # The run.
+      @run: MutantRun
 
       # What ends the child.
       @finisher: Finisher
@@ -26,16 +29,16 @@ module Stryker
       #
       # - `runner`: Stryker::_TestRunner, the adapter whose tests the parent
       #   loaded.
+      # - `run`: Stryker::MutantRun, the run.
       # - `finisher`: Stryker::Isolation::Finisher, what ends the child.
       # - `runtime`: `Stryker::Runtime`, or a stand-in in a test.
-      def initialize: (_TestRunner runner, ?Finisher finisher, ?singleton(Runtime) runtime) -> void
+      def initialize: (_TestRunner runner, MutantRun run, ?Finisher finisher, ?singleton(Runtime) runtime) -> void
 
-      # Runs `run` in this process, writes what happens to `writer`, and
+      # Runs the run in this process, writes what happens to `writer`, and
       # ends the process.
       #
-      # - `run`: Stryker::MutantRun, the run.
       # - `writer`: IO, the child's end of its pipe to the parent.
-      def call: (MutantRun run, IO writer) -> void
+      def call: (IO writer) -> void
     end
   end
 end

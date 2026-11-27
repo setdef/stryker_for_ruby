@@ -19,7 +19,7 @@ class ForkParentTest < Minitest::Test
       @test = test
     end
 
-    def start(run)
+    def start(run, _work)
       @test.scripted(run.test_ids.first)
     end
 

@@ -1,0 +1,72 @@
+module Stryker
+  module Isolation
+    # What a forked child does with what it runs: it runs it in this
+    # process, writes what happens to its pipe, and ends the process.
+    # `Stryker::Isolation::ForkedRun` is one, for a mutant run.
+    interface _ForkedWork
+      # Runs the work's run in this process, writes what happens to
+      # `writer`, and ends the process.
+      #
+      # - `writer`: IO, the child's end of its pipe to the parent.
+      def call: (IO writer) -> void
+    end
+
+    # The lines that the orchestrator gives the parent that forks, on the
+    # parent's standard input. It reads each into what the parent runs and
+    # the work its child does with it, and starts that child. Each line is a
+    # run, as `Stryker::MutantRun#to_json` writes it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # orders = Stryker::Isolation::Orders.new(Stryker::Isolation::LineReader.new(input), runner, children)
+    # orders.serve
+    # # returns once the orchestrator closed the parent's standard input
+    # ```
+    class Orders
+      # The reader of the parent's standard input.
+      @commands: LineReader
+
+      # The test runner adapter, whose tests the parent loaded.
+      @runner: _TestRunner
+
+      # The parent's children.
+      @children: Children
+
+      # Builds the orders.
+      #
+      # - `commands`: Stryker::Isolation::LineReader, the reader of the
+      #   parent's standard input.
+      # - `runner`: Stryker::_TestRunner, the adapter whose tests the parent
+      #   loaded.
+      # - `children`: Stryker::Isolation::Children, the parent's children,
+      #   which start each child.
+      def initialize: (LineReader commands, _TestRunner runner, Children children) -> void
+
+      # Starts a child for each line as it comes, while the parent's
+      # children run, and returns once the orchestrator closed the parent's
+      # standard input. Raises as `Stryker::JsonValue::Reading#from_json`
+      # does for a line that holds no run.
+      def serve: () -> void
+
+      private
+
+      # Waits until standard input or a child's pipe can be read, or until
+      # the first child's time is up, as `Stryker::Isolation::Children#wait`
+      # does, then reads what standard input holds, and returns whether runs
+      # may still come.
+      def serving?: () -> bool
+
+      # Starts a child for each whole line that standard input holds now,
+      # without waiting for more, and returns false once the orchestrator
+      # closed it.
+      def open?: () -> bool
+
+      # Starts a child for the run on `line`, with the work its child does,
+      # as `Stryker::Isolation::Children#start` does.
+      #
+      # - `line`: String, one line from the orchestrator.
+      def start: (String line) -> nil
+    end
+  end
+end

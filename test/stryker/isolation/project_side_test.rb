@@ -37,7 +37,7 @@ class ProjectSideTest < Minitest::Test
 
   def test_forking_forks_a_child_with_a_pipe_of_its_own
     process = FakeProcess.new
-    pid, reader = Stryker::Isolation::Forking.new(nil, nil, process).start(sample_run)
+    pid, reader = Stryker::Isolation::Forking.new(nil, process).start(sample_run, nil)
 
     # The child's own setpgid may run after a KILL, which then finds no group,
     # so the parent puts the child in its group too.
@@ -50,7 +50,7 @@ class ProjectSideTest < Minitest::Test
   def test_forking_a_child_that_has_ended_already_is_no_error
     [Errno::ESRCH, Errno::EACCES, Errno::EPERM].each do |error|
       process = FakeProcess.new(setpgid_error: error)
-      pid, reader = Stryker::Isolation::Forking.new(nil, nil, process).start(sample_run)
+      pid, reader = Stryker::Isolation::Forking.new(nil, process).start(sample_run, nil)
 
       assert_equal(FakeProcess::PID, pid)
       reader.close
@@ -61,10 +61,10 @@ class ProjectSideTest < Minitest::Test
     process = FakeProcess.new
     streams = Calls.new
     forked_run = Calls.new
-    Stryker::Isolation::Forking.new(streams, forked_run, process).child(sample_run(7), :writer)
+    Stryker::Isolation::Forking.new(streams, process).child(sample_run(7), forked_run, :writer)
 
     assert_equal([[[:setpgid, 0, 0]], [["7"]]], [process.calls, streams.calls])
-    assert_equal([[sample_run(7), :writer]], forked_run.calls)
+    assert_equal([[:writer]], forked_run.calls)
   end
 
   def test_forking_gives_the_end_of_each_childs_standard_error
@@ -74,7 +74,7 @@ class ProjectSideTest < Minitest::Test
 
       assert_equal(
         "[BUG] crash\n",
-        Stryker::Isolation::Forking.new(streams, nil, FakeProcess.new).errors(sample_run(7))
+        Stryker::Isolation::Forking.new(streams, FakeProcess.new).errors(sample_run(7))
       )
     end
   end
@@ -83,7 +83,7 @@ class ProjectSideTest < Minitest::Test
     runner = Runner.new
     runtime = Runtime.new
     writer = StringIO.new
-    Stryker::Isolation::ForkedRun.new(runner, Finisher.new, runtime).call(sample_run(9), writer)
+    Stryker::Isolation::ForkedRun.new(runner, sample_run(9), Finisher.new, runtime).call(writer)
 
     assert_equal([9, [[:run, ["SampleTest#test_value"], true]]], [runtime.active, runner.calls])
     assert_equal(%w[started finished ended], kinds(writer.string))

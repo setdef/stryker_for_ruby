@@ -9,7 +9,7 @@ module Stryker
     #
     # ```ruby
     # children = Stryker::Isolation::Children.new(forking, relay)
-    # children.start(run)
+    # children.start(run, Stryker::Isolation::ForkedRun.new(runner, run))
     # children.wait(commands)
     # # => [commands], when a run is waiting on commands
     # ```
@@ -30,8 +30,12 @@ module Stryker
       #   orchestrator reads.
       def initialize: (Forking forking, Relay relay) -> void
 
-      # Forks a child for `run`, says which, and watches it.
-      def start: (MutantRun run) -> nil
+      # Forks a child that does `work`, which runs `run`, says which, and
+      # watches it.
+      #
+      # - `run`: what the child runs, such as a Stryker::MutantRun.
+      # - `work`: what the child does with it.
+      def start: (MutantRun run, _ForkedWork work) -> nil
 
       # Waits until `commands` or a child's pipe can be read, or until the
       # first child's time is up, relays what the children wrote and how

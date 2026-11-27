@@ -3,26 +3,25 @@
 module Stryker
   module Isolation
     class Forking
-      def initialize(streams, forked_run, process = Process)
+      def initialize(streams, process = Process)
         @streams = streams
-        @forked_run = forked_run
         @process = process
       end
 
-      def start(run)
+      def start(run, work)
         reader, writer = IO.pipe
-        pid = @process.fork { child(run, writer) }
+        pid = @process.fork { child(run, work, writer) }
         writer.close
         [grouped(pid), reader]
       end
 
-      def child(run, writer)
+      def child(run, work, writer)
         # A group of its own, so that killing the group ends whatever the
         # run's tests started too. The parent does the same for the child, in
         # start, and whichever runs first wins.
         @process.setpgid(0, 0)
         @streams.call(run.output_name)
-        @forked_run.call(run, writer)
+        work.call(writer)
       end
 
       def errors(run)

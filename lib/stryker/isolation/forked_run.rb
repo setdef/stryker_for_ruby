@@ -7,13 +7,15 @@ require_relative "run_report"
 module Stryker
   module Isolation
     class ForkedRun
-      def initialize(runner, finisher = Finisher.new, runtime = Runtime)
+      def initialize(runner, run, finisher = Finisher.new, runtime = Runtime)
         @runner = runner
+        @run = run
         @finisher = finisher
         @runtime = runtime
       end
 
-      def call(run, writer)
+      def call(writer)
+        run = @run
         report = RunReport.new(writer)
         @finisher.call(report) do
           @runtime.activate_mutant(run.mutant.id)

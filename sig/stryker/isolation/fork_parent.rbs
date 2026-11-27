@@ -65,13 +65,12 @@ module Stryker
       # parent's standard input, and then stops every child still running.
       def serve: (IO input) -> void
 
-      # Waits for the next thing to do, does it, and returns whether runs
-      # may still come.
-      def serving?: (LineReader commands) -> bool
-
-      # Starts a child for each whole run on `commands`, and returns false
-      # once the orchestrator closed them.
-      def open?: (LineReader commands) -> bool
+      # Loads the tests, tells the orchestrator that the parent is ready, and
+      # returns the orders that come on `commands`.
+      #
+      # - `commands`: Stryker::Isolation::LineReader, the reader of the
+      #   parent's standard input.
+      def ready: (LineReader commands) -> Orders
     end
   end
 end
