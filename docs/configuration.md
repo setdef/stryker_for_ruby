@@ -249,7 +249,7 @@ Mutation testing 50% (elapsed: ~2m, remaining: ~2m) 5/10 tested (1 survived, 0 t
 
 The percent counts work, not mutants. The work of a mutant is the time that the tests which run against it took in the dry run, so a mutant that runs a slow test moves the percent further than one that runs a fast test. A mutant that runs in a fresh process, a static mutant, also adds the time that the dry run spent besides its tests. When no test took any time, each mutant counts the same. A mutant that times out counts as done.
 
-The time is rough, in whole minutes rounded down: `<1m` below a minute, `~5m`, and `~1h 5m` from an hour on. The time left is the time so far, per unit of work done, times the work that is left. It is `n/a` before the first mutant is tested, and when no work is left.
+The time is rough, in whole minutes rounded down: `<1m` below a minute, `~5m`, and `~1h 5m` from an hour on. The time left is the time so far, per unit of work done, times the work that is left. It is `n/a` before the first mutant is tested, when no work is left, and when the time left, in whole seconds, rounds down to less than one second, as in StrykerJS.
 
 On a terminal, the bar is 50 characters wide, or as wide as the rest of the line leaves room for in the width that the terminal gives, and it has no width on a terminal too narrow for the rest of the line. The filled part of the bar is green, a count of survivors above zero is red, and a count of timeouts above zero is yellow. The reporter paints nothing when standard error isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`, and it still animates on a terminal in those cases.
 

@@ -75,4 +75,12 @@ class ProgressTallyTest < Minitest::Test
 
     assert_nil(counted.seconds_left(60.0))
   end
+
+  def test_has_no_estimate_when_the_time_left_rounds_down_to_less_than_a_second
+    counted = tally
+    record(counted, 1, "Killed")
+
+    assert_nil(counted.seconds_left(2.0))
+    assert_equal("elapsed: <1m, remaining: n/a", counted.times(2.0))
+  end
 end
