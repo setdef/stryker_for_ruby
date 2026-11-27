@@ -34,9 +34,9 @@ module Stryker
 
       def self.index(paths)
         # The paths and nothing else, with NUL between them, because no path
-        # holds a NUL. Reading it takes String#split, so the runtime loads no
-        # format library, such as the json default gem, into a process whose
-        # bundle the project controls.
+        # holds a NUL. Reading it takes String#split, so reading the cache
+        # needs no format library. The project process loads json anyway, for
+        # the runs and messages that cross its pipes.
         raise(ArgumentError, NUL_IN_PATH) if paths.any? { |path| path.include?(SEPARATOR) }
 
         # Each path goes in as its bytes, because Ruby tags a path from the
