@@ -50,13 +50,21 @@ class LoaderProcessTest < Minitest::Test
       puts error.files.map { |file| File.basename(file) }.sort.inspect, error.message.lines.last
     end
   RUBY
+  # Loads one file wrapped in an anonymous module, and one wrapped in a module
+  # of its own, so that their constants land in the wrapping modules.
+  WRAPPED = <<~RUBY
+    load($LOAD_PATH.first + "/tally.rb", true)
+    wrap = Module.new
+    load($LOAD_PATH.first + "/line.rb", wrap)
+    p [Thread.current[:tally], wrap::LINE, defined?(::LINE)]
+  RUBY
   # Loads a file in a Ractor other than the main one. On Ruby 4.1, a file
   # that sets a constant can't load there, with or without the loader.
   TALLY = <<~RUBY
     path = $LOAD_PATH.first + "/tally.rb"
     p Ractor.new(path) { |tally| load(tally) && Thread.current[:tally] }.value
   RUBY
-  private_constant(:AHEAD, :LOADS, :RIVAL, :TALLY)
+  private_constant(:AHEAD, :LOADS, :RIVAL, :TALLY, :WRAPPED)
 
   # What +program+ prints after the loader is installed for the project.
   def run_installed(program)
@@ -72,6 +80,10 @@ class LoaderProcessTest < Minitest::Test
 
   def test_a_loaded_file_runs_its_instrumented_source
     assert_equal(":instrumented\nchecked\n", run_installed("load($LOAD_PATH.first + '/line.rb')\np LINE\n#{CHECK}"))
+  end
+
+  def test_a_file_loaded_wrapped_in_a_module_runs_its_instrumented_source_in_that_module
+    assert_equal("[:instrumented, :instrumented, nil]\n", run_installed(WRAPPED))
   end
 
   def test_a_file_that_is_not_instrumented_runs_its_own_source

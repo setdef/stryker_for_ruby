@@ -107,6 +107,8 @@ A file of 30 KB or less parses in less time than the system takes to switch to a
 
 Ruby compiles every file it loads from disk, whether through `require`, `require_relative`, `load`, or an autoload such as Zeitwerk's. Before it compiles one, CRuby calls `RubyVM::InstructionSequence.load_iseq(path)`, if that method exists. When the method returns an instruction sequence, Ruby runs it in place of compiling the file. When it returns `nil`, Ruby compiles the file as usual.
 
+A `load` with a wrap, `true` or a module, calls `load_iseq` too. CRuby's `load_wrapping`, in `load.c`, makes the wrapping module the top level and then calls `load_iseq`, so the served code defines its constants and methods in that module, as code that Ruby compiles itself does.
+
 The loader prepends a module to `RubyVM::InstructionSequence.singleton_class` that defines `load_iseq`. For each call, the module does one of two things:
 
 - When `path` is an instrumented file's path ([Finding an instrumented file](#finding-an-instrumented-file)), it reads that file's instrumented source from the cache, compiles it with `RubyVM::InstructionSequence.compile`, giving the original `path` as the file name and the file's real path as the path, records that it served that file, and returns the result.
