@@ -5,7 +5,6 @@ require "io/wait"
 require "json"
 require_relative "../test_runners/minitest_runner"
 require_relative "error"
-require_relative "not_ready"
 require_relative "output_files"
 require_relative "timer"
 
@@ -15,10 +14,11 @@ module Stryker
       GRACE_SECONDS = 10
       LOAD_SECONDS = Timer::START_SECONDS
       READY = { ready: true }.transform_keys(&:to_s).freeze
+      ENDED = "The fork parent ended before it loaded the tests, and said %<said>s.\n%<errors>s"
       SLOW = "The fork parent loaded no tests within %<seconds>p seconds. Check that the test helper, " \
         "#{TestRunners::MinitestRunner::HELPER} by default, loads without waiting for anything.".freeze
       public_constant(:GRACE_SECONDS, :LOAD_SECONDS)
-      private_constant(:READY, :SLOW)
+      private_constant(:ENDED, :READY, :SLOW)
 
       def initialize(child, pipes, folder)
         @child = child
@@ -61,7 +61,7 @@ module Stryker
         said = receive
         return if said == READY
 
-        NotReady.new(said, OutputFiles.new(@folder).tail("parent")).error
+        Error.new(format(ENDED, said: said&.inspect || "nothing", errors: OutputFiles.new(@folder).tail("parent")))
       end
     end
   end

@@ -1,7 +1,0 @@
-# frozen_string_literal: true
-
-source "https://rubygems.org"
-
-# Bundler resolves this against the installed gems, and then raises
-# Bundler::GemRequireError, because Minitest has no file of this name.
-gem "minitest", ">= 5", require: "no_such_file_in_minitest"

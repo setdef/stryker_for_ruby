@@ -51,9 +51,8 @@ module Stryker
 
       # Loads the tests, runs every run that comes on `input` until it
       # closes, and ends the process. A failure to load the tests reaches
-      # the orchestrator as an `{"error":...}` line in place of
-      # `{"ready":true}`, preceded by a `{"load_error":...}` line when the
-      # project's tests raised.
+      # the orchestrator as a line with the error, in place of
+      # `{"ready":true}`.
       #
       # - `input`: IO, where the runs come, standard input by default. Its
       #   descriptor ends up open on the null device, so no test reads it.
@@ -72,11 +71,6 @@ module Stryker
       # - `commands`: Stryker::Isolation::LineReader, the reader of the
       #   parent's standard input.
       def ready: (LineReader commands) -> Orders
-
-      # Loads the tests through the test runner adapter, and returns them.
-      # When they raise, it tells the relay, and raises the same exception
-      # again.
-      def loaded_tests: () -> Array[Test]
     end
   end
 end
