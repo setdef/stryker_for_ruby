@@ -35,11 +35,6 @@ module Stryker
       # The first test that failed, or nil.
       @failure: TestResult?
 
-      # The result of `run`, as `new(run, messages, ending).result` gives
-      # it, so that the class is the judge of a mutant run's
-      # `Stryker::Isolation::Flight`.
-      def self.call: (MutantRun run, Messages messages, Ending ending) -> MutantResult
-
       # Builds the verdict.
       #
       # - `run`: Stryker::MutantRun, the run.

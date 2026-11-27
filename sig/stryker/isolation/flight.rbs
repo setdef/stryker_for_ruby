@@ -1,30 +1,20 @@
 module Stryker
   module Isolation
-    # What turns a mutant run, the messages its child wrote, and how the
-    # child ended into the run's result. `Stryker::Isolation::Verdict` is
-    # one.
-    interface _Judge
-      # The result of `run`.
-      #
-      # - `run`: Stryker::MutantRun, the run.
-      # - `messages`: Stryker::Isolation::Messages, what the child wrote.
-      # - `ending`: Stryker::Isolation::Ending, how the child ended.
-      def call: (MutantRun run, Messages messages, Ending ending) -> MutantResult
-    end
-
     # One run that the orchestrator gave the parent that forks, from then
     # until the parent says how its child ended: the run, its child's
     # process ID once the parent says it, and the messages the child wrote.
-    # Its judge turns them into the run's result.
+    # When it is told to land, it hands those messages and how the child
+    # ended to the block it was built with, which judges the run.
     #
     # ## Examples
     #
     # ```ruby
-    # flight = Stryker::Isolation::Flight.new(run, Stryker::Isolation::Verdict)
+    # flight = Stryker::Isolation::Flight.new(run) { |messages, ending| puts(ending.exit_status) }
     # flight.receive({ "forked" => 4242 })
     # # => nil
-    # flight.receive({ "exited" => { "exit_status" => 0, "signal" => nil, "timed_out" => false, "duration_ms" => 3.1, "errors" => "" } })
-    # # => #<data Stryker::MutantResult ...>
+    # ending = flight.receive({ "exited" => { "exit_status" => 0, "signal" => nil, "timed_out" => false, "duration_ms" => 3.1, "errors" => "" } })
+    # flight.land(ending)
+    # # prints 0
     # ```
     class Flight
       # The kinds of line that the parent writes about a run, each the key
@@ -33,10 +23,16 @@ module Stryker
       KINDS: Array[String]
 
       # The run.
-      @run: MutantRun
+      attr_reader run: MutantRun
 
-      # What turns the run's messages and ending into its result.
-      @judge: _Judge
+      # The flight of the mutant run `run`, which yields the run's result,
+      # as `Stryker::Isolation::Verdict` gives it, when it lands.
+      #
+      # - `run`: Stryker::MutantRun, the run.
+      def self.judged: (MutantRun run) { (MutantResult result) -> void } -> Flight
+
+      # What judges the run from its child's messages and ending.
+      @landing: ^(Messages messages, Ending ending) -> void
 
       # The child's process ID, once the parent says it.
       @pid: Integer?
@@ -47,18 +43,25 @@ module Stryker
       # Builds the flight.
       #
       # - `run`: Stryker::MutantRun, the run.
-      # - `judge`: what turns the run's messages and ending into its result,
-      #   such as `Stryker::Isolation::Verdict`.
-      def initialize: (MutantRun run, _Judge judge) -> void
+      # - the block: what judges the run, given the child's messages and how
+      #   the child ended, when the flight lands.
+      def initialize: (MutantRun run) { (Messages messages, Ending ending) -> void } -> void
 
-      # Takes one line that the parent wrote about the run, and returns the
-      # run's result once the line says how the child ended, or nil before
-      # that. Raises `Stryker::Isolation::Error` for a line of a kind it
-      # doesn't know, or an ending that isn't one.
+      # Takes one line that the parent wrote about the run, and returns how
+      # the child ended once the line says it, or nil before that. Raises
+      # `Stryker::Isolation::Error` for a line of a kind it doesn't know, or
+      # an ending that isn't one.
       #
       # - `object`: Hash, the line without its run's relay key, whose one key is
       #   `"forked"`, `"message"`, or `"exited"`.
-      def receive: (Hash[String, JsonValue::json_value] object) -> MutantResult?
+      def receive: (Hash[String, JsonValue::json_value] object) -> Ending?
+
+      # Hands the messages the child wrote, and `ending`, to the block the
+      # flight was built with, and returns what nothing needs.
+      #
+      # - `ending`: Stryker::Isolation::Ending, how the child ended, as
+      #   `receive` returned it.
+      def land: (Ending ending) -> nil
 
       # Kills the child's process group, when the parent said which child
       # runs the run, for a parent that couldn't end its children.
@@ -73,9 +76,8 @@ module Stryker
       # - `value`: the line's value.
       def record: (String? kind, JsonValue::json_value value) -> void
 
-      # The run's result, from its messages and `ending`, as the judge gives
-      # it.
-      def verdict: (JsonValue::json_value ending) -> MutantResult
+      # How the child ended, from the line's `value`.
+      def ending: (JsonValue::json_value value) -> Ending
 
       # The run's relay key as JSON, which names the run in an error.
       def about: () -> String

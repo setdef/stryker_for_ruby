@@ -4,6 +4,7 @@ require_relative "ending"
 require_relative "error"
 require_relative "messages"
 require_relative "process_group"
+require_relative "verdict"
 
 module Stryker
   module Isolation
@@ -11,18 +12,29 @@ module Stryker
       KINDS = %w[forked message exited].freeze
       public_constant(:KINDS)
 
-      def initialize(run, judge)
+      attr_reader :run
+
+      def self.judged(run)
+        new(run) { |messages, ending| yield(Verdict.new(run, messages, ending).result) }
+      end
+
+      def initialize(run, &landing)
         @run = run
-        @judge = judge
+        @landing = landing
         @pid = nil
         @objects = []
       end
 
       def receive(object)
         kind, value = object.first
-        return verdict(value) if kind == "exited"
+        return ending(value) if kind == "exited"
 
         record(kind, value)
+        nil
+      end
+
+      def land(ending)
+        @landing.call(Messages.new(@objects), ending)
         nil
       end
 
@@ -40,15 +52,17 @@ module Stryker
         end
       end
 
-      private def verdict(ending)
-        raise(Error, "The fork parent wrote no ending for the run #{about}.") unless ending.is_a?(Hash)
+      private def ending(value)
+        raise(Error, "The fork parent wrote no ending for the run #{about}.") unless value.is_a?(Hash)
 
-        @judge.call(@run, Messages.new(@objects), Ending.from_h(ending))
+        Ending.from_h(value)
       end
 
       private def about
         JSON.generate(@run.relay_key)
       end
+
+      # @dynamic run
     end
   end
 end

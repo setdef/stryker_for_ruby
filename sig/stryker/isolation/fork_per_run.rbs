@@ -66,6 +66,12 @@ module Stryker
       # Ends the parent, its children, and what the project's code started
       # in the parent's group, and waits until the parent ended.
       def stop: () -> nil
+
+      private
+
+      # Lands every flight of `list` through the flights, and calls `stop`
+      # when that raises. Raises `Stryker::Isolation::Error` before `start`.
+      def fly: (Array[Flight] list) -> void
     end
   end
 end

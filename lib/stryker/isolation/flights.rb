@@ -15,14 +15,13 @@ module Stryker
         @flights = {}
       end
 
-      def run(runs, judge)
-        waiting = runs.dup
+      def run(flights)
+        waiting = flights.dup
         until waiting.empty? && @flights.empty?
           # At most the window's number of runs are in the parent at once, so
           # the parent forks at most that many children.
-          dispatch(waiting.shift, judge) while @flights.size < @window && waiting.any?
-          result = receive
-          yield(result) if result
+          dispatch(waiting.shift) while @flights.size < @window && waiting.any?
+          receive
         end
       end
 
@@ -33,8 +32,9 @@ module Stryker
         nil
       end
 
-      private def dispatch(run, judge)
-        @flights[run.relay_key] = Flight.new(run, judge)
+      private def dispatch(flight)
+        run = flight.run
+        @flights[run.relay_key] = flight
         @parent.give(run)
       end
 
@@ -43,7 +43,16 @@ module Stryker
         # The kinds of line that a flight takes, and the rest is the key of
         # the run that the line is about.
         key = object.except(*Flight::KINDS)
-        flight(key, object).receive(object.slice(*Flight::KINDS))&.tap { @flights.delete(key) }
+        flight = flight(key, object)
+        ending = flight.receive(object.slice(*Flight::KINDS)) or return
+        land(key, flight, ending)
+      end
+
+      private def land(key, flight, ending)
+        # Out of the set before it lands, so that a landing that raises
+        # leaves no ended child to be killed.
+        @flights.delete(key)
+        flight.land(ending)
       end
 
       private def flight(key, object)
