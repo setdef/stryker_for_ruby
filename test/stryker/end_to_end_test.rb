@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../report_schema")
+require_relative("../support/child_processes")
 require_relative("../support/sample_projects")
 require_relative("../test_helper")
 require "open3"
@@ -12,6 +13,7 @@ require "tmpdir"
 # no fork, a run isn't built, and each test checks that the command says so
 # instead.
 class EndToEndTest < Minitest::Test
+  include ChildProcesses
   include ReportSchema
   include SampleProjects
 
@@ -81,21 +83,32 @@ class EndToEndTest < Minitest::Test
   end
 
   def assert_terminated(temporary)
-    status, err = terminated(temporary)
+    status, err, parent = terminated(temporary)
 
     assert_equal([143, "Stopped by TERM.\n", []], [status, err, Dir.children(temporary)])
+    refute(listed_running?(parent), "The fork parent #{parent.inspect} is still running.")
   end
 
   # Starts the command in a copy of the sample, sends it TERM once the fork
-  # parent has started, and gives how it ended.
+  # parent has started, and gives how it ended, and the fork parent's process
+  # ID. Ruby can wait only for its own children, and the command started the
+  # fork parent, so the system's list tells whether it is still running.
   private def terminated(temporary)
     in_copy(SAMPLE) do |root|
       Open3.popen3({ "TMPDIR" => temporary }, *COMMAND, chdir: root) do |stdin, _out, err, waiter|
         stdin.close
-        sleep(0.01) until Dir.glob("stryker-fork-*", base: temporary).any? || !waiter.alive?
+        sleep(0.01) until (parent = fork_parent_of(waiter.pid)) || !waiter.alive?
         Process.kill("TERM", waiter.pid)
-        [waiter.value.exitstatus, err.read]
+        [waiter.value.exitstatus, err.read, parent]
       end
     end
+  end
+
+  # The process ID of the fork parent that the process +pid+ started, or nil
+  # when it has started none.
+  private def fork_parent_of(pid)
+    children = listed_processes.select { |process| process[:parent] == pid }
+    parent = children.find { |process| process[:command].include?("fork-parent") }
+    parent&.fetch(:pid)
   end
 end
