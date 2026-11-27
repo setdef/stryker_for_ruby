@@ -35,12 +35,22 @@ class ReleaseRecordTest < Minitest::Test
     assert_equal(version_file("0.1.0"), working_copy(VERSION_FILE))
   end
 
+  def test_recording_raises_the_gem_in_every_lockfile_and_no_other_gem
+    tagged = commit_with("One.")
+    release.record("0.1.0", tagged, DAY)
+
+    other_gem_unchanged = lockfile("0.1.0").sub("stryker_for_ruby_extras (0.1.0)", "stryker_for_ruby_extras (0.0.0)")
+
+    assert_equal([other_gem_unchanged] * 2, LOCKFILES.map { |name| working_copy(name) })
+  end
+
   def test_recording_never_lowers_the_version
     tagged = commit_with("One.")
     commit_with("One.", version: "0.2.0")
     release.record("0.1.0", tagged, DAY)
 
     assert_equal(version_file("0.2.0"), working_copy(VERSION_FILE))
+    assert_equal(lockfile("0.2.0"), working_copy(LOCKFILES.first))
   end
 
   def test_recording_a_commit_that_has_its_tag_lists_the_same_entries

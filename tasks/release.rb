@@ -27,6 +27,15 @@ class Release
   CHANGELOG = "CHANGELOG.md"
   public_constant(:CHANGELOG)
 
+  # The gem, as a lockfile names it.
+  GEM = "stryker_for_ruby"
+  public_constant(:GEM)
+
+  # The lockfiles that list the gem at its version: the project's, and each
+  # that a CI job installs from.
+  LOCKFILES = ["Gemfile.lock", "gemfiles/*.lock"].freeze
+  private_constant(:LOCKFILES)
+
   # The assignment in the version file.
   ASSIGNMENT = /VERSION = "[^"]+"/
   private_constant(:ASSIGNMENT)
@@ -83,7 +92,22 @@ class Release
     path = File.join(@root, CHANGELOG)
     recorded = Changelog.new(File.read(path)).record(version, date, added(sha), changelog(sha).unreleased)
     File.write(path, recorded.to_s)
-    stamp(version) if newer?(version, "v#{current_version}")
+    raise_version(version)
+  end
+
+  # Raises the version file, and the lockfiles that name the gem's version, to
+  # +version+, unless the version file is at a newer release already. Bundler
+  # refuses to install from a lockfile whose path gem is at another version
+  # than its gemspec, which CI does with the lockfile frozen.
+  private def raise_version(version)
+    old = current_version
+    return unless newer?(version, "v#{old}")
+
+    stamp(version)
+    Dir.glob(LOCKFILES, base: @root).each do |name|
+      path = File.join(@root, name)
+      File.write(path, File.read(path).gsub("#{GEM} (#{old})", "#{GEM} (#{version})"))
+    end
   end
 
   # The release tags, oldest first, among those +options+ select of git's tag

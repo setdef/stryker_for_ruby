@@ -1,0 +1,162 @@
+# A release is a tag on a commit of trunk whose run of ci.yml passed every job,
+# with a GitHub release that holds the built gem, its SHA256SUMS, and the
+# changelog's notes. Nothing is published outside GitHub. Every version is
+# 0.X.Y, three plain integers, until 1.0.0.
+#
+# What it does. It picks the commit, wherever trunk has moved since: the one
+# asked for, or the newest of trunk's last 300 commits that has a run of
+# ci.yml that passed (tasks/release_commit.rb). It takes the version from the
+# tag, writes it into the version file of a checkout of that commit, builds
+# stryker_for_ruby-VERSION.gem there, checks that the gem says that version,
+# and writes SHA256SUMS. The notes are the entries of CHANGELOG.md's
+# [Unreleased] at that commit that the release before it did not list. It
+# makes no release commit before the tag. Afterward, the last job writes one
+# commit to trunk as it stands: it dates the release's section of
+# CHANGELOG.md, files under it the entries the tagged commit held, leaves
+# newer entries unreleased, and raises lib/stryker/version.rb to the release's
+# version.
+#
+# Dry run. A run with no tag, or on a branch, builds and assembles everything
+# and publishes nothing: the gem, SHA256SUMS, and notes are kept as the run's
+# artifact. A dry run with no tag assembles the next PATCH release.
+#
+#   gh workflow run release.yml --ref trunk                    # dry run
+#   gh workflow run release.yml --ref trunk -f tag=v0.1.0      # releases
+#   gh workflow run release.yml --ref trunk -f tag=v0.1.0 -f commit=FULLSHA
+#
+# Its tokens. Every job uses the run's own token, with only the permissions it
+# needs: the build job reads runs, and the two jobs that write may write the
+# repository's contents. A release created with that token starts no workflow,
+# and neither does the commit the last job pushes, so a release costs no second
+# run of CI. Trunk has no branch protection, so that token may push to it.
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: The tag to release, such as v0.1.0. Leave it empty for a dry run.
+        type: string
+        default: ""
+      commit:
+        description: The full SHA of the commit to release. Leave it empty for the newest commit whose CI run passed.
+        type: string
+        default: ""
+
+permissions: {}
+
+# One release at a time, and none cancelled midway.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    name: Build the release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      # Reading the runs of ci.yml and their jobs.
+      actions: read
+    outputs:
+      commit: ${{ steps.plan.outputs.commit }}
+      version: ${{ steps.plan.outputs.version }}
+      tag: ${{ steps.plan.outputs.tag }}
+      publish: ${{ steps.plan.outputs.publish }}
+    steps:
+      # Every commit and tag, which the version and the notes are decided from.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@145243922b4465b78e04dd66294782c7de45901f # v1.345.0
+        with:
+          ruby-version: "4.0"
+
+      - name: Pick the commit and the version
+        id: plan
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+          COMMIT: ${{ inputs.commit }}
+        run: .github/scripts/release.sh plan
+
+      - name: Build the gem, its checksums, and the notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ steps.plan.outputs.commit }}
+          VERSION: ${{ steps.plan.outputs.version }}
+        run: .github/scripts/release.sh build
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release
+          path: |
+            release
+            release-notes.md
+          if-no-files-found: error
+          retention-days: 14
+
+  # The one job that creates the release, and only on a run of trunk with a tag.
+  publish:
+    name: Publish the GitHub release
+    needs: build
+    if: needs.build.outputs.publish == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      # Creating the release, and the tag with it.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release
+          path: .
+
+      - name: Check the gem against its checksums
+        run: (cd release && sha256sum --strict -c SHA256SUMS)
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.build.outputs.tag }}
+          COMMIT: ${{ needs.build.outputs.commit }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: .github/scripts/release.sh publish
+
+  # Trunk's own record of the release, written once the release exists.
+  record:
+    name: Record the release on trunk
+    needs: [build, publish]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      # Pushing the one commit to trunk.
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: trunk
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: ruby/setup-ruby@145243922b4465b78e04dd66294782c7de45901f # v1.345.0
+        with:
+          ruby-version: "4.0"
+
+      - name: Record the release
+        env:
+          RELEASE_PUSH_TOKEN: ${{ github.token }}
+          COMMIT: ${{ needs.build.outputs.commit }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: .github/scripts/release.sh record
