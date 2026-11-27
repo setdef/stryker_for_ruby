@@ -1,0 +1,74 @@
+module Stryker
+  module Runtime
+    # The dry run's `_TestObserver`: it gives each test its own bucket in
+    # the hit recorder, passes each test's start and result on to another
+    # observer as it happens, and builds what the dry run found as a
+    # `Stryker::DryRunResult`. A test's bucket opens before the other
+    # observer hears the test start, and closes before it hears the result,
+    # so nothing that observer does lands in a test's bucket.
+    #
+    # ## Examples
+    #
+    # A dry run that reports each test as it finishes, and then the whole
+    # result:
+    #
+    # ```ruby
+    # observer = Stryker::Runtime::DryRunObserver.new(report)
+    # runner.run(test_ids, bail: true, observer:)
+    # observer.result.buckets
+    # # => {"Shop::DiscountTest#test_rate" => [3, 4]}
+    # ```
+    class DryRunObserver
+      # Each bucket of `tests` that holds a test of `results`, keyed by the
+      # test's ID, in the order of `results`, with an empty Array for a test
+      # that has none.
+      #
+      # - `results`: Array of Stryker::TestResult, the tests that finished.
+      # - `tests`: Hash, the recorder's buckets, keyed by each test.
+      def self.buckets: (Array[TestResult] results, Hash[Object, Set[Integer]] tests) -> Hash[String, Array[Integer]]
+
+      # The observer that hears each start and result.
+      @observer: _TestObserver
+
+      # The recorder whose buckets the tests fill.
+      @recorder: Recorder
+
+      # The time from the first test's start to the last test's end.
+      @span: TestSpan
+
+      # The result of each test that finished, in order.
+      @results: Array[TestResult]
+
+      # Builds the observer.
+      #
+      # - `observer`: Stryker::_TestObserver, the observer that hears each
+      #   start and result after the recorder does.
+      # - `recorder`: Stryker::Runtime::Recorder, the recorder whose buckets
+      #   the tests fill. By default, the process's own,
+      #   `Stryker::Runtime::RECORDER`.
+      # - `span`: Stryker::Runtime::TestSpan, what times the tests.
+      def initialize: (_TestObserver observer, ?Recorder recorder, ?TestSpan span) -> void
+
+      # Opens `test`'s bucket, and passes the start on. Raises as
+      # `Stryker::Runtime::Recorder#test_started` does when a test is still
+      # running.
+      #
+      # - `test`: Stryker::Test, the test that starts.
+      def test_started: (Test test) -> void
+
+      # Closes the running test's bucket, keeps `result`, and passes it on.
+      # Raises as `Stryker::Runtime::Recorder#test_finished` does when no
+      # test is running.
+      #
+      # - `result`: Stryker::TestResult, the test's result.
+      def test_finished: (TestResult result) -> void
+
+      # What the dry run found so far: each result in the order the tests
+      # finished, each test's bucket keyed by its ID, the static bucket, the
+      # files first loaded in a test, and the time from the first test's
+      # start to the last test's end, which is 0 when no test finished. A
+      # test that reached no mutant has an empty bucket.
+      def result: () -> DryRunResult
+    end
+  end
+end

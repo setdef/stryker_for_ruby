@@ -1,0 +1,47 @@
+module Stryker
+  module Runtime
+    # The time from the first test's start to the last test's end, in
+    # milliseconds, on a clock that a change to the system's time doesn't
+    # move. It leaves out the time before the first test, which a process
+    # spends starting and loading the tests.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # span = Stryker::Runtime::TestSpan.new
+    # span.started
+    # span.finished
+    # span.duration_ms
+    # # => 0.004
+    # ```
+    class TestSpan
+      # Milliseconds on the monotonic clock.
+      def self.now: () -> Float
+
+      # What gives the time.
+      @clock: ^() -> Float
+
+      # When the first test started, or nil before it.
+      @started: Float?
+
+      # When the last test finished, or nil before the first one did.
+      @finished: Float?
+
+      # Builds the span.
+      #
+      # - `clock`: a Proc that returns the time in milliseconds. By default,
+      #   `now`.
+      def initialize: (?^() -> Float clock) -> void
+
+      # Notes that a test started. Only the first call counts.
+      def started: () -> nil
+
+      # Notes that a test finished. The last call counts.
+      def finished: () -> nil
+
+      # The milliseconds from the first start to the last finish, or 0 before
+      # a test has both started and finished.
+      def duration_ms: () -> Float
+    end
+  end
+end
