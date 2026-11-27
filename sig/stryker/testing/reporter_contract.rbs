@@ -1,0 +1,46 @@
+module Stryker
+  module Testing
+    # The tests that every adapter of the `Stryker::_Reporter` port passes.
+    # Include it in a Minitest test class, and define the method of
+    # `Stryker::Testing::_ReporterHost` there: it builds the adapter for a
+    # project. The test class then runs the contract's tests against the
+    # adapter that `reporter_under_test` returns.
+    #
+    # Each test builds a `Stryker::Testing::ReporterContract::SampleProject`, gives the
+    # adapter the events of a run, and checks that the adapter takes them
+    # without raising and leaves the project's source and test files as they
+    # were. The runs are a complete run, a run that found no mutants, and a
+    # run with a result of every status.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # require "stryker/testing"
+    #
+    # class JsonReportTest < Minitest::Test
+    #   include Stryker::Testing::ReporterContract
+    #
+    #   def reporter_under_test(config, root) = Stryker::Reporters::JsonReport.new(config:, root:)
+    # end
+    # ```
+    module ReporterContract : ::Minitest::Test, _ReporterHost
+      # Checks that the adapter takes every event of a complete run, and
+      # changes no file of the project.
+      def test_hears_every_event_of_a_run_and_changes_no_file_of_the_project: () -> void
+
+      # Checks that the adapter takes the events of a run with no mutants, and
+      # changes no file of the project.
+      def test_hears_a_run_that_found_no_mutants: () -> void
+
+      # Checks that the adapter takes a result of each of
+      # `Stryker::MutantResult::STATUSES`, and changes no file of the project.
+      def test_hears_a_result_of_every_status: () -> void
+
+      private
+
+      # Gives `events` to the adapter built for the project in `root`, and fails
+      # when it raises or when it changes a file of the project.
+      def assert_hears_without_changing: (String root, Array[event] events) -> void
+    end
+  end
+end

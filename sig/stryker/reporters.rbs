@@ -1,0 +1,11 @@
+module Stryker
+  # The adapters of the `Stryker::_Reporter` port that the gem has. The
+  # `json` reporter is `Stryker::Reporters::JsonReport` and the `clear-text`
+  # reporter is `Stryker::Reporters::ClearText`.
+  module Reporters
+    # A value of a report's document: what JSON holds, with the schema's keys
+    # as Symbols and the file names and test IDs as Strings.
+    type report_value = String | Numeric | bool | nil | Array[report_value]
+                      | Hash[Symbol, report_value] | Hash[String, report_value]
+  end
+end

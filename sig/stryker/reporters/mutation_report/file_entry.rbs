@@ -1,0 +1,23 @@
+module Stryker
+  module Reporters
+    class MutationReport
+      # One mutated file of the report: the schema's `FileResult`. It holds the
+      # file's language and source, and an entry for each of its mutants, in the
+      # order of the results.
+      class FileEntry
+        @file: ProjectFile
+
+        @results: Array[MutantResult]
+
+        # Builds the entry.
+        #
+        # - `file`: Stryker::Reporters::ProjectFile, the mutated file.
+        # - `results`: Array of Stryker::MutantResult, the results of the file's mutants.
+        def initialize: (ProjectFile file, Array[MutantResult] results) -> void
+
+        # The entry as a Hash with the schema's keys as Symbols.
+        def to_h: () -> Hash[Symbol, report_value]
+      end
+    end
+  end
+end

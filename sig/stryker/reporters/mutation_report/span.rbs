@@ -1,0 +1,19 @@
+module Stryker
+  module Reporters
+    class MutationReport
+      # A range of a file as the schema's `Location` holds it: a `start` and an
+      # `end`, each with a `line` and a `column`, as Symbol-keyed hashes.
+      class Span
+        @location: Location
+
+        # Builds the span.
+        #
+        # - `location`: Stryker::Location, the range.
+        def initialize: (Location location) -> void
+
+        # The span as a Hash.
+        def to_h: () -> Hash[Symbol, report_value]
+      end
+    end
+  end
+end

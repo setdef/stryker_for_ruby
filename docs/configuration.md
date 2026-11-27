@@ -101,6 +101,26 @@ With no value, the project's folders choose it: `minitest` when the project has 
 
 A list of reporter names. The default is `clear-text`, `progress`, and `html`.
 
+#### The `json` reporter
+
+Writes the run's report to `reports/mutation/mutation.json` in the project's root, once, when the run ends. It creates the folders, and replaces the report of an earlier run. A run that stops before it ends leaves the file as it was. When a file that has a mutant, or a test file, no longer exists at the end of the run, the reporter stops with that error and writes no report.
+
+The report is one line of JSON in the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) (schema version `1.0`) that the Stryker tools share, so any viewer of that schema reads it. `files` holds each file that has a mutant, by its path, with its language (`ruby`, or `erb` for a template), its source, and its mutants. `testFiles` holds each test file by its path, with its source and its tests: each test's `id`, `name`, and `location`. A test with no file goes under the empty name, with no source. A field with no value is left out of a mutant or a test.
+
+| Field of a mutant | What it holds |
+| - | - |
+| `id` | The mutant's number in the run, as a string. |
+| `mutatorName` | The name of the mutator that made the mutant. |
+| `replacement` | The text that replaces the range in `location`. |
+| `location` | The range in the file that the mutant replaces: `start` and `end`, each with a `line` and a `column` counted from 1. `end` is just after the range. Columns count UTF-16 code units, as JavaScript counts the index of a character in a string, so an emoji takes two columns. |
+| `status` | `Killed`, `Survived`, `NoCoverage`, `CompileError`, `RuntimeError`, `Timeout`, or `Ignored`. |
+| `statusReason` | Why the mutant has that status, for a status that has a reason. |
+| `coveredBy` | The IDs of the tests that reached the mutant. |
+| `killedBy` | The ID of the test that killed the mutant. |
+| `testsCompleted` | How many tests finished in the mutant's run. |
+| `duration` | The run's time in milliseconds. |
+| `static` | Whether the mutant was static, so its run was a fresh process with the mutant active before any file loaded. |
+
 ### `concurrency`
 
 How many project processes run at once. It takes a whole number of 1 or more, or a percentage string from `"0%"` to `"100%"` that is a share of the logical processors. A percentage rounds half up, as StrykerJS rounds it, and never gives fewer than 1. On a machine with 8 processors, `"50%"` is 4, `"100%"` is 8, and `"1%"` is 1.

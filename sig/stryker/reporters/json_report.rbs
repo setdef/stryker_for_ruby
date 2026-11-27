@@ -1,0 +1,36 @@
+module Stryker
+  module Reporters
+    # The `json` reporter. When the run completes, it writes the run's
+    # `Stryker::Reporters::MutationReport` as JSON to
+    # `reports/mutation/mutation.json` under the project's root, which is
+    # where StrykerJS writes it. It creates the folders that the file needs
+    # and replaces a report of an earlier run. It writes nothing before the
+    # run completes.
+    #
+    # The report validates against the
+    # [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema).
+    # It raises `Errno::ENOENT` when a file that a mutant or a test names
+    # doesn't exist.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # reporter = Stryker::Reporters::JsonReport.new(config:, root: Dir.pwd)
+    # events.each { |event| reporter.call(event) }
+    # JSON.parse(File.read("reports/mutation/mutation.json"))["files"].keys
+    # # => ["lib/invoice.rb"]
+    # ```
+    class JsonReport < WholeRun
+      @path: String
+
+      # The path of the report, relative to the project's root.
+      FILE_NAME: String
+
+      # Builds a reporter that writes under `root`.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      # - `root`: String, the project's root.
+      def initialize: (config: Config, root: String) -> void
+    end
+  end
+end

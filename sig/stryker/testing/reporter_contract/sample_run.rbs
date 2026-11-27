@@ -1,0 +1,58 @@
+module Stryker
+  module Testing
+    module ReporterContract
+      # The results and events of a run that mutated the source file of
+      # `Stryker::Testing::ReporterContract::SampleProject`: one mutant that
+      # survived, one that a test killed, and one that no test reached.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # Stryker::Testing::ReporterContract::SampleRun.events.map(&:class)
+      # # => [Stryker::Events::DryRunCompleted, Stryker::Events::PlanReady,
+      # #     Stryker::Events::MutantTested, Stryker::Events::MutantTested,
+      # #     Stryker::Events::MutantTested, Stryker::Events::RunCompleted]
+      # ```
+      module SampleRun
+        # The result of a mutant that replaces the text `from` of the source
+        # file with `to`: a survivor that the `label` test reached. Raises
+        # ArgumentError when the source file doesn't hold `from`.
+        #
+        # - `from`: String, the text of the source file that the mutant replaces.
+        # - `to`: String, the replacement.
+        # - `id`: Integer, the mutant's ID.
+        def self.result: (String from, String to, ?Integer id) -> MutantResult
+
+        # A mutant that survived.
+        def self.survivor: () -> MutantResult
+
+        # A mutant that the `rate` test killed.
+        #
+        # - `id`: Integer, the mutant's ID.
+        def self.killed: (?id: Integer) -> MutantResult
+
+        # A mutant that no test reached.
+        def self.not_covered: () -> MutantResult
+
+        # The events of the run, in the order the run publishes them: the dry
+        # run, the plan, a result for each mutant, and the end of the run.
+        def self.events: () -> Array[event]
+
+        # The events of a run that found no mutants: the dry run, a plan with
+        # nothing to run, and the end of the run.
+        def self.without_mutants: () -> Array[event]
+
+        # The event that ends a run that has a result of every status in
+        # `Stryker::MutantResult::STATUSES`.
+        def self.of_every_status: () -> Events::RunCompleted
+
+        # The mutant that replaces `from` with `to`. Private.
+        def self.mutant: (String from, String to, Integer id) -> Mutant
+
+        # The event that the plan publishes: the survivor's run, and the
+        # results that won't run. Private.
+        def self.plan_ready: (Array[MutantResult] results) -> Events::PlanReady
+      end
+    end
+  end
+end

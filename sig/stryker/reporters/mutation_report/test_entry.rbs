@@ -1,0 +1,25 @@
+module Stryker
+  module Reporters
+    class MutationReport
+      # One test of the report: the schema's `TestDefinition`. It holds the test's
+      # ID and name, and its location when the test runner gave one.
+      class TestEntry
+        @test: Test
+
+        # Builds the entry.
+        #
+        # - `test`: Stryker::Test, the test.
+        def initialize: (Test test) -> void
+
+        # The entry as a Hash with the schema's keys as Symbols.
+        def to_h: () -> Hash[Symbol, report_value]
+
+        private
+
+        # The test's location as the schema's `OpenEndLocation`, or nil when the
+        # test has none.
+        def span: () -> Hash[Symbol, report_value]?
+      end
+    end
+  end
+end

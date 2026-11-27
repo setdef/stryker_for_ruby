@@ -1,0 +1,41 @@
+module Stryker
+  module Reporters
+    # The start of a reporter that needs the whole run, such as the JSON
+    # reporter: it remembers the tests of the dry run, and when it hears
+    # `Stryker::Events::RunCompleted` it builds the run's
+    # `Stryker::Reporters::MutationReport` and passes it to `publish`, which
+    # the subclass defines. It does nothing for the other events.
+    #
+    # It implements `Stryker::_Reporter`.
+    class WholeRun
+      @config: Config
+
+      @root: String
+
+      @tests: Array[Test]
+
+      # Builds a reporter that builds its report from this project's run.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      # - `root`: String, the project's root.
+      def initialize: (config: Config, root: String) -> void
+
+      # Receives one event, and builds the report when the run is complete.
+      #
+      # - `event`: Stryker::event, the event the run published.
+      def call: (event event) -> void
+
+      private
+
+      # Builds the run's report from the tests of the dry run and `results`,
+      # and passes it to `publish`.
+      def finish: (Array[MutantResult] results) -> void
+
+      # Writes or shows `report`. The subclass defines it, and this one raises
+      # NotImplementedError.
+      #
+      # - `report`: Stryker::Reporters::MutationReport, the report of the run.
+      def publish: (MutationReport report) -> void
+    end
+  end
+end

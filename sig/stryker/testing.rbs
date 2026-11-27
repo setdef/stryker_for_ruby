@@ -11,6 +11,8 @@ module Stryker
   #   `Stryker::_ConfigSource` port.
   # - `Stryker::Testing::IsolationContract` checks an adapter of the
   #   `Stryker::_Isolation` port.
+  # - `Stryker::Testing::ReporterContract` checks an adapter of the
+  #   `Stryker::_Reporter` port.
   module Testing
     # What a test class that includes `Stryker::Testing::ConfigSourceContract`
     # defines.
@@ -43,6 +45,18 @@ module Stryker
       # Whether the adapter runs static mutants, so that the contract gives
       # it static runs. Otherwise it gives it runtime runs.
       def runs_static_mutants?: () -> bool
+    end
+
+    # What a test class that includes `Stryker::Testing::ReporterContract`
+    # defines.
+    interface _ReporterHost
+      # The adapter under test, built to report on the project in `root`. A
+      # reporter that writes text takes its stream from the test class, so the
+      # test can read it.
+      #
+      # - `config`: Stryker::Config, the options of the run.
+      # - `root`: String, the project's root.
+      def reporter_under_test: (Config config, String root) -> _Reporter
     end
 
     # What a test class that includes `Stryker::Testing::TestRunnerContract`

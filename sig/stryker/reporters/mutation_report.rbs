@@ -1,0 +1,63 @@
+module Stryker
+  module Reporters
+    # The result of a run as a document of the
+    # [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema),
+    # which every Stryker tool writes and the HTML report reads.
+    #
+    # The document has the thresholds of the config, the framework, each
+    # mutated file with its source and its mutants, and each test file with
+    # its source and its tests. A mutant's `location` is the range the mutant
+    # replaces, with columns in UTF-16 code units, and its `replacement` is
+    # the text that takes the place of that range. A field with no value is
+    # left out: the document has no `statusReason` for a survivor, and no
+    # `killedBy` for a mutant that no test killed.
+    #
+    # It reads each file that a mutant or a test names, and raises
+    # `Errno::ENOENT` for a file that doesn't exist. It changes no file.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # report = Stryker::Reporters::MutationReport.new(
+    #   config:, root: Dir.pwd, tests: dry_run_result.results.map(&:test), results: run_completed.results
+    # )
+    # report.to_h[:files]["lib/invoice.rb"][:mutants].first[:status]
+    # # => "Survived"
+    # File.write("mutation.json", JSON.generate(report.to_h))
+    # ```
+    class MutationReport
+      @config: Config
+
+      @root: String
+
+      @tests: Array[Test]
+
+      @results: Array[MutantResult]
+
+      # The version of the report schema that the document follows. Private.
+      SCHEMA_VERSION: String
+
+      # Builds the report.
+      #
+      # - `config`: Stryker::Config, whose thresholds the report carries.
+      # - `root`: String, the project's root, which relative file names are relative to.
+      # - `tests`: Array of Stryker::Test, every test the dry run found.
+      # - `results`: Array of Stryker::MutantResult, the result of every mutant.
+      def initialize: (config: Config, root: String, tests: Array[Test], results: Array[MutantResult]) -> void
+
+      # The document, as nested hashes and arrays that convert to JSON. The
+      # keys of the schema are Symbols and the file names are Strings.
+      def to_h: () -> Hash[Symbol, report_value]
+
+      private
+
+      # The `files` of the document: each mutated file, with its mutants in
+      # the order of the results.
+      def files: () -> Hash[String, report_value]
+
+      # The `testFiles` of the document: each test file with its tests. A
+      # test with no file goes under the empty name, with no source.
+      def test_files: () -> Hash[String, report_value]
+    end
+  end
+end

@@ -1,0 +1,31 @@
+module Stryker
+  module Reporters
+    class MutationReport
+      # One test file of the report: the schema's `TestFile`. It holds an entry
+      # for each of the file's tests, and the file's source. A file that has no
+      # name, because the test runner gave none, has no source.
+      class TestFileEntry
+        @root: String
+
+        @name: String?
+
+        @tests: Array[Test]
+
+        # Builds the entry.
+        #
+        # - `root`: String, the project's root.
+        # - `name`: String or nil, the test file's path.
+        # - `tests`: Array of Stryker::Test, the tests of the file.
+        def initialize: (String root, String? name, Array[Test] tests) -> void
+
+        # The entry as a Hash with the schema's keys as Symbols.
+        def to_h: () -> Hash[Symbol, report_value]
+
+        private
+
+        # The `source` of the file, or nothing for a file with no name.
+        def source: () -> Hash[Symbol, String]
+      end
+    end
+  end
+end

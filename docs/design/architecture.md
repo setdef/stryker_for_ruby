@@ -140,12 +140,12 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
 - **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapters are `Isolation::ForkPerRun` and `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
-- **`_Reporter`** receives each domain event of a run.
+- **`_Reporter`** receives each domain event of a run. Its adapter is `Reporters::JsonReport`, which [Configuration](../configuration.md#the-json-reporter) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
 - **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../configuration.md#the-configuration-file) says how to use.
 
 ### Contract tests
 
-`require "stryker/testing"` loads one Minitest module for each of these ports that has an adapter: `Stryker::Testing::TestRunnerContract` and `ConfigSourceContract`. Each holds the tests that every adapter of its port must pass, and the gem's adapters pass them, so an adapter written outside the gem is held to the same behavior. The RBS documentation of [`Stryker::Testing`](../../sig/stryker/testing.rbs) says how to use them.
+`require "stryker/testing"` loads one Minitest module for each of these ports that has an adapter: `Stryker::Testing::TestRunnerContract`, `ConfigSourceContract`, and `ReporterContract`. Each holds the tests that every adapter of its port must pass, and the gem's adapters pass them, so an adapter written outside the gem is held to the same behavior. The RBS documentation of [`Stryker::Testing`](../../sig/stryker/testing.rbs) says how to use them.
 
 ## Values and events
 

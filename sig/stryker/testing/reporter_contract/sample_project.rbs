@@ -1,0 +1,77 @@
+module Stryker
+  module Testing
+    module ReporterContract
+      # A project on disk with one source file and one test file.
+      # `Stryker::Testing::ReporterContract` runs every reporter against it, and
+      # a reporter's own tests may use it to build the events they need.
+      #
+      # The source file, `lib/shop/discount.rb`, holds a line with text that
+      # UTF-16 counts differently from characters, so a reporter that counts
+      # columns in characters places a mutant wrongly. The test file,
+      # `test/shop/discount_test.rb`, holds two tests.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # sample = Stryker::Testing::ReporterContract
+      # sample::SampleProject.create do |root|
+      #   reporter = Stryker::Reporters::JsonReport.new(config: sample::SampleProject.config, root:)
+      #   sample::SampleRun.events.each { |event| reporter.call(event) }
+      # end
+      # ```
+      module SampleProject
+        # The text of the source file.
+        SOURCE: String
+
+        # The path of the source file, relative to the project's root.
+        SOURCE_FILE: String
+
+        # The path of the test file, relative to the project's root.
+        TEST_FILE: String
+
+        # The ID of the test of `label`.
+        LABEL_TEST: String
+
+        # The ID of the test of `rate`.
+        RATE_TEST: String
+
+        # Writes the project's files to a new temporary folder, yields the
+        # folder's path, and deletes the folder after the block. Returns the
+        # block's value.
+        def self.create: [T] () { (String root) -> T } -> T
+
+        # The text of each file, by its path.
+        def self.files: () -> Hash[String, String]
+
+        # The text of the test file.
+        def self.test_source: () -> String
+
+        # The text of each file of the project in `root`, by its path.
+        #
+        # - `root`: String, the project's root.
+        def self.read: (String root) -> Hash[String, String]
+
+        # A config with the defaults for every option but the thresholds.
+        #
+        # - `threshold_high`: Integer, the score at or above which a score is high.
+        # - `threshold_low`: Integer, the score below which a score is low.
+        def self.config: (?threshold_high: Integer, ?threshold_low: Integer) -> Config
+
+        # The two tests of the test file, as the dry run lists them.
+        def self.tests: () -> Array[Test]
+
+        # The event that the dry run publishes, with the two tests passing.
+        def self.dry_run_completed: () -> Events::DryRunCompleted
+
+        # Writes the project's files under `root`, and returns `root`. Private.
+        def self.populate: (String root) -> String
+
+        # Writes `text` to `path`, and the folders that `path` needs. Private.
+        def self.write: (String path, String text) -> void
+
+        # The test with the ID `name`, on line `line` of the test file. Private.
+        def self.test: (String name, Integer line) -> Test
+      end
+    end
+  end
+end

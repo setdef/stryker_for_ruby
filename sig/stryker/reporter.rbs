@@ -1,0 +1,40 @@
+module Stryker
+  # One of the domain events of a run, which a reporter receives.
+  type event = Events::DryRunCompleted | Events::PlanReady | Events::MutantTested | Events::RunCompleted
+
+  # The port where **Stryker (for Ruby)** meets whatever shows or stores the
+  # results of a run: it receives each domain event, in the order the run
+  # publishes them. There is one adapter for each name in the `reporters`
+  # option. `Stryker::Reporters::JsonReport` and
+  # `Stryker::Reporters::ClearText` are two of them.
+  # [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-ports)
+  # shows where it fits, and `Stryker::Testing::ReporterContract` holds every
+  # adapter to the same behavior.
+  #
+  # Ruby checks nothing about the interface: any object with `call` is a
+  # reporter. A reporter acts on the events it needs and returns from the
+  # rest without doing anything. It leaves the project's files as they were,
+  # except that it may create and write its own output.
+  #
+  # ## Examples
+  #
+  # A reporter that counts the mutants as the run tests them:
+  #
+  # ```ruby
+  # class Counter
+  #   attr_reader :tested
+  #
+  #   def initialize
+  #     @tested = 0
+  #   end
+  #
+  #   def call(event)
+  #     @tested += 1 if event.is_a?(Stryker::Events::MutantTested)
+  #   end
+  # end
+  # ```
+  interface _Reporter
+    # Receives one event. Returns nothing the caller may use.
+    def call: (event event) -> void
+  end
+end

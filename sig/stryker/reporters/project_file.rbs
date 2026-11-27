@@ -1,0 +1,57 @@
+module Stryker
+  module Reporters
+    # A file of the project that a report quotes: a source file with mutants,
+    # or a test file. It reads the file once, as bytes that it takes to be
+    # UTF-8.
+    #
+    # It raises `Errno::ENOENT` when the file doesn't exist, because a report
+    # that quotes a file it can't read would show the wrong code.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # file = Stryker::Reporters::ProjectFile.new(Dir.pwd, "lib/invoice.rb")
+    # file.language
+    # # => "ruby"
+    # file.location(10, 11).start
+    # # => #<data Stryker::Position line=1, column=11>
+    # ```
+    class ProjectFile
+      @path: String
+
+      @name: String
+
+      @source_text: SourceText?
+
+      @text: String?
+
+      # Builds the file.
+      #
+      # - `root`: String, the project's root.
+      # - `name`: String, the file's path, relative to `root` or absolute.
+      def initialize: (String root, String name) -> void
+
+      # `"erb"` for a file whose name ends in `.erb`, and `"ruby"` for every
+      # other file.
+      def language: () -> String
+
+      # The file's text, with each byte that isn't valid UTF-8 replaced by
+      # U+FFFD, so that it converts to JSON.
+      def source: () -> String
+
+      # The place in the file of the bytes from `start_offset` up to
+      # `end_offset`, as `Stryker::SourceText#location` gives it, with columns
+      # in UTF-16 code units. Raises ArgumentError for an offset that
+      # isn't on a character boundary.
+      #
+      # - `start_offset`: Integer, the offset in bytes of the first byte.
+      # - `end_offset`: Integer, the offset in bytes of the byte just after the last.
+      def location: (Integer start_offset, Integer end_offset) -> Location
+
+      private
+
+      # The file's bytes as a UTF-8 String, read once.
+      def text: () -> String
+    end
+  end
+end
