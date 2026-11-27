@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "../mutators"
-require_relative "candidate"
 require_relative "occupancy"
 require_relative "policy"
 require_relative "roster"
@@ -11,8 +10,7 @@ module Stryker
   module Mutators
     class Walk
       def initialize(file:, result:, mutators: ALL, first_id: 1, policy: Policy.new)
-        @search = Search.new(result, file)
-        @mutators = mutators
+        @search = Search.new(result, file, mutators)
         @policy = policy
         @roster = Roster.new(file:, source: result.source.source, first_id:)
       end
@@ -26,11 +24,7 @@ module Stryker
       end
 
       def made
-        @made ||= @roster.made(chosen(judged(@mutators.flat_map { |mutator| found_by(mutator) })))
-      end
-
-      private def found_by(mutator)
-        Candidate.in_order(@search.candidates_of(mutator))
+        @made ||= @roster.made(chosen(judged(@search.candidates)))
       end
 
       private def judged(candidates)

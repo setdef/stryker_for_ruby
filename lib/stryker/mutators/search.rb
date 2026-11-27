@@ -8,14 +8,19 @@ require_relative "unreadable"
 module Stryker
   module Mutators
     class Search
-      def initialize(result, file)
+      def initialize(result, file, mutators)
         raise(ArgumentError, "#{file} doesn't parse, so it has no sites") unless result.success?
 
         @tree = result.value
         @file = file
+        @mutators = mutators
       end
 
-      def candidates_of(mutator)
+      def candidates
+        @mutators.flat_map { |mutator| Candidate.in_order(candidates_of(mutator)) }
+      end
+
+      private def candidates_of(mutator)
         # @type var found: Array[Candidate]
         found = []
         Traversal.new(@tree).each { |node, ancestors| found.concat(candidates_at(mutator, node, ancestors)) }

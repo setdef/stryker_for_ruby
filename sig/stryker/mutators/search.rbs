@@ -1,17 +1,17 @@
 module Stryker
   module Mutators
-    # Finds the candidates that one mutator makes in a parsed file. A file
-    # that doesn't parse has no sites, so it raises ArgumentError. It tells
-    # the person who runs Stryker (for Ruby) about each site the mutator can't
+    # Finds the candidates that the mutators make in a parsed file, and tells
+    # the person who runs Stryker (for Ruby) about each site a mutator can't
     # read. The warning goes to standard error, with the file and the line of
-    # the site, and the site gets no candidate.
+    # the site, and the site gets no candidate. A file that doesn't parse has
+    # no sites, so it raises ArgumentError.
     #
     # ## Examples
     #
     # ```ruby
     # result = Prism.parse("x = 1 + 2")
-    # search = Stryker::Mutators::Search.new(result, "lib/a.rb")
-    # search.candidates_of(Stryker::Mutators::ArithmeticOperator).size
+    # search = Stryker::Mutators::Search.new(result, "lib/a.rb", [Stryker::Mutators::ArithmeticOperator])
+    # search.candidates.size
     # # => 1
     # ```
     class Search
@@ -20,17 +20,23 @@ module Stryker
       # - `result`: Prism::ParseResult, the file parsed. A result with errors
       #   raises ArgumentError.
       # - `file`: String, the file's path, which a warning and the error give.
-      def initialize: (Prism::ParseResult result, String file) -> void
+      # - `mutators`: Array of Stryker::_Mutator, the mutators to ask at every
+      #   node, in the order of the catalog's table.
+      def initialize: (Prism::ParseResult result, String file, Array[_Mutator] mutators) -> void
 
-      # The candidates of `mutator` in the file, in the order of the tree.
-      #
-      # - `mutator`: Stryker::_Mutator, the mutator to ask at every node.
-      def candidates_of: (_Mutator mutator) -> Array[Candidate]
+      # The candidates of every mutator in the file: each mutator's in turn,
+      # in the order of `mutators`, and each mutator's own in the order its
+      # sites start in the file, with the edits of one site in the order the
+      # mutator gives them.
+      def candidates: () -> Array[Candidate]
 
       private
 
       @tree: Prism::ProgramNode
       @file: String
+      @mutators: Array[_Mutator]
+
+      def candidates_of: (_Mutator mutator) -> Array[Candidate]
 
       def candidates_at: (_Mutator mutator, Prism::node node, Array[Prism::node] ancestors) -> Array[Candidate]
     end

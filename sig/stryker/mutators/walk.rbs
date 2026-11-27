@@ -69,12 +69,9 @@ module Stryker
       private
 
       @search: Search
-      @mutators: Array[_Mutator]
       @policy: Policy
       @roster: Roster
       @made: Made
-
-      def found_by: (_Mutator mutator) -> Array[Candidate]
 
       def judged: (Array[Candidate] candidates) -> Array[Candidate]
 
