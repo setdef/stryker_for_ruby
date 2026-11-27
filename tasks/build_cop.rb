@@ -93,8 +93,7 @@ class BuildCop
   end
 
   private def read(workflow, **query)
-    path = "actions/workflows/#{workflow}/runs"
-    @github.all(path, "workflow_runs", created: ">=#{@since}", exclude_pull_requests: true, **query)
+    @github.runs(workflow, since: @since, **query)
   end
 
   private def step(commits, reverts)
@@ -130,7 +129,7 @@ class BuildCop
     failed = @runs.failed_jobs(red)
     return narrow(commits, failed) unless failed.empty?
 
-    BuildCopStep.of(:none, "run #{red['id']} has no job that failed, only ones canceled or no runner took")
+    BuildCopStep.of(:none, "run #{red.id} has no job that failed, only ones canceled or no runner took")
   end
 
   # Bisects +commits+, oldest first, the first green and the last red, by
@@ -148,7 +147,7 @@ class BuildCop
   end
 
   private def blame(commits, verdicts, failed, high)
-    BuildCopBlame.new(@runs, BISECT).call(commits[high], verdicts[high].run, failed, commits[high - 1])
+    BuildCopBlame.new(@runs, BISECT).call(commits[high], verdicts[high].run!, failed, commits[high - 1])
   end
 
   # Halves the commits between the last good one and the first bad one, once
@@ -158,7 +157,7 @@ class BuildCop
     return BuildCopStep.of(:wait, "a run of #{commits[unfinished]} has not finished") if unfinished
 
     middle = (range.begin + range.end) / 2
-    return BuildCopStep.unsettled(commits[middle], verdicts[middle].run, failed) if verdicts[middle].state == :unknown
+    return BuildCopStep.unsettled(commits[middle], verdicts[middle].run!, failed) if verdicts[middle].state == :unknown
 
     BuildCopStep.of(:bisect, between(commits, failed, range), commit: commits[middle])
   end

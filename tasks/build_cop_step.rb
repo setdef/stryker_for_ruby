@@ -15,11 +15,11 @@ class BuildCopStep < Data.define(:action, :commit, :run, :reason)
   # run that finished green has no failed job, and the API refuses to run
   # again what did not fail.
   def self.unsettled(commit, run, failed)
-    told = "run #{run['id']} of #{commit} finished without passing or failing #{failed.join(', ')}"
-    return of(:stuck, "#{told}, and is green, so it has no failed job to run again") if run["conclusion"] == "success"
-    return of(:rerun, "#{told}; its failed jobs run again", commit:, run: run["id"]) if run["run_attempt"] == 1
+    told = "run #{run.id} of #{commit} finished without passing or failing #{failed.join(', ')}"
+    return of(:stuck, "#{told}, and is green, so it has no failed job to run again") if run.conclusion == "success"
+    return of(:rerun, "#{told}; its failed jobs run again", commit:, run: run.id) if run.run_attempt == 1
 
-    of(:stuck, "#{told}, on attempt #{run['run_attempt']}")
+    of(:stuck, "#{told}, on attempt #{run.run_attempt}")
   end
 
   # Whether the step changes something: a run runs again, or a commit is

@@ -55,15 +55,14 @@ class BuildCopFast
   end
 
   private def rerun(run, commit, failed)
-    reason = "run #{run['id']} of Fast on #{commit} failed #{failed.join(', ')}, " \
-      "and a second attempt tells a flake apart"
-    BuildCopStep.of(:rerun, reason, commit:, run: run["id"])
+    reason = "run #{run.id} of Fast on #{commit} failed #{failed.join(', ')}, and a second attempt tells a flake apart"
+    BuildCopStep.of(:rerun, reason, commit:, run: run.id)
   end
 
   private def revert(run, commit, failed)
-    reason = "run #{run['id']} of Fast on #{commit} failed #{failed.join(', ')} again on attempt " \
-      "#{run['run_attempt']}, and the run of its parent passed"
-    BuildCopStep.of(:revert, reason, commit:, run: run["id"])
+    reason = "run #{run.id} of Fast on #{commit} failed #{failed.join(', ')} again on attempt " \
+      "#{run.run_attempt}, and the run of its parent passed"
+    BuildCopStep.of(:revert, reason, commit:, run: run.id)
   end
 
   private def wait(commit, parent, state)
@@ -72,6 +71,6 @@ class BuildCopFast
   end
 
   private def stuck(run, commit, because)
-    BuildCopStep.of(:stuck, "run #{run['id']} of Fast on #{commit} #{because}")
+    BuildCopStep.of(:stuck, "run #{run.id} of Fast on #{commit} #{because}")
   end
 end

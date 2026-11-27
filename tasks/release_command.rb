@@ -86,7 +86,6 @@ class ReleaseCommand
     api = @env.fetch("GITHUB_API_URL", "https://api.github.com")
     github = GitHubAPI.new(repository: @env["GITHUB_REPOSITORY"], token: @env["GH_TOKEN"], api:)
     since = (@now - (DAYS * 86_400)).utc.strftime("%Y-%m-%d")
-    path = "actions/workflows/ci.yml/runs"
-    CommitRuns.new(github.all(path, "workflow_runs", created: ">=#{since}", exclude_pull_requests: true), github)
+    CommitRuns.new(github.runs("ci.yml", since:), github)
   end
 end

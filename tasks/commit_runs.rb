@@ -5,13 +5,19 @@
 # run passed, failed, or never ran in the newest run of another commit.
 #
 # BuildCop reads the runs through this class, and decides what to do about
-# them. A run is a Hash as GitHub's API gives it, and the class reads each
-# run's jobs from the API once.
+# them. A run is a GitHubAPI::Run, and the class reads each run's jobs from
+# the API once.
 class CommitRuns
   # The verdict on one commit: +state+ is :good, :bad, :pending, :unknown, or
   # :none, and +run+ is the run it rests on, which :none has not got.
-  Verdict = Data.define(:state, :run)
-  public_constant(:Verdict)
+  class Verdict < Data.define(:state, :run)
+    # The run that the verdict rests on. Raises for a verdict that has none.
+    def run!
+      run or raise(KeyError, "a verdict of #{state} rests on no run")
+    end
+
+    # @dynamic state, run
+  end
 
   # The events whose runs check out their commit itself. A pull request's run
   # checks out a merge, and says nothing of the commit.
@@ -35,8 +41,8 @@ class CommitRuns
   # +runs+ are the runs of ci.yml, and +github+ the GitHubAPI that reads each
   # run's jobs.
   def initialize(runs, github)
-    @by_commit = runs.select { |run| EVENTS.include?(run["event"]) }
-      .group_by { |run| run["head_sha"] }
+    @by_commit = runs.select { |run| EVENTS.include?(run.event) }
+      .group_by(&:head_sha)
     @github = github
     @jobs = {}
   end
@@ -54,13 +60,13 @@ class CommitRuns
 
   # The names of the jobs that failed in +run+.
   def failed_jobs(run)
-    jobs(run).filter_map { |job| job["name"] if failed?(job) }
+    jobs(run).filter_map { |job| job.name if failed?(job) }
   end
 
   # Whether a job of +run+ named in +names+ failed on a second attempt or
   # later, which tells a failure from a flake.
   def failed_again?(run, names)
-    jobs(run).any? { |job| names.include?(job["name"]) && failed?(job) && job["run_attempt"] > 1 }
+    jobs(run).any? { |job| names.include?(job.name) && failed?(job) && job.run_attempt > 1 }
   end
 
   # The Verdict for +commit+'s newest run that was not canceled, by the jobs
@@ -87,15 +93,15 @@ class CommitRuns
   end
 
   private def newest(commit, only)
-    runs = @by_commit.fetch(commit, []).reject { |run| run["conclusion"] == "cancelled" }
-    runs = runs.select { |run| run["head_branch"].start_with?(only) } if only
-    runs.max_by { |run| run["id"] }
+    runs = @by_commit.fetch(commit, []).reject { |run| run.conclusion == "cancelled" }
+    runs = runs.select { |run| run.head_branch.to_s.start_with?(only) } if only
+    runs.max_by(&:id)
   end
 
   private def state(run, failed)
     return :pending if unfinished?(run)
 
-    mine = jobs(run).select { |job| failed.include?(job["name"]) }
+    mine = jobs(run).select { |job| failed.include?(job.name) }
     return :bad if mine.any? { |job| failed?(job) }
     return :good if passed?(mine, failed)
 
@@ -103,35 +109,35 @@ class CommitRuns
   end
 
   private def passed?(jobs, names)
-    jobs.size == names.size && jobs.all? { |job| job["conclusion"] == "success" }
+    jobs.size == names.size && jobs.all? { |job| job.conclusion == "success" }
   end
 
   private def green?(run)
-    return false unless run["conclusion"] == "success"
+    return false unless run.conclusion == "success"
 
     all = jobs(run)
-    all.any? && all.all? { |job| job["conclusion"] == "success" }
+    all.any? && all.all? { |job| job.conclusion == "success" }
   end
 
   private def trunk_runs(commit)
-    runs = @by_commit.fetch(commit, []).select { |run| run["head_branch"] == TRUNK && finished?(run) }
-    runs.sort_by { |run| -run["id"] }
+    runs = @by_commit.fetch(commit, []).select { |run| run.head_branch == TRUNK && finished?(run) }
+    runs.sort_by { |run| -run.id }
   end
 
   private def failed?(run_or_job)
-    FAILURES.include?(run_or_job["conclusion"])
+    FAILURES.include?(run_or_job.conclusion)
   end
 
   private def finished?(run)
-    run["status"] == "completed" && run["conclusion"] != APPROVAL
+    run.status == "completed" && run.conclusion != APPROVAL
   end
 
   # A run that is going, or that has a job waiting for a person's approval.
   private def unfinished?(run)
-    !finished?(run) || jobs(run).any? { |job| job["conclusion"] == APPROVAL }
+    !finished?(run) || jobs(run).any? { |job| job.conclusion == APPROVAL }
   end
 
   private def jobs(run)
-    @jobs[[run["id"], run["run_attempt"]]] ||= @github.all("actions/runs/#{run['id']}/jobs", "jobs", filter: "latest")
+    @jobs[[run.id, run.run_attempt]] ||= @github.jobs(run)
   end
 end
