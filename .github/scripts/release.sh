@@ -11,7 +11,9 @@
 #            RELEASE_DIR (release/), and the notes in RELEASE_NOTES
 #            (release-notes.md). Needs COMMIT and VERSION.
 #   publish  creates the GitHub release of TAG at COMMIT from RELEASE_DIR
-#            and RELEASE_NOTES. Needs TAG, COMMIT, and VERSION.
+#            and RELEASE_NOTES, making the tag when it doesn't exist and
+#            using it when it points at COMMIT. Ends the run when TAG points
+#            anywhere else. Needs TAG, COMMIT, and VERSION.
 #   record   writes the release into trunk's CHANGELOG.md and version file, as
 #            one commit pushed to trunk. Needs VERSION and COMMIT.
 #
@@ -89,10 +91,12 @@ build() {
 
 publish() {
   : "${TAG:?TAG is not set}" "${COMMIT:?COMMIT is not set}" "${VERSION:?VERSION is not set}"
-  local dir=${RELEASE_DIR:-release} notes=${RELEASE_NOTES:-release-notes.md}
-  # A tag never moves: --target only names where a new tag is made.
-  if git ls-remote --exit-code --tags origin "refs/tags/$TAG" >/dev/null 2>&1; then
-    echo "::error::$TAG exists already"
+  local dir=${RELEASE_DIR:-release} notes=${RELEASE_NOTES:-release-notes.md} tagged
+  # A tag never moves, so a release of one that exists is made only where it
+  # points. An annotated tag is listed twice, and its ^{} line is its commit.
+  tagged=$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}" | awk 'END { print $1 }')
+  if [ -n "$tagged" ] && [ "$tagged" != "$COMMIT" ]; then
+    echo "::error::$TAG exists already, at $tagged, not $COMMIT"
     exit 1
   fi
   gh release create "$TAG" --repo "$repository" --target "$COMMIT" \
