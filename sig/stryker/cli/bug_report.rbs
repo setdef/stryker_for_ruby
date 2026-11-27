@@ -1,12 +1,9 @@
 module Stryker
   class CLI
     # The text for an unexpected error: its class and message, its
-    # backtrace, and where to report it.
+    # backtrace, and where to report it and what to include.
     class BugReport
       @error: StandardError
-
-      # Where to report an unexpected error.
-      ISSUES: String
 
       # Builds the report.
       #

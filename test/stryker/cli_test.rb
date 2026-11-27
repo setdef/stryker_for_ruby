@@ -20,6 +20,14 @@ class CLITest < Minitest::Test
     end
   end
 
+  def test_the_overview_sends_problems_to_the_forum
+    status, out, = run_cli("help")
+
+    assert_equal(0, status)
+    assert_includes(out, "Problems: https://forum.setdef.com/c/stryker-for-ruby\n")
+    refute_includes(out, "github.com/setdef/stryker_for_ruby/issues")
+  end
+
   def test_no_command_prints_the_overview_to_standard_error_and_exits_with_status_two
     status, out, err = run_cli
 

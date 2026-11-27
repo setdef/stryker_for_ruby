@@ -4,6 +4,7 @@ module Stryker
   class CLI
     module Help
       DOCUMENTATION = "https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/configuration.md"
+      FORUM = "https://forum.setdef.com/c/stryker-for-ruby"
       OVERVIEW = <<~TEXT.freeze
         Stryker (for Ruby) puts bugs into your code, one at a time, and reports each bug that no test caught.
 
@@ -18,7 +19,7 @@ module Stryker
           --version          Show the version
 
         Documentation: #{DOCUMENTATION}
-        Problems: https://github.com/setdef/stryker_for_ruby/issues
+        Problems: #{FORUM}
       TEXT
       RUN = <<~TEXT
         Usage: stryker run [options] [configFile]
@@ -34,7 +35,7 @@ module Stryker
         Options:
       TEXT
       EXITS = "Exit statuses: 0 passed, 1 score below thresholds.break, 2 error"
-      public_constant(:DOCUMENTATION, :OVERVIEW)
+      public_constant(:DOCUMENTATION, :FORUM, :OVERVIEW)
       private_constant(:RUN, :EXITS)
 
       def self.overview

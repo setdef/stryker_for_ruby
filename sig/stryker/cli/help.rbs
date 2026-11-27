@@ -5,6 +5,10 @@ module Stryker
       # The address of the user documentation of the options.
       DOCUMENTATION: String
 
+      # The address of the forum category where people ask questions and report
+      # problems.
+      FORUM: String
+
       # The usage and description at the top of the help of `run`.
       RUN: String
 

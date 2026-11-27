@@ -2,7 +2,7 @@
 
 **Stryker (for Ruby)** supports Ruby 4.0 and later. Ruby 3.3 and 3.4 are unsupported. Nothing blocks them: the gem installs on them and runs, and you use them at your own risk. On a Ruby older than 4.0, `require "stryker/runtime"` writes one line to standard error that names the Ruby version and links to this page.
 
-This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn't search for more on those versions. When you find one, [open an issue](https://github.com/setdef/stryker_for_ruby/issues), and it goes on this page.
+This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn't search for more on those versions. When you find one, [report it on the forum](https://forum.setdef.com/c/stryker-for-ruby), and it goes on this page.
 
 | Problem | Ruby 3.3 | Ruby 3.4 |
 | - | - | - |

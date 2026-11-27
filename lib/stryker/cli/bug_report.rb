@@ -1,11 +1,10 @@
 # frozen_string_literal: true
 
+require_relative("help")
+
 module Stryker
   class CLI
     class BugReport
-      ISSUES = "https://github.com/setdef/stryker_for_ruby/issues/new"
-      public_constant(:ISSUES)
-
       def initialize(error)
         @error = error
       end
@@ -14,7 +13,9 @@ module Stryker
         <<~TEXT.chomp
           Stryker (for Ruby) stopped because of a bug: #{@error.class}: #{@error.message}
           #{Array(@error.backtrace).join("\n")}
-          Report it at #{ISSUES}
+          Report it on the forum at #{Help::FORUM}
+          Include the command you ran, what it printed, your Ruby version,
+          your operating system, and the backtrace above.
         TEXT
       end
     end

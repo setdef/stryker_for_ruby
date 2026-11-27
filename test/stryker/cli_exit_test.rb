@@ -59,11 +59,24 @@ class CLIExitTest < Minitest::Test
     assert_equal([2, "#{message}\n"], [outcome.status, outcome.err])
   end
 
-  def test_an_unexpected_error_exits_with_status_two_with_a_backtrace_and_where_to_report_it
+  def test_an_unexpected_error_exits_with_status_two_with_a_backtrace
     outcome = stryker("run", pipeline: RecordingPipeline.new(raises: RuntimeError.new("boom")))
 
     assert_equal(2, outcome.status)
     assert_match(/stopped because of a bug: RuntimeError: boom\n.*\n/m, outcome.err)
-    assert_includes(outcome.err, "Report it at https://github.com/setdef/stryker_for_ruby/issues/new")
+  end
+
+  def test_an_unexpected_error_says_to_report_it_on_the_forum
+    outcome = stryker("run", pipeline: RecordingPipeline.new(raises: RuntimeError.new("boom")))
+
+    assert_includes(outcome.err, "Report it on the forum at https://forum.setdef.com/c/stryker-for-ruby\n")
+    refute_includes(outcome.err, "github.com/setdef/stryker_for_ruby/issues")
+  end
+
+  def test_an_unexpected_error_says_what_to_include_in_the_report
+    outcome = stryker("run", pipeline: RecordingPipeline.new(raises: RuntimeError.new("boom")))
+
+    assert_includes(outcome.err, "Include the command you ran, what it printed, your Ruby version,")
+    assert_includes(outcome.err, "your operating system, and the backtrace above.")
   end
 end
