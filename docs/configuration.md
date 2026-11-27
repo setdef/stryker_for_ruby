@@ -88,7 +88,7 @@ The flag --test-runner needs a value. Run "stryker help run" for the flags.
 | - | - |
 | 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, and `stryker run -h` also exit with 0 when they have written their text. |
 | 1 | The run finished, and its score is below `thresholds.break`. |
-| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that `mutate` selects, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
+| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that `mutate` selects, a file that `mutate` selects and that doesn't parse, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
 | 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. It ends every process that the run started and deletes its temporary files before it exits. A second signal stops that cleanup and leaves the temporary files. |
 
 A dry run fails, and no mutant runs, when a test fails with no mutant active, when the tests take longer than [`dryRunTimeoutMinutes`](#dryruntimeoutminutes), or when a file that `mutate` selects loaded without its mutants, as it can when another library loads Ruby files itself. The message says which test failed, or what went wrong.
@@ -163,6 +163,14 @@ The patterns apply in order, as StrykerJS applies them: a pattern adds the files
 An empty list selects no file.
 
 **Stryker (for Ruby)** mutates Ruby files only. When a pattern matches an ERB template, a file whose name ends in `.erb`, the run stops before it reads any file, with an error that gives the template's path. The default patterns select the templates in `lib` and `app`, so a project that has any needs a pattern that leaves them out, such as `"!**/*.erb"`.
+
+A file that a pattern selects and that isn't valid Ruby stops the run, with the file's path and the line of the first error that Prism, the Ruby parser, finds:
+
+```text
+lib/cart.rb doesn't parse as Ruby 4.0.0: unexpected end-of-input; expected an expression after the operator, on line 2. Fix the file, or leave it out of the mutate option.
+```
+
+The file is parsed as the Ruby that runs the command, so a file with syntax that only a newer Ruby has stops a run on an older one. The run exits with status 2 and writes no bug report, because the file is yours to fix.
 
 ### `testRunner`
 

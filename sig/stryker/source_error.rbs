@@ -1,0 +1,17 @@
+module Stryker
+  # Raised when a file that the `mutate` option selects can't be used as it
+  # is: it isn't valid Ruby, so Prism finds no sites in it. The message names
+  # the file, the Ruby it was parsed as, Prism's first error, and the line of
+  # that error, and says what to do: fix the file, or leave it out.
+  #
+  # The `stryker` command prints the message and ends with exit status 2,
+  # because the file is the project's to fix. It isn't a bug in
+  # **Stryker (for Ruby)**, so the command writes no bug report.
+  class SourceError < StandardError
+    # Builds the error for a file that doesn't parse.
+    #
+    # - `path`: String, the file's path from the project's root.
+    # - `error`: Prism::ParseError, the first error of the parse.
+    def self.unparsable: (String path, Prism::ParseError error) -> SourceError
+  end
+end

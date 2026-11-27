@@ -2,6 +2,7 @@
 
 require_relative("../support/cli_project")
 require "stryker/isolation/dry_run_error"
+require "stryker/source_error"
 
 # Checks the exit status of `stryker run` for each way a run ends.
 class CLIExitTest < Minitest::Test
@@ -40,6 +41,13 @@ class CLIExitTest < Minitest::Test
     outcome = stryker("run", pipeline: RecordingPipeline.new(raises: failure))
 
     assert_equal([2, "The dry run failed: ShopTest#test_total failed.\n"], [outcome.status, outcome.err])
+  end
+
+  def test_a_file_that_does_not_parse_exits_with_status_two_and_its_message_alone
+    message = "lib/a.rb doesn't parse as Ruby 4.0.0: unexpected end-of-input, on line 2."
+    outcome = stryker("run", pipeline: RecordingPipeline.new(raises: Stryker::SourceError.new(message)))
+
+    assert_equal([2, "#{message}\n"], [outcome.status, outcome.err])
   end
 
   def test_an_unexpected_error_exits_with_status_two_with_a_backtrace_and_where_to_report_it
