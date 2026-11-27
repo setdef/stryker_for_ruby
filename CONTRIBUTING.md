@@ -97,13 +97,13 @@ Record these where the next contributor will find it. (What lives only in a chat
 - Before every network request, have the program say on standard error what it is about to do, and give the request a time limit, so that no command waits on the network in silence or forever.
 - The test suite of the project under test runs with the user's rights. Never widen what it can reach.
 - Never call `Marshal.load` or `YAML.unsafe_load` on data from outside the process.
-- Commits, issues, comments, docs, and code hold only what anyone could find in public sources. Never put in them your machine's names, paths, or hardware, or anything said in a private conversation, and never quote a person from one. An ADR lists its deciders by role, with links to the public issues.
+- Commits, issues, comments, docs, and code contain only what anyone could find in public sources. Never put in them your machine's names, paths, or hardware, or anything said in a private conversation, and never quote a person from one. An ADR lists its deciders by role, with links to the public issues.
 
 ## Quality gates
 
 `bundle exec rake` runs the quality gates: RubyCritic, RuboCop, Steep, test coverage, documentation coverage, `docs:placement` (which fails on a doc comment in a `.rb` file), and `reuse lint`. Every change has to pass all of them, with zero errors and zero warnings. Their thresholds only ever go up. When a change fails a gate, fix the change; never lower a threshold, turn off a check, or exclude code to get it through.
 
-Coverage is 100% for each file, on every system in CI. A test skipped on one system can drop that system's branch coverage below 100% and turn its job red, even though every test passes. Never skip a test on one system to make it pass. Pass the system-dependent value in, such as a path separator or a platform flag, so the test runs everywhere.
+Coverage is 100% for each file, on every system CI tests. A test skipped on one system can drop that system's branch coverage below 100% and turn its job red, even though every test passes. Never skip a test on one system to make it pass. Pass the system-dependent value in, such as a path separator or a platform flag, so the test runs everywhere.
 
 When a gate (a RubyCritic score, a Reek smell, a RuboCop length limit) pushes the design, it's actually pushing you to remember OOA&D & OOP best practices. They properly flag bad code, but their suggestions are naive. Don't game them or comply naively; take responsibility for the object design improving over time.
 
@@ -118,8 +118,8 @@ Ask the maintainer before you change any of these:
 
 ## Copyright and licenses
 
-The project follows the [REUSE Specification](https://reuse.software/spec-3.3/). SPDX headers in files are only for content under a copyleft or share-alike license. Snippet comments are used for ported code, complying with their license. Examples in documentation also use Snippet comments, MIT-0. `REUSE.toml` holds the license information for content under a permissive or public-domain license. The project's own files are Apache-2.0, which is permissive, so they have no SPDX headers; `REUSE.toml` covers them.
+The project follows the [REUSE Specification](https://reuse.software/spec-3.3/). SPDX headers in files are only for content under a copyleft or share-alike license. Ported code goes between snippet comments, as its license requires. Examples in documentation also use Snippet comments, MIT-0. `REUSE.toml` contains the license information for content under a permissive or public-domain license. The project's own files are Apache-2.0, which is permissive, so they have no SPDX headers; `REUSE.toml` covers them.
 
-A file under a copyleft or share-alike license must not be copied from elsewhere without permission from the maintainer. An approved copyleft or share-alike file, or a file copied under a permissive or public-domain license, has that license in its own SPDX header. Run `reuse lint` before you push when copying or porting code.
+A file under a copyleft or share-alike license must not be copied from elsewhere without permission from the maintainer. An approved copyleft or share-alike file, or a file copied under a permissive or public-domain license, has that license in its SPDX header. Run `reuse lint` before you push when copying or porting code.
 
-Code ported from another project (an algorithm translated into Ruby, a table, a regex, etc.), as opposed to code only inspired by it, goes between `# SPDX-SnippetBegin` and `# SPDX-SnippetEnd` comments in its file. Inside them, give the upstream license as `SPDX-License-Identifier`, the upstream copyright as `SPDX-SnippetCopyrightText`, and an `SPDX-SnippetComment` that names the upstream project and file and says what the port changed. `reuse lint` must still pass.
+Code ported from another project (an algorithm translated into Ruby, a table, a regex, etc.), as opposed to code only inspired by it, goes between `# SPDX-SnippetBegin` and `# SPDX-SnippetEnd` comments in its file. Inside them, give the upstream license as `SPDX-License-Identifier`, the upstream copyright as `SPDX-SnippetCopyrightText`, and an `SPDX-SnippetComment` that gives the upstream project's name and file and says what the port changed. `reuse lint` must still pass.
