@@ -36,6 +36,9 @@ module Stryker
       private
 
       # Configures, calls the pipeline, and returns the status for its score.
+      # It loads Configure when the first run needs it. Configure knows every
+      # mutator's name, so loading it loads Prism, which `stryker --version`
+      # and `stryker help` leave alone.
       def execute: (Hash[String, Object?] options, String? file, bool no_color) -> Integer
     end
   end

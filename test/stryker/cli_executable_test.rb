@@ -9,7 +9,15 @@ require_relative("../test_helper")
 class CLIExecutableTest < Minitest::Test
   ROOT = File.expand_path("../..", __dir__)
   EXECUTABLE = File.join(ROOT, "exe", "stryker")
-  private_constant(:ROOT, :EXECUTABLE)
+  # Prism and refract cost most of a run's start-up, and only `stryker run`
+  # uses them. The probe prints each of them that the other commands load.
+  NO_PARSER_PROBE = <<~RUBY
+    require "stringio"
+    require "stryker/cli"
+    [["--version"], ["help"], ["help", "run"]].each { |argv| Stryker::CLI.call(argv, stdout: StringIO.new) }
+    puts($LOADED_FEATURES.grep(%r{/(?:prism|refract)(?:/|\\.rb\\z)}))
+  RUBY
+  private_constant(:ROOT, :EXECUTABLE, :NO_PARSER_PROBE)
 
   def test_version_goes_to_standard_output
     out, err, status = stryker("--version")
@@ -22,6 +30,12 @@ class CLIExecutableTest < Minitest::Test
 
     assert_equal(["", 2], [out, status.exitstatus])
     assert_includes(err, %(Unknown command "frobnicate"))
+  end
+
+  def test_the_version_and_the_help_load_neither_prism_nor_refract
+    out, _err, status = Open3.capture3(RbConfig.ruby, "-I", File.join(ROOT, "lib"), "-e", NO_PARSER_PROBE)
+
+    assert_equal([0, ""], [status.exitstatus, out])
   end
 
   def test_the_gemspec_ships_the_executable

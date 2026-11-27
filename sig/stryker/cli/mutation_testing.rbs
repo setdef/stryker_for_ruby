@@ -30,16 +30,16 @@ module Stryker
 
       @forks: bool
 
-      @pipeline: singleton(Pipeline)
+      @pipeline: singleton(Pipeline)?
 
       # Builds the run.
       #
       # - `root`: String, the project's root.
       # - `forks`: bool, whether Ruby has `fork` on this system. By default,
       #   `FORKS`.
-      # - `pipeline`: the class of the pipeline, `Stryker::Pipeline` by
-      #   default, or a stand-in in a test.
-      def initialize: (String root, ?forks: bool, ?pipeline: singleton(Pipeline)) -> void
+      # - `pipeline`: the class of the pipeline, or nil for
+      #   `Stryker::Pipeline`, or a stand-in in a test.
+      def initialize: (String root, ?forks: bool, ?pipeline: singleton(Pipeline)?) -> void
 
       # Runs mutation testing as `config` says, and returns the run's
       # mutation score, or nil when no mutant was valid. Before it reads any
@@ -55,6 +55,14 @@ module Stryker
       def call: (Config config, Streams streams, Color color) -> Float?
 
       private
+
+      # Raises Stryker::UnsupportedError where the system has no `fork`, and
+      # otherwise loads the stages of a run: the isolation adapters, the
+      # pipeline, the test runners, and the reporters. Prism and refract come
+      # with them, and only a run needs them, so `stryker --version` and
+      # `stryker help` never load them. Then raises Stryker::ConfigError when
+      # `testRunner` names no test runner that the gem has.
+      def prepare: (Config config) -> void
 
       # The adapters that read the cache at `cache`, for the run's root.
       def isolations: (String cache) -> [Isolation::ForkPerRun, Isolation::FreshProcesses]

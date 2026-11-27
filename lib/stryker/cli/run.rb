@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative("../config_error")
-require_relative("../configure")
 require_relative("color")
 require_relative("failures")
 require_relative("verdict")
@@ -23,6 +22,9 @@ module Stryker
       private def execute(options, file, no_color)
         raise(ConfigError, %(The configuration file #{file.inspect} has a NUL byte.)) if file&.include?("\0")
 
+        # Configure knows every mutator's name, so it loads Prism, which only a
+        # run uses: `stryker --version` and `stryker help` never load it.
+        require_relative("../configure")
         config = Configure.call(options:, file:, root: @root)
         score = @pipeline.call(config, @streams, Color.from(@env, no_color))
         Verdict.new(config.threshold_break).status(score)

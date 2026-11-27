@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 
 ### Changed
 
+- `stryker --version` and `stryker help` start about three times as fast, because they no longer load the parser that only `stryker run` uses.
 - On Windows, `stryker run` stops after its checks with an error that says a run on Windows isn't built yet.
 - `thresholds.high` and `thresholds.low` take only whole numbers from 0 to 100, as the JSON report's schema requires. A fraction such as `82.5` is now an error that says so, where the configuration took it and the report then failed its schema. `thresholds.break` still takes any number from 0 to 100.
 

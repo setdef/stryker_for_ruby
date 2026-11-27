@@ -53,7 +53,7 @@ flowchart LR
   CA -- read by the hook --> S5
 ```
 
-Prism and refract load only in the orchestrator, and a project process loads only the runtime, which uses nothing outside the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
+Prism and refract load only in the orchestrator, and only when `stryker run` goes on to configure a run, so `stryker --version` and `stryker help` don't load them. A project process loads only the runtime, which uses nothing outside the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
 
 ## Ports and adapters
 
