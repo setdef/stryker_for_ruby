@@ -207,24 +207,25 @@ Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argumen
 
 A project process ends with `exit!`, whatever its mode, once its work is done or has raised. `exit` would run every `at_exit` block, the project's included: `minitest/autorun`'s, and SimpleCov's, which writes its results into the project.
 
-No result travels on standard output, on any system. Each project process's standard output and standard error go to files of its own, which `Isolation::OutputFiles` names: the parent's in a folder that the orchestrator makes with `Dir.mktmpdir` and deletes when it stops the parent, a forked child's in the same folder, named by its mutant's ID, which the child reopens both streams onto right after the fork, and a fresh process's in the run's folder. A `RuntimeError`'s reason ends with the last 20 lines of the run's standard error.
+No result travels on standard output, on any system. Each project process's standard output and standard error go to files of its own, which `Isolation::OutputFiles` names: the parent's in a folder that the orchestrator makes with `Dir.mktmpdir` and deletes when it stops the parent, a forked child's in the same folder, named by its mutant's ID, or `dry-run` for the dry run's child, which the child reopens both streams onto right after the fork, and a fresh process's in the run's folder. A `RuntimeError`'s reason ends with the last 20 lines of the run's standard error.
 
 ### The protocol
 
 Every message is one JSON object on a line of its own. Each process that reads one parses it with `JSON.parse` and never with `Marshal.load`, because the process that wrote it ran the project's tests. Each line goes in one write, in sync mode, so a write survives the writer's `exit!`, and the lines of two threads never mix.
 
-A process that runs a mutant run writes, as it happens:
+A process that runs a mutant run, or the dry run, writes, as it happens:
 
 | Message | When |
 | - | - |
 | `{"started": <the test>}` | Just before each test starts |
 | `{"finished": <the test's result>}` | As soon as each test finishes, through the test runner adapter's `test_finished` |
+| `{"result": <the DryRunResult>}` | The dry run only: once the loading check passed, with what the dry run found ([The dry run](coverage.md#the-dry-run)) |
 | `{"ended": true}` | When the run's last test has finished |
 | `{"error": "<class>: <message>"}` | When the run raised instead, such as `SystemExit` from a test that calls `exit` |
 
 A test's result crosses as soon as the test finishes ([#20](https://github.com/setdef/stryker_for_ruby/issues/20)), so a failure reaches the orchestrator even when the process dies right after it.
 
-The parent that forks relays each child's lines to the orchestrator, each with the mutant's ID:
+The parent that forks relays each child's lines to the orchestrator, each with its run's key: the mutant's ID, as the table shows, or `"dry_run": true` for the dry run's child, as in `{"dry_run": true, "forked": 4242}`:
 
 | Message | When |
 | - | - |
@@ -233,9 +234,9 @@ The parent that forks relays each child's lines to the orchestrator, each with t
 | `{"mutant": 7, "message": {...}}` | Each whole line that the child wrote, parsed, or `null` for a line that isn't JSON |
 | `{"mutant": 7, "exited": {"exit_status": 0, "signal": null, "timed_out": false, "duration_ms": 3.1, "errors": ""}}` | The child ended, and how, with the last 20 lines of its standard error |
 
-The orchestrator gives the parent each run as `Stryker::MutantRun#to_json` on a line of the parent's standard input. A fresh process reads its run from a file, as JSON, and writes its messages to another file, because Ruby on Windows hands a new process no descriptor beyond its standard input, output, and error: `Process.spawn` there refuses a descriptor of 3 or more. Both files are in a temporary folder for the run, which the orchestrator makes with `Dir.mktmpdir` and deletes once it has judged the run. Each line reaches the file when its test finishes, so a failure written before a crash is still there.
+The orchestrator gives the parent each run as `Stryker::MutantRun#to_json` on a line of the parent's standard input, and the dry run as `{"dry_run": {"timeout_ms": N}}`, with the dry run's limit. The run's key on the parent's lines, and the name of its child's output files, come from the run itself, so the relay, the forking, and the orchestrator's record of the runs in flight treat both kinds alike. A fresh process reads its run from a file, as JSON, and writes its messages to another file, because Ruby on Windows hands a new process no descriptor beyond its standard input, output, and error: `Process.spawn` there refuses a descriptor of 3 or more. Both files are in a temporary folder for the run, which the orchestrator makes with `Dir.mktmpdir` and deletes once it has judged the run. Each line reaches the file when its test finishes, so a failure written before a crash is still there.
 
-A stream that stops partway is read up to the last whole line. A last line with no line break is one the writer didn't finish, and is left out. The orchestrator trusts a run's messages up to the first line that is no message, such as a line that isn't JSON, an object with a key it doesn't know, or `null` from the parent, and reads nothing after it. A parent that ends while runs are in flight, or writes a line about a mutant that isn't in flight, makes the adapter raise `Stryker::Isolation::Error`: that is a fault of **Stryker (for Ruby)**, not a result of the mutant.
+A stream that stops partway is read up to the last whole line. A last line with no line break is one the writer didn't finish, and is left out. The orchestrator trusts a run's messages up to the first line that is no message, such as a line that isn't JSON, an object with a key it doesn't know, or `null` from the parent, and reads nothing after it. A parent that ends while runs are in flight, or writes a line about a run that isn't in flight, makes the adapter raise `Stryker::Isolation::Error`: that is a fault of **Stryker (for Ruby)**, not a result of the mutant.
 
 ### How a run's outcome becomes a status
 
@@ -254,7 +255,7 @@ So a failed test kills the mutant whatever the process did after it said so: cra
 
 | Run | Who writes the messages | Who reads them | Who enforces the time limit |
 | - | - | - | - |
-| Forked child | The child, to its fork parent, over a pipe of its own | The fork parent, which relays them to the orchestrator over the parent's pipe | The fork parent |
+| Forked child, for a runtime mutant or the dry run | The child, to its fork parent, over a pipe of its own | The fork parent, which relays them to the orchestrator over the parent's pipe | The fork parent |
 | Fresh process for a static mutant | The fresh process, to a file of its run's | The orchestrator, once the process ended | The orchestrator |
 
 A run's time limit counts from the start of its first test, because the plan computes it from the dry-run times of tests ([The plan](coverage.md#each-runs-time-limit)), and a process's start isn't a test's. A fresh process can take longer to start than a run's limit: on Windows with Ruby 4.0.10, while the whole suite ran, a static run's process took 5 to 8 seconds from `Process.spawn` to its first test, against a `timeoutMS` of 5000 by default ([#85](https://github.com/setdef/stryker_for_ruby/issues/85)). Until its first test starts, a process has a fixed limit of 300 seconds to start and load the tests, the same limit as the fork parent has to load them, and no option changes it. A run that passes that limit started no test, so no test judged its mutant, and its status is `RuntimeError`, never `Timeout`, which the report counts as detected.

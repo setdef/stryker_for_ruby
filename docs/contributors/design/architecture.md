@@ -13,19 +13,21 @@ flowchart TB
   C["Configure"] --> P["Parse and find sites"]
   P --> I["Instrument"]
   I --> L["Load"]
-  L --> PL["Plan mutant runs"]
+  L --> D["Dry run"]
+  D --> PL["Plan mutant runs"]
 ```
 
 - **Configure.** A config source adapter reads `stryker.config.json` or `stryker.config.yml`, and `Configure.call` merges the file with the command line's options and the defaults, checks every option, and returns one `Config` value. [Configuration](../../configuration.md) lists the options, their defaults, and the checks.
 - **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog).
 - **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
 - **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
+- **Dry run.** Every test runs once with no mutant active, in a child forked from the parent that loaded the project, and the switches record which tests reach which mutants. The dry run fails, and no mutant runs, when a test fails, when an instrumented file loaded without going through the hook, or when its tests take longer than `dryRunTimeoutMinutes`. `Isolation::ForkPerRun#dry_run` returns what it found as a `DryRunResult`. [The dry run](coverage.md#the-dry-run) explains where it runs and why, and [Coverage](coverage.md) specifies the hits and buckets.
 - **Plan mutant runs.** From what a dry run of every test found, a `DryRunResult`, the plan gives each mutant the status `NoCoverage`, a static run, or a runtime run of the tests that reached it, with a time limit taken from the dry-run times of those tests. It publishes `Events::PlanReady`. [The plan](coverage.md#the-plan) explains the rules and the time limit.
 - **Run each mutant in isolation.** An isolation adapter runs each mutant run in a clean process: a child forked from a loaded parent for a runtime mutant on Linux and macOS, or a fresh process for a static mutant on every system. [Loading and isolation](loading-and-isolation.md#isolation) specifies it.
 
 ## Two kinds of process
 
-A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Parse and find sites, Instrument, and Plan mutant runs. A project process loads the project's code, and it runs Load. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
+A run has two kinds of process. The orchestrator is the process that `stryker run` starts, and it runs Configure, Parse and find sites, Instrument, and Plan mutant runs. A project process loads the project's code, and it runs Load and the dry run. [Loading and isolation](loading-and-isolation.md#two-kinds-of-process) specifies both kinds.
 
 ```mermaid
 flowchart LR

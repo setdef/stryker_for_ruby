@@ -165,6 +165,33 @@ The errors have two causes:
 
 Hits avoid both causes, because each switch records the IDs of the mutants it holds, and a switch runs exactly when the code at its sites does.
 
+## The dry run
+
+The dry run runs every test once, with no mutant active, while the switches record their hits. What it finds is the map: each test's result and time, the mutants in each test's bucket, the static bucket, and every file first loaded during a test, all in one `Stryker::DryRunResult` for the plan.
+
+### Where it runs
+
+On Linux and macOS, the dry run runs in a child of the parent that forks, as a runtime mutant's run does ([Forking on Linux and macOS](loading-and-isolation.md#forking-on-linux-and-macos)). The parent recorded hits while it loaded the project's code and tests, so the child starts with those hits in its static bucket, and runs the tests from the same state that every mutant run starts from. The project loads once for the dry run and every runtime mutant run. A fresh process for the dry run would load the project once more, and start from a state that no runtime mutant's run shares. `Isolation::ForkPerRun#dry_run` gives the parent the dry run. How the dry run runs on Windows, which has no `fork`, is decided in [#37](https://github.com/setdef/stryker_for_ruby/issues/37).
+
+The child runs the tests that the parent loaded, in the parent's order. It can't load them again: the Minitest adapter empties Minitest's list of classes as it loads them ([Test runners](test-runners.md#why-the-adapter-empties-minitests-list-of-classes)), so a second load lists none. A forked child can't drain its parent's collector, so the child readies another collector before its first test ([The collector Ractor](#the-collector-ractor)).
+
+### What it writes
+
+The child speaks the protocol of a mutant run ([The protocol](loading-and-isolation.md#the-protocol)): a `started` and a `finished` line for each test as it happens, then, once the loading check has passed, one `result` line with the whole `DryRunResult`, and `ended`. A test's result crosses as soon as the test finishes, so a crash after a failing test still says which test failed ([#20](https://github.com/setdef/stryker_for_ruby/issues/20)). The buckets go on the last line, whole, rather than on each test's `finished` line, so the plan reads the map from one place. The parent relays the child's lines under the key `"dry_run": true`, where a mutant run's lines have the mutant's ID.
+
+### When it fails
+
+The child stops at the first failing test, as a mutant run's child does, and then runs the loading check ([The loading check](loading-and-isolation.md#the-loading-check)). It fails, and no mutant runs, when:
+
+- a test failed: a test that fails with no mutant active can't judge a mutant;
+- the loading check found an instrumented file that loaded without the hook;
+- the child crashed, exited before it wrote what it found, or raised;
+- its tests ran past `dryRunTimeoutMinutes`, whose default is StrykerJS's 5 minutes.
+
+In each case, `Isolation::ForkPerRun#dry_run` raises `Stryker::Isolation::DryRunError` and stops the parent. The error's message gives the failed test, the error the child wrote, or how the child ended, with the end of its standard error, and gives `dryRunTimeoutMinutes` when the limit passed. It is a class apart from `Stryker::Isolation::Error`, which stands for a fault of **Stryker (for Ruby)**, because each of these is the project's to fix.
+
+The limit counts from the start of the first test, as a mutant run's does ([Time limits and kills](loading-and-isolation.md#time-limits-and-kills)). Before its first test, the child has the fixed 300 seconds for starting, and when it passes them, the error's message says that it started no test.
+
 ## The plan
 
 The plan, `Stryker::Plan`, reads the map that a dry run recorded and gives each mutant a status or a run, so that each mutant runs against only the tests that reach it, and a mutant that no test reaches gets the status `NoCoverage` without running:
@@ -195,5 +222,6 @@ The run's tests are the tests that it runs: for a runtime run, the tests that re
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.
 - It doesn't record hits in a mutant run.
+- It doesn't run the dry run on Windows, where no isolation adapter forks.
 - It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
 - It doesn't record a hit from a Ractor that started before the runtime loaded. Such a hit raises `Stryker::UnsupportedError`.
