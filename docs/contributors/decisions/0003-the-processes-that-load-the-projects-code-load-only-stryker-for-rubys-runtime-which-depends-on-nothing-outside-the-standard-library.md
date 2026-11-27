@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: accepted
 date: 2026-11-27
 deciders: "The project's architect, an AI agent, chose the rule ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)). The owner's scope rulings ([#1](https://github.com/setdef/stryker_for_ruby/issues/1), [#2](https://github.com/setdef/stryker_for_ruby/issues/2), [#3](https://github.com/setdef/stryker_for_ruby/issues/3), [#4](https://github.com/setdef/stryker_for_ruby/issues/4), [#5](https://github.com/setdef/stryker_for_ruby/issues/5), and [#6](https://github.com/setdef/stryker_for_ruby/issues/6)) set what the gem must do, and none of them mentions a dependency."
 ---
@@ -22,13 +22,13 @@ No other driver was recorded.
 
 ## Considered Options
 
-1. **Two kinds of process.** The orchestrator instruments, plans, and reports. It loads Prism and refract, and it starts the parse workers, which check that each mutant is valid Ruby and load Prism but neither refract nor the project's code. The processes that load the project's code load only **Stryker (for Ruby)**'s runtime, which uses nothing outside the standard library and the project's own test framework, and they read the instrumented source from a cache outside the project. The runtime holds the hook, the switch, the hit recorder and its collector, the test runner adapters, the entry point of a project process, the code that writes each test's result, and the part of each isolation adapter that runs in a project process.
-2. **One kind of process.** The instrumenter, with Prism and refract, loads in the processes that load the project's code.
+1. **Two kinds of process.** The orchestrator instruments, plans, and reports. It loads Prism, refract, and regexp_parser, and it starts the parse workers, which check that each mutant is valid Ruby and load Prism but neither refract nor the project's code. The processes that load the project's code load only **Stryker (for Ruby)**'s runtime, which uses nothing outside the standard library and the project's own test framework, and they read the instrumented source from a cache outside the project. The runtime holds the hook, the switch, the hit recorder and its collector, the test runner adapters, the entry point of a project process, the code that writes each test's result, and the part of each isolation adapter that runs in a project process.
+2. **One kind of process.** The instrumenter, with Prism, refract, and regexp_parser, loads in the processes that load the project's code.
 3. **Prism only,** with a printer for mutated Prism nodes written in this repository in place of refract.
 
 ## Decision Outcome
 
-Chosen: option 1, because every dependency resolves against the project's bundle, and under option 1 the processes that load the project's code load nothing for **Stryker (for Ruby)** outside the standard library and the project's own test framework. Option 2 lost on the same driver: it loads Prism, refract, and Zeitwerk beside the project's code. Option 3 lost to reusing refract, which already prints valid Ruby with precedence kept, and whose tests round-trip the standard library and installed gems ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)).
+Chosen: option 1, because every dependency resolves against the project's bundle, and under option 1 the processes that load the project's code load nothing for **Stryker (for Ruby)** outside the standard library and the project's own test framework. Option 2 lost on the same driver: it loads Prism, refract, regexp_parser, and Zeitwerk beside the project's code. Option 3 lost to reusing refract, which already prints valid Ruby with precedence kept, and whose tests round-trip the standard library and installed gems ([#7](https://github.com/setdef/stryker_for_ruby/issues/7)).
 
 A parse worker is not a process that loads the project's code, so the rule that those processes load only the runtime holds. How it works is in [docs/contributors/design/loading-and-isolation.md](../design/loading-and-isolation.md#two-kinds-of-process).
 
@@ -36,16 +36,16 @@ Confidence: a probe shows that option 1 works ([#7](https://github.com/setdef/st
 
 ### Consequences
 
-* Good, because the processes that run the project's tests never load Prism, refract, or Zeitwerk for **Stryker (for Ruby)**, so the project's code never runs beside a version of them that **Stryker (for Ruby)** needs.
+* Good, because the processes that run the project's tests never load Prism, refract, regexp_parser, or Zeitwerk for **Stryker (for Ruby)**, so the project's code never runs beside a version of them that **Stryker (for Ruby)** needs.
 * Good, because instrumented source never goes into the project's folders.
-* Bad, because the gem still depends on `prism >= 1.7` and `refract ~> 2.0`, so a bundle that holds the gem has to resolve them, and a bundle that locks Prism below 1.7 can't hold the gem.
+* Bad, because the gem still depends on `prism >= 1.7`, `refract ~> 2.0`, and `regexp_parser ~> 2.12`, so a bundle that holds the gem has to resolve them, and a bundle that locks Prism below 1.7 can't hold the gem.
 * Bad, because on a Ruby whose bundled Prism is older than 1.7, Bundler has to install the Prism gem. Ruby 3.3 bundles 0.19.0 and Ruby 3.4 bundles 1.5.3.
 * Bad, because the rule trades against the project's rule to reuse before building ([CONTRIBUTING.md](../../../CONTRIBUTING.md#writing-code)). Code that a gem would provide in the runtime is written and maintained in this repository, with this ADR as the written reason that rule asks for.
 * Bad for maintainers, because a run has two kinds of process and a cache between them to build, test, and keep working, and the runtime has to work with any version of a default gem, such as `json`, that a project can lock and a supported Ruby can load.
 
 ### Confirmation
 
-`StandardLibraryTest` starts a Ruby process that requires the runtime, every value that crosses a pipe, and the entry point of a project process, and fails when that process loads a file from outside the gem's `lib` folder, Ruby's library folders, and the folders of the `json` that RubyGems activates. It also fails when that process loads Prism or refract. CI runs it in the gate on Linux, macOS, and Windows. CI's `prism-floor` job runs the tests on Prism 1.7.0, the lowest version the gemspec allows, with Ruby 4.0. Nothing checks refract's constraint, `~> 2.0`: every job runs the refract that its lockfile locks. Nothing checks the gemspec's dependencies, so a reviewer reads every change to them.
+`StandardLibraryTest` starts a Ruby process that requires the runtime, every value that crosses a pipe, and the entry point of a project process, and fails when that process loads a file from outside the gem's `lib` folder, Ruby's library folders, and the folders of the `json` that RubyGems activates. It also fails when that process loads Prism, refract, or regexp_parser. CI runs it in the gate on Linux, macOS, and Windows. CI's `prism-floor` job runs the tests on Prism 1.7.0, the lowest version the gemspec allows, with Ruby 4.0. Nothing checks refract's constraint, `~> 2.0`: every job runs the refract that its lockfile locks. Nothing checks the gemspec's dependencies, so a reviewer reads every change to them.
 
 ## More Information
 
