@@ -33,6 +33,12 @@ class ConfigureNamesTest < Minitest::Test
     assert_equal('Unknown option "--test-runnr" on the command line. Did you mean "--test-runner"?', message)
   end
 
+  def test_a_name_that_only_starts_like_a_group_is_unknown_and_not_a_group
+    message = refusal({ "stryker.config.json": '{ "thresholds.hig": 90 }' })
+
+    assert_equal('Unknown option "thresholds.hig" in stryker.config.json. Did you mean "thresholds.high"?', message)
+  end
+
   def test_a_name_that_groups_options_says_so_and_lists_them
     message = refusal({ "stryker.config.json": '{ "thresholds": 90 }' })
 

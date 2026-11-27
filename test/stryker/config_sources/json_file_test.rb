@@ -35,6 +35,16 @@ class JsonFileTest < Minitest::Test
     end
   end
 
+  def test_shows_only_the_first_line_of_the_parsers_message_without_its_spaces
+    in_file("{}") do |path|
+      error = JSON.stub(:parse, -> (_text) { raise(JSON::ParserError, "first line \nsecond line\n") }) do
+        assert_raises(Stryker::ConfigError) { source_under_test(path).read }
+      end
+
+      assert_equal("#{path} isn't valid JSON: first line", error.message)
+    end
+  end
+
   def test_says_that_a_byte_order_mark_is_the_problem_instead_of_an_unexpected_character
     in_file("\uFEFF{ \"mutate\": [] }") do |path|
       error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }
