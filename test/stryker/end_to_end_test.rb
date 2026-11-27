@@ -1,11 +1,9 @@
 # frozen_string_literal: true
 
 require_relative("../report_schema")
+require_relative("../support/sample_projects")
 require_relative("../test_helper")
-require "fileutils"
-require "json"
 require "open3"
-require "rbconfig"
 require "tmpdir"
 
 # Runs `stryker run` as a user runs it, in a fresh process, on the sample
@@ -15,12 +13,11 @@ require "tmpdir"
 # instead.
 class EndToEndTest < Minitest::Test
   include ReportSchema
+  include SampleProjects
 
   parallelize_me!
 
-  ROOT = File.expand_path("../..", __dir__)
-  SAMPLE = File.join(ROOT, "test", "fixtures", "sample_project")
-  COMMAND = [RbConfig.ruby, "-I", File.join(ROOT, "lib"), File.join(ROOT, "exe", "stryker"), "run"].freeze
+  SAMPLE = "sample_project"
   FORKS = Process.respond_to?(:fork)
   # Each mutant that the sample is built to give, by its file, line, mutator,
   # and replacement, with its status and whether it is static. The run holds
@@ -34,24 +31,12 @@ class EndToEndTest < Minitest::Test
   }.freeze
   REFUSED = "A run on Windows isn't built yet: Stryker (for Ruby) runs each runtime mutant in a process " \
     "forked from one that loaded the project, and Windows has no fork.\n"
-  private_constant(:ROOT, :SAMPLE, :COMMAND, :FORKS, :BUILT, :REFUSED)
-
-  Outcome = Data.define(:status, :out, :err, :report)
-  private_constant(:Outcome)
+  private_constant(:SAMPLE, :FORKS, :BUILT, :REFUSED)
 
   # Runs the command in a copy of the sample, with the flags, and with
   # `TMPDIR` set to `temporary`.
   def stryker(*flags, temporary: Dir.tmpdir)
-    Dir.mktmpdir("stryker-end-to-end-") do |root|
-      FileUtils.cp_r(File.join(SAMPLE, "."), root)
-      out, err, status = Open3.capture3({ "TMPDIR" => temporary }, *COMMAND, *flags, chdir: root)
-      Outcome.new(status.exitstatus, out, err, report_in(root))
-    end
-  end
-
-  def report_in(root)
-    path = File.join(root, "reports", "mutation", "mutation.json")
-    JSON.parse(File.read(path)) if File.exist?(path)
+    run_in_copy(SAMPLE, *flags, temporary:)
   end
 
   # The status and staticness of each mutant of `report` that the sample is
@@ -104,8 +89,7 @@ class EndToEndTest < Minitest::Test
   # Starts the command in a copy of the sample, sends it TERM once the fork
   # parent has started, and gives how it ended.
   private def terminated(temporary)
-    Dir.mktmpdir("stryker-end-to-end-") do |root|
-      FileUtils.cp_r(File.join(SAMPLE, "."), root)
+    in_copy(SAMPLE) do |root|
       Open3.popen3({ "TMPDIR" => temporary }, *COMMAND, chdir: root) do |stdin, _out, err, waiter|
         stdin.close
         sleep(0.01) until Dir.glob("stryker-fork-*", base: temporary).any? || !waiter.alive?
