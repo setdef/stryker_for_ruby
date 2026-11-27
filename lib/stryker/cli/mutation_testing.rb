@@ -20,8 +20,7 @@ module Stryker
       def call(config, streams, color)
         prepare(config)
         reporters = Reporting.new(config, @root).reporters(streams, color)
-        selected = Templates.new(config, @root).config(streams.stderr)
-        (@pipeline || Pipeline).new(@root, -> (cache) { isolations(cache) }, reporters).call(selected)
+        (@pipeline || Pipeline).new(@root, -> (cache) { isolations(cache) }, reporters).call(config)
       end
 
       private def prepare(config)

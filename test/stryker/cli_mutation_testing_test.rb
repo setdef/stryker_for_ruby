@@ -17,15 +17,14 @@ class CLIMutationTestingTest < Minitest::Test
   # gives a score.
   class Pipeline
     class << self
-      attr_reader :built, :config
+      attr_reader :built
     end
 
     def initialize(root, isolations, reporters)
       self.class.instance_variable_set(:@built, [root, isolations, reporters])
     end
 
-    def call(config)
-      self.class.instance_variable_set(:@config, config)
+    def call(_config)
       75.0
     end
   end
@@ -44,17 +43,6 @@ class CLIMutationTestingTest < Minitest::Test
   def run_with(forks: true, stdout: StringIO.new, stderr: StringIO.new, **)
     testing = Stryker::CLI::MutationTesting.new("/project", forks:, pipeline: Pipeline)
     testing.call(config(**), Stryker::CLI::Streams.new(stdout, stderr), Stryker::CLI::Color.new(false))
-  end
-
-  def test_the_templates_that_only_the_default_selects_are_left_out_of_the_patterns_the_pipeline_gets
-    Dir.mktmpdir do |root|
-      File.write(File.join(root, "a.erb"), "")
-      streams = Stryker::CLI::Streams.new(StringIO.new, stderr = StringIO.new)
-      testing = Stryker::CLI::MutationTesting.new(root, pipeline: Pipeline)
-      testing.call(config(mutate: %w[*.erb], reporters: []), streams, Stryker::CLI::Color.new(false))
-
-      assert_equal([%w[*.erb !**/*.erb], true], [Pipeline.config.mutate, stderr.string.start_with?("Warning: ")])
-    end
   end
 
   def test_the_pipeline_runs_in_the_project_and_its_score_is_the_runs
