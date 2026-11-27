@@ -203,7 +203,7 @@ The orchestrator starts every project process with an array of arguments, never 
 | Mode | What it needs | Standard input | Standard output and standard error |
 | - | - | - | - |
 | `fork-parent` | The number of the file descriptor of its pipe for results, and the folder for its children's output | A pipe that carries its runs | Files in a temporary folder of the parent's |
-| `static` | The path of the file that holds its run, and the path of the file for its results | The null device | Files in the run's temporary folder |
+| `fresh` | The path of the file that holds its run, and the path of the file for its results | The null device | Files in the run's temporary folder |
 
 Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set for a static mutant's run and unset for the parent that forks, whatever the orchestrator's environment holds.
 

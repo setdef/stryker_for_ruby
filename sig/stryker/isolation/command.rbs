@@ -6,7 +6,7 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # argv = Stryker::Isolation::Command.for("static", cache_directory, "minitest", "7.run", "7.results")
+    # argv = Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "7.run", "7.results")
     # Process.spawn(Stryker::Isolation::Command.environment(7), *argv)
     # ```
     module Command

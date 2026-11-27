@@ -7,7 +7,7 @@ require_relative "run_report"
 
 module Stryker
   module Isolation
-    class StaticRun
+    class FreshProcess
       OTHER_MUTANT = "The process has mutant %<active>p active, from STRYKER_ACTIVE_MUTANT, " \
         "and its run is of mutant %<run>p."
       private_constant(:OTHER_MUTANT)

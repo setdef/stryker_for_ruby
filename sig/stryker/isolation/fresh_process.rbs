@@ -1,6 +1,6 @@
 module Stryker
   module Isolation
-    # What the fresh process of a static mutant's run does, in its project
+    # What a fresh process does with its run, in its project
     # process: it reads its run from a file, checks that the run's mutant
     # is the one that `STRYKER_ACTIVE_MUTANT` made active before anything
     # loaded, loads the project's tests, and runs the run's tests, stopping
@@ -14,10 +14,10 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # Stryker::Isolation::StaticRun.build(runner, ["7.run", "7.results"]).call
+    # Stryker::Isolation::FreshProcess.build(runner, ["7.run", "7.results"]).call
     # # the process ends here
     # ```
-    class StaticRun
+    class FreshProcess
       # The text of the error for a run of another mutant than the active
       # one.
       OTHER_MUTANT: String
@@ -36,7 +36,7 @@ module Stryker
       #
       # - `runner`: Stryker::_TestRunner, the test runner adapter.
       # - `details`: Array of String, the two paths.
-      def self.build: (_TestRunner runner, Array[String] details) -> StaticRun
+      def self.build: (_TestRunner runner, Array[String] details) -> FreshProcess
 
       # Builds the run.
       #

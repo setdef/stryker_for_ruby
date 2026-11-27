@@ -9,10 +9,10 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # launch = Stryker::Isolation::StaticLaunch.new(cache_directory, project_root)
+    # launch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root)
     # watch = launch.call(run, "minitest")
     # ```
-    class StaticLaunch
+    class FreshLaunch
       # The cache's directory.
       @directory: String
 

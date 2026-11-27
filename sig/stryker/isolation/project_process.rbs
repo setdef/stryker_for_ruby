@@ -15,20 +15,19 @@ module Stryker
     #
     # ## Examples
     #
-    # The arguments of a fresh process for a static mutant's run:
+    # The arguments of a fresh process for mutant 7's run:
     #
     # ```ruby
-    # Stryker::Isolation::Command.for("static", cache_directory, "minitest", "7.run", "7.results")
+    # Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "7.run", "7.results")
     # # => [RbConfig.ruby, "-r", ".../stryker/isolation/project_process.rb",
     # #     "-e", "Stryker::Isolation::ProjectProcess.main", "--",
-    # #     "static", cache_directory, "minitest", "7.run", "7.results"]
+    # #     "fresh", cache_directory, "minitest", "7.run", "7.results"]
     # ```
     module ProjectProcess
       # What a project process does, by the name of its mode:
       # `"fork-parent"`, the parent that forks a child for each runtime
-      # mutant's run, and `"static"`, the fresh process of a static
-      # mutant's run.
-      MODES: Hash[String, singleton(ForkParent) | singleton(StaticRun)]
+      # mutant's run, and `"fresh"`, a fresh process that runs one run.
+      MODES: Hash[String, singleton(ForkParent) | singleton(FreshProcess)]
 
       # Runs the process from `argv`. It takes every argument out of
       # `argv` before the project's code loads, so Minitest, which parses
@@ -40,7 +39,7 @@ module Stryker
       # - `argv`: Array of String, `ARGV` by default.
       # - `loader`: `Stryker::Runtime::Loader`, or a stand-in in a test.
       # - `modes`: Hash, `MODES` unless a test passes others.
-      def self.main: (?Array[String] argv, ?singleton(Runtime::Loader) loader, ?Hash[String, singleton(ForkParent) | singleton(StaticRun)] modes) -> void
+      def self.main: (?Array[String] argv, ?singleton(Runtime::Loader) loader, ?Hash[String, singleton(ForkParent) | singleton(FreshProcess)] modes) -> void
     end
   end
 end

@@ -73,11 +73,11 @@ class SmallPartsTest < Minitest::Test
   end
 
   def test_the_command_starts_the_entry_point_with_the_arguments_after_its_options
-    argv = Stryker::Isolation::Command.for("static", "/cache", "minitest", "0.run", "0.results")
+    argv = Stryker::Isolation::Command.for("fresh", "/cache", "minitest", "0.run", "0.results")
     entry = File.expand_path("../../../lib/stryker/isolation/project_process.rb", __dir__)
 
     assert_equal([RbConfig.ruby, "-r", entry, "-e", "Stryker::Isolation::ProjectProcess.main", "--"], argv.first(6))
-    assert_equal(%w[static /cache minitest 0.run 0.results], argv.drop(6))
+    assert_equal(%w[fresh /cache minitest 0.run 0.results], argv.drop(6))
     assert_path_exists(Stryker::Isolation::Command::ENTRY)
   end
 

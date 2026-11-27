@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "error"
+require_relative "fresh_launch"
 require_relative "fresh_watches"
-require_relative "static_launch"
 require_relative "stop_on_raise"
 
 module Stryker
@@ -11,7 +11,7 @@ module Stryker
       UNSTARTED = "The adapter has no options for its runs: call start first."
       private_constant(:UNSTARTED)
 
-      def initialize(directory, root = Dir.pwd, launch = StaticLaunch.new(directory, root))
+      def initialize(directory, root = Dir.pwd, launch = FreshLaunch.new(directory, root))
         @launch = launch
         @config = nil
         @running = FreshWatches.new

@@ -64,7 +64,7 @@ class LaunchTest < Minitest::Test
   # Launches a fresh process of mutant 7's static run with the stand-in, and
   # returns what it was asked to spawn with, the run's file, and the watch.
   def fresh_spawned
-    watch = Stryker::Isolation::StaticLaunch.new("/cache", "/project", @process).call(
+    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(
       sample_run(7, static: true),
       "minitest"
     )

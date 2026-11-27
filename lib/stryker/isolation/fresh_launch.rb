@@ -9,7 +9,7 @@ require_relative "timer"
 
 module Stryker
   module Isolation
-    class StaticLaunch
+    class FreshLaunch
       def initialize(directory, root, process = Process)
         @directory = directory
         @root = root
@@ -23,7 +23,7 @@ module Stryker
 
       private def spawn(fresh, runner)
         input, results = fresh.paths
-        argv = Command.for("static", @directory, runner, input, results)
+        argv = Command.for("fresh", @directory, runner, input, results)
         options = { chdir: @root, **fresh.output_options, **ProcessGroup::SYSTEM.spawn_options }
         # The mutant is active before the process starts, so its switch takes
         # the mutated branch while its file loads.

@@ -32,7 +32,7 @@ module Stryker
       UNSTARTED: String
 
       # What starts each process.
-      @launch: StaticLaunch
+      @launch: FreshLaunch
 
       # The options of the run, from `start`.
       @config: Config?
@@ -45,9 +45,9 @@ module Stryker
       # - `directory`: String, the cache's directory.
       # - `root`: String, the project's root, the current folder by
       #   default.
-      # - `launch`: Stryker::Isolation::StaticLaunch, what starts each
+      # - `launch`: Stryker::Isolation::FreshLaunch, what starts each
       #   process, or a stand-in in a test.
-      def initialize: (String directory, ?String root, ?StaticLaunch launch) -> void
+      def initialize: (String directory, ?String root, ?FreshLaunch launch) -> void
 
       # Keeps `config`.
       def start: (Config config) -> nil

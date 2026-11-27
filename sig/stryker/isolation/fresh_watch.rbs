@@ -8,7 +8,7 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # watch = Stryker::Isolation::StaticLaunch.new(cache_directory, project_root).call(run, "minitest")
+    # watch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(run, "minitest")
     # watch.finish.status
     # # => "Survived"
     # ```

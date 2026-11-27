@@ -30,7 +30,8 @@ class ProjectSideTest < Minitest::Test
       File.binwrite(paths.first, sample_run(5, static: true).to_json)
       runner = Runner.new("failed")
       finisher = Finisher.new
-      Stryker::Isolation::StaticRun.build(runner, paths).call(finisher, Stryker::Runtime::ActiveMutant.new(id: active))
+      Stryker::Isolation::FreshProcess.build(runner, paths)
+        .call(finisher, Stryker::Runtime::ActiveMutant.new(id: active))
       [runner, finisher, File.read(paths.last), open_handles(paths.last)]
     end
   end
@@ -110,27 +111,28 @@ class ProjectSideTest < Minitest::Test
   end
 
   def test_the_entry_point_empties_argv_installs_the_loader_and_runs_its_mode
-    argv = %w[static /cache minitest 0.run 0.results]
+    argv = %w[fresh /cache minitest 0.run 0.results]
     loader = Loader.new
 
     assert_equal(
       :called,
-      Stryker::Isolation::ProjectProcess.main(argv, loader, { static: Mode }.transform_keys(&:to_s))
+      Stryker::Isolation::ProjectProcess.main(argv, loader, { fresh: Mode }.transform_keys(&:to_s))
     )
     assert_equal([[], "/cache"], [argv, loader.installed])
   end
 
   def test_the_entry_point_refuses_a_mode_or_a_test_runner_it_does_not_know
     assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[pool /cache minitest], Loader.new) }
-    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[static /cache rspec], Loader.new) }
+    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[fresh /cache rspec], Loader.new) }
   end
 
   def test_the_modes_build_from_their_arguments
     reader, writer = IO.pipe
     parent = Stryker::Isolation::ForkParent.build(Runner.new, [writer.fileno.to_s, Dir.tmpdir])
+    fresh = Stryker::Isolation::FreshProcess.build(Runner.new, %w[0.run 0.results])
 
     assert_kind_of(Stryker::Isolation::ForkParent, parent)
-    assert_kind_of(Stryker::Isolation::StaticRun, Stryker::Isolation::StaticRun.build(Runner.new, %w[0.run 0.results]))
+    assert_kind_of(Stryker::Isolation::FreshProcess, fresh)
   ensure
     [reader, writer].each { |io| io&.close }
   end

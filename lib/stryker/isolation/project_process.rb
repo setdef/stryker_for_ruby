@@ -5,12 +5,12 @@
 require_relative "../runtime"
 require_relative "../test_runners"
 require_relative "fork_parent"
-require_relative "static_run"
+require_relative "fresh_process"
 
 module Stryker
   module Isolation
     module ProjectProcess
-      MODES = { "fork-parent": ForkParent, static: StaticRun }.transform_keys(&:to_s).freeze
+      MODES = { "fork-parent": ForkParent, fresh: FreshProcess }.transform_keys(&:to_s).freeze
       public_constant(:MODES)
 
       def self.main(argv = ARGV, loader = Runtime::Loader, modes = MODES)
