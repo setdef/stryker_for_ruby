@@ -15,7 +15,8 @@ class MinitestExecutorTest < Minitest::Test
       def test_runs = Stryker::Testing::SampleRuns.ran(:parallel)
     end
   RUBY
-  private_constant(:PARALLEL)
+  LEAVING = { "test/leaving_test.rb": "class LeavingTest < Minitest::Test; def test_exits = exit; end\n" }.freeze
+  private_constant(:LEAVING, :PARALLEL)
 
   def test_a_test_of_a_parallel_class_runs_at_once_in_its_turn
     runner = loaded(PARALLEL)
@@ -26,6 +27,14 @@ class MinitestExecutorTest < Minitest::Test
     id = "InParallelTest#test_runs"
 
     assert_equal([[:started, id, 0], [:finished, id, 1]], observer.events)
+    assert_same(stand_in, left)
+  end
+
+  def test_the_parallel_executor_is_put_back_when_a_test_leaves_the_run
+    runner = loaded(LEAVING)
+    stand_in = Object.new
+    left = executor_after(stand_in) { assert_raises(SystemExit) { run_ids(runner, "LeavingTest#test_exits") } }
+
     assert_same(stand_in, left)
   end
 
