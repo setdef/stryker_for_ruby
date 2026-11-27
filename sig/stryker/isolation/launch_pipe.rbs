@@ -1,0 +1,36 @@
+module Stryker
+  module Isolation
+    # A pipe, with its two ends named, so that a launch can hand one end to
+    # the process it starts and keep the other.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # pipe = Stryker::Isolation::LaunchPipe.open
+    # pipe.writer.write("hello")
+    # pipe.writer.close
+    # pipe.reader.read
+    # # => "hello"
+    # ```
+    class LaunchPipe < Data
+      # The end that reads.
+      attr_reader reader: IO
+
+      # The end that writes.
+      attr_reader writer: IO
+
+      # Makes a pipe with `IO.pipe`, and returns both its ends.
+      def self.open: () -> LaunchPipe
+
+      # Makes two pipes, in order, with `IO.pipe`.
+      def self.pair: () -> [LaunchPipe, LaunchPipe]
+
+      # Builds the value.
+      #
+      # - `reader`: IO, the end that reads.
+      # - `writer`: IO, the end that writes.
+      def self.new: (reader: IO, writer: IO) -> instance
+                  | (IO reader, IO writer) -> instance
+    end
+  end
+end

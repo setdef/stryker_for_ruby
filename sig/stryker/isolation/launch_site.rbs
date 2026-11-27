@@ -1,0 +1,52 @@
+module Stryker
+  module Isolation
+    # What the launch of the fork parent makes before it spawns the parent:
+    # a temporary folder for the parent's output and two pipes, one that
+    # carries the runs to the parent and one that carries its results back.
+    # When the launch raises, it closes the pipes and deletes the folder.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # site = Stryker::Isolation::LaunchSite.new
+    # site.launch { Stryker::Isolation::Child.new(Process.spawn(*argv, site.redirects)) }
+    # ```
+    class LaunchSite
+      # The temporary folder for the parent's output, made by `Dir.mktmpdir`.
+      attr_reader folder: String
+
+      # The pipe that carries the runs: the parent reads it, and the
+      # orchestrator writes it.
+      @runs: LaunchPipe
+
+      # The pipe that carries the results: the parent writes it, and the
+      # orchestrator reads it.
+      @results: LaunchPipe
+
+      # Makes the folder and the pipes.
+      def initialize: () -> void
+
+      # The descriptor of the results pipe's write end, as text, for the
+      # parent's arguments.
+      def descriptor: () -> String
+
+      # The redirections for `Process.spawn`: the runs pipe's read end as
+      # standard input, standard output and standard error on files in the
+      # folder, and the results pipe's write end passed on at its own
+      # descriptor.
+      def redirects: () -> Hash[Symbol | IO, IO | String]
+
+      # Yields the site, and returns the parent that the orchestrator keeps:
+      # the process the block returns, with the orchestrator's ends of the
+      # pipes and the folder. Closes the parent's ends of the pipes. When the
+      # block raises, closes the orchestrator's ends too, deletes the folder,
+      # and lets the error reach the caller.
+      def launch: () { (LaunchSite site) -> Child } -> ParentProcess
+
+      private
+
+      # Closes the orchestrator's ends of the pipes and deletes the folder.
+      def release: () -> void
+    end
+  end
+end

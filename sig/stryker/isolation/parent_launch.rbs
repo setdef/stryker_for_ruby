@@ -32,7 +32,9 @@ module Stryker
       # - `process`: `Process`, or a stand-in in a test.
       def initialize: (String directory, String root, ?singleton(::Process) process) -> void
 
-      # Makes the parent's folder, starts the parent, and returns it.
+      # Makes the parent's folder and pipes, starts the parent, and returns
+      # it. When the start raises, the folder and the pipes are gone, and the
+      # error reaches the caller.
       #
       # - `runner`: String, the test runner's name, from the `testRunner`
       #   option.
@@ -40,17 +42,15 @@ module Stryker
 
       private
 
-      # Spawns the parent with the test runner `runner`, its output in
-      # `folder`, `input` as its standard input, and a new pipe for its
-      # results, and returns that pipe's read end and the parent's process
-      # ID.
-      def spawn: (String runner, String folder, IO input) -> [IO, Integer]
+      # Spawns the parent with the test runner `runner`, its output in the
+      # folder of `site`, and the results pipe of `site`, and returns the
+      # parent's process ID.
+      def spawn: (String runner, LaunchSite site) -> Integer
 
-      # The options of `Process.spawn`: `input` as standard input, standard
-      # output and standard error on files in `folder`, `output` passed on
-      # at its own descriptor, the project's root as the folder, and a group
-      # of its own where the system has groups.
-      def options: (IO input, IO output, String folder) -> Hash[Symbol | IO, IO | String | bool]
+      # The options of `Process.spawn`: the redirections of `site`, the
+      # project's root as the folder, and a group of its own where the system
+      # has groups.
+      def options: (LaunchSite site) -> Hash[Symbol | IO, IO | String | bool]
     end
   end
 end
