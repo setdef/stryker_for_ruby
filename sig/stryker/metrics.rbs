@@ -1,0 +1,104 @@
+module Stryker
+  # How many mutants ended in each status, and the mutation scores that follow
+  # from the counts. The scores are the shared
+  # [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/)
+  # of the Stryker tools, so a score here equals the same run's score in the
+  # other tools.
+  #
+  # The `Killed` and `Timeout` mutants are the detected ones. The `Survived`
+  # and `NoCoverage` mutants are the undetected ones. A score judges only
+  # those two groups. A `RuntimeError`, a `CompileError`, and an `Ignored`
+  # mutant change no score, because none of them says whether the tests are
+  # strong.
+  #
+  # Metrics are a value: two of them with equal counts are equal.
+  #
+  # ## Examples
+  #
+  # Four mutants: two killed, one survived, and one that no test reached:
+  #
+  # ```ruby
+  # metrics = Stryker::Metrics.count(%w[Killed Killed Survived NoCoverage])
+  # metrics.mutation_score
+  # # => 50.0
+  # metrics.covered_score
+  # # => 66.66666666666666
+  # ```
+  #
+  # A run with nothing to judge has no score:
+  #
+  # ```ruby
+  # Stryker::Metrics.count(%w[Ignored CompileError]).mutation_score
+  # # => nil
+  # ```
+  class Metrics < Data
+    # How many mutants were killed.
+    attr_reader killed: Integer
+
+    # How many mutants timed out.
+    attr_reader timeout: Integer
+
+    # How many mutants survived.
+    attr_reader survived: Integer
+
+    # How many mutants no test reached.
+    attr_reader no_coverage: Integer
+
+    # How many mutants ended their run with an error.
+    attr_reader runtime_errors: Integer
+
+    # How many mutants weren't valid Ruby.
+    attr_reader compile_errors: Integer
+
+    # How many mutants were ignored.
+    attr_reader ignored: Integer
+
+    # Builds metrics from the count of each status.
+    #
+    # - `killed`: Integer, how many mutants were killed.
+    # - `timeout`: Integer, how many timed out.
+    # - `survived`: Integer, how many survived.
+    # - `no_coverage`: Integer, how many no test reached.
+    # - `runtime_errors`: Integer, how many ended with an error.
+    # - `compile_errors`: Integer, how many weren't valid Ruby.
+    # - `ignored`: Integer, how many were ignored.
+    def self.new: (killed: Integer, timeout: Integer, survived: Integer, no_coverage: Integer, runtime_errors: Integer, compile_errors: Integer, ignored: Integer) -> instance
+                | (Integer killed, Integer timeout, Integer survived, Integer no_coverage, Integer runtime_errors, Integer compile_errors, Integer ignored) -> instance
+
+    # Counts the mutants of each status. Raises ArgumentError for a status
+    # that isn't in `Stryker::MutantResult::STATUSES`, `Pending` included,
+    # because a mutant that hasn't ended has no place in a count.
+    #
+    # - `statuses`: Array of String, the status of each mutant.
+    def self.count: (Array[String] statuses) -> Metrics
+
+    # The number of mutants with each status, and 0 for a status that none
+    # has. Raises ArgumentError for a status that `count` doesn't accept.
+    # Private.
+    def self.tally_of: (Array[String] statuses) -> Hash[String, Integer]
+
+    # How many mutants there are, whatever their status.
+    def total: () -> Integer
+
+    # The percentage of the valid mutants that the tests detected, or nil
+    # when no mutant is valid (every one was ignored, or ended with an
+    # error, or there are none). A mutant is valid when it was killed, timed
+    # out, survived, or had no coverage.
+    def mutation_score: () -> Float?
+
+    # The percentage of the mutants that some test reached that the tests
+    # detected: the mutation score, leaving out the mutants with no
+    # coverage. It is 0.0 when mutants are valid but no test reached any, and
+    # nil when no mutant is valid.
+    def covered_score: () -> Float?
+
+    private
+
+    # The mutants that were killed or timed out.
+    def detected: () -> Integer
+
+    # The detected mutants as a percentage of `whole`, or nil when `whole` is
+    # 0.
+    def detected_share_of: (Integer whole) -> Float?
+  end
+end
