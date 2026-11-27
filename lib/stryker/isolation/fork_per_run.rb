@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "dry_run"
+require_relative "dry_run_verdict"
 require_relative "error"
 require_relative "flight"
 require_relative "flights"
@@ -31,6 +33,10 @@ module Stryker
         raise(ArgumentError, format(STATIC, id: static.mutant.id)) if static
 
         fly(runs.map { |run| Flight.judged(run, &) })
+      end
+
+      def dry_run(config)
+        DryRunVerdict.awaited(DryRun.within(config.dry_run_timeout_minutes)) { |flight| fly([flight]) }
       end
 
       def stop

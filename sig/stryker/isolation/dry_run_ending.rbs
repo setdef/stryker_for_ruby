@@ -1,0 +1,45 @@
+module Stryker
+  module Isolation
+    # How a dry run that didn't pass ended, when no test failed and its
+    # tests stayed within their limit: the error its process wrote, such as
+    # a `Stryker::Runtime::LoadingError`, or how the process ended and the
+    # test that was running, and then the last lines of its standard error.
+    #
+    # An ending's text is a value: two with equal members are equal.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::DryRunEnding.new(messages:, ending:).to_s
+    # # => "The dry run's process exited with status 3, while Shop::CartTest#test_total ran."
+    # ```
+    class DryRunEnding < Data
+      # The text for a process that started no test in time.
+      UNSTARTED: String
+
+      # What the dry run's process said.
+      attr_reader messages: Messages
+
+      # How the dry run's process ended.
+      attr_reader ending: Ending
+
+      # Builds the text.
+      #
+      # - `messages`: Stryker::Isolation::Messages, what the process said.
+      # - `ending`: Stryker::Isolation::Ending, how the process ended.
+      def self.new: (messages: Messages, ending: Ending) -> instance
+                  | (Messages messages, Ending ending) -> instance
+
+      # The error the process wrote, or how it ended, and the last lines of
+      # its standard error, one after the other.
+      def to_s: () -> String
+
+      private
+
+      # How the process ended, when it wrote no error: that it started no
+      # test within `Stryker::Isolation::Timer::START_SECONDS`, or its exit
+      # status or signal, and the test that was running.
+      def ended: () -> String
+    end
+  end
+end

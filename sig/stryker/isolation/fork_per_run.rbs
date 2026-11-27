@@ -23,6 +23,7 @@ module Stryker
     # isolation = Stryker::Isolation::ForkPerRun.new(cache_directory, project_root)
     # isolation.start(config)
     # begin
+    #   found = isolation.dry_run(config)
     #   isolation.run_all(runtime_runs) { |result| reporter.call(Stryker::Events::MutantTested.new(result:)) }
     # ensure
     #   isolation.stop
@@ -62,6 +63,26 @@ module Stryker
       # parent writes, or before `start`. Calls `stop` when it raises, or
       # when the block does.
       def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+
+      # Runs the dry run in a child of the parent, which runs every test that
+      # the parent loaded once, with no mutant active, stopping after the
+      # first that fails, and then runs the loading check. Returns what the
+      # dry run found. The child inherits the static bucket that the parent
+      # filled while it loaded the project, so the dry run starts from the
+      # state that every mutant run starts from. The dry run's tests have
+      # `config.dry_run_timeout_minutes` from the start of the first test.
+      #
+      # Raises `Stryker::Isolation::DryRunError` when a test failed, the
+      # loading check failed, the child crashed or raised, or the tests ran
+      # past the limit, in which case the message names
+      # `dryRunTimeoutMinutes`. Raises `Stryker::Isolation::Error` when the
+      # parent ends or writes what no parent writes, or before `start`.
+      # Calls `stop` when it raises, so no mutant runs after a dry run that
+      # failed.
+      #
+      # - `config`: Stryker::Config, whose `dry_run_timeout_minutes` limits
+      #   the tests.
+      def dry_run: (Config config) -> DryRunResult
 
       # Ends the parent, its children, and what the project's code started
       # in the parent's group, and waits until the parent ended.

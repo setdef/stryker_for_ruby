@@ -23,7 +23,7 @@ module Stryker
       KINDS: Array[String]
 
       # The run.
-      attr_reader run: MutantRun
+      attr_reader run: forked
 
       # The flight of the mutant run `run`, which yields the run's result,
       # as `Stryker::Isolation::Verdict` gives it, when it lands.
@@ -42,10 +42,10 @@ module Stryker
 
       # Builds the flight.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - the block: what judges the run, given the child's messages and how
       #   the child ended, when the flight lands.
-      def initialize: (MutantRun run) { (Messages messages, Ending ending) -> void } -> void
+      def initialize: (forked run) { (Messages messages, Ending ending) -> void } -> void
 
       # Takes one line that the parent wrote about the run, and returns how
       # the child ended once the line says it, or nil before that. Raises

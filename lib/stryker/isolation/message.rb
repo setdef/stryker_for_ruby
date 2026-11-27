@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../dry_run_result"
 require_relative "../test"
 require_relative "../test_result"
 
@@ -12,6 +13,7 @@ module Stryker
         finished: TestResult.method(:from_h).to_proc,
         ended: -> (_value) { true },
         error: :to_s.to_proc,
+        result: DryRunResult.method(:from_h).to_proc,
       }.transform_keys(&:to_s).freeze
       private_constant(:READERS)
 

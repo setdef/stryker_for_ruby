@@ -1,0 +1,60 @@
+module Stryker
+  module Isolation
+    # Turns how the dry run went into what it found, or the error that
+    # stops the run. The dry run passed when its process wrote what it
+    # found and that its run ended, no test failed, and the process exited
+    # with status 0. Otherwise `Stryker::Isolation::DryRunReason` gives the
+    # error's message.
+    #
+    # A verdict is a value: two with equal members are equal.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::DryRunVerdict.new(dry_run:, messages:, ending:).result.static_bucket
+    # # => [1]
+    # found = Stryker::Isolation::DryRunVerdict.awaited(dry_run) { |flight| flights.run([flight]) }
+    # ```
+    class DryRunVerdict < Data
+      # The text of the error for a block that landed no flight.
+      UNLANDED: String
+
+      # Yields the flight of `dry_run`, whose landing judges the dry run, and
+      # returns what the dry run found once the block has landed the flight.
+      # Raises `Stryker::Isolation::DryRunError` from the landing when the
+      # dry run didn't pass, and `Stryker::Isolation::Error` when the block
+      # returns without landing the flight.
+      #
+      # - `dry_run`: Stryker::Isolation::DryRun, the dry run.
+      def self.awaited: (DryRun dry_run) { (Flight flight) -> void } -> DryRunResult
+
+      # The dry run.
+      attr_reader dry_run: DryRun
+
+      # What the dry run's process said.
+      attr_reader messages: Messages
+
+      # How the dry run's process ended.
+      attr_reader ending: Ending
+
+      # Builds the verdict.
+      #
+      # - `dry_run`: Stryker::Isolation::DryRun, the dry run.
+      # - `messages`: Stryker::Isolation::Messages, what its process said.
+      # - `ending`: Stryker::Isolation::Ending, how its process ended.
+      def self.new: (dry_run: DryRun, messages: Messages, ending: Ending) -> instance
+                  | (DryRun dry_run, Messages messages, Ending ending) -> instance
+
+      # What the dry run found. Raises `Stryker::Isolation::DryRunError`
+      # when the dry run didn't pass, with the message that
+      # `Stryker::Isolation::DryRunReason` gives.
+      def result: () -> DryRunResult
+
+      private
+
+      # Whether no test failed, the run ended, and the process exited with
+      # status 0.
+      def passed?: () -> bool
+    end
+  end
+end

@@ -44,8 +44,8 @@ module Stryker
       # rounded up, so that the limit is never shorter than the option says.
       # A limit of 0 minutes is 0 milliseconds.
       #
-      # - `minutes`: Integer or Float, `dryRunTimeoutMinutes`.
-      def self.within: (Integer | Float minutes) -> DryRun
+      # - `minutes`: Numeric, `dryRunTimeoutMinutes`.
+      def self.within: (Numeric minutes) -> DryRun
 
       # The dry run that `line` holds, as `to_json` writes it, or nil when
       # `line` holds something else, such as a mutant run. Raises

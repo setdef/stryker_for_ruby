@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../dry_run_result"
 require_relative "../test"
 require_relative "../test_result"
 require_relative "message"
@@ -39,6 +40,11 @@ module Stryker
       def error
         errors = @values.filter_map { |value| value.is_a?(String) && value }
         errors.first
+      end
+
+      def found
+        found = @values.filter_map { |value| value.is_a?(DryRunResult) && value }
+        found.first
       end
 
       def unfinished

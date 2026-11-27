@@ -9,7 +9,9 @@ module Stryker
       public_constant(:KEY)
 
       def self.within(minutes)
-        new(timeout_ms: (minutes * 60_000).ceil)
+        # The option is any number of 0 or more, and RBS gives Numeric no *.
+        number = _ = minutes
+        new(timeout_ms: (number * 60_000).ceil)
       end
 
       def self.from_line(line)

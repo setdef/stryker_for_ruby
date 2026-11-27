@@ -1,0 +1,15 @@
+module Stryker
+  module Isolation
+    # Raised when the dry run fails, so that no mutant runs: a test failed
+    # with no mutant active, an instrumented file loaded without going
+    # through the loader's hook, the dry run's process crashed or raised,
+    # or its tests ran past `dryRunTimeoutMinutes`. The message says which,
+    # with the failed test and its failure, the error the process wrote,
+    # or how it ended, and the last lines of its standard error.
+    #
+    # A mutant can't be judged by a test that fails without it, so the run
+    # stops here instead of reporting results that rest on such a test.
+    class DryRunError < StandardError
+    end
+  end
+end

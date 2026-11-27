@@ -1,0 +1,57 @@
+module Stryker
+  module Isolation
+    # The message of the error for a dry run that didn't pass. The first of
+    # these that holds gives it:
+    #
+    # | What happened | Message |
+    # | - | - |
+    # | A test failed | The test's ID and its failure message |
+    # | The tests ran past their limit | That the tests took longer than `dryRunTimeoutMinutes` allows, and that the option raises it |
+    # | Anything else | `Stryker::Isolation::DryRunEnding`: the error the process wrote, such as a `Stryker::Runtime::LoadingError`, or how it ended, and then the last lines of its standard error |
+    #
+    # A reason is a value: two with equal members are equal.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::DryRunReason.new(dry_run:, messages:, ending:).to_s
+    # # => "The dry run failed: Shop::CartTest#test_total failed with no mutant active, ..."
+    # ```
+    class DryRunReason < Data
+      # The text for a test that failed.
+      FAILED: String
+
+      # The text for tests that ran past their limit.
+      TIMEOUT: String
+
+      # The dry run.
+      attr_reader dry_run: DryRun
+
+      # What the dry run's process said.
+      attr_reader messages: Messages
+
+      # How the dry run's process ended.
+      attr_reader ending: Ending
+
+      # Builds the reason.
+      #
+      # - `dry_run`: Stryker::Isolation::DryRun, the dry run.
+      # - `messages`: Stryker::Isolation::Messages, what its process said.
+      # - `ending`: Stryker::Isolation::Ending, how its process ended.
+      def self.new: (dry_run: DryRun, messages: Messages, ending: Ending) -> instance
+                  | (DryRun dry_run, Messages messages, Ending ending) -> instance
+
+      # The message, as the table says.
+      def to_s: () -> String
+
+      private
+
+      # The text for the first test that failed, or nil when none did.
+      def failed: () -> String?
+
+      # The text for tests that ran past their limit, or nil when they
+      # didn't.
+      def past_limit: () -> String?
+    end
+  end
+end

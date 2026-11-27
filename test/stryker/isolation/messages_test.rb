@@ -74,4 +74,14 @@ class MessagesTest < Minitest::Test
   def test_the_messages_say_whether_a_test_started
     assert_equal([true, false], [parsed(started), parsed(line(:ended, true))].map(&:tests_started?))
   end
+
+  def test_a_dry_runs_result_line_gives_what_it_found_and_trusts_the_lines_after_it
+    found = Stryker::DryRunResult.new(
+      results: [sample_result("passed")], buckets: {}, static_bucket: [1], files_loaded_in_tests: [], duration_ms: 0.5
+    )
+    messages = parsed(line(:result, found.as_json), line(:ended, true))
+
+    assert_equal([found, true], [messages.found, messages.ended?])
+    assert_nil(parsed(line(:ended, true)).found)
+  end
 end

@@ -66,8 +66,8 @@ module Stryker
 
       # Gives the parent `run`, as one line of JSON.
       #
-      # - `run`: Stryker::MutantRun, the run.
-      def give: (MutantRun run) -> nil
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
+      def give: (forked run) -> nil
 
       # The parent's next line, parsed with `JSON.parse`, or nil when the
       # parent's pipe ended.
