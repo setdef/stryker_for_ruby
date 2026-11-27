@@ -40,7 +40,7 @@ class InstrumentationTest < Minitest::Test
   def write(name, source)
     path = File.join(@root, name)
     FileUtils.mkdir_p(File.dirname(path))
-    File.write(path, source)
+    File.binwrite(path, source)
   end
 
   def instrumented(paths = %w[lib/cart.rb lib/flag.rb], mutators: OPERATORS, **)
