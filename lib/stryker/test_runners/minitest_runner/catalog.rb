@@ -2,6 +2,7 @@
 
 require_relative "../../test"
 require_relative "../../unsupported_error"
+require_relative "../index"
 require_relative "runnable_method"
 
 module Stryker
@@ -30,16 +31,16 @@ module Stryker
 
         def initialize(classes, root)
           @root = root
-          @methods = {}
+          @methods = Index.new
           classes.each { |klass| add(klass) }
         end
 
         def tests
-          @methods.each_value.map(&:test)
+          @methods.tests
         end
 
         def runnable_methods(ids)
-          ids.map { |id| @methods.fetch(id) { raise(ArgumentError, "No test has the ID #{id.inspect}.") } }
+          @methods.chosen(ids)
         end
 
         private def add(klass)
@@ -55,7 +56,7 @@ module Stryker
 
           file = klass.instance_method(name).source_location&.first
           test = Test.new(id:, name:, file: file && @root.relative(file), location: nil)
-          @methods[id] = RunnableMethod.new(klass, name, test)
+          @methods.add(RunnableMethod.new(klass, name, test))
         end
       end
     end

@@ -1,8 +1,11 @@
 module Stryker
   module TestRunners
-    # One test that an adapter can run on its own, as `Sequence.run` takes
-    # it.
+    # One test that an adapter can run alone, as `Sequence.run` and
+    # `Index` take it.
     interface _RunnableTest
+      # The test.
+      def test: () -> Test
+
       # Tells `observer` when the test starts and finishes, runs it, and
       # returns its result.
       def run: (_TestObserver observer) -> TestResult

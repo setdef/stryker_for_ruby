@@ -54,7 +54,7 @@ module Stryker
         TWICE: String
 
         @root: Root
-        @methods: Hash[String, RunnableMethod]
+        @methods: Index[RunnableMethod]
 
         def add: (singleton(::Minitest::Runnable) klass) -> void
 

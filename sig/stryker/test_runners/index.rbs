@@ -1,0 +1,45 @@
+module Stryker
+  module TestRunners
+    # The tests that an adapter took from its framework, each with what runs
+    # it, by the test's ID, in the order the adapter added them.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # index = Stryker::TestRunners::Index.new
+    # index.add(runnable)
+    # index.tests.map(&:id)
+    # # => ["Shop::DiscountTest#test_rate"]
+    # index.chosen(["Shop::DiscountTest#test_rate"])
+    # # => [runnable]
+    # ```
+    class Index[T < _RunnableTest]
+      # Builds an empty index.
+      def initialize: () -> void
+
+      # Adds `runnable` under its test's ID, in the place of any added under
+      # that ID before, and returns it.
+      #
+      # - `runnable`: what runs one test, with the test as its `test`.
+      def add: (T runnable) -> T
+
+      # Whether a test with `id` was added.
+      #
+      # - `id`: String, a test's ID.
+      def key?: (String id) -> bool
+
+      # Every test, in the order they were added.
+      def tests: () -> Array[Test]
+
+      # What runs each of the tests with `ids`, in the same order. Raises
+      # ArgumentError, naming the first ID that no test has.
+      #
+      # - `ids`: Array of String, the tests' IDs.
+      def chosen: (Array[String] ids) -> Array[T]
+
+      private
+
+      @runnables: Hash[String, T]
+    end
+  end
+end
