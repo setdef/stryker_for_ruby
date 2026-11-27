@@ -54,8 +54,8 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         # head is the development version of Ruby, the version that mise.toml
-        # lists as 4.1-dev on Linux and macOS. ruby/setup-ruby offers every one of these versions
-        # on Windows, head included.
+        # lists as 4.1-dev on Linux. ruby/setup-ruby offers every one of these versions
+        # on macOS and Windows, head included.
         ruby: ["4.0", head]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
