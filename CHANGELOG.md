@@ -21,7 +21,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 ### Changed
 
 - `stryker --version` and `stryker help` start about three times as fast, because they no longer load the parser that only `stryker run` uses.
-- `stryker help` and the message that **Stryker (for Ruby)** prints after an error in its code give the address of [the forum](https://forum.setdef.com/c/stryker-for-ruby) for reports, in place of GitHub Issues. The error message lists what to include in a report: the command you ran, what it printed, your Ruby version, your operating system, and the backtrace. The gem's `bug_tracker_uri` is the forum's address too.
+- **Stryker (for Ruby)** prints the address of [the forum](https://forum.setdef.com/c/stryker-for-ruby) for reports, in place of GitHub Issues, in `stryker help` and in the message after an error in its code. The error message lists what to include in a report: the command you ran, what it printed, your Ruby version, your operating system, and the backtrace. The gem's `bug_tracker_uri` is the forum's address too.
 - On Windows, `stryker run` stops after its checks with an error that says a run on Windows isn't built yet.
 - `thresholds.high` and `thresholds.low` take only whole numbers from 0 to 100, as the JSON report's schema requires. A fraction such as `82.5` is now an error that says so, where the configuration took it and the report then failed its schema. `thresholds.break` still takes any number from 0 to 100.
 
