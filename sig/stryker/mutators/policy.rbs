@@ -1,11 +1,15 @@
 module Stryker
   module Mutators
-    # What a walk does with the mutators of a run: which of them are
-    # fallback mutators, and which are excluded. An excluded mutator's
-    # mutants are still made, and each is `Ignored`, with StrykerJS's text as
-    # its reason, as
+    # What a walk does with the mutators of a run and the file it walks:
+    # which of them are fallback mutators, which are excluded, and what the
+    # file's disable comments say. A mutator's mutant is still made when it
+    # is excluded or a comment covers it, and it is `Ignored`, with
+    # StrykerJS's text as its reason for an exclusion and the comment's
+    # reason for a comment, as
     # [Turning mutators off](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#turning-mutators-off)
-    # specifies.
+    # and
+    # [The disable comment](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#the-disable-comment)
+    # specify.
     #
     # ## Examples
     #
@@ -18,8 +22,13 @@ module Stryker
       # The reason text of an excluded mutator. Private.
       EXCLUDED: String
 
+      # The directives of a file with no disable comment, which give no
+      # reason for any candidate. Private.
+      NO_DIRECTIVES: Directives
+
       @fallbacks: Array[_Mutator]
       @excluded: Array[String]
+      @directives: Directives
 
       # Builds the policy.
       #
@@ -28,7 +37,14 @@ module Stryker
       #   `Stryker::Mutators::FALLBACKS`.
       # - `excluded`: Array of String, the names of the excluded mutators,
       #   matched exactly, with their letter case. Empty by default.
-      def initialize: (?fallbacks: Array[_Mutator], ?excluded: Array[String]) -> void
+      # - `directives`: what the disable comments of the file say. By
+      #   default, directives that say nothing.
+      def initialize: (?fallbacks: Array[_Mutator], ?excluded: Array[String], ?directives: Directives) -> void
+
+      # The same policy, with the disable comments of one file.
+      #
+      # - `directives`: Stryker::Mutators::Directives, the file's comments.
+      def reading: (Directives directives) -> Policy
 
       # Whether `candidate`'s mutator is a fallback mutator.
       #
@@ -36,10 +52,14 @@ module Stryker
       def fallback?: (Candidate candidate) -> bool
 
       # The reason `candidate`'s mutant is `Ignored`, or nil when the mutant
-      # is live.
+      # is live. A disable comment's reason wins over an exclusion's.
       #
       # - `candidate`: Stryker::Mutators::Candidate, the candidate.
       def reason: (Candidate candidate) -> String?
+
+      private
+
+      def excluded: (String name) -> String?
     end
   end
 end

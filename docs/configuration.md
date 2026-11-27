@@ -269,7 +269,7 @@ The report is one line of JSON in the [mutation testing report schema](https://g
 | `description` | What the mutant changed in a regular expression's pattern, as in `Anchor "^" was removed at offset 0.`. Only mutants of the `Regex` mutator have one. |
 | `location` | The range in the file that the mutant replaces: `start` and `end`, each with a `line` and a `column` counted from 1. `end` is just after the range. Columns count UTF-16 code units, as JavaScript counts the index of a character in a string, so an emoji takes two columns. |
 | `status` | `Killed`, `Survived`, `NoCoverage`, `CompileError`, `RuntimeError`, `Timeout`, or `Ignored`. |
-| `statusReason` | Why the mutant has that status, for a status that has a reason. A mutant that no test can run with has the status `Ignored`, and the reason says why: its mutator is in `mutator.excludedMutations`, its site can't hold a switch, or its text has no form on one line. |
+| `statusReason` | Why the mutant has that status, for a status that has a reason. A mutant that no test can run with has the status `Ignored`, and the reason says why: its mutator is in `mutator.excludedMutations`, a disable comment covers it, its site can't hold a switch, or its text has no form on one line. |
 | `coveredBy` | The IDs of the tests that reached the mutant. |
 | `killedBy` | The ID of the test that killed the mutant. |
 | `testsCompleted` | How many tests finished in the mutant's run. |
@@ -322,7 +322,7 @@ The names of the mutators to turn off, such as `"BooleanLiteral"`. The default i
 
 Each mutant of an excluded mutator is still made and reported. It has the status `Ignored` and the `statusReason` `Ignored because of excluded mutation "BooleanLiteral"`, gets no switch, and never runs. An `Ignored` mutant counts toward the total but toward no mutation score. An excluded mutator's mutants hold no other mutator's mutant back: with `StringLiteral` excluded, `notify("Saved")` still gets its removal.
 
-A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](contributors/design/mutators.md#the-catalog) lists the names, and [Turning mutators off](contributors/design/mutators.md#turning-mutators-off) says what an excluded mutator's mutants report.
+A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](contributors/design/mutators.md#the-catalog) lists the names, and [Turning mutators off](contributors/design/mutators.md#turning-mutators-off) says what an excluded mutator's mutants report. To turn a mutator off at one site, use a [disable comment](contributors/design/mutators.md#the-disable-comment).
 
 ### `incremental`
 

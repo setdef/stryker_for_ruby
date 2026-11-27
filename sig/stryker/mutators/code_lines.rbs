@@ -1,0 +1,44 @@
+module Stryker
+  module Mutators
+    # The lines of a parsed file that hold code, so that a `next-line`
+    # disable comment finds the line it covers. A line holds code when it
+    # isn't blank, isn't a comment and nothing else, and isn't in the data
+    # after `__END__`.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # code = Stryker::Mutators::CodeLines.new(Prism.parse("# note\n\nx = 1\n"))
+    # code.after(1)
+    # # => 3
+    # ```
+    class CodeLines
+      # What a line that holds code has in it. Private.
+      CODE: Regexp
+
+      @source: Prism::Source
+      @lines: Array[String]
+      @last: Integer
+      @comments: Set[Integer]
+
+      # Reads the lines of the file.
+      #
+      # - `result`: Prism::ParseResult, the file parsed.
+      def initialize: (Prism::ParseResult result) -> void
+
+      # The number of the first line after `line` that holds code, or nil
+      # when none does.
+      #
+      # - `line`: Integer, a line number counted from 1.
+      def after: (Integer line) -> Integer?
+
+      private
+
+      def code?: (Integer number) -> bool
+
+      def lines_of: (Prism::Location location) -> Array[Integer]
+
+      def last_line: (Prism::Location location) -> Integer
+    end
+  end
+end

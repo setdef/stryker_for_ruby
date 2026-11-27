@@ -58,6 +58,12 @@ module Stryker
       #   to sort, in the order a walk found them.
       def self.in_order: (Array[Candidate] candidates) -> Array[Candidate]
 
+      # The line the candidate's site starts on, counted from 1.
+      def line: () -> Integer
+
+      # The name of the candidate's mutator.
+      def mutator_name: () -> String
+
       # Whether the candidate's mutant is live, which it is when the
       # candidate has no reason to be ignored.
       def live?: () -> bool

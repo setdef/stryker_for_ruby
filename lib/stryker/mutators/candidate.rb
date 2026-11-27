@@ -21,6 +21,14 @@ module Stryker
         super
       end
 
+      def line
+        site.location.start_line
+      end
+
+      def mutator_name
+        mutator.name
+      end
+
       def live?
         !reason
       end
@@ -34,7 +42,7 @@ module Stryker
       end
 
       def mutant(file, id)
-        Mutant.new(id:, file:, mutator_name: mutator.name, **edit.to_h)
+        Mutant.new(id:, file:, mutator_name:, **edit.to_h)
       end
 
       # @dynamic mutator, site, edit, reason

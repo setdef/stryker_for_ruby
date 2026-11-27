@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../mutators"
+require_relative "directives"
 require_relative "occupancy"
 require_relative "policy"
 require_relative "roster"
@@ -11,7 +12,7 @@ module Stryker
     class Walk
       def initialize(file:, result:, mutators: ALL, first_id: 1, policy: Policy.new)
         @search = Search.new(result, file, mutators)
-        @policy = policy
+        @policy = policy.reading(Directives.new(file:, result:, names: mutators.map(&:name)))
         @roster = Roster.new(file:, source: result.source.source, first_id:)
       end
 

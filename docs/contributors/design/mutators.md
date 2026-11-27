@@ -8,7 +8,7 @@ Every rule here serves one aim: each mutant that survives should be worth acting
 
 - **Mutator:** the part of the instrumenter that finds one kind of site and makes its mutants.
 - **Mutator name:** the name in the report's `mutatorName` field, and that `mutator.excludedMutations` accepts.
-- **Ignored mutant:** a mutant that the run makes and reports with the status `Ignored`, and that gets no switch and never runs. `mutator.excludedMutations` makes mutants ignored, and so do the sites that can't hold a switch ([Mutant placement](mutant-placement.md#sites-that-cant-hold-a-switch)).
+- **Ignored mutant:** a mutant that the run makes and reports with the status `Ignored`, and that gets no switch and never runs. `mutator.excludedMutations` and the [disable comment](#the-disable-comment) make mutants ignored, and so do the sites that can't hold a switch ([Mutant placement](mutant-placement.md#sites-that-cant-hold-a-switch)).
 - **Live mutant:** a mutant that isn't `Ignored`, so it gets a switch and runs.
 - **Pair:** an original construct and the mutant a mutator makes from it, such as `a < b` and `a <= b`.
 - **Edit:** the byte range a mutant changes and the text that replaces it ([The text edit](mutant-placement.md#the-text-edit)).
@@ -427,9 +427,72 @@ A name that isn't a mutator name is a configuration error, and the run stops bef
 
 The run stops, because `Equality` is Stryker.NET's short name, and the name here is `EqualityOperator`.
 
+To turn a mutator off at one site, use a [disable comment](#the-disable-comment).
+
 ### Ignored mutants and the fallback mutator
 
 An ignored mutant holds nothing back. `CallExpression`'s mutant is made where no other *live* mutant is, on its site or inside it, so a call whose only other mutants are ignored still gets its removal. The reason is the one that [`CallExpression`](#callexpression) gives for the rule: a mutant inside shows whether any test checks that code, and an ignored mutant shows nothing, because no test runs against it. With `StringLiteral` excluded, `notify("Saved")` keeps its removal, where the removal would otherwise give way to the string's mutant, which never runs. `CallExpression` itself is ignored when it is excluded, and then it is made, as an ignored mutant, only where it would be made if it were live.
+
+## The disable comment
+
+With a disable comment, you turn off mutators for one line, or for the rest of a file, and record why. It follows StrykerJS's grammar in Ruby's comment syntax:
+
+```ruby
+# Stryker [disable|restore] [next-line] <mutators>[: <reason>]
+```
+
+- `disable` turns the mutators off and `restore` turns them back on.
+- With `next-line`, the comment applies to the mutants whose site starts on the next line that holds code. A blank line, a comment, and a `=begin` block don't hold code. Without `next-line`, the comment applies from the comment's line to the end of the file, or until a `restore` for the same mutators.
+- `<mutators>` is a comma-separated list of mutator names, or `all`. Names match without regard to letter case, as in StrykerJS. An unknown name makes the run write a warning with the file and the line to standard error, as StrykerJS does, and the rest of the comment still applies.
+- `<reason>`, after a colon, becomes the mutant's `statusReason`.
+
+Each mutant that a disable comment covers is made and reported with the status `Ignored`, and its `statusReason` is the reason, or StrykerJS's text, `Ignored using a comment`, when the comment has none. It gets no switch and never runs. A mutant is covered or not by the line its site starts on, so a mutant whose site spans several lines belongs to the line where the site starts. Of the comments that cover a mutant, the latest one in the file decides, so a `restore` after a `disable` turns the mutant back on. When a comment and `mutator.excludedMutations` both ignore a mutant, the comment's reason is the one reported.
+
+The comment's text after `#` must match StrykerJS's pattern, `/^\s?Stryker (disable|restore)(?: (next-line))? ([a-zA-Z, ]+)(?::(.+)?)?/`. So the comment starts with `#Stryker`, or with `#`, one whitespace character, and `Stryker`, and nothing else may come before `Stryker`. A comment that follows code on its line counts: `total = a + b # Stryker disable ArithmeticOperator` covers its own line and the lines after it. Only a `#` comment counts, so `=begin` blocks, strings, and heredocs hold none, and neither does the data after `__END__`.
+
+A fee that starts after a free allowance has an equivalent mutant: at exactly `FREE_HOURS`, both branches give `0`, so `hours >= FREE_HOURS` behaves as `hours > FREE_HOURS` does. Mark it on the line before:
+
+```ruby
+# Stryker disable next-line EqualityOperator: at FREE_HOURS both branches give 0, so the >= mutant is equivalent
+fee = (hours > FREE_HOURS) ? (hours - FREE_HOURS) * RATE : 0
+```
+
+Both of that line's `EqualityOperator` mutants are `Ignored` with that reason, the `<=` mutant as well, which isn't equivalent: a comment lists mutators, not pairs. The line's `ConditionalExpression` mutants still run.
+
+A comment that doesn't match the pattern is an ordinary comment, and one that matches with an unknown name turns nothing off:
+
+```ruby
+# Wrong: "next line" has a space where the grammar needs a hyphen. The comment matches
+# the pattern, and its whole list, "next line EqualityOperator", is one unknown name,
+# so the run writes a warning and the mutants on the next line stay live.
+# Stryker disable next line EqualityOperator
+total -= total * @rate if order.quantity > BULK_THRESHOLD
+```
+
+```ruby
+# Wrong: "@stryker" isn't "Stryker", so this is an ordinary comment.
+# @stryker disable next-line all
+total -= total * @rate if order.quantity > BULK_THRESHOLD
+```
+
+A condition that is always true while the tests run, such as `Rails.env.test?`, has a `ConditionalExpression` mutant that no test can kill. Mark it on the line before:
+
+```ruby
+# Stryker disable next-line ConditionalExpression: Rails.env.test? is always true under the tests
+deliver_later unless Rails.env.test?
+```
+
+To turn off every mutator for part of a file:
+
+```ruby
+# Stryker disable all: generated from the carrier's rate table
+RATES = {
+  # The generated rates go here.
+}.freeze
+# Stryker restore all
+```
+
+An ignored mutant holds nothing back, as [Turning mutators off](#ignored-mutants-and-the-fallback-mutator) says, so a disable comment for `StringLiteral` leaves the removal of `notify("Saved")` live.
 
 ## Defaults
 
@@ -437,7 +500,7 @@ Every mutator in the catalog runs when nothing is configured, as every StrykerJS
 
 ### Logger calls and `# :nocov:`
 
-No site is ignored by default. A call to a logger gets the same mutants as any other call, and code between `# :nocov:` comments, the markers that SimpleCov reads, gets its mutants too.
+No site is ignored by default. A call to a logger gets the same mutants as any other call, and code between `# :nocov:` comments, the markers that SimpleCov reads, gets its mutants too. A project that doesn't want a mutant uses a [disable comment](#the-disable-comment).
 
 No other Stryker tool ignores a logging call by default. StrykerJS ships only an `angular` ignorer, and a maintainer wrote in [stryker-js#1174](https://github.com/stryker-mutator/stryker-js/issues/1174) that a log statement that no test checks shouldn't be swept under a rug. The default of Stryker.NET's `ignore-methods` is empty. Only Stryker.NET honors a coverage exclusion, `[ExcludeFromCodeCoverage]`, and StrykerJS and Stryker4s honor none.
 
@@ -463,7 +526,7 @@ The default of the `mutate` option leaves out test files ([`mutate`](../../confi
 
 ## Equivalent mutants
 
-An equivalent mutant behaves the same as the original for every input, so no test can kill it, and its survivor wastes its reader's time. No Stryker tool detects equivalent mutants in general, and neither does **Stryker (for Ruby)**. The mutators avoid the ones that the source text alone proves equivalent.
+An equivalent mutant behaves the same as the original for every input, so no test can kill it, and its survivor wastes its reader's time. No Stryker tool detects equivalent mutants in general, and neither does **Stryker (for Ruby)**. The mutators avoid the ones that the source text alone proves equivalent, and the [disable comment](#the-disable-comment) marks the rest.
 
 ### Mutants the mutators don't make
 
@@ -471,13 +534,13 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, ignored or live, such as `x <=> x` swapped.
 - **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, a condition that is already `true` or `false`, an endless range, and `&.` on `self` or a literal.
 
-A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
+A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for. Mark it with a disable comment once you've checked it.
 
 ## What this design doesn't do
 
 - It doesn't detect equivalent mutants beyond the ones the source text proves.
 - It doesn't use a value's class: `MethodExpression` and the operator mutators match by name and syntax alone.
 - It doesn't remove a call whose value something reads, and it doesn't remove a call where another mutant is.
-- It has no mutation levels: every mutator runs unless `mutator.excludedMutations` lists it.
+- It has no mutation levels: every mutator runs unless `mutator.excludedMutations` lists it or a disable comment covers it.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
 - It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.

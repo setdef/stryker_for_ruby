@@ -1,0 +1,44 @@
+module Stryker
+  module Mutators
+    # The disable comments of a file, read as
+    # [The disable comment](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#the-disable-comment)
+    # specifies, and what they say about each candidate. A name that no
+    # mutator has makes the run write a warning to standard error, with the
+    # file and the line of the comment, and the rest of the comment still
+    # applies.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # directives = Stryker::Mutators::Directives.new(file: "lib/fee.rb", result:, names: ["EqualityOperator"])
+    # directives.reason(candidate)
+    # # => "at FREE_HOURS both branches give 0"
+    # ```
+    class Directives
+      # The text of the warning for a name that no mutator has. Private.
+      UNKNOWN: String
+
+      @names: Array[String]
+      @comments: Array[DisableComment]
+
+      # Reads the comments.
+      #
+      # - `file`: String, the file's path, which a warning gives.
+      # - `result`: Prism::ParseResult, the file parsed.
+      # - `names`: Array of String, the names of the mutators in the run.
+      def initialize: (file: String, result: Prism::ParseResult, names: Array[String]) -> void
+
+      # The reason that the comments give for `candidate`'s mutant to be
+      # `Ignored`, or nil when the mutant is live. The latest comment that
+      # covers the mutant decides, so a `restore` after a `disable` gives nil.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, the candidate. Its
+      #   mutator's name and the line its site starts on decide.
+      def reason: (Candidate candidate) -> String?
+
+      private
+
+      def report: (DisableComment comment, String where) -> void
+    end
+  end
+end

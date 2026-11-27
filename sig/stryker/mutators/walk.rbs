@@ -12,6 +12,8 @@ module Stryker
     # `Stryker::Mutators::Policy`'s reason, and has an ID like any other. A
     # fallback mutator's mutant is made only where no other live mutant is,
     # on its site or inside it, so an ignored mutant holds no removal back.
+    # A disable comment in the file makes the mutants it covers `Ignored`
+    # too, with the comment's reason, which wins over the exclusion's.
     # `Stryker::Mutators::Roster` leaves out the mutants that would show
     # nothing and numbers the rest, and `Stryker::Mutators::Traversal` leaves
     # out the sites that no mutator makes a mutant of. A mutator that can't
@@ -52,7 +54,8 @@ module Stryker
       # - `first_id`: Integer, the ID of the first mutant.
       # - `policy`: Stryker::Mutators::Policy, which mutators are fallbacks
       #   and which are excluded. By default, the fallbacks of
-      #   `Stryker::Mutators::FALLBACKS` and no exclusions.
+      #   `Stryker::Mutators::FALLBACKS` and no exclusions. The walk adds the
+      #   file's disable comments to it.
       def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?first_id: Integer, ?policy: Policy) -> void
 
       # The file's live mutants, in the order above, which get a switch.

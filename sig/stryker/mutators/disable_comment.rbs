@@ -1,0 +1,114 @@
+module Stryker
+  module Mutators
+    # One `# Stryker disable` or `# Stryker restore` comment, read as
+    # [The disable comment](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#the-disable-comment)
+    # specifies: StrykerJS's pattern, applied to the text after the `#`. A
+    # comment says which mutators it covers, on which lines, and the
+    # reason, which a `restore` comment doesn't have.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # comment = Stryker::Mutators::DisableComment.parse(" Stryker disable next-line StringLiteral: a log text", 7, code)
+    # comment.covers?(candidate)
+    # # => true
+    # comment.reason
+    # # => "a log text"
+    # ```
+    class DisableComment < Data
+      # StrykerJS's pattern, which the text after the `#` has to match. Private.
+      PATTERN: Regexp
+
+      # The reason of a comment that gives none: StrykerJS's text. Private.
+      DEFAULT_REASON: String
+
+      # The name that stands for every mutator. Private.
+      ALL: String
+
+      # The lines of a comment that covers none. Private.
+      NO_LINES: Range[Integer?]
+
+      # The line the comment is on.
+      attr_reader line: Integer
+
+      # The mutator names the comment lists, as written, with the spaces
+      # around each trimmed, by their lowercase form.
+      attr_reader names: Hash[String, String]
+
+      # The `statusReason` of a mutant that the comment turns off, or nil for
+      # a `restore` comment, which turns mutants on.
+      attr_reader reason: String?
+
+      # The lines whose mutants the comment covers: from its own line to the
+      # end of the file, or only the next line that holds code.
+      attr_reader lines: Range[Integer?]
+
+      # Builds the comment.
+      #
+      # - `line`: Integer, the line the comment is on.
+      # - `names`: Hash of String to String, the mutator names by lowercase.
+      # - `reason`: String or nil, the reason, or nil for a `restore`.
+      # - `lines`: Range of Integer, the lines it covers.
+      def self.new: (line: Integer, names: Hash[String, String], reason: String?, lines: Range[Integer?]) -> instance
+                  | (Integer line, Hash[String, String] names, String? reason, Range[Integer?] lines) -> instance
+
+      # The disable comment that `comment` is, or nil when it is an ordinary
+      # comment: any other `#` comment, a block comment, or a comment whose
+      # text doesn't match the pattern.
+      #
+      # - `comment`: Prism::Comment, a comment of the file.
+      # - `code`: Stryker::Mutators::CodeLines, which finds the next line
+      #   that holds code.
+      def self.read: (Prism::Comment comment, CodeLines code) -> DisableComment?
+
+      # The comment that `text` is, or nil when `text` doesn't match the
+      # pattern, so that the comment is an ordinary one.
+      #
+      # - `text`: String, the comment's text after the `#`.
+      # - `line`: Integer, the line the comment is on.
+      # - `code`: Stryker::Mutators::CodeLines, which finds the next line
+      #   that holds code. Asked only for a `next-line` comment.
+      def self.parse: (String text, Integer line, CodeLines code) -> DisableComment?
+
+      # The comment that the match of the pattern is.
+      #
+      # - `match`: MatchData, the match of `text` against the pattern.
+      # - `line`: Integer, the line the comment is on.
+      # - `code`: Stryker::Mutators::CodeLines, which finds the next line
+      #   that holds code.
+      def self.from: (MatchData match, Integer line, CodeLines code) -> DisableComment
+
+      # The reason of a `disable` comment: the text after the colon, or
+      # StrykerJS's text when there is none or it is only whitespace.
+      #
+      # - `given`: String or nil, the text after the colon.
+      def self.given_or_default: (String? given) -> String
+
+      # The range that holds only `line`, or none when `line` is nil.
+      #
+      # - `line`: Integer or nil, the one line.
+      def self.only: (Integer? line) -> Range[Integer?]
+
+      # Whether the comment covers `candidate`: the comment lists the name of
+      # its mutator, or `all`, with any letter case, and its lines hold the
+      # line its site starts on.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, the candidate.
+      def covers?: (Candidate candidate) -> bool
+
+      # What the comments so far say about `candidate`: this comment's reason
+      # when it covers the candidate, which is nil for a `restore`, and
+      # `earlier` when it doesn't.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, the candidate.
+      # - `earlier`: String or nil, what the comments before this one say.
+      def decide: (Candidate candidate, String? earlier) -> String?
+
+      # The names in the comment, as written, that none of `valid` is, except
+      # `all`.
+      #
+      # - `valid`: Array of String, the names of the mutators in lowercase.
+      def unknown: (Array[String] valid) -> Array[String]
+    end
+  end
+end

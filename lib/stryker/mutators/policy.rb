@@ -1,16 +1,24 @@
 # frozen_string_literal: true
 
+require "prism"
 require_relative "../mutators"
+require_relative "directives"
 
 module Stryker
   module Mutators
     class Policy
       EXCLUDED = 'Ignored because of excluded mutation "%<name>s"'
-      private_constant(:EXCLUDED)
+      NO_DIRECTIVES = Directives.new(file: "", result: Prism.parse(""), names: [])
+      private_constant(:EXCLUDED, :NO_DIRECTIVES)
 
-      def initialize(fallbacks: FALLBACKS, excluded: [])
+      def initialize(fallbacks: FALLBACKS, excluded: [], directives: NO_DIRECTIVES)
         @fallbacks = fallbacks
         @excluded = excluded
+        @directives = directives
+      end
+
+      def reading(directives)
+        self.class.new(fallbacks: @fallbacks, excluded: @excluded, directives:)
       end
 
       def fallback?(candidate)
@@ -18,7 +26,10 @@ module Stryker
       end
 
       def reason(candidate)
-        name = candidate.mutator.name
+        @directives.reason(candidate) || excluded(candidate.mutator_name)
+      end
+
+      private def excluded(name)
         format(EXCLUDED, name:) if @excluded.include?(name)
       end
     end
