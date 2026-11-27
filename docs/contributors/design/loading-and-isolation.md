@@ -20,7 +20,7 @@ The orchestrator never loads the project's code, and a project process never ins
 | Process | What it does | The code of **Stryker (for Ruby)** that it loads |
 | - | - | - |
 | The orchestrator | Reads the configuration, parses the files, instruments them (starting parse workers for a file with many mutants), writes the cache, starts the project processes, and judges each run from what they write. | The code that instruments, with Prism and refract, and the part of each isolation adapter that starts and judges the runs. |
-| A project process: the parent that forks, each child forked from it, and each fresh process for a static mutant | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
+| A project process: the parent that forks, each child forked from it, and each fresh process | Installs the hook, loads the project's code and tests, and runs tests. | Only its runtime, which uses nothing outside the standard library. |
 
 Prism, refract, and regexp_parser load in the orchestrator, and never in a project process. A parse worker, which isn't a project process, loads Prism too ([Parsing plain mutants](#parsing-plain-mutants)). The reasons are in [ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md).
 
@@ -205,7 +205,7 @@ The orchestrator starts every project process with an array of arguments, never 
 | `fork-parent` | The number of the file descriptor of its pipe for results, and the folder for its children's output | A pipe that carries its runs | Files in a temporary folder of the parent's |
 | `fresh` | The path of the file that holds its run, and the path of the file for its results | The null device | Files in the run's temporary folder |
 
-Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set for a static mutant's run and unset for the parent that forks, whatever the orchestrator's environment holds.
+Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set for a fresh process's mutant run, and unset for the parent that forks and for a fresh process's dry run, whatever the orchestrator's environment holds.
 
 A project process ends with `exit!`, whatever its mode, once its work is done or has raised. `exit` would run every `at_exit` block, the project's included: `minitest/autorun`'s, and SimpleCov's, which writes its results into the project.
 
@@ -258,7 +258,7 @@ So a failed test kills the mutant whatever the process did after it said so: cra
 | Run | Who writes the messages | Who reads them | Who enforces the time limit |
 | - | - | - | - |
 | Forked child, for a runtime mutant or the dry run | The child, to its fork parent, over a pipe of its own | The fork parent, which relays them to the orchestrator over the parent's pipe | The fork parent |
-| Fresh process for a static mutant | The fresh process, to a file of its run's | The orchestrator, once the process ended | The orchestrator |
+| Fresh process, for a mutant run or the dry run | The fresh process, to a file of its run's | The orchestrator, once the process ended | The orchestrator |
 
 A run's time limit counts from the start of its first test, because the plan computes it from the dry-run times of tests ([The plan](coverage.md#each-runs-time-limit)), and a process's start isn't a test's. A fresh process can take longer to start than a run's limit: on Windows with Ruby 4.0.10, while the whole suite ran, a static run's process took 5 to 8 seconds from `Process.spawn` to its first test, against a `timeoutMS` of 5000 by default ([#85](https://github.com/setdef/stryker_for_ruby/issues/85)). Until its first test starts, a process has a fixed limit of 300 seconds to start and load the tests, the same limit as the fork parent has to load them, and no option changes it. A run that passes that limit started no test, so no test judged its mutant, and its status is `RuntimeError`, never `Timeout`, which the report counts as detected.
 
@@ -297,7 +297,7 @@ A static mutant's switch runs once, while its file loads. Setting the mutant act
 
 So every static mutant run gets a fresh process, on every system, from `Isolation::FreshProcesses`, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The runtime reads that variable when it loads, before any of the project's code, and makes the active mutant's holder from it ([The active mutant's holder](#the-active-mutants-holder)), so the switch takes the mutated branch while the file loads. The process reads its run from a file, checks that the run's mutant is the active one, loads the project's tests, runs the run's tests, stopping at the first failure, and writes each test's start and result to its results' file as it happens. The run includes every test, because a value set at load time can reach any test.
 
-The adapter keeps up to `concurrency` processes running at once, and enforces each run's time limit itself. It judges a run from its results' file once its process ended, and then deletes the run's folder. The pipeline gives it each static run that ended as `Timeout` again, alone, once every other static run has ended ([A static run that times out](coverage.md#a-static-run-that-times-out)). A runtime mutant's run works in a fresh process too, at the cost of a process for each run.
+The adapter keeps up to `concurrency` processes running at once, and enforces each run's time limit itself. It judges a run from its results' file once its process ended, and then deletes the run's folder. The pipeline gives it each static run that ended as `Timeout` again, alone, once every other static run has ended ([A static run that times out](coverage.md#a-static-run-that-times-out)). A runtime mutant's run works in a fresh process too, at the cost of a process for each run, and so does the dry run ([The dry run](coverage.md#where-it-runs)).
 
 ## Ractors
 

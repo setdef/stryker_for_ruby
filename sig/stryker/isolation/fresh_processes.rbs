@@ -1,7 +1,7 @@
 module Stryker
   module Isolation
-    # The `Stryker::_Isolation` adapter for static mutants, on Linux,
-    # macOS, and Windows, as
+    # The `Stryker::_DryRunIsolation` adapter that gives each run a fresh
+    # process, on Linux, macOS, and Windows, as
     # [Static mutants on every system](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#static-mutants-on-every-system)
     # specifies. Each run gets a fresh project process, with its mutant
     # named in `STRYKER_ACTIVE_MUTANT` before the process starts, so the
@@ -13,8 +13,13 @@ module Stryker
     # runs past its time limit, and judges each run from its file once its
     # process ended.
     #
-    # A runtime mutant's run works here too, at the cost of a fresh process
-    # for each run.
+    # A static mutant needs such a process on every system. A runtime
+    # mutant's run works here too, at the cost of a fresh process for each
+    # run, and so does the dry run, in a fresh process with no mutant
+    # active, which records the hits made while the project loads in its
+    # static bucket, and each test's in that test's bucket, as
+    # [The dry run](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-dry-run)
+    # specifies.
     #
     # ## Examples
     #
@@ -22,7 +27,8 @@ module Stryker
     # isolation = Stryker::Isolation::FreshProcesses.new(cache_directory, project_root)
     # isolation.start(config)
     # begin
-    #   isolation.run_all(static_runs) { |result| reporter.call(Stryker::Events::MutantTested.new(result:)) }
+    #   found = isolation.dry_run(config)
+    #   isolation.run_all(runs) { |result| reporter.call(Stryker::Events::MutantTested.new(result:)) }
     # ensure
     #   isolation.stop
     # end
@@ -58,11 +64,33 @@ module Stryker
       # ended, and deletes their folders.
       def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
 
+      # Runs the dry run in a fresh process, which loads the project's code
+      # and tests with no mutant active, runs every test once, stopping
+      # after the first that fails, and then runs the loading check.
+      # Returns what the dry run found. The dry run's tests have
+      # `config.dry_run_timeout_minutes` from the start of the first test,
+      # and the process has `Stryker::Isolation::Timer::START_SECONDS` to
+      # start it.
+      #
+      # Raises `Stryker::Isolation::DryRunError` when a test failed, the
+      # loading check failed, the process crashed or raised, or the tests
+      # ran past the limit, in which case the message names
+      # `dryRunTimeoutMinutes`, as `Stryker::Isolation::ForkPerRun#dry_run`
+      # raises it. Raises `Stryker::Isolation::Error` before `start`. Calls
+      # `stop` when it raises.
+      #
+      # - `config`: Stryker::Config, whose `dry_run_timeout_minutes` limits
+      #   the tests.
+      def dry_run: (Config config) -> DryRunResult
+
       # Kills every process still running, waits until each ended, and
       # deletes their folders.
       def stop: () -> nil
 
       private
+
+      # Runs `fresh`, as `run_all` says, until it lands.
+      def land: (FreshRun fresh) -> void
 
       # Runs the fresh run that the block gives for each of `runs`, as
       # `run_all` says. Raises `Stryker::Isolation::Error` before `start`.

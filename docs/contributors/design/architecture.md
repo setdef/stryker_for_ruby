@@ -87,8 +87,7 @@ flowchart TB
   PIPE --> TR & CS & ISO & DRI & REPP
   MT -. implements .-> TR
   JC & YC -. implements .-> CS
-  FP -. implements .-> DRI
-  FR -. implements .-> ISO
+  FP & FR -. implements .-> DRI
   JR & CX -. implements .-> REPP
   CT -. verifies .-> MT & JC & YC
 ```
@@ -169,7 +168,7 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
 - **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapters are `Isolation::ForkPerRun` and `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
-- **`_DryRunIsolation`** is an `_Isolation` that also runs the dry run, in the kind of process that its mutant runs start from. Its adapter is `Isolation::ForkPerRun`, whose dry run is a child of the parent that forks every runtime mutant's run ([The dry run](coverage.md#the-dry-run)).
+- **`_DryRunIsolation`** is an `_Isolation` that also runs the dry run, in the kind of process that its mutant runs start from. Its adapters are `Isolation::ForkPerRun`, whose dry run is a child of the parent that forks every runtime mutant's run, and `Isolation::FreshProcesses`, whose dry run is a fresh process, as each of its mutant runs is ([The dry run](coverage.md#the-dry-run)).
 - **`_Reporter`** receives each domain event of a run. Its adapters are `Reporters::JsonReport` and `Reporters::ClearText`, which [Configuration](../../configuration.md#reporters) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
 - **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../../configuration.md#the-configuration-file) says how to use.
 

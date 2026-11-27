@@ -19,8 +19,8 @@ module Stryker
     # # prints Killed
     # ```
     class FreshRun
-      # The run.
-      attr_reader run: MutantRun
+      # The run: a mutant run, or the dry run.
+      attr_reader run: forked
 
       # What judges the run from its process's messages and ending.
       @landing: ^(Messages messages, Ending ending) -> void
@@ -39,10 +39,10 @@ module Stryker
 
       # Makes the run's folder.
       #
-      # - `run`: Stryker::MutantRun, the run.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - the block: what judges the run, given the process's messages and
       #   how the process ended, when the run lands.
-      def initialize: (MutantRun run) { (Messages messages, Ending ending) -> void } -> void
+      def initialize: (forked run) { (Messages messages, Ending ending) -> void } -> void
 
       # Writes the run's file, as JSON in binary mode, and returns its path
       # and the path of the results' file, for the process's arguments.

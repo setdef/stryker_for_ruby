@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "dry_run"
+require_relative "dry_run_verdict"
 require_relative "error"
 require_relative "fresh_launch"
 require_relative "fresh_run"
@@ -27,8 +29,17 @@ module Stryker
         fly(runs) { |run| FreshRun.judged(run, &) }
       end
 
+      def dry_run(config)
+        dry_run = DryRun.within(config.dry_run_timeout_minutes)
+        DryRunVerdict.awaited(dry_run) { |landing| land(FreshRun.new(dry_run, &landing)) }
+      end
+
       def stop
         @running.stop
+      end
+
+      private def land(fresh)
+        fly([fresh.run]) { fresh }
       end
 
       private def fly(runs, &fresh)
