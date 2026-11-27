@@ -18,7 +18,8 @@ module Stryker
       SLOW = "The fork parent loaded no tests within %<seconds>p seconds. Check that the test helper, " \
         "#{TestRunners::MinitestRunner::HELPER} by default, loads without waiting for anything.".freeze
       public_constant(:GRACE_SECONDS, :LOAD_SECONDS)
-      private_constant(:READY, :SLOW)
+      GONE = "The fork parent ended before it took a run.\n%<errors>s"
+      private_constant(:READY, :SLOW, :GONE)
 
       def initialize(child, pipes, folder)
         @child = child
@@ -36,6 +37,8 @@ module Stryker
       def give(run)
         @commands.write("#{run.to_json}\n")
         nil
+      rescue Errno::EPIPE
+        raise(Error, format(GONE, errors: OutputFiles.new(@folder).tail("parent")).chomp)
       end
 
       def receive

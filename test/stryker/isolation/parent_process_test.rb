@@ -14,15 +14,21 @@ class ParentProcessTest < Minitest::Test
 
   parallelize_me!
 
-  # Stops a parent whose process has ended, and returns what it asked of
-  # +process+ and the folder it was given.
-  def stopped(process)
-    folder = Dir.mktmpdir("stryker-fork-")
+  # A parent whose process has ended, with +process+ as its stand-in for
+  # Process and +folder+ for its output. Nothing reads its runs' pipe.
+  def ended_parent(process, folder)
     input, commands = IO.pipe
     results, output = IO.pipe
     [input, output].each(&:close)
     child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
-    Stryker::Isolation::ParentProcess.new(child, [commands, results], folder).stop
+    Stryker::Isolation::ParentProcess.new(child, [commands, results], folder)
+  end
+
+  # Stops a parent whose process has ended, and returns what it asked of
+  # +process+ and the folder it was given.
+  def stopped(process)
+    folder = Dir.mktmpdir("stryker-fork-")
+    ended_parent(process, folder).stop
     folder
   end
 
@@ -40,6 +46,17 @@ class ParentProcessTest < Minitest::Test
     assert_raises(Stryker::Isolation::Error, Stryker::Isolation::TestsLoadError) { parent.await_ready }
   ensure
     FileUtils.rm_rf(folder) if folder
+  end
+
+  # Gives a run to a parent that ended, whose standard error ended with
+  # +errors+, and returns the error that this raises.
+  def given_to_an_ended_parent(errors = nil)
+    folder = Dir.mktmpdir("stryker-fork-")
+    File.binwrite(Stryker::Isolation::OutputFiles.new(folder).paths("parent").last, errors) if errors
+    parent = ended_parent(FakeProcess.new, folder)
+    assert_raises(Stryker::Isolation::Error) { parent.give(sample_run) }
+  ensure
+    parent&.stop
   end
 
   def kills
@@ -73,6 +90,16 @@ class ParentProcessTest < Minitest::Test
 
     assert_instance_of(Stryker::Isolation::Error, error)
     assert_includes(error.message, "NameError: Minitest")
+  end
+
+  def test_giving_a_run_to_a_parent_that_ended_raises_an_error_that_says_so_with_the_end_of_its_standard_error
+    error = given_to_an_ended_parent("first line\nlast line\n")
+
+    assert_equal("The fork parent ended before it took a run.\nfirst line\nlast line", error.message)
+  end
+
+  def test_giving_a_run_to_a_parent_that_ended_without_writing_standard_error_raises_an_error_that_says_so
+    assert_equal("The fork parent ended before it took a run.", given_to_an_ended_parent.message)
   end
 
   def test_stopping_the_parent_ends_what_the_projects_code_started_in_its_group

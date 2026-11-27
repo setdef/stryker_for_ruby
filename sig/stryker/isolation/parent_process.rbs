@@ -30,6 +30,9 @@ module Stryker
       # The text of the error for a parent that wasn't ready in time.
       SLOW: String
 
+      # The text of the error for a run given to a parent that ended.
+      GONE: String
+
       # The parent's process.
       @child: Child
 
@@ -65,7 +68,10 @@ module Stryker
       #   another.
       def await_ready: (?(Integer | Float) seconds) -> void
 
-      # Gives the parent `run`, as one line of JSON.
+      # Gives the parent `run`, as one line of JSON. Raises
+      # `Stryker::Isolation::Error`, saying that the parent ended and giving
+      # the last lines of its standard error, when the parent has ended and
+      # nothing reads its runs' pipe.
       #
       # - `run`: the run, a Stryker::MutantRun or the dry run.
       def give: (forked run) -> nil
