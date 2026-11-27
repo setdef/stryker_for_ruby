@@ -297,7 +297,7 @@ A static mutant's switch runs once, while its file loads. Setting the mutant act
 
 So every static mutant run gets a fresh process, on every system, from `Isolation::FreshProcesses`, with the mutant ID in the `STRYKER_ACTIVE_MUTANT` environment variable before the process starts. The runtime reads that variable when it loads, before any of the project's code, and makes the active mutant's holder from it ([The active mutant's holder](#the-active-mutants-holder)), so the switch takes the mutated branch while the file loads. The process reads its run from a file, checks that the run's mutant is the active one, loads the project's tests, runs the run's tests, stopping at the first failure, and writes each test's start and result to its results' file as it happens. The run includes every test, because a value set at load time can reach any test.
 
-The adapter keeps up to `concurrency` processes running at once, and enforces each run's time limit itself. It judges a run from its results' file once its process ended, and then deletes the run's folder. A runtime mutant's run works in a fresh process too, at the cost of a process for each run.
+The adapter keeps up to `concurrency` processes running at once, and enforces each run's time limit itself. It judges a run from its results' file once its process ended, and then deletes the run's folder. The pipeline gives it each static run that ended as `Timeout` again, alone, once every other static run has ended ([A static run that times out](coverage.md#a-static-run-that-times-out)). A runtime mutant's run works in a fresh process too, at the cost of a process for each run.
 
 ## Ractors
 

@@ -1,0 +1,29 @@
+module Stryker
+  class Pipeline
+    # The static mutants' runs of a run, through one isolation adapter. A
+    # run's time limit comes from the dry run, which had the machine to
+    # itself, and static runs run up to `concurrency` at once, each through
+    # the whole suite, so a run that would pass can pass its limit only
+    # because the others slowed it. So a static run that ends as `Timeout`
+    # runs again, alone, once every other static run has ended, and the
+    # mutant's status is that run's.
+    class StaticRuns
+      @isolation: _Isolation
+
+      # Builds the runs' schedule.
+      #
+      # - `isolation`: Stryker::_Isolation, started, which runs each static
+      #   mutant's run in a fresh process.
+      def initialize: (_Isolation isolation) -> void
+
+      # Runs every one of `runs` through the adapter, and then each run that
+      # ended as `Timeout` again, one at a time, with nothing else running.
+      # Yields each mutant's result once: the first run's, or, for a run
+      # that ended as `Timeout`, the result of its run alone, which may be
+      # `Timeout` again.
+      #
+      # - `runs`: Array of Stryker::MutantRun, the static mutants' runs.
+      def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
+    end
+  end
+end

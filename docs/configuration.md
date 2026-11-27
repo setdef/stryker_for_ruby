@@ -312,6 +312,8 @@ limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
 
 A run of a mutant that tests reach has the tests that passed and reached it. A run of a static mutant has every test that passed in the dry run. The overhead is the dry run's time from the start of its first test to the end of its last, less the sum of its tests' times: the test runner's time between tests. With the defaults, a mutant reached by two tests that took 100 ms and 20 ms, in a dry run whose overhead was 30 ms, has a limit of 1.5 × 120 + 5000 + 30 = 5210 ms. A run that passes its limit gives its mutant the status `Timeout`.
 
+The dry run runs alone, and the runs of static mutants run up to [`concurrency`](#concurrency) at once, each through every test, so they slow each other down. A static mutant's run that passes its limit runs again once every other static mutant's run has ended, with no other run beside it, and the mutant's status is that run's: `Survived`, `Killed`, or `Timeout` again. A static mutant that hangs takes its limit twice, and those second runs go one after another.
+
 ### `dryRunTimeoutMinutes`
 
 How many minutes the dry run's tests may take, from the start of the first test to the end of the last. It takes any number of 0 or more, such as `0.5`. The default is `5`, as in StrykerJS. A dry run that takes longer fails the run, with an error that names this option. Raise it for a test suite that takes longer than 5 minutes to run once.

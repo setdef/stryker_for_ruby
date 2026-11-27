@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "static_runs"
+
 module Stryker
   class Pipeline
     class Isolations < Data.define(:runtime, :static)
@@ -18,7 +20,7 @@ module Stryker
       def run_all(runs, &)
         statics, runtimes = runs.partition(&:static)
         runtime.run_all(runtimes, &)
-        static.run_all(statics, &)
+        StaticRuns.new(static).run_all(statics, &)
       end
 
       private def stop

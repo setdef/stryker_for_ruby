@@ -32,8 +32,9 @@ module Stryker
       def dry_run: (Config config) -> DryRunResult
 
       # Runs every runtime mutant's run through the runtime adapter, and
-      # then every static mutant's run through the static adapter, and
-      # yields each result as it arrives.
+      # then every static mutant's run through the static adapter, as
+      # Stryker::Pipeline::StaticRuns schedules them, and yields each
+      # mutant's result once, as it arrives.
       #
       # - `runs`: Array of Stryker::MutantRun, the runs of the plan.
       def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void

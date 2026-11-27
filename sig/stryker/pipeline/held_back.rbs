@@ -1,0 +1,25 @@
+module Stryker
+  class Pipeline
+    # The static mutants' runs whose first run ended as `Timeout`, so that
+    # each runs again alone, as Stryker::Pipeline::StaticRuns schedules
+    # them.
+    class HeldBack
+      @by_mutant: Hash[Mutant, MutantRun]
+
+      # Holds none of `runs` yet.
+      #
+      # - `runs`: Array of Stryker::MutantRun, the runs whose results it
+      #   may hold.
+      def initialize: (Array[MutantRun] runs) -> void
+
+      # Holds `result` back, and gives true, when its run ended as
+      # `Timeout`. Gives false for any other result.
+      #
+      # - `result`: Stryker::MutantResult, the result of one of the runs.
+      def hold?: (MutantResult result) -> bool
+
+      # The runs whose results it held, in the order it held them.
+      attr_reader runs: Array[MutantRun]
+    end
+  end
+end

@@ -218,9 +218,37 @@ limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
 
 The run's tests are the tests that it runs: for a runtime run, the tests that reached its mutant, and for a static run, every test that passed. The overhead is the dry run's `duration_ms` less the sum of its tests' `duration_ms`, and never below 0. A dry run's `duration_ms` counts from the start of its first test, so the time its process took to start and to load the tests is in neither the tests' times nor the overhead, which leaves the test runner's time between tests ([#85](https://github.com/setdef/stryker_for_ruby/issues/85)). The plan adds the overhead because a limit without it would time out, on a test runner that is slow between tests, mutants that StrykerJS wouldn't. The limit is rounded up to a whole millisecond, because a run holds its limit as an Integer, and with a limit rounded down, the isolation adapter could end a run a fraction of a millisecond early.
 
+### A static run that times out
+
+The dry run that the limit comes from runs alone, while static runs run up to `concurrency` at once, each through the whole suite, after every runtime run has ended. Runs at once slow each other down, so a static run that would pass can pass its limit only because of the runs beside it, and its mutant would count as detected. So the pipeline runs each static run that ends as `Timeout` again, once every other static run has ended, one at a time, with no other run beside it, and the mutant's status is that run's: `Survived`, `Killed` by a test that the first run never reached, or `Timeout` again. `Pipeline::StaticRuns` holds the rule.
+
+On Linux, on a machine with 24 hardware threads and nothing else running, with Ruby 4.0.10, a made-up suite of 200 Minitest tests that sort and join strings, which took 19.0 seconds alone, took this long with other copies of it running at once:
+
+| Copies at once | Median | Slowest |
+| - | - | - |
+| 1 | 19.0 s | 19.0 s |
+| 4 | 22.5 s | 22.6 s |
+| 8 | 29.8 s | 31.5 s |
+| 12 | 35.4 s | 36.8 s |
+| 16 | 41.6 s | 50.4 s |
+| 23 | 60.3 s | 64.2 s |
+
+With the defaults, that suite's static runs have a limit of about 1.5 × 19 + 5 = 33.5 seconds, so at the default `concurrency` of 23 on that machine, every static run passes it, and none would alone.
+
+A run alone errs toward cost, never toward a wrong status. A mutant that hangs costs its limit once more, and those runs go one after another, so a run with many such mutants takes longer by the sum of their limits. A survivor counts as detected only when its run passes its limit with the machine to itself, as the dry run had it.
+
+These ways fell short:
+
+- **Fewer static runs at once than `concurrency`** changes what the option means, and any number below it still puts runs beside each other, so a survivor can still pass its limit.
+- **A limit scaled by the number of runs at once** guesses how runs slow each other down. In the table, the slowdown is 1.2 at 4 copies and 3.2 at 23, neither the number of copies nor a fixed share of it, and it depends on the machine and on what the tests do. A guess too small calls survivors detected, and one too large lets every hung mutant run that much longer. It also changes the formula that StrykerJS's users know.
+- **A dry run beside copies of itself** would measure the slowdown of one number of runs at once, while the last static runs of a run have fewer beside them, and it would add whole runs of the suite to every run.
+
+StrykerJS runs the runs that reload the test environment, its static runs, last too, at the same concurrency and with the same formula, and it trusts their timeouts. Stryker.NET runs a group of mutants that timed out together again, one mutant at a time, to tell which one timed out, and Stryker4s runs a mutant again only when its test runner crashed. None of the three runs a single mutant's timeout again.
+
 ## What this design doesn't do
 
 - It doesn't measure line or branch coverage of the project's code. Use SimpleCov or `Coverage` for that.
+- It doesn't run a runtime mutant's run that timed out again. Such a run holds only the tests that reached its mutant, and its limit adds `timeoutMS` to their dry-run time, where a static run holds the whole suite.
 - It doesn't record hits in a mutant run.
 - It doesn't run the dry run on Windows, where no isolation adapter forks.
 - It doesn't attribute a hit from a Ractor that is still running when its test ends to that test.
