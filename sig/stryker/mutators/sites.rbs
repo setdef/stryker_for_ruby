@@ -26,9 +26,20 @@ module Stryker
       # - `node`: Prism::node, a node of the file.
       def self.children: (Prism::node node) -> Array[Prism::node]
 
-      LOADERS: Array[Symbol]
+      # Whether `node` is a call with no receiver to `sig` with a block, a
+      # Sorbet type signature.
+      #
+      # - `node`: Prism::node, a node of the file.
+      def self.type_signature?: (Prism::node node) -> bool
 
-      private def self.type_signature?: (Prism::node node) -> bool
+      # Whether `call` loads a file: a call to `require`,
+      # `require_relative`, `load`, or `autoload` with no receiver, or to
+      # `autoload` on a module.
+      #
+      # - `call`: Prism::CallNode, the call.
+      def self.loader?: (Prism::CallNode call) -> bool
+
+      LOADERS: Array[Symbol]
 
       private def self.loader_arguments: (Prism::node node) -> Prism::ArgumentsNode?
     end

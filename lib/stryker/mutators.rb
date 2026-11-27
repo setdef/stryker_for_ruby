@@ -5,6 +5,7 @@ require_relative "mutators/array_declaration"
 require_relative "mutators/assignment_operator"
 require_relative "mutators/block_statement"
 require_relative "mutators/boolean_literal"
+require_relative "mutators/call_expression"
 require_relative "mutators/conditional_expression"
 require_relative "mutators/equality_operator"
 require_relative "mutators/logical_operator"
@@ -23,6 +24,7 @@ module Stryker
       AssignmentOperator,
       BlockStatement,
       BooleanLiteral,
+      CallExpression,
       ConditionalExpression,
       EqualityOperator,
       LogicalOperator,
@@ -33,6 +35,7 @@ module Stryker
       StringLiteral,
       UnaryOperator,
     ].freeze
-    public_constant(:ALL)
+    FALLBACKS = [CallExpression].freeze
+    public_constant(:ALL, :FALLBACKS)
   end
 end

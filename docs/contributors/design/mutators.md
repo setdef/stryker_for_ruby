@@ -10,6 +10,7 @@ Every rule here serves one aim: each mutant that survives should be worth acting
 - **Mutator name:** the name in the report's `mutatorName` field, and that `mutator.excludedMutations` accepts.
 - **Pair:** an original construct and the mutant a mutator makes from it, such as `a < b` and `a <= b`.
 - **Edit:** the byte range a mutant changes and the text that replaces it ([The text edit](mutant-placement.md#the-text-edit)).
+- **Fallback mutator:** a mutator whose mutant at a site is made only where no other mutator's mutant is, on the site or inside it. `CallExpression` is the one fallback mutator.
 
 ## Names
 
@@ -28,7 +29,7 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Fourteen mutators make up the catalog. Thirteen have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Fifteen mutators make up the catalog. Fourteen have the names of Stryker mutators, and `RangeOperator` mutates a Ruby construct that no Stryker tool mutates. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
@@ -37,6 +38,7 @@ Fourteen mutators make up the catalog. Thirteen have the names of Stryker mutato
 | `AssignmentOperator` | `+=`, `-=`, and the other operator assignments, `\|\|=`, `&&=` | the `OperatorWrite`, `OrWrite`, and `AndWrite` nodes | StrykerJS `AssignmentOperator` |
 | `BlockStatement` | The body of a method, block, lambda, branch, loop, `when`, `in`, `begin`, `rescue`, or `ensure` | `StatementsNode` | StrykerJS `BlockStatement` |
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
+| `CallExpression` | A call that stands as a statement, removed | `CallNode` | StrykerJS `CallExpression` |
 | `ConditionalExpression` | Conditions of `if`, `unless`, `elsif`, ternaries, `while`, `until`, and `in` guards, and comparisons and `&&`/`\|\|` elsewhere | the condition's node, `CallNode`, `AndNode`, `OrNode` | StrykerJS `ConditionalExpression` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
@@ -138,6 +140,35 @@ A loop whose body is emptied can run forever when the body is what ends it. The 
 `unless c` is `if !c`, and `until c` is `while !c`, so turning `unless` into `if` is the same mutation as StrykerJS's removal of the `!` in `if (!c)`. An `unless` hides its negation in the keyword, which makes a compound condition such as `unless paid && shipped` easy to get backwards, and a survivor shows that no test takes the other branch. A project that turns off `BooleanLiteral` turns these off too. Because the node spans its whole body, the edit for these two covers only the keyword, and the report's `replacement` is `if` or `while`.
 
 An `unless`, an `until`, or a negation whose condition or operand is the comparison `__FILE__ == $0` gets no mutant, as in `unless __FILE__ == $0` and `!(__FILE__ == $0)` (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
+### `CallExpression`
+
+It replaces a call that stands as a statement with `nil`, as StrykerJS's `CallExpression` empties a call statement:
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `order.save` | `nil` | A test that checks an effect of `order.save`. |
+| `notify(customer)` | `nil` | A test that checks that `notify` ran. |
+| `raise NotFound` | `nil` | A test that expects the error. |
+| `items << item` | `nil` | A test that checks `items`. |
+
+A statement is a call in a body, as [`BlockStatement`](#blockstatement) defines one, in a class, module, or singleton class body, or at the top level of a file, with or without a receiver, arguments, or a block. Parentheses around one statement are ignored, so `(save)` stands as a statement too. The edit covers the whole call, its arguments and block included.
+
+A call whose value something reads gets no mutant: an argument, a receiver, a condition, the value of an assignment or of `return`, a call in an interpolation, and the statements in parentheses that hold more than one. StrykerJS replaces a call whose value is read with `void 0` only in an expression of a Svelte template, which holds no statements. In Ruby, `nil` in place of such a value mostly raises `NoMethodError` at the next call on it, so its mutant would be killed by any test that reaches it and show nothing that coverage doesn't. The last statement of a body is the body's value, and its removal makes the body return `nil`, as `BlockStatement` does when the body has only that statement; the run then keeps `BlockStatement`'s mutant (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+
+`CallExpression` is a fallback mutator: it makes no mutant where another mutator makes one on the call, such as `MethodExpression`'s `items.sort!` to `items`, or anywhere inside it, in its receiver, its arguments, or its block, at any depth. StrykerJS removes a call only under the same condition: it keeps its `CallExpression` mutant only when that mutant is the only one at the call and inside it, and Stryker.NET drops a block's removal in the same way when another mutant lies inside the block. A mutant inside already shows whether any test checks that code. `notify("Saved")` gets `notify("")`, and when no test checks what `notify` does, that mutant survives too, so removing the call would add a second survivor that shows the same thing, and a second run of the tests. Without the rule, `CallExpression` would make nearly twice as many mutants: 236 instead of 125 in Ruby 4.0.10's `resolv.rb`, which gets 1,689 from the other mutators, and 349 instead of 214 in the `lib` folder of rake 13.4.2, which gets 2,386.
+
+"Inside" follows the tree and not the bytes, so the body of a heredoc that the call takes is inside the call, though its bytes come after the call's. Only the mutators that run count: a mutator that [`mutator.excludedMutations`](../../configuration.md#mutatorexcludedmutations) lists makes no mutant, so it keeps no call from being removed. The walk counts every mutant that a mutator makes inside the call, also one that the instrumenter can't place.
+
+It makes no mutant of:
+
+- an attribute or index write, such as `order.total = 0` or `items[0] = 1`, which is an assignment, as StrykerJS doesn't remove an assignment;
+- `super` and `yield`, which aren't calls in Prism, as StrykerJS doesn't remove `super()`;
+- a call that loads a file, a call that sets visibility, `freeze`, and a type signature (see [Sites that get no mutant](#sites-that-get-no-mutant)).
+
+An operator call that stands as a statement, such as `items << item`, gets the removal, as `items.add(item)` does. One that another mutator changes, such as `a + b` as the last statement of a body, gets that mutator's mutant on the call, so it gets no removal.
+
+A call in a class body, a module body, or at the top level runs while the file loads, so its mutant is static ([Loading and isolation](loading-and-isolation.md#terms)). `include Comparable`, `attr_reader :total`, and a Rails `before_action :authenticate` get such a mutant, and StrykerJS's removal of a call statement at the top level of a module is static in the same way.
 
 ### `ConditionalExpression`
 
@@ -346,6 +377,7 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 | A call with no receiver to `require`, `require_relative`, `load`, or `autoload`, and `autoload` called on a module: the call's arguments, and the call's removal | A changed path loads another file or raises `LoadError`, and a removed `require` or `autoload` either raises `NameError` or changes nothing because another file loaded the same code. Each such mutant is static, so it would cost a fresh process and the whole suite. [Mutant placement](mutant-placement.md#sites-that-get-no-mutant) gives the rule for the arguments. |
 | A backtick or `%x` command | See [`StringLiteral`](#stringliteral). |
 | Comments, magic comments such as `# frozen_string_literal: true`, and the data after `__END__` | They aren't code that Prism gives a mutator. The instrumenter keeps them byte for byte ([Splicing into the original bytes](mutant-placement.md#splicing-into-the-original-bytes)). |
+| The removal of a call to `private`, `protected`, `public`, `module_function`, `private_constant`, `public_constant`, `private_class_method`, or `public_class_method` | No Stryker tool has a mutator that changes visibility, so `CallExpression` leaves these calls alone, with a receiver or without one. A removed `private` makes the methods after it public, and only a test that expects `NoMethodError` for a private method would kill it. |
 | `freeze` | No mutator removes a call to `freeze`, or the `-` or `+` before a string literal. The receiver behaves the same unfrozen unless some code changes it, and only a test that expects `FrozenError` would kill the mutant, so it would survive on every frozen constant. |
 | The comparison `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, either way round, wherever it stands | A mutant that makes the comparison true, such as `true` in its place or `!=` for `==`, runs the file's script code inside the test process, where it does whatever the script does. The comparison gets none whether it is a condition or a value. |
 | A node whose condition or operand is that comparison, with any parentheses around the comparison ignored: an `if`, `unless`, `elsif`, `while`, `until`, or ternary condition, an operand of `&&`, `\|\|`, `and`, or `or`, and the operand of `!` or `not` | A mutator that changes such a node makes no mutant of it, `LogicalOperator`, `BooleanLiteral`, and `ConditionalExpression` among them, because each mutant would change whether the comparison decides, and run the file's script code inside the test process, as `true` in place of the comparison does. `__FILE__ == $0 and main`, `unless __FILE__ == $0`, and `!(__FILE__ == $0)` get none, as the bare `if __FILE__ == $0` gets none. The mutants inside such a node, in its body or in an operand that isn't the comparison, are made. |
@@ -362,7 +394,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 ### Mutants the mutators don't make
 
-- **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
+- **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `def save` with the single statement `write` as its body, `BlockStatement` and `CallExpression` both replace `write` with `nil`, and the run keeps `BlockStatement`'s. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
 - **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, a body that is already empty or `nil`, a condition that is already `true` or `false`, an endless range, and `&.` on `self` or a literal.
 
@@ -372,6 +404,7 @@ A mutant whose equivalence depends on a value's class or range at run time is ma
 
 - It doesn't detect equivalent mutants beyond the ones the source text proves.
 - It doesn't use a value's class: `MethodExpression` and the operator mutators match by name and syntax alone.
+- It doesn't remove a call whose value something reads, and it doesn't remove a call where another mutant is.
 - It has no mutation levels: every mutator runs.
 - It doesn't ignore a site by default: logger calls and code between `# :nocov:` comments get mutants.
 - It doesn't mutate symbols, numbers other than their sign, `nil`, or `case`/`in` patterns.

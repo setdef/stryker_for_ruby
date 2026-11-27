@@ -71,6 +71,15 @@ class InstrumentationTest < Minitest::Test
     assert_equal("def on = true\n", found.sources[File.join(@root, "lib/flag.rb")])
   end
 
+  def test_an_excluded_mutators_mutant_does_not_keep_a_call_from_being_removed
+    write("lib/notice.rb", "def notify(log)\n  log.push(\"saved\")\n  log\nend\n")
+    mutators = [Stryker::Mutators::CallExpression, Stryker::Mutators::StringLiteral]
+    kept = instrumented(["lib/notice.rb"], mutators:).mutants
+    excluded = instrumented(["lib/notice.rb"], mutators:, excluded_mutations: ["StringLiteral"]).mutants
+
+    assert_equal([%w[StringLiteral], %w[CallExpression]], [kept, excluded].map { |found| found.map(&:mutator_name) })
+  end
+
   def test_a_mutant_that_is_not_valid_ruby_gets_no_switch_and_the_status_compile_error
     found = instrumented(["lib/cart.rb"], mutators: [BROKEN])
 

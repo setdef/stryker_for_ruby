@@ -8,5 +8,11 @@ module Stryker
     # Every mutator that is built, in the order of the catalog's table. The
     # order decides which of two identical mutants a walk keeps.
     ALL: Array[_Mutator]
+
+    # The mutators of `ALL` whose mutant a walk makes only where no other
+    # mutator's mutant is, on its site or inside it: `CallExpression`, as
+    # [`CallExpression`](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#callexpression)
+    # says.
+    FALLBACKS: Array[_Mutator]
   end
 end

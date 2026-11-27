@@ -13,6 +13,7 @@ class MutatorsTest < Minitest::Test
     AssignmentOperator
     BlockStatement
     BooleanLiteral
+    CallExpression
     ConditionalExpression
     EqualityOperator
     LogicalOperator
@@ -27,6 +28,10 @@ class MutatorsTest < Minitest::Test
 
   def test_lists_the_mutators_in_the_order_of_the_catalogs_table
     assert_equal(CATALOG, Stryker::Mutators::ALL.map(&:name))
+  end
+
+  def test_lists_call_expression_as_the_one_fallback
+    assert_equal([Stryker::Mutators::CallExpression], Stryker::Mutators::FALLBACKS)
   end
 
   def test_a_walk_asks_every_mutator_in_the_list_when_given_none

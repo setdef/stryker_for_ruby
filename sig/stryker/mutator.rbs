@@ -14,7 +14,10 @@ module Stryker
   # A mutator keeps no state between calls. The walk leaves out the sites
   # that no mutator makes a mutant of ([Sites that get no
   # mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#sites-that-get-no-mutant)),
-  # so a mutator applies only the rules of its own section.
+  # and it leaves out the mutant of a fallback mutator, one of
+  # `Stryker::Mutators::FALLBACKS`, wherever another mutant is on its site
+  # or inside it. So a mutator applies only the rules of its own section,
+  # and sees no other mutator's edits.
   interface _Mutator
     # The mutator's name in the report's `mutatorName` field, such as
     # `"ArithmeticOperator"`.

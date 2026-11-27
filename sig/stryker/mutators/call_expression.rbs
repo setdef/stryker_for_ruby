@@ -1,0 +1,61 @@
+module Stryker
+  module Mutators
+    # Removes a call that stands as a statement, to find the tests that never
+    # check what the call does. It makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `order.save` | `nil` |
+    # | `notify(customer)` | `nil` |
+    # | `raise NotFound` | `nil` |
+    #
+    # A statement is a call in a body, as `Stryker::Mutators::Bodies` defines
+    # one, in a class, module, or singleton class body, or at the top level of
+    # a file, with any parentheses around it ignored. A call whose value
+    # something reads, such as an argument, a receiver, a condition, an
+    # assignment's value, or a call in an interpolation, is no statement. The
+    # edit covers the whole call, its arguments and block included, and the
+    # replacement is `nil`.
+    #
+    # It makes no mutant of an attribute or index write, a type signature, a
+    # call that loads a file, `freeze`, or a call that sets visibility:
+    # `private`, `protected`, `public`, `module_function`,
+    # `private_constant`, `public_constant`, `private_class_method`, and
+    # `public_class_method`. It is one of `Stryker::Mutators::FALLBACKS`, so
+    # a walk makes its mutant only where no other mutant is, on the call or
+    # inside it. A call in a class body or at the top level runs while the
+    # file loads, so its mutant is static.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#callexpression)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("order.save").value
+    # call = tree.statements.body.first
+    # Stryker::Mutators::CallExpression.edits(call, [tree, tree.statements]).map(&:replacement)
+    # # => ["nil"]
+    # ```
+    module CallExpression
+      # The mutator's name in the report: `"CallExpression"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for a call that stands as a statement, and
+      # none for any other node.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   of the file to its parent. The mutator reads them to tell a
+      #   statement from a call whose value something reads.
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+
+      KEPT: Array[Symbol]
+
+      LOAD_TIME: Array[singleton(Prism::Node)]
+
+      private def self.removable?: (Prism::CallNode call) -> bool
+
+      private def self.statement?: (Prism::CallNode node, Array[Prism::node] ancestors) -> bool
+    end
+  end
+end

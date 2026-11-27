@@ -18,16 +18,17 @@ module Stryker
       def self.type_signature?(node)
         node.is_a?(Prism::CallNode) && node.name == :sig && !node.receiver && node.block.is_a?(Prism::BlockNode)
       end
-      private_class_method(:type_signature?)
 
-      def self.loader_arguments(node)
-        return unless node.is_a?(Prism::CallNode)
-
-        name = node.name
+      def self.loader?(call)
+        name = call.name
         # autoload is also a method of a module, so it keeps its rule with a
         # receiver. The other three are Kernel methods that a receiver would
         # make some other call.
-        node.arguments if LOADERS.include?(name) && (name == :autoload || !node.receiver)
+        LOADERS.include?(name) && (name == :autoload || !call.receiver)
+      end
+
+      def self.loader_arguments(node)
+        node.arguments if node.is_a?(Prism::CallNode) && loader?(node)
       end
       private_class_method(:loader_arguments)
     end

@@ -1,0 +1,36 @@
+module Stryker
+  module Mutators
+    # Which nodes of a file hold candidates, so that a walk can tell whether
+    # a candidate is the only one on its site and inside it. A node is inside
+    # a site when the site's tree holds it, as a walk goes into it, so a
+    # heredoc's body is inside the call that holds the heredoc, though the
+    # body's bytes come after the call's.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # occupancy = Stryker::Mutators::Occupancy.new(candidates)
+    # occupancy.alone?(candidates.first)
+    # # => true
+    # ```
+    class Occupancy
+      # Counts the candidates on each node.
+      #
+      # - `candidates`: Array of Stryker::Mutators::Candidate, every candidate
+      #   of the file, of every mutator in the walk.
+      def initialize: (Array[Candidate] candidates) -> void
+
+      # Whether `candidate` is the only candidate on its site, and no
+      # candidate is on a node inside the site.
+      #
+      # - `candidate`: Stryker::Mutators::Candidate, one of the candidates.
+      def alone?: (Candidate candidate) -> bool
+
+      private
+
+      @counts: Hash[Prism::node, Integer]
+
+      def held?: (Prism::node node) -> bool
+    end
+  end
+end

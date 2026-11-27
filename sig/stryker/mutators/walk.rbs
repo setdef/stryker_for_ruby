@@ -7,10 +7,11 @@ module Stryker
     # The mutants come in the order of the catalog's table: each mutator's
     # mutants in turn, in the order of the list given, and each mutator's own
     # in the order its sites start in the file. The edits of one site stay in
-    # the order the mutator gave them. `Stryker::Mutators::Roster` leaves out
-    # the mutants that would show nothing and numbers the rest, and
-    # `Stryker::Mutators::Traversal` leaves out the sites that no mutator
-    # makes a mutant of.
+    # the order the mutator gave them. A fallback mutator's mutant is made
+    # only where no other mutant is, on its site or inside it.
+    # `Stryker::Mutators::Roster` leaves out the mutants that would show
+    # nothing and numbers the rest, and `Stryker::Mutators::Traversal` leaves
+    # out the sites that no mutator makes a mutant of.
     #
     # ## Examples
     #
@@ -31,8 +32,11 @@ module Stryker
       #   raises ArgumentError.
       # - `mutators`: Array of Stryker::_Mutator, the mutators to ask, in the
       #   order of the catalog's table. By default, `Stryker::Mutators::ALL`.
+      # - `fallbacks`: Array of Stryker::_Mutator, the mutators whose mutants
+      #   yield to every other mutant. By default,
+      #   `Stryker::Mutators::FALLBACKS`.
       # - `first_id`: Integer, the ID of the first mutant.
-      def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?first_id: Integer) -> void
+      def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?fallbacks: Array[_Mutator], ?first_id: Integer) -> void
 
       # The file's mutants, in the order above.
       def mutants: () -> Array[Mutant]
@@ -41,7 +45,10 @@ module Stryker
 
       @tree: Prism::ProgramNode
       @mutators: Array[_Mutator]
+      @fallbacks: Array[_Mutator]
       @roster: Roster
+
+      def made: (Array[Candidate] candidates) -> Array[Candidate]
 
       def candidates_of: (_Mutator mutator) -> Array[Candidate]
     end
