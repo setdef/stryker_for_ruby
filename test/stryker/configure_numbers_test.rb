@@ -4,17 +4,18 @@ require_relative("../support/config_project")
 require_relative("../test_helper")
 
 # Checks that the options that take a number accept a fraction as well as a
-# whole number, as StrykerJS's schema does, and refuse a number that is not
-# finite.
+# whole number, as StrykerJS's schema does, except thresholds.high and
+# thresholds.low, which take whole numbers only because the report schema types
+# them as integers, and refuse a number that is not finite.
 class ConfigureNumbersTest < Minitest::Test
   include ConfigProject
 
   def test_a_fraction_in_a_file_is_kept_as_it_is
-    json = '{ "thresholds": { "high": 90.5, "low": 70.25, "break": 80.5 }, "timeoutMS": 2500.5 }'
+    json = '{ "thresholds": { "high": 90, "low": 70, "break": 80.5 }, "timeoutMS": 2500.5 }'
     config = configure({ "stryker.config.json": json })
 
     assert_equal(
-      [90.5, 70.25, 80.5, 2500.5],
+      [90, 70, 80.5, 2500.5],
       [config.threshold_high, config.threshold_low, config.threshold_break, config.timeout_ms]
     )
   end

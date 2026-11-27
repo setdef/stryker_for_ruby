@@ -15,7 +15,7 @@ class CLIRunTest < Minitest::Test
     3
     --thresholds.high=90
     --thresholds.low
-    70.5
+    70
     --thresholds.break
     75
     --timeout-ms
@@ -32,7 +32,7 @@ class CLIRunTest < Minitest::Test
     test_runner: "rspec",
     concurrency: 3,
     threshold_high: 90,
-    threshold_low: 70.5,
+    threshold_low: 70,
     threshold_break: 75,
     timeout_ms: 2500,
     timeout_factor: 2.0,

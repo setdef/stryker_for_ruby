@@ -23,10 +23,10 @@ class ConfigureTypesTest < Minitest::Test
     ["concurrency", "50%abc", NUMBER_OR_PERCENT],
     ["concurrency", "abc50%", NUMBER_OR_PERCENT],
     ["concurrency", "50%\n", NUMBER_OR_PERCENT],
-    ["thresholds.high", 101, "a number from 0 to 100"],
-    ["thresholds.high", 100.5, "a number from 0 to 100"],
-    ["thresholds.low", -1, "a number from 0 to 100"],
-    ["thresholds.low", -0.5, "a number from 0 to 100"],
+    ["thresholds.high", 101, "a whole number from 0 to 100"],
+    ["thresholds.high", 100.5, "a whole number from 0 to 100"],
+    ["thresholds.low", -1, "a whole number from 0 to 100"],
+    ["thresholds.low", -0.5, "a whole number from 0 to 100"],
     ["thresholds.break", "70", "a number from 0 to 100, or null"],
     ["thresholds.break", 101, "a number from 0 to 100, or null"],
     ["timeoutMS", -1, "a number of milliseconds, 0 or more"],
@@ -40,8 +40,8 @@ class ConfigureTypesTest < Minitest::Test
   ].freeze
   RIGHT_VALUES = {
     :concurrency => [1, 16, "0%", "1%", "50%", "100%"],
-    :"thresholds.high" => [60, 100, 80.5, 100.0],
-    :"thresholds.low" => [0, 80, 0.5, 59.99],
+    :"thresholds.high" => [60, 100, 100.0],
+    :"thresholds.low" => [0, 80, 59.0],
     :"thresholds.break" => [nil, 0, 100, 80.5],
     :timeoutMS => [0, 5000, 0.5, 2500.5],
     :timeoutFactor => [0, 1, 1.5],
@@ -86,7 +86,7 @@ class ConfigureTypesTest < Minitest::Test
     message = refusal({ "stryker.config.yml": "thresholds:\n  high: lots\n" })
 
     assert_equal(
-      '"thresholds.high" in stryker.config.yml takes a number from 0 to 100, but its value is "lots".', message
+      '"thresholds.high" in stryker.config.yml takes a whole number from 0 to 100, but its value is "lots".', message
     )
   end
 

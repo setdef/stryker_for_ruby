@@ -60,29 +60,45 @@ class ConfigureThresholdsTest < Minitest::Test
     message = refusal({}, options: { :"thresholds.low" => 150 })
 
     assert_equal(
-      '"--thresholds.low" on the command line takes a number from 0 to 100, but its value is 150.',
+      '"--thresholds.low" on the command line takes a whole number from 0 to 100, but its value is 150.',
       message
     )
   end
 
-  def test_fractions_are_compared_as_they_are
-    message = refusal({}, options: { :"thresholds.high" => 70.4, :"thresholds.low" => 70.5 })
+  # The report schema gives thresholds.high and thresholds.low the type integer.
+  def test_a_fractional_high_in_a_file_is_refused_as_not_a_whole_number
+    message = refusal({ "stryker.config.json": '{ "thresholds": { "high": 80.5 } }' })
 
     assert_equal(
-      [
-        %("--thresholds.high" on the command line is 70.4,),
-        %(which is below "--thresholds.low" on the command line (70.5).),
-        %("thresholds.high" can't be below "thresholds.low".),
-      ].join(" "),
+      '"thresholds.high" in stryker.config.json takes a whole number from 0 to 100, but its value is 80.5.',
       message
     )
+  end
+
+  def test_a_fractional_low_on_the_command_line_is_refused_as_not_a_whole_number
+    message = refusal({}, options: { :"thresholds.low" => 70.5 })
+
+    assert_equal(
+      '"--thresholds.low" on the command line takes a whole number from 0 to 100, but its value is 70.5.',
+      message
+    )
+  end
+
+  def test_a_number_with_a_zero_fraction_is_a_whole_number
+    config = configure({}, options: { :"thresholds.high" => 90.0, :"thresholds.low" => 70.0 })
+
+    assert_equal([90.0, 70.0], [config.threshold_high, config.threshold_low])
+  end
+
+  def test_the_break_threshold_still_takes_a_fraction
+    assert_in_delta(80.5, configure({}, options: { :"thresholds.break" => 80.5 }).threshold_break, 0.001)
   end
 
   def test_a_value_of_the_wrong_type_is_the_only_problem_reported
     message = refusal({}, options: { :"thresholds.high" => "lots", :"thresholds.low" => 70 })
 
     assert_equal(
-      '"--thresholds.high" on the command line takes a number from 0 to 100, but its value is "lots".',
+      '"--thresholds.high" on the command line takes a whole number from 0 to 100, but its value is "lots".',
       message
     )
   end

@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 
 ## [Unreleased]
 
+### Changed
+
+- `thresholds.high` and `thresholds.low` take only whole numbers from 0 to 100, as the JSON report's schema requires. A fraction such as `82.5` is now an error that says so, where the configuration took it and the report then failed its schema. `thresholds.break` still takes any number from 0 to 100.
+
 ### Fixed
 
 - A JSON configuration file that holds bytes that aren't valid UTF-8 is now an error that names the file and the line, where it used to load with the bytes as they were.

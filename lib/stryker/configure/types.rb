@@ -29,6 +29,10 @@ module Stryker
       end
 
       score = number("a number from 0 to 100", 0..100)
+      whole_score = Kind.new(
+        "a whole number from 0 to 100",
+        -> (value) { value.is_a?(Numeric) && score.accepts?(value) && value == value.floor }
+      )
       score_or_null = Kind.new(
         "a number from 0 to 100, or null",
         -> (value) { value.nil? || score.accepts?(value) }
@@ -46,8 +50,8 @@ module Stryker
         testRunner: Kind.new("a string", -> (value) { value.is_a?(String) }),
         reporters: list_of("reporter names"),
         concurrency:,
-        "thresholds.high": score,
-        "thresholds.low": score,
+        "thresholds.high": whole_score,
+        "thresholds.low": whole_score,
         "thresholds.break": score_or_null,
         timeoutMS: number("a number of milliseconds, 0 or more", 0..),
         timeoutFactor: factor,
