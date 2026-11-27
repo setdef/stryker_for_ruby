@@ -49,9 +49,12 @@ module Stryker
       def self.new: (dry_run: DryRun, messages: Messages, ending: Ending) -> instance
                   | (DryRun dry_run, Messages messages, Ending ending) -> instance
 
-      # What the dry run found. Raises `Stryker::Isolation::DryRunError`
-      # when the dry run didn't pass, with the message that
-      # `Stryker::Isolation::DryRunReason` gives.
+      # What the dry run found. Raises `Stryker::Isolation::TestsLoadError`
+      # when the process said that the project's tests raised while they
+      # loaded, as the parent that forks says it, and
+      # `Stryker::Isolation::DryRunError` when the dry run didn't pass
+      # otherwise, with the message that `Stryker::Isolation::DryRunReason`
+      # gives.
       def result: () -> DryRunResult
 
       private

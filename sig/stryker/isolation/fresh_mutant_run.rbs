@@ -4,7 +4,8 @@ module Stryker
     # `STRYKER_ACTIVE_MUTANT` made active before anything loaded: it loads
     # the project's tests, and runs the run's tests, stopping at the first
     # that fails, as `Stryker::Isolation::ForkedRun` runs them in a forked
-    # child.
+    # child. When the tests raise while they load, it writes
+    # `{"load_error":...}` before the error that ends the run.
     #
     # ## Examples
     #

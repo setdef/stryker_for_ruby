@@ -7,7 +7,10 @@ module Stryker
     # first that fails, and then the loading check, and writes what the dry
     # run found, as `Stryker::Isolation::ForkedDryRun` does in a forked
     # child. Unlike the forked child, it readies no dry run of its own,
-    # because nothing before it recorded hits in the process.
+    # because nothing before it recorded hits in the process. When the
+    # tests raise while they load, it writes `{"load_error":...}` before
+    # the error that ends the run, as the parent that forks does, because
+    # this process is the first to load them.
     #
     # ## Examples
     #

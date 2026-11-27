@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "loaded_tests"
+
 module Stryker
   module Isolation
     class FreshMutantRun
@@ -11,7 +13,7 @@ module Stryker
       end
 
       def call(report)
-        @runner.load_tests
+        LoadedTests.of(@runner, report)
         @runner.run(@run.test_ids, bail: true, observer: report)
       end
 

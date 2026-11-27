@@ -1,0 +1,31 @@
+module Stryker
+  module Isolation
+    # What the project's tests raised while a process loaded them, as the
+    # process said it on its `"load_error"` line: the exception's class and
+    # message. It is a value: two with the same text are equal.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # failure = Stryker::Isolation::LoadFailure.new(raised: "KeyError: locale")
+    # failure.error("Reading settings.json\n").message
+    # # => "The project's tests failed to load, so no mutant can run. They raised:\nKeyError: locale\n..."
+    # ```
+    class LoadFailure < Data
+      # The exception's class and message, as the process wrote them.
+      attr_reader raised: String
+
+      # Builds the failure.
+      #
+      # - `raised`: String, the exception's class and message.
+      def self.new: (raised: String) -> instance
+                  | (String raised) -> instance
+
+      # The error that stops the run for it, with `errors`, the last lines
+      # of the process's standard error.
+      #
+      # - `errors`: String, the end of the process's standard error.
+      def error: (String errors) -> TestsLoadError
+    end
+  end
+end

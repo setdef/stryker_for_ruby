@@ -4,6 +4,7 @@ require "json"
 require_relative "../dry_run_result"
 require_relative "../test"
 require_relative "../test_result"
+require_relative "load_failure"
 
 module Stryker
   module Isolation
@@ -14,6 +15,7 @@ module Stryker
         ended: -> (_value) { true },
         error: :to_s.to_proc,
         result: DryRunResult.method(:from_h).to_proc,
+        load_error: -> (value) { LoadFailure.new(raised: value.to_s) },
       }.transform_keys(&:to_s).freeze
       private_constant(:READERS)
 

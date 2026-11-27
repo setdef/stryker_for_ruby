@@ -5,8 +5,9 @@ require_relative("isolation_stand_ins")
 # Stand-ins for what the code in a project process drives: a test runner, the
 # finisher, and the runtime.
 module ProjectSideStandIns
-  # A test runner that loads the tests with the IDs +loaded+, runs every test
-  # it's given, with +status+, and records the calls it gets.
+  # A test runner that loads the tests with the IDs +loaded+, or raises
+  # +loaded+ when it is an exception, runs every test it's given, with
+  # +status+, and records the calls it gets.
   class Runner
     attr_reader :calls
 
@@ -18,6 +19,8 @@ module ProjectSideStandIns
 
     def load_tests
       @calls << [:load_tests]
+      raise(@loaded) if @loaded.is_a?(Exception)
+
       @loaded.map { |id| Stryker::Test.new(id:, name: id, file: nil, location: nil) }
     end
 

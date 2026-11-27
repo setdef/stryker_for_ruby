@@ -42,6 +42,11 @@ module Stryker
         errors.first
       end
 
+      def load_failure
+        failures = @values.filter_map { |value| value.is_a?(LoadFailure) && value }
+        failures.first
+      end
+
       def found
         found = @values.filter_map { |value| value.is_a?(DryRunResult) && value }
         found.first

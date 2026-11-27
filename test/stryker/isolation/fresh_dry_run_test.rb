@@ -20,6 +20,14 @@ class FreshDryRunTest < Minitest::Test
     assert_equal([["Killed"], 2], dry_run_and_mutant_run)
   end
 
+  # The dry run is the first process to load the project's tests, so what
+  # they raise while they load is what a fork parent would say of them.
+  def test_tests_that_raise_while_they_load_fail_the_dry_run_as_they_fail_the_fork_parent
+    error = assert_raises(Stryker::Isolation::TestsLoadError) { dry_run("  raise(KeyError, \"locale\")") }
+
+    assert_includes(error.message, "failed to load, so no mutant can run. They raised:\nKeyError: locale")
+  end
+
   def test_the_dry_run_needs_starting_first
     config = Stryker::Config.new(mutate: [], test_runner: "minitest")
     error = assert_raises(Stryker::Isolation::Error) { Stryker::Isolation::FreshProcesses.new(@cache, @root).dry_run(config) }

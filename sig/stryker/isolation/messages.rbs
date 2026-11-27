@@ -48,6 +48,10 @@ module Stryker
       # The error that stopped the run, as the process wrote it, or nil.
       def error: () -> String?
 
+      # What the project's tests raised while the process loaded them, on
+      # its `"load_error"` line, or nil when it wrote no such line.
+      def load_failure: () -> LoadFailure?
+
       # What a dry run's process said it found, on its `"result"` line, or
       # nil when it wrote no such line. Only the dry run writes one.
       def found: () -> DryRunResult?

@@ -80,6 +80,14 @@ class FreshProcessTest < Minitest::Test
     assert_equal(%w[A#test_a B#test_b], outcome.lines.dig(4, "result", "buckets").keys)
   end
 
+  def test_tests_that_raise_while_they_load_are_marked_as_failing_to_load
+    runner = Runner.new("passed", NameError.new("uninitialized constant Shop"))
+    outcome = fresh(Stryker::Isolation::DryRun.within(5), Stryker::Runtime::Recording.new(collector: nil), runner)
+
+    assert_equal([1, %w[load_error error]], [outcome.code, kinds(outcome)])
+    assert_equal("NameError: uninitialized constant Shop", outcome.lines.first["load_error"])
+  end
+
   def test_the_dry_run_with_a_mutant_active_runs_no_test
     outcome = dry_run(active(4))
 

@@ -6,6 +6,7 @@ require "stryker/isolation/dry_run"
 require "stryker/isolation/dry_run_verdict"
 require "stryker/isolation/ending"
 require "stryker/isolation/messages"
+require "stryker/isolation/tests_load_error"
 
 # How the dry run's messages and its process's ending become what the dry run
 # found, or the error that stops the run.
@@ -74,6 +75,17 @@ class DryRunVerdictTest < Minitest::Test
     assert_equal(
       "Stryker::Runtime::LoadingError: These instrumented files loaded\n[BUG] crash",
       refused(said, ending(exit_status: 1, errors: "[BUG] crash\n"))
+    )
+  end
+
+  def test_a_dry_run_whose_tests_failed_to_load_raises_what_the_fork_parent_raises_for_it
+    said = messages({ load_error: "NameError: uninitialized constant Shop" }, { error: "NameError: Shop" })
+    error = assert_raises(Stryker::Isolation::TestsLoadError) { judged(said, ending(exit_status: 1, errors: "trace\n")) }
+
+    assert_equal(
+      "The project's tests failed to load, so no mutant can run. They raised:\n" \
+        "NameError: uninitialized constant Shop\nThe end of the process's standard error:\ntrace",
+      error.message
     )
   end
 

@@ -18,6 +18,11 @@ module Stryker
       end
 
       def result
+        # The tests are the project's, so what they raised while they loaded
+        # stops the run as it stops it from the parent that forks.
+        unloaded = messages.load_failure
+        raise(unloaded.error(ending.errors)) if unloaded
+
         found = messages.found
         raise(DryRunError, DryRunReason.new(dry_run, messages, ending).to_s) unless found && passed?
 
