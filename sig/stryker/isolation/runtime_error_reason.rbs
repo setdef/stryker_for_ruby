@@ -2,8 +2,9 @@ module Stryker
   module Isolation
     # The reason of a run whose status is `RuntimeError`: the error that its
     # process wrote, or else a sentence on how its process ended, how many
-    # of its tests finished, and which test was running, and then the last
-    # lines of the process's standard error.
+    # of its tests finished, and which test was running, or that it started
+    # no test within `Stryker::Isolation::Timer::START_SECONDS`, and then
+    # the last lines of the process's standard error.
     #
     # ## Examples
     #
@@ -13,6 +14,10 @@ module Stryker
     # #    "while Shop::CartTest#test_total ran.\n[BUG] Segmentation fault ..."
     # ```
     class RuntimeErrorReason
+      # The sentence for a process that ran out of time before it started a
+      # test, with a `%<seconds>d` for the limit for starting.
+      UNSTARTED: String
+
       # The run.
       @run: MutantRun
 

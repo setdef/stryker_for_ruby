@@ -47,8 +47,9 @@ module Stryker
     # ([#27](https://github.com/setdef/stryker_for_ruby/issues/27)).
     attr_reader covered_by: Array[String]
 
-    # The run's time limit in milliseconds. A run that passes it has the
-    # status `Timeout`.
+    # The run's time limit in milliseconds, from the start of its first
+    # test, so the time its process takes to start and to load the tests
+    # isn't part of it. A run that passes it has the status `Timeout`.
     attr_reader timeout_ms: Integer
 
     # Builds the run.

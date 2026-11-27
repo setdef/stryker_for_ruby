@@ -11,6 +11,11 @@ class WatchesTest < Minitest::Test
 
   parallelize_me!
 
+  # The line a run's process writes as its first test starts, which starts
+  # the run's time limit.
+  STARTED = %q(puts('{"started":{}}'))
+  private_constant(:STARTED)
+
   # Each time limit starts once its process has written a line or ended, so
   # how long Ruby takes to start never counts against the limit. With +ended+,
   # it starts once the process has ended, and a pipe that another process
@@ -60,20 +65,35 @@ class WatchesTest < Minitest::Test
   end
 
   def test_a_process_past_its_time_is_killed_and_timed_out
-    lines, endings = watched(watches({ slow: "puts 'before'; sleep" }, timeout_ms: 300))
+    lines, endings = watched(watches({ slow: "#{STARTED}; sleep" }, timeout_ms: 300))
     ending = endings[:slow]
 
-    assert_equal([["before\n"], true], [lines[:slow], ending.timed_out])
+    assert_equal([[%({"started":{}}\n)], true], [lines[:slow], ending.timed_out])
     assert_operator(ending.duration_ms, :>=, 300)
   end
 
   def test_a_process_whose_pipe_another_holds_ends_without_timing_out
     # The grandchild inherits the pipe and outlives the process, so the pipe
     # stays open until the time limit ends.
-    script = "Process.spawn(RbConfig.ruby, '-e', 'sleep 8'); puts 'done'; exit!(0)"
+    script = "#{STARTED}; Process.spawn(RbConfig.ruby, '-e', 'sleep 8'); puts 'done'; exit!(0)"
     lines, endings = watched(watches({ parent: script }, timeout_ms: 300, ended: true))
 
-    assert_equal([["done\n"], 0, false], [lines[:parent], endings[:parent].exit_status, endings[:parent].timed_out])
+    assert_equal(
+      [[%({"started":{}}\n), "done\n"], 0, false],
+      [lines[:parent], endings[:parent].exit_status, endings[:parent].timed_out]
+    )
+  end
+
+  def test_a_time_limit_starts_with_the_first_test
+    # The limit is shorter than the wait before the first test, as a
+    # process's start can be (#85).
+    pid, reader = scripted("$stdout.sync = true; sleep 0.6; #{STARTED}; exit!(0)")
+    watch = Stryker::Isolation::Watch.new(:late, Stryker::Isolation::Child.new(pid), reader, Stryker::Isolation::Timer.new(300))
+    set = Stryker::Isolation::Watches.new
+    set.add(watch)
+    _, endings = watched(set)
+
+    assert_equal([0, false], [endings[:late].exit_status, endings[:late].timed_out])
   end
 
   def test_an_input_that_can_be_read_comes_back

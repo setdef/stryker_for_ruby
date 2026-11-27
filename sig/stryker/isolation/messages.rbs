@@ -39,6 +39,12 @@ module Stryker
       # - `line`: String, one line.
       def self.object: (String line) -> JsonValue::json_value
 
+      # Whether `line` is a whole line, with its line break, that says a
+      # test started. Its run's time limit starts with that line.
+      #
+      # - `line`: String, one line a run's process wrote.
+      def self.started?: (String line) -> bool
+
       # The value of the message `object`, or nil when it is no message.
       #
       # - `object`: what one line holds.
@@ -66,6 +72,9 @@ module Stryker
 
       # Whether the process said that its run ended.
       def ended?: () -> bool
+
+      # Whether the process said that a test started.
+      def tests_started?: () -> bool
 
       # The error that stopped the run, as the process wrote it, or nil.
       def error: () -> String?

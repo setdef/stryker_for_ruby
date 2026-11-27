@@ -3,6 +3,7 @@
 require_relative "child"
 require_relative "ending"
 require_relative "line_reader"
+require_relative "messages"
 require_relative "timer"
 
 module Stryker
@@ -50,7 +51,10 @@ module Stryker
       end
 
       private def read
-        @reader.read { |line| yield(@subject, line) }
+        @reader.read do |line|
+          @timer.tests_started if Messages.started?(line)
+          yield(@subject, line)
+        end
       end
 
       private def drain

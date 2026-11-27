@@ -13,8 +13,24 @@ module Stryker
         @timer = timer
       end
 
-      def ended?
-        @child.ended?
+      def check
+        # A fresh process writes its messages to a file, so the start of its
+        # first test, which starts the run's time limit, shows only there.
+        timer = @timer
+        timer.tests_started if !timer.testing? && @fresh.started?
+        nil
+      end
+
+      def testing?
+        @timer.testing?
+      end
+
+      def done?
+        @child.ended? || left.zero?
+      end
+
+      def wait(seconds)
+        @child.wait(seconds)
       end
 
       def left

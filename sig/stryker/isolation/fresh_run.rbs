@@ -39,6 +39,11 @@ module Stryker
       # error on files in the run's folder.
       def output_options: () -> Hash[Symbol, String]
 
+      # Whether the process has started a test: the results' file begins
+      # with a whole line for a test that started. False before the process
+      # opened the file.
+      def started?: () -> bool
+
       # The run's result, from the results' file, `ending`, and the last
       # lines of the process's standard error. Deletes the run's folder. A
       # process that ended before it opened the results' file has no
@@ -51,6 +56,9 @@ module Stryker
       def remove: () -> void
 
       private
+
+      # The path of the results' file.
+      def results_path: () -> String
 
       # What the process wrote to the results' file.
       def results_text: () -> String

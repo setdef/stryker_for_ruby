@@ -4,12 +4,11 @@ require_relative("../../support/isolation_stand_ins")
 require "stryker/isolation/command"
 require "stryker/isolation/ending"
 require "stryker/isolation/finisher"
-require "stryker/isolation/timer"
 require "stryker/runtime"
 
 # The small parts that the isolation adapters share: the finisher, a
-# process's ending, the command and environment of a project process, and
-# the timer.
+# process's ending, and the command and environment of a project process.
+# timer_test.rb checks the timer.
 class SmallPartsTest < Minitest::Test
   include IsolationStandIns
 
@@ -86,16 +85,5 @@ class SmallPartsTest < Minitest::Test
     assert_equal(Stryker::Runtime::VARIABLE, Stryker::Isolation::Command::ACTIVE_MUTANT)
     assert_equal({ Stryker::Runtime::VARIABLE => "7" }, Stryker::Isolation::Command.environment(7))
     assert_equal({ Stryker::Runtime::VARIABLE => nil }, Stryker::Isolation::Command.environment)
-  end
-
-  def test_the_timer_counts_down_from_its_limit
-    timer = Stryker::Isolation::Timer.new(60_000)
-
-    assert_in_delta(60.0, timer.left, 5.0)
-    assert_operator(timer.elapsed_ms, :>=, 0)
-  end
-
-  def test_a_timer_past_its_deadline_has_no_time_left
-    assert_in_delta(0.0, Stryker::Isolation::Timer.new(0).left)
   end
 end

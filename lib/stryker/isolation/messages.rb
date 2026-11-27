@@ -28,6 +28,15 @@ module Stryker
         line
       end
 
+      def self.started?(line)
+        # A whole line only, because the rest of one the process is still
+        # writing can't be read yet.
+        return false unless line.end_with?("\n")
+
+        object = object(line)
+        object.is_a?(Hash) && object.key?("started")
+      end
+
       def self.read(object)
         return unless object.is_a?(Hash) && object.size == 1
 
@@ -51,6 +60,10 @@ module Stryker
 
       def ended?
         @ended
+      end
+
+      def tests_started?
+        !@tests.empty?
       end
 
       def error

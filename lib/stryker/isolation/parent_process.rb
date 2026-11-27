@@ -6,12 +6,13 @@ require "json"
 require_relative "../test_runners/minitest_runner"
 require_relative "error"
 require_relative "output_files"
+require_relative "timer"
 
 module Stryker
   module Isolation
     class ParentProcess
       GRACE_SECONDS = 10
-      LOAD_SECONDS = 300
+      LOAD_SECONDS = Timer::START_SECONDS
       READY = { ready: true }.transform_keys(&:to_s).freeze
       ENDED = "The fork parent ended before it loaded the tests, and said %<said>s.\n%<errors>s"
       SLOW = "The fork parent loaded no tests within %<seconds>p seconds. Check that the test helper, " \

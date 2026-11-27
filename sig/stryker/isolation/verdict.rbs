@@ -8,7 +8,7 @@ module Stryker
     # | What happened | Status | Reason |
     # | - | - | - |
     # | A test failed | `Killed` | The failure's message |
-    # | The process ran past its time limit | `Timeout` | `Timeout of <N> ms exceeded.` |
+    # | The process ran past its time limit, which starts with its first test | `Timeout` | `Timeout of <N> ms exceeded.` |
     # | The run ended, every test finished without failing, and the process exited with status 0 | `Survived` | none |
     # | Anything else | `RuntimeError` | `Stryker::Isolation::RuntimeErrorReason`: the error the process wrote, or how it ended, and the end of its standard error |
     #
@@ -57,6 +57,10 @@ module Stryker
 
       # The ID of the test that failed, or none.
       def killed_by: () -> Array[String]
+
+      # Whether the run ran past its time limit, which starts with its
+      # first test. A run that no test started never times out.
+      def timed_out?: () -> bool
 
       # Whether the run survived.
       def survived?: () -> bool

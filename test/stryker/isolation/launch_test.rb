@@ -101,6 +101,20 @@ class LaunchTest < Minitest::Test
     assert_equal(["RuntimeError", 0, false], [result.status, result.tests_completed, File.exist?(folder)])
   end
 
+  def test_a_fresh_run_has_started_a_test_once_its_results_begin_with_a_whole_start
+    fresh = Stryker::Isolation::FreshRun.new(sample_run(7, static: true))
+    results = fresh.paths.last
+    started = [fresh.started?]
+    File.binwrite(results, '{"started":')
+    started << fresh.started?
+    File.binwrite(results, %({"started":{}}\n{"finished":))
+    started << fresh.started?
+
+    assert_equal([false, false, true], started)
+  ensure
+    fresh&.remove
+  end
+
   def test_the_fresh_adapter_needs_starting_first_and_stops_without_a_start
     isolation = Stryker::Isolation::FreshProcesses.new("/cache")
 

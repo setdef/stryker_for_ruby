@@ -19,16 +19,22 @@ module Stryker
 
       def paths
         input = File.join(@folder, "run")
-        results = File.join(@folder, "results")
         # Binary, because a text-mode write on Windows turns each LF into
         # CRLF.
         File.binwrite(input, @run.to_json)
-        [input, results]
+        [input, results_path]
       end
 
       def output_options
         out, err = @outputs.paths("process")
         { in: File::NULL, out:, err: }
+      end
+
+      def started?
+        # The first line the process writes is its first test's start, so
+        # that line is all this reads.
+        first = File.open(results_path, "rb", &:gets) if File.exist?(results_path)
+        first ? Messages.started?(first) : false
       end
 
       def result(ending)
@@ -41,8 +47,12 @@ module Stryker
         FileUtils.remove_entry(@folder, true)
       end
 
+      private def results_path
+        File.join(@folder, "results")
+      end
+
       private def results_text
-        results = File.join(@folder, "results")
+        results = results_path
         # A process that ended before it opened the file wrote nothing.
         File.exist?(results) ? File.read(results, mode: "rb", encoding: Encoding::UTF_8) : ""
       end

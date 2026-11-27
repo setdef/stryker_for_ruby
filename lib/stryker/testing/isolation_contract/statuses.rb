@@ -39,8 +39,8 @@ module Stryker
         end
 
         def test_a_run_past_its_time_limit_times_out
-          # Only a test that hangs, so the verdict is the same whether the
-          # limit ends while the process is starting or while the test hangs.
+          # The limit starts with the test, which hangs, so it ends while the
+          # test runs, however long the process took to start.
           result = isolated_one(SampleProject::HARMLESS, :hangs, timeout_ms: 500).to_h
           expected = { status: "Timeout", status_reason: "Timeout of 500 ms exceeded." }
 

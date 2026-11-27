@@ -20,7 +20,8 @@ module Stryker
       GRACE_SECONDS: Integer
 
       # How long the parent has to load the project's tests and say it is
-      # ready: 300 seconds. It is a fixed limit, and no option sets it.
+      # ready: 300 seconds, `Stryker::Isolation::Timer::START_SECONDS`. It is a
+      # fixed limit, and no option sets it.
       LOAD_SECONDS: Integer
 
       # The line that says the parent loaded the tests.

@@ -60,4 +60,18 @@ class MessagesTest < Minitest::Test
 
     assert_equal([true, nil], [messages.ended?, messages.error])
   end
+
+  def test_a_whole_line_for_a_test_that_started_is_a_start
+    assert(Stryker::Isolation::Messages.started?(started))
+  end
+
+  def test_no_other_line_is_a_start
+    lines = [finished("passed"), started.chomp, "started\n", "[]\n", line(:ended, true)]
+
+    assert_equal([false] * 5, lines.map { |each_line| Stryker::Isolation::Messages.started?(each_line) })
+  end
+
+  def test_the_messages_say_whether_a_test_started
+    assert_equal([true, false], [parsed(started), parsed(line(:ended, true))].map(&:tests_started?))
+  end
 end

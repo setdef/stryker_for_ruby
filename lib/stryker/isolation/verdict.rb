@@ -23,7 +23,7 @@ module Stryker
         # said so: crashed, exited with an error, or ran past its time.
         failure = @failure
         return ["Killed", failure.failure_message] if failure
-        return ["Timeout", "Timeout of #{@run.timeout_ms} ms exceeded."] if @ending.timed_out
+        return ["Timeout", "Timeout of #{@run.timeout_ms} ms exceeded."] if timed_out?
         return ["Survived", nil] if survived?
 
         ["RuntimeError", RuntimeErrorReason.new(@run, @messages, @ending).to_s]
@@ -42,6 +42,12 @@ module Stryker
       private def killed_by
         failure = @failure
         failure ? [failure.test.id] : []
+      end
+
+      private def timed_out?
+        # A run that no test started never times out, because no test judged
+        # its mutant (#85).
+        @ending.timed_out && @messages.tests_started?
       end
 
       private def survived?

@@ -105,9 +105,10 @@ class ForkParentTest < Minitest::Test
   end
 
   def test_the_parent_kills_a_child_past_its_time_limit
-    lines, = served([script_run("sleep", timeout_ms: 300)], lines: 3)
+    # The limit starts with the run's first test.
+    lines, = served([script_run("$stdout.sync = true; puts('{\"started\":{}}'); sleep", timeout_ms: 300)], lines: 4)
 
-    assert(lines.dig(2, :exited, :timed_out))
+    assert(lines.dig(3, :exited, :timed_out))
   end
 
   def test_the_parent_ends_a_child_still_running_when_the_runs_stop_coming

@@ -12,6 +12,12 @@ module Stryker
     # watches.finish { |result| puts(result.status) }
     # ```
     class FreshWatches
+      # The longest wait, in seconds, while a process hasn't started a test:
+      # a process writes the start of its first test only to its results
+      # file, so the set looks there this often, and a run's time limit starts
+      # at most this much after its first test does.
+      POLL_SECONDS: Float
+
       # The processes still running.
       @watches: Array[FreshWatch]
 
@@ -27,11 +33,16 @@ module Stryker
       # Whether the set waits on no process.
       def empty?: () -> bool
 
-      # Yields the result of each process that has ended, and drops it from
-      # the set. With none ended, it waits on the process whose time ends
-      # first, until that process ends or its time does, and yields its
-      # result.
+      # Starts the time limit of each run whose first test has started, then
+      # yields the result of each process that has ended or run out of time,
+      # and drops it from the set. With none of them, it first waits on the
+      # process whose time ends first, until that process ends or its time
+      # does, or for at most `POLL_SECONDS` while any run hasn't started a
+      # test, and may yield nothing.
       def finish: () { (MutantResult result) -> void } -> void
+
+      # Waits, as `finish` says, for the process whose time ends first.
+      def pause: () -> nil
 
       # Kills every process still running, waits until each ended, deletes
       # their folders, and empties the set.

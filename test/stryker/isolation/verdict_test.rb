@@ -54,6 +54,15 @@ class VerdictTest < Minitest::Test
     )
   end
 
+  def test_a_run_past_its_time_before_any_test_started_is_a_runtime_error
+    result = judged(messages, killed_by_signal(timed_out: true))
+
+    assert_equal(
+      ["RuntimeError", "The run's process started no test within 300 seconds, so no test judged the mutant."],
+      [result.status, result.status_reason]
+    )
+  end
+
   def test_a_timed_out_run_counts_the_tests_that_finished_before_its_time_ended
     said = messages(sample_test, sample_result("passed"), sample_test("test_hangs"))
     result = judged(said, killed_by_signal(timed_out: true))

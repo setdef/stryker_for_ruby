@@ -1,30 +1,57 @@
 module Stryker
   module Isolation
-    # The time limit of one run, from when the run's process started. It
-    # reads the monotonic clock, so a change to the system clock during a
-    # run changes no time limit.
+    # The time limit of one run, in two parts, as
+    # [Time limits and kills](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#time-limits-and-kills)
+    # explains. Until the run's first test starts, its process has
+    # `START_SECONDS` to start and load the tests. From that start, the run
+    # has its time limit. It reads the monotonic clock, so a change to the
+    # system clock during a run changes no time limit.
     #
     # ## Examples
     #
     # ```ruby
     # timer = Stryker::Isolation::Timer.new(1500)
     # timer.left
+    # # => 299.9999...
+    # timer.tests_started
+    # timer.left
     # # => 1.4999...
     # ```
     class Timer
+      # The seconds that a run's process has to start and to load the tests,
+      # before its first test starts: 300, the same as the fork parent has to
+      # load them.
+      START_SECONDS: Integer
+
+      # The run's time limit, in milliseconds.
+      @milliseconds: Integer
+
       # The monotonic time, in seconds, when the run's time is up.
       @deadline: Float
 
       # When the timer started, in seconds of the monotonic clock.
       @started: Float
 
+      # Whether the run's first test has started.
+      @testing: bool
+
       # The monotonic clock's time now, in seconds.
       def self.now: () -> Float
 
-      # Starts the timer.
+      # Starts the timer, with the limit for starting.
       #
-      # - `milliseconds`: Integer, the run's time limit.
-      def initialize: (Integer milliseconds) -> void
+      # - `milliseconds`: Integer, the run's time limit, which starts
+      #   with its first test.
+      # - `start_seconds`: Integer, the limit for starting. By default,
+      #   `START_SECONDS`.
+      def initialize: (Integer milliseconds, ?Integer start_seconds) -> void
+
+      # Starts the run's time limit, from now. Only the first call counts, so
+      # the limit covers every test of the run.
+      def tests_started: () -> nil
+
+      # Whether the run's time limit has started.
+      def testing?: () -> bool
 
       # The seconds left before the deadline, or 0 when none are left.
       def left: () -> Float

@@ -29,8 +29,22 @@ module Stryker
       # - `timer`: Stryker::Isolation::Timer, its time limit.
       def initialize: (FreshRun fresh, Child child, Timer timer) -> void
 
-      # Whether the process has ended.
-      def ended?: () -> bool
+      # Starts the run's time limit once its results file shows that its
+      # first test started. Before then, the process has the limit for
+      # starting, `Stryker::Isolation::Timer::START_SECONDS`.
+      def check: () -> nil
+
+      # Whether the run's time limit has started.
+      def testing?: () -> bool
+
+      # Whether the process has ended or its time is up, so that `finish`
+      # returns at once.
+      def done?: () -> bool
+
+      # Waits at most `seconds` for the process to end.
+      #
+      # - `seconds`: Float, the longest wait.
+      def wait: (Float seconds) -> nil
 
       # The seconds left before the time is up, or 0.
       def left: () -> Float
