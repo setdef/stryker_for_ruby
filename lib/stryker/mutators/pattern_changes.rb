@@ -30,7 +30,7 @@ module Stryker
         tree = Regexp::Parser.parse(pattern, options:)
         tree.each_expression.flat_map { |expression, _index| at(expression) }
       rescue Regexp::Parser::Error
-        raise(Unreadable, format(UNREADABLE, reason: $ERROR_INFO))
+        raise(Unreadable, format(UNREADABLE, reason: String($ERROR_INFO).inspect))
       end
 
       def self.at(expression)

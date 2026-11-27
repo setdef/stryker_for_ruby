@@ -43,6 +43,20 @@ class RegexUnreadableTest < Minitest::Test
     assert_equal(["2"], err.lines.map { |line| line[WARNING, 1] })
   end
 
+  def test_a_warning_shows_an_invalid_byte_of_the_pattern_as_an_escape
+    _mutants, err = walk("Regexp.new(\"\\xff^a\")\n")
+
+    assert_predicate(err, :valid_encoding?)
+    assert_includes(err, '\xFF')
+  end
+
+  def test_a_warning_shows_a_terminal_escape_character_of_the_pattern_as_an_escape
+    _mutants, err = walk("Regexp.new(\"\\e[31m(\")\n")
+
+    refute_includes(err, "\e")
+    assert_includes(err, '\e[31m(')
+  end
+
   def test_a_walk_goes_on_to_the_other_patterns
     mutants, err = walk("Regexp.new(\"(\")\n/^a/\nRegexp.new(\"[\")\n")
 

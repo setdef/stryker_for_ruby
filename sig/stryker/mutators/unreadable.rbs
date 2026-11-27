@@ -3,7 +3,9 @@ module Stryker
     # What a mutator raises for a site it can't read, so that the walk makes
     # no mutant of the site and tells the person who runs it. `Stryker::Mutators::Regex`
     # raises it for a pattern that regexp_parser can't parse. The message says
-    # what the walk prints after the file and the line.
+    # what the walk prints after the file and the line. The message quotes
+    # the parser's reason as `String#inspect` writes it, so a control or
+    # invalid byte of the project's pattern shows as an escape.
     #
     # ## Examples
     #
