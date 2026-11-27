@@ -437,64 +437,33 @@ An ignored mutant holds nothing back. `CallExpression`'s mutant is made where no
 
 ## The disable comment
 
-With a disable comment, you turn off mutators for one line, or for the rest of a file, and record why. It follows StrykerJS's grammar in Ruby's comment syntax:
+How to write a disable comment, what it does, and examples are in [Disable comments](../../configuration.md#disable-comments), the guide for users. This section says why the grammar and the line rules are as they are, and where they trap.
+
+The comment follows StrykerJS's grammar in Ruby's comment syntax, so that a reader who knows StrykerJS's `// Stryker disable` comments writes the same thing in Ruby:
 
 ```ruby
 # Stryker [disable|restore] [next-line] <mutators>[: <reason>]
 ```
 
-- `disable` turns the mutators off and `restore` turns them back on.
-- With `next-line`, the comment applies to the mutants whose site starts on the next line that holds code. A blank line, a comment, and a `=begin` block don't hold code. Without `next-line`, the comment applies from the comment's line to the end of the file, or until a `restore` for the same mutators.
-- `<mutators>` is a comma-separated list of mutator names, or `all`. Names match without regard to letter case, as in StrykerJS. An unknown name makes the run write a warning with the file and the line to standard error, as StrykerJS does, and the rest of the comment still applies.
-- `<reason>`, after a colon, becomes the mutant's `statusReason`.
+The comment's text after `#` must match StrykerJS's pattern, `/^\s?Stryker (disable|restore)(?: (next-line))? ([a-zA-Z, ]+)(?::(.+)?)?/`. So the comment starts with `#Stryker`, or with `#`, one whitespace character, and `Stryker`, and nothing else may come before `Stryker`. The list accepts only letters, commas, and spaces, which is why every mutator name is letters only ([Names](#names)). A comment that doesn't match the pattern is an ordinary comment.
 
-Each mutant that a disable comment covers is made and reported with the status `Ignored`, and its `statusReason` is the reason, or StrykerJS's text, `Ignored using a comment`, when the comment has none. It gets no switch and never runs. A mutant is covered or not by the line its site starts on, so a mutant whose site spans several lines belongs to the line where the site starts. Of the comments that cover a mutant, the latest one in the file decides, so a `restore` after a `disable` turns the mutant back on. When a comment and `mutator.excludedMutations` both ignore a mutant, the comment's reason is the one reported.
+Names match without regard to letter case, as in StrykerJS. A name that no mutator has makes the run write a warning with the file and the line to standard error, as StrykerJS does, and the rest of the comment still applies. The list takes spaces, so a comment with `next line` where the grammar needs `next-line` still matches the pattern: its whole list, `next line EqualityOperator`, is one unknown name, the run writes the warning, and the mutants on the next line stay live. A comment such as `# @stryker disable next-line all` fails the pattern, so nothing warns, and it is an ordinary comment.
 
-The comment's text after `#` must match StrykerJS's pattern, `/^\s?Stryker (disable|restore)(?: (next-line))? ([a-zA-Z, ]+)(?::(.+)?)?/`. So the comment starts with `#Stryker`, or with `#`, one whitespace character, and `Stryker`, and nothing else may come before `Stryker`. A comment that follows code on its line counts: `total = a + b # Stryker disable ArithmeticOperator` covers its own line and the lines after it. Only a `#` comment counts, so `=begin` blocks, strings, and heredocs hold none, and neither does the data after `__END__`.
+Each mutant that a disable comment covers is made and reported with the status `Ignored`, as an excluded mutator's mutants are ([Turning mutators off](#turning-mutators-off)). Its `statusReason` is the comment's reason, or StrykerJS's text, `Ignored using a comment`, when the comment has none. It gets no switch and never runs.
 
-A fee that starts after a free allowance has an equivalent mutant: at exactly `FREE_HOURS`, both branches give `0`, so `hours >= FREE_HOURS` behaves as `hours > FREE_HOURS` does. Mark it on the line before:
+These rules decide which mutants a comment covers:
 
-```ruby
-# Stryker disable next-line EqualityOperator: at FREE_HOURS both branches give 0, so the >= mutant is equivalent
-fee = (hours > FREE_HOURS) ? (hours - FREE_HOURS) * RATE : 0
-```
+- With `next-line`, a comment applies to the mutants whose site starts on the next line that holds code. A blank line, a comment, and a `=begin` block don't hold code, so a reason can run over several comment lines. Without `next-line`, it applies from the comment's line to the end of the file, or until a `restore` for the same mutators.
+- A mutant is covered or not by the line its site starts on, so a mutant whose site spans several lines is covered by the comments of the line where the site starts.
+- Of the comments that cover a mutant, the latest one in the file applies, so a `restore` after a `disable` turns the mutant back on.
+- When a comment and `mutator.excludedMutations` both ignore a mutant, the comment's reason is the one reported.
+- A comment lists mutators, as StrykerJS's does, and not pairs. For `hours > FREE_HOURS`, whose `>=` mutant is equivalent, a comment for `EqualityOperator` ignores both of the line's `EqualityOperator` mutants, the `<=` mutant too.
+- An ignored mutant holds nothing back, as [Turning mutators off](#ignored-mutants-and-the-fallback-mutator) says, so a disable comment for `StringLiteral` leaves the removal of `notify("Saved")` live.
 
-Both of that line's `EqualityOperator` mutants are `Ignored` with that reason, the `<=` mutant as well, which isn't equivalent: a comment lists mutators, not pairs. The line's `ConditionalExpression` mutants still run.
+The traps:
 
-A comment that doesn't match the pattern is an ordinary comment, and one that matches with an unknown name turns nothing off:
-
-```ruby
-# Wrong: "next line" has a space where the grammar needs a hyphen. The comment matches
-# the pattern, and its whole list, "next line EqualityOperator", is one unknown name,
-# so the run writes a warning and the mutants on the next line stay live.
-# Stryker disable next line EqualityOperator
-total -= total * @rate if order.quantity > BULK_THRESHOLD
-```
-
-```ruby
-# Wrong: "@stryker" isn't "Stryker", so this is an ordinary comment.
-# @stryker disable next-line all
-total -= total * @rate if order.quantity > BULK_THRESHOLD
-```
-
-A condition that is always true while the tests run, such as `Rails.env.test?`, has a `ConditionalExpression` mutant that no test can kill. Mark it on the line before:
-
-```ruby
-# Stryker disable next-line ConditionalExpression: Rails.env.test? is always true under the tests
-deliver_later unless Rails.env.test?
-```
-
-To turn off every mutator for part of a file:
-
-```ruby
-# Stryker disable all: generated from the carrier's rate table
-RATES = {
-  # The generated rates go here.
-}.freeze
-# Stryker restore all
-```
-
-An ignored mutant holds nothing back, as [Turning mutators off](#ignored-mutants-and-the-fallback-mutator) says, so a disable comment for `StringLiteral` leaves the removal of `notify("Saved")` live.
+- A comment that follows code on its line counts: `total = a + b # Stryker disable ArithmeticOperator` covers its line and the lines after it.
+- Only a `#` comment counts, as Prism reports comments, so `=begin` blocks, strings, and heredocs hold none, and neither does the data after `__END__`.
 
 ## Defaults
 

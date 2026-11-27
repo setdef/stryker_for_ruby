@@ -170,7 +170,7 @@ With a disable comment in a `.rb` file, you turn mutators off for the next line,
 ```
 <!-- SPDX-SnippetEnd -->
 
-The mutants that the comment covers have the status `Ignored`, count toward no score, and keep the reason in the JSON report. [The disable comment](docs/contributors/design/mutators.md#the-disable-comment) describes its grammar, and [the catalog](docs/contributors/design/mutators.md#the-catalog) lists every mutator and what it changes.
+The mutants that the comment covers have the status `Ignored`, count toward no score, and keep the reason in the JSON report. [Disable comments](docs/configuration.md#disable-comments) gives the grammar and more examples, and [the catalog](docs/contributors/design/mutators.md#the-catalog) lists every mutator and what it changes.
 
 ### Exit statuses
 
@@ -185,7 +185,7 @@ The mutants that the comment covers have the status `Ignored`, count toward no s
 
 ## Documentation
 
-- [Configuration](docs/configuration.md): every option, flag, check, reporter, and exit status.
+- [Configuration](docs/configuration.md): every option, flag, check, reporter, and exit status, and the disable comment.
 - [Ruby 3.3 and 3.4](docs/older-ruby.md): the problems found on the unsupported Rubies.
 - [Changelog](CHANGELOG.md): what changed in each release, and what is on `trunk` and in no release yet.
 - [Contributor documentation](docs/contributors/README.md): how the code works inside and why, for the people who change it.

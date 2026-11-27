@@ -322,11 +322,80 @@ The names of the mutators to turn off, such as `"BooleanLiteral"`. The default i
 
 Each mutant of an excluded mutator is still made and reported. It has the status `Ignored` and the `statusReason` `Ignored because of excluded mutation "BooleanLiteral"`, gets no switch, and never runs. An `Ignored` mutant counts toward the total but toward no mutation score. An excluded mutator's mutants hold no other mutator's mutant back: with `StringLiteral` excluded, `notify("Saved")` still gets its removal.
 
-A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](contributors/design/mutators.md#the-catalog) lists the names, and [Turning mutators off](contributors/design/mutators.md#turning-mutators-off) says what an excluded mutator's mutants report. To turn a mutator off at one site, use a [disable comment](contributors/design/mutators.md#the-disable-comment).
+A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](contributors/design/mutators.md#the-catalog) lists the names, and [Turning mutators off](contributors/design/mutators.md#turning-mutators-off) says what an excluded mutator's mutants report. To turn a mutator off at one site, use a [disable comment](#disable-comments).
 
 ### `incremental`
 
 A boolean. The default is `false`.
+
+## Disable comments
+
+A disable comment turns mutators off for one line, or for the rest of a `.rb` file, and records why. Use one for a mutant that no test can kill, such as an equivalent mutant, and give the reason in the comment. It has the grammar of [StrykerJS's disable comments](https://stryker-mutator.io/docs/stryker-js/disable-mutants/), in Ruby's comment syntax:
+
+```ruby
+# Stryker [disable|restore] [next-line] <mutators>[: <reason>]
+```
+
+- `disable` turns the mutators off, and `restore` turns them back on.
+- With `next-line`, the comment applies to the mutants whose code starts on the next line that holds code. A blank line, a comment, and a `=begin` block hold no code. Without `next-line`, the comment applies from its line to the end of the file, or until a `restore` for the same mutators.
+- `<mutators>` is a comma-separated list of mutator names, or `all`. Names match without regard to letter case. For a name that no mutator has, the run writes a warning to standard error with the file and the line, and the rest of the comment still applies. [Mutators](contributors/design/mutators.md#the-catalog) lists the names.
+- `<reason>`, after a colon, is the reason that the report gives.
+
+Each mutant that a comment covers is made and reported with the status `Ignored`. Its `statusReason` is the reason in the comment, or `Ignored using a comment` when the comment has none. It gets no switch, no test runs against it, and it counts toward no mutation score. A comment covers a mutant by the line where the mutant's code starts, even when that code spans several lines. Of the comments that cover a mutant, the latest in the file applies, so a `restore` after a `disable` turns the mutant back on. When a comment and [`mutator.excludedMutations`](#mutatorexcludedmutations) both ignore a mutant, the report gives the comment's reason.
+
+A comment lists mutators, not individual mutants, so it ignores every mutant of each mutator it names on its lines. Like an excluded mutator, a mutator that a comment turns off holds no other mutator's mutant back: a comment for `StringLiteral` leaves the removal of `notify("Saved")` live.
+
+The comment's text after the `#` has to start with `Stryker`, with at most one whitespace character between the `#` and `Stryker`. A comment that follows code on its line counts, and without `next-line` it covers its line and the lines after it. Only a `#` comment counts, so `=begin` blocks, strings, heredocs, and the data after `__END__` hold none. A comment that doesn't match the grammar is an ordinary comment. [The disable comment](contributors/design/mutators.md#the-disable-comment) gives the exact pattern and the reasons for these rules.
+
+### An equivalent mutant
+
+A fee that starts after a free allowance has an equivalent mutant: at exactly `FREE_HOURS`, both branches give `0`, so `hours >= FREE_HOURS` behaves as `hours > FREE_HOURS` does. Mark it on the line before:
+
+```ruby
+# Stryker disable next-line EqualityOperator: at FREE_HOURS both branches give 0, so the >= mutant is equivalent
+fee = (hours > FREE_HOURS) ? (hours - FREE_HOURS) * RATE : 0
+```
+
+Both of that line's `EqualityOperator` mutants are `Ignored` with that reason, the `<=` mutant as well, which isn't equivalent. The line's `ConditionalExpression` mutants still run.
+
+### A condition that is always true under the tests
+
+A condition that is always true while the tests run, such as `Rails.env.test?`, has a `ConditionalExpression` mutant that no test can kill. Mark it on the line before:
+
+```ruby
+# Stryker disable next-line ConditionalExpression: Rails.env.test? is always true under the tests
+deliver_later unless Rails.env.test?
+```
+
+### Part of a file
+
+Use `all` with `disable`, and end the part with `restore`:
+
+```ruby
+# Stryker disable all: generated from the carrier's rate table
+RATES = {
+  # The generated rates go here.
+}.freeze
+# Stryker restore all
+```
+
+### Comments that turn nothing off
+
+A comment with an unknown mutator name turns nothing off, and a comment that doesn't match the grammar is an ordinary comment:
+
+```ruby
+# Wrong: "next line" has a space where the grammar needs a hyphen. The comment matches
+# the grammar, and its whole list, "next line EqualityOperator", is one unknown name,
+# so the run writes a warning and the mutants on the next line stay live.
+# Stryker disable next line EqualityOperator
+total -= total * @rate if order.quantity > BULK_THRESHOLD
+```
+
+```ruby
+# Wrong: "@stryker" isn't "Stryker", so this is an ordinary comment.
+# @stryker disable next-line all
+total -= total * @rate if order.quantity > BULK_THRESHOLD
+```
 
 ## Example files
 
