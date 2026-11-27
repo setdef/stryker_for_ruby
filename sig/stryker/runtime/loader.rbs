@@ -67,7 +67,9 @@ module Stryker
       # compares `path`'s key (`Stryker::Runtime::PathKey.of`) with the
       # cache's. In the main Ractor, it also records in `SERVED` the key of
       # `path`, as Ruby gave it, because that is the path that Ruby records
-      # the file under in `$LOADED_FEATURES`. It resolves the real path once.
+      # the file under in `$LOADED_FEATURES`. It resolves the real path once,
+      # and twice for a file that `LookupTable#file` finds by its base name,
+      # because the lookup resolves it as well.
       # Raises SyntaxError when the instrumented source doesn't parse, so the
       # load fails as it would for the file itself.
       #
