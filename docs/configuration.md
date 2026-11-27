@@ -88,7 +88,7 @@ The flag --test-runner needs a value. Run "stryker help run" for the flags.
 | - | - |
 | 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, and `stryker run -h` also exit with 0 when they have written their text. |
 | 1 | The run finished, and its score is below `thresholds.break`. |
-| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that `mutate` selects, a file that `mutate` selects and that doesn't parse, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
+| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that a `mutate` pattern of yours selects, a file that `mutate` selects and that doesn't parse, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
 | 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. It ends every process that the run started and deletes its temporary files before it exits. A second signal stops that cleanup and leaves the temporary files. |
 
 A dry run fails, and no mutant runs, when a test fails with no mutant active, when the tests take longer than [`dryRunTimeoutMinutes`](#dryruntimeoutminutes), or when a file that `mutate` selects loaded without its mutants, as it can when another library loads Ruby files itself. The message says which test failed, or what went wrong.
@@ -162,7 +162,13 @@ The patterns apply in order, as StrykerJS applies them: a pattern adds the files
 
 An empty list selects no file.
 
-**Stryker (for Ruby)** mutates Ruby files only. When a pattern matches an ERB template, a file whose name ends in `.erb`, the run stops before it reads any file, with an error that gives the template's path. The default patterns select the templates in `lib` and `app`, so a project that has any needs a pattern that leaves them out, such as `"!**/*.erb"`.
+**Stryker (for Ruby)** mutates Ruby files only. The default patterns select the ERB templates in `lib` and `app`, files whose names end in `.erb`. A run with the default leaves them out, and writes one warning to standard error that says how many:
+
+```text
+Warning: this run leaves out 2 ERB templates, which the default mutate patterns select, because Stryker (for Ruby) doesn't mutate ERB templates. Name the files you want in mutate, as in --mutate "lib/**/*.rb", to choose your own.
+```
+
+A pattern that you give, in the file or on the command line, and that matches a template stops the run before it reads any file, with an error that gives the template's path. Leave templates out with a pattern such as `"!**/*.erb"`.
 
 A file that a pattern selects and that isn't valid Ruby stops the run, with the file's path and the line of the first error that Prism, the Ruby parser, finds:
 
