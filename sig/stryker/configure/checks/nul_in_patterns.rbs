@@ -1,0 +1,22 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that no pattern of `mutate` holds a NUL byte, which no file name
+      # can hold and which Ruby's path methods refuse. It applies to no other
+      # option, and it runs before `OutsidePatterns` so that this check can
+      # report a pattern that `OutsidePatterns` can't resolve. The line names
+      # the pattern.
+      class NulInPatterns
+        NUL: String
+
+        @setting: Setting
+
+        # Builds the check.
+        def initialize: (Setting setting) -> void
+
+        # Returns one line for each pattern that holds a NUL byte, or none.
+        def to_a: () -> Array[String]
+      end
+    end
+  end
+end

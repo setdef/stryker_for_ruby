@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative("checks/nul_in_patterns")
 require_relative("checks/outside_patterns")
 require_relative("checks/threshold_order")
 require_relative("checks/unknown_mutators")
@@ -23,6 +24,7 @@ module Stryker
         checks = [
           Checks::UnknownOption.new(setting),
           Checks::WrongType.new(setting),
+          Checks::NulInPatterns.new(setting),
           Checks::OutsidePatterns.new(setting, @root),
           Checks::UnknownMutators.new(setting),
         ]

@@ -68,4 +68,24 @@ class ConfigurePathsTest < Minitest::Test
 
     assert_equal(%("--mutate" on the command line has the pattern "../x.rb", #{OUTSIDE}), message)
   end
+
+  def test_a_pattern_with_a_nul_byte_is_a_config_error_that_names_it
+    message = refusal({ "stryker.config.json": '{ "mutate": ["lib/**/*.rb", "lib/\u0000x"] }' })
+
+    assert_equal(
+      %("mutate" in stryker.config.json has the pattern "lib/\\u0000x", which holds a NUL byte, ) +
+        "and no file name can.",
+      message
+    )
+  end
+
+  def test_a_pattern_with_a_nul_byte_from_the_command_line_names_the_flag
+    message = refusal({}, options: { mutate: ["\0"] })
+
+    assert_match(/\A"--mutate" on the command line has the pattern "\\u0000", which holds a NUL byte/, message)
+  end
+
+  def test_a_nul_byte_in_a_leave_out_pattern_is_refused_too
+    assert_match(/which holds a NUL byte/, refusal({}, options: { mutate: ["!a\0b"] }))
+  end
 end

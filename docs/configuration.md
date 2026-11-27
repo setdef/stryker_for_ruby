@@ -48,6 +48,7 @@ Before it does anything else, **Stryker (for Ruby)** checks every option in the 
 - **A `thresholds.high` below `thresholds.low`** is an error that names both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
 - **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
+- **A pattern in `mutate` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
 
 The checks read the type of `testRunner` and `reporters`. They don't check that a test runner or a reporter with that name exists.
 

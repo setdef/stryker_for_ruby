@@ -22,7 +22,7 @@ module Stryker
   # option, the type it takes, and the value), a name in
   # `mutator.excludedMutations` that no mutator has (the line lists the valid
   # names), a pattern in `mutate` that resolves outside the project's
-  # root, or a `thresholds.high` below `thresholds.low`. Each line says where
+  # root or holds a NUL byte, or a `thresholds.high` below `thresholds.low`. Each line says where
   # the value came from: the file, the flag, or the default.
   #
   # Configure parses no `argv`: the `stryker` command does, and passes the
