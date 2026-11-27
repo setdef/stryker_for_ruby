@@ -1,0 +1,30 @@
+module Stryker
+  module Isolation
+    # The runs that `Stryker::Isolation::ForkPerRun#run_all` was given, and
+    # what makes them fit for a fork parent: none is a static mutant's run,
+    # because a child's code loaded in the parent before any mutant was
+    # active.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # runs = Stryker::Isolation::ForkableRuns.new(runs).checked
+    # ```
+    class ForkableRuns
+      # The text of the error for a static mutant's run.
+      STATIC: String
+
+      # The runs.
+      @runs: Array[MutantRun]
+
+      # Wraps `runs`.
+      #
+      # - `runs`: Array of Stryker::MutantRun.
+      def initialize: (Array[MutantRun] runs) -> void
+
+      # The runs, when a fork parent can take them. Raises ArgumentError,
+      # naming the mutant, for a static mutant's run.
+      def checked: () -> Array[MutantRun]
+    end
+  end
+end

@@ -30,9 +30,6 @@ module Stryker
     # end
     # ```
     class ForkPerRun
-      # The text of the error for a static mutant's run.
-      STATIC: String
-
       # The text of the error for `run_all` before `start`.
       UNSTARTED: String
 

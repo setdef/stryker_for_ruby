@@ -5,16 +5,15 @@ require_relative "dry_run_verdict"
 require_relative "error"
 require_relative "flight"
 require_relative "flights"
+require_relative "forkable_runs"
 require_relative "parent_launch"
 require_relative "stop_on_raise"
 
 module Stryker
   module Isolation
     class ForkPerRun
-      STATIC = "Mutant %<id>p is static, and a fork has its parent's code already loaded, " \
-        "so its run needs a fresh process."
       UNSTARTED = "The fork parent isn't running: call start first."
-      private_constant(:STATIC, :UNSTARTED)
+      private_constant(:UNSTARTED)
 
       def initialize(directory, root = Dir.pwd, launch = ParentLaunch.new(directory, root))
         @launch = launch
@@ -31,10 +30,7 @@ module Stryker
       end
 
       def run_all(runs, &)
-        static = runs.find(&:static)
-        raise(ArgumentError, format(STATIC, id: static.mutant.id)) if static
-
-        fly(runs.map { |run| Flight.judged(run, &) })
+        fly(ForkableRuns.new(runs).checked.map { |run| Flight.judged(run, &) })
       end
 
       def dry_run(config)
