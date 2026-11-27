@@ -25,6 +25,8 @@ With neither file, a run uses the defaults and the command line. With both, the 
 
 A JSON file can't start with a byte-order mark (BOM), because JSON doesn't allow one. A file that does is an error that says so: save it as UTF-8 without a BOM. A YAML file may start with one.
 
+A configuration file's bytes must be valid UTF-8. A JSON or YAML file that holds a byte that isn't is an error, and the one for a JSON file gives the line of the first such byte. **Stryker (for Ruby)** refuses the file instead of reading each bad byte as U+FFFD, because a `mutate` pattern that holds U+FFFD matches no file, and the run would mutate fewer files than you asked for with no error.
+
 An empty YAML file has no options. A YAML file may hold only strings, numbers, booleans, null, lists, and maps. A date, a symbol, an alias, or a tag that names a Ruby class is an error, because the file comes from the project and loading it must never run code.
 
 ### The command line

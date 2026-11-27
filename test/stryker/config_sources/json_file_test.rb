@@ -56,6 +56,17 @@ class JsonFileTest < Minitest::Test
     end
   end
 
+  def test_says_that_a_byte_that_is_not_valid_utf8_is_the_problem_and_on_which_line
+    in_file("{\n  \"mutate\": [\"\xFF\"]\n}\n") do |path|
+      error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }
+      assert_equal(
+        "#{path} isn't valid JSON: it holds bytes that aren't valid UTF-8, the first on line 2. " \
+          "Save the file as UTF-8.",
+        error.message
+      )
+    end
+  end
+
   def test_names_the_file_by_its_label_when_it_has_one
     in_file("[]") do |path|
       error = assert_raises(Stryker::ConfigError) { Stryker::ConfigSources::JsonFile.new(path, label: "stryker.config.json").read }

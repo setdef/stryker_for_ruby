@@ -46,6 +46,13 @@ class YamlFileTest < Minitest::Test
     end
   end
 
+  def test_refuses_a_byte_that_is_not_valid_utf8_instead_of_loading_it
+    in_file("mutate: [\"\xFF\"]\n") do |path|
+      error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }
+      assert_match(/\A#{Regexp.escape(path)} isn't valid YAML: invalid leading UTF-8 octet/, error.message)
+    end
+  end
+
   def test_refuses_a_value_that_is_not_a_plain_value_instead_of_building_it
     in_file("timeoutMS: 2026-01-01\n") do |path|
       error = assert_raises(Stryker::ConfigError) { source_under_test(path).read }

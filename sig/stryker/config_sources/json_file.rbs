@@ -9,18 +9,12 @@ module Stryker
     # # => { "testRunner" => "minitest", "thresholds" => { "break" => 70 } }
     # ```
     class JsonFile < TextFile
-      # The byte-order mark (U+FEFF) that some editors put at the start of a
-      # UTF-8 file.
-      BYTE_ORDER_MARK: String
-
-      # The line of the error for a file that starts with a byte-order mark.
-      BYTE_ORDER_MARK_PROBLEM: String
-
       private
 
       # Parses `text` as JSON, and raises `Stryker::ConfigError` for text
-      # that isn't valid JSON. A text that starts with a byte-order mark is
-      # refused with an error that says so, because JSON doesn't allow one.
+      # that isn't valid JSON, with the problem that
+      # `Stryker::ConfigSources::JsonText` finds in it, if any, or else the
+      # parser's own.
       def parse: (String text) -> JsonValue::json_value
     end
   end

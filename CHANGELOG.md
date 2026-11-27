@@ -6,6 +6,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 
 ## [Unreleased]
 
+### Fixed
+
+- A JSON configuration file that holds bytes that aren't valid UTF-8 is now an error that names the file and the line, where it used to load with the bytes as they were.
+
 ## [0.1.0] - 2026-11-27
 
 ### Added

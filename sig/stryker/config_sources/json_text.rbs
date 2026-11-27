@@ -1,0 +1,43 @@
+module Stryker
+  module ConfigSources
+    # The text of a JSON configuration file, before the JSON parser reads it.
+    # It knows what the parser can't be trusted to refuse: a byte-order mark,
+    # which JSON doesn't allow, and bytes that aren't valid UTF-8, which Ruby's
+    # parser loads as they are.
+    #
+    # ```ruby
+    # Stryker::ConfigSources::JsonText.new("{}").problem
+    # # => nil
+    #
+    # Stryker::ConfigSources::JsonText.new("{\n\"a\": \"\xFF\"}").problem
+    # # => "it holds bytes that aren't valid UTF-8, the first on line 2. Save the file as UTF-8."
+    # ```
+    class JsonText
+      # The byte-order mark (U+FEFF) that some editors put at the start of a
+      # UTF-8 file.
+      BYTE_ORDER_MARK: String
+
+      # The problem for a text that starts with a byte-order mark.
+      BYTE_ORDER_MARK_PROBLEM: String
+
+      @text: String
+
+      # Builds the text.
+      #
+      # - `text`: String, the text that the file holds.
+      def initialize: (String text) -> void
+
+      # Says what is wrong with the text, as the end of a sentence that starts
+      # with the file's name: a problem for bytes that aren't valid UTF-8, with
+      # the line of the first, or for a byte-order mark. Returns nil when the
+      # text holds neither.
+      def problem: () -> String?
+
+      private
+
+      # The problem for bytes that aren't valid UTF-8, with the line of the
+      # first.
+      def not_utf8_problem: () -> String
+    end
+  end
+end
