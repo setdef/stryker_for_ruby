@@ -28,12 +28,13 @@ Where the sources disagree on the pairs, the catalog follows StrykerJS's code, b
 
 ## The catalog
 
-Eight mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
+Nine mutators make up the catalog, and each has the name of a Stryker mutator. The run uses this table's order to choose which of two identical mutants it keeps (see [Mutants the mutators don't make](#mutants-the-mutators-dont-make)).
 
 | Mutator | What it mutates | Prism nodes | Stryker counterpart |
 | - | - | - | - |
 | `ArithmeticOperator` | `+`, `-`, `*`, `/`, `%` between two operands | `CallNode` | StrykerJS `ArithmeticOperator` |
 | `ArrayDeclaration` | Array literals and `Array.new` | `ArrayNode`, `CallNode` | StrykerJS `ArrayDeclaration` |
+| `BlockStatement` | The body of a method, block, lambda, branch, loop, `when`, `in`, `begin`, `rescue`, or `ensure` | `StatementsNode` | StrykerJS `BlockStatement` |
 | `BooleanLiteral` | `true`, `false`, `!`, `not`, the negation in `unless` and `until` | `TrueNode`, `FalseNode`, `CallNode`, `UnlessNode`, `UntilNode` | StrykerJS `BooleanLiteral` |
 | `EqualityOperator` | `<`, `<=`, `>`, `>=`, `==`, `!=`, and the operands of `<=>` | `CallNode` | StrykerJS `EqualityOperator` |
 | `LogicalOperator` | `&&`, `\|\|`, `and`, `or` | `AndNode`, `OrNode` | StrykerJS `LogicalOperator` |
@@ -72,6 +73,26 @@ Ruby's `**`, `<<`, and `>>` get no mutant, as in StrykerJS. `<<` is mostly appen
 | `Array.new(3, 0)` | `Array.new` | A test that checks the array's elements. |
 
 The replacement text for an empty array is StrykerJS's. An array with no brackets, the right side of `a, b = 1, 2`, gets no mutant: `a, b = []` reads as a different assignment, not as an emptied array. StrykerJS turns `new Array()` into `new Array([])`, but in Ruby `Array.new([])` and `Array.new` both give an empty array, so `Array.new` with no arguments, or with `[]`, gets no mutant. The `[]` inside `Array.new([])` still gets its own mutant.
+
+### `BlockStatement`
+
+It replaces a body with `nil`. A body is the `StatementsNode` of a `def` (an endless `def`'s expression included), a block (`{ }` or `do ... end`), a lambda, a branch of `if`, `unless`, or `case` (`else` included), a `while`, `until`, or `for` loop, a `when` or `in` clause, `begin`, `rescue`, or `ensure`.
+
+| Original | Mutant | Kills it |
+| - | - | - |
+| `def apply(order)` with a body of `total = order.total` and `total.round(2)` | the body replaced with `nil` | A test that checks a value or an effect of this body. |
+| `items.map { \|item\| item.price }` | `items.map { \|item\| nil }` | A test that checks a value or an effect of this body. |
+
+The edit covers the body's statements, and the replacement is `nil`, because a Ruby body that is empty returns `nil`. It makes no mutant of a body that is already empty or is only `nil`, as StrykerJS doesn't mutate an empty block. The `else` of a `begin ... rescue ... else` is a body too, with the others of its `begin`.
+
+A class, module, or singleton class body isn't a body here, and neither is the top level of a file: emptying one would take every method in it, so every test that touches it fails and the survivor shows nothing new. StrykerJS likewise doesn't treat a class body as a block. The statements inside parentheses or an interpolation aren't a body either, and neither is the pattern of a guard, `in pattern if condition`, which Prism holds as the statements of an `if`.
+
+> [!NOTE]
+> StrykerJS's `ArrowFunction` replaces an arrow function that has an expression body with `() => undefined`, and its `BlockStatement` empties one that has a block body. Ruby makes no such distinction: a block's or lambda's body is always a list of statements. So `BlockStatement` empties every block and lambda body, and the catalog has no `ArrowFunction`.
+
+In JavaScript, an emptied `case` falls through to the next one, so StrykerJS empties a `case` under `ConditionalExpression`. In Ruby, an emptied `when` returns `nil` and runs nothing else, so it is an emptied body, and `BlockStatement` makes it.
+
+A loop whose body is emptied can run forever when the body is what ends it. The run ends such a mutant at its time limit, with the status `Timeout` ([Time limits and kills](loading-and-isolation.md#time-limits-and-kills)).
 
 ### `BooleanLiteral`
 
@@ -174,6 +195,12 @@ A zero of any kind (`-0`, `-0.0`, `-0r`, `-0i`, and the same with `+`) gets no m
 
 It makes no mutant of `-` or `+` on a string literal, such as `-"draft"`: those control whether the string is frozen (see [Sites that get no mutant](#sites-that-get-no-mutant)).
 
+## Shared groups with no Ruby mutator
+
+| Stryker mutator | Why the catalog has no counterpart |
+| - | - |
+| `ArrowFunction` | Ruby's blocks and lambdas always have a body of statements, which `BlockStatement` empties. |
+
 ## Constructs that get no mutator
 
 Each of these was left out of the catalog because its survivors would rarely be worth acting on:
@@ -222,7 +249,7 @@ An equivalent mutant behaves the same as the original for every input, so no tes
 
 - **Identical mutants.** When two mutants give the same text for the whole file, the run keeps one: the mutant whose mutator comes first in [the catalog](#the-catalog), and between two of the same mutator, the one whose site starts first. In `!!ready`, removing either `!` gives `!ready`, and the run keeps the outer one.
 - **A mutant equal to the original.** A mutant whose text for the whole file is the original's is never made, such as `x <=> x` swapped.
-- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, and an empty hash.
+- **Mutants whose equivalence the syntax shows.** Each mutator's section lists them: `-0`, `-0r`, `-0i`, `Array.new` given no argument or `[]`, an empty hash, and a body that is already empty or `nil`.
 
 A mutant whose equivalence depends on a value's class or range at run time is made. For example, `x > 0` and `x >= 1` agree when `x` is an `Integer`, and differ when it is `0.5`, and the instrumenter can't know which `x` holds. Leaving such a mutant out would hide every real mistake that it stands for.
 

@@ -10,6 +10,7 @@ class MutatorsTest < Minitest::Test
   CATALOG = %w[
     ArithmeticOperator
     ArrayDeclaration
+    BlockStatement
     BooleanLiteral
     EqualityOperator
     LogicalOperator

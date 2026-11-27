@@ -2,6 +2,7 @@
 
 require_relative "mutators/arithmetic_operator"
 require_relative "mutators/array_declaration"
+require_relative "mutators/block_statement"
 require_relative "mutators/boolean_literal"
 require_relative "mutators/equality_operator"
 require_relative "mutators/logical_operator"
@@ -14,6 +15,7 @@ module Stryker
     ALL = [
       ArithmeticOperator,
       ArrayDeclaration,
+      BlockStatement,
       BooleanLiteral,
       EqualityOperator,
       LogicalOperator,

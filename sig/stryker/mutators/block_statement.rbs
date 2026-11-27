@@ -1,0 +1,59 @@
+module Stryker
+  module Mutators
+    # Empties a body, to find the tests that never check what a body does. It
+    # makes one mutant of each:
+    #
+    # | Original | Mutant |
+    # | - | - |
+    # | `def apply(order)` with a body of `total = order.total` and `total.round(2)` | the body replaced with `nil` |
+    # | `items.map { \|item\| item.price }` | `items.map { \|item\| nil }` |
+    #
+    # A body is the statements of a `def` (an endless `def`'s expression
+    # included), a block, a lambda, a branch of `if`, `unless`, or `case`
+    # (`else` included), a `while`, `until`, or `for` loop, a `when` or `in`
+    # clause, `begin`, `rescue`, or `ensure`. The edit covers the body's
+    # statements, and the replacement is `nil`, because a Ruby body that is
+    # empty returns `nil`.
+    #
+    # It makes no mutant of a body that is already empty or is only `nil`. A
+    # class, module, or singleton class body isn't a body here, and neither is
+    # the top level of a file, the statements in parentheses, those in an
+    # interpolation, or the pattern of a guard, `in pattern if condition`. A
+    # loop whose body ends it can run forever once the body is `nil`, and the
+    # run ends such a mutant at its time limit.
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#blockstatement)
+    # specifies the pairs and the reasons.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tree = Prism.parse("def total = items.sum").value
+    # method = tree.statements.body.first
+    # Stryker::Mutators::BlockStatement.edits(method.body, [tree, tree.statements, method]).map(&:replacement)
+    # # => ["nil"]
+    # ```
+    module BlockStatement
+      # The mutator's name in the report: `"BlockStatement"`.
+      def self.name: () -> String
+
+      # The edits at `node`: one for the statements of a body, and none for
+      # any other node, for the statements of a class, a module, the top
+      # level, parentheses, or an interpolation, or for a body that is only
+      # `nil`.
+      #
+      # - `node`: Prism::node, a node of the file.
+      # - `ancestors`: Array of Prism::node, the nodes above it, from the root
+      #   of the file to its parent. The mutator reads the parent, to tell a
+      #   body from other statements.
+      def self.edits: (Prism::node node, Array[Prism::node] ancestors) -> Array[Edit]
+
+      OWNERS: Array[singleton(Prism::Node)]
+
+      private def self.body?: (Prism::node node, Array[Prism::node] ancestors) -> bool
+
+      private def self.guard_pattern?: (Array[Prism::node] ancestors) -> bool
+
+      private def self.nil_only?: (Array[Prism::node] statements) -> bool
+    end
+  end
+end
