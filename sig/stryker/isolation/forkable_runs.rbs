@@ -3,7 +3,9 @@ module Stryker
     # The runs that `Stryker::Isolation::ForkPerRun#run_all` was given, and
     # what makes them fit for a fork parent: none is a static mutant's run,
     # because a child's code loaded in the parent before any mutant was
-    # active.
+    # active, and no two are runs of one mutant, because the parent tells
+    # the runs in flight apart by their mutants' IDs, so two runs of a
+    # mutant would mix their lines.
     #
     # ## Examples
     #
@@ -14,6 +16,9 @@ module Stryker
       # The text of the error for a static mutant's run.
       STATIC: String
 
+      # The text of the error for two runs of one mutant.
+      REPEATED: String
+
       # The runs.
       @runs: Array[MutantRun]
 
@@ -23,8 +28,15 @@ module Stryker
       def initialize: (Array[MutantRun] runs) -> void
 
       # The runs, when a fork parent can take them. Raises ArgumentError,
-      # naming the mutant, for a static mutant's run.
+      # naming the mutant, for a static mutant's run or for two runs of one
+      # mutant. Either is a bug in the caller, never a fault of the project.
       def checked: () -> Array[MutantRun]
+
+      private
+
+      # Raises ArgumentError, naming the mutant, when two of the runs are
+      # runs of one mutant.
+      def refuse_repeats: () -> void
     end
   end
 end

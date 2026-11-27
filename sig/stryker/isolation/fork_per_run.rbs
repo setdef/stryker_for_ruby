@@ -58,9 +58,13 @@ module Stryker
 
       # Runs every run, and yields each result as it arrives. Raises
       # ArgumentError, before it runs any, for a static mutant's run, and
+      # for two runs of one mutant, because a fork parent tells the runs in
+      # flight apart by their mutants' IDs, so two runs of a mutant would
+      # mix their lines (`Stryker::Isolation::ForkableRuns` says so). A
+      # repeat is a bug in the caller, never a fault of the project. Raises
       # `Stryker::Isolation::Error` when the parent ends or writes what no
-      # parent writes, or before `start`. Calls `stop` when it raises, or
-      # when the block does.
+      # parent writes, or before `start`. Calls `stop` when it raises that,
+      # or when the block raises.
       def run_all: (Array[MutantRun] runs) { (MutantResult result) -> void } -> void
 
       # Runs the dry run in a child of the parent, which runs every test that
