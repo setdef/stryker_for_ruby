@@ -5,19 +5,20 @@ require_relative("isolation_stand_ins")
 # Stand-ins for what the code in a project process drives: a test runner, the
 # finisher, and the runtime.
 module ProjectSideStandIns
-  # A test runner that runs every test it's given, with +status+, and records
-  # the calls it gets.
+  # A test runner that loads the tests with the IDs +loaded+, runs every test
+  # it's given, with +status+, and records the calls it gets.
   class Runner
     attr_reader :calls
 
-    def initialize(status = "passed")
+    def initialize(status = "passed", loaded = [])
       @status = status
+      @loaded = loaded
       @calls = []
     end
 
     def load_tests
       @calls << [:load_tests]
-      []
+      @loaded.map { |id| Stryker::Test.new(id:, name: id, file: nil, location: nil) }
     end
 
     def run(test_ids, bail:, observer:)
@@ -52,6 +53,14 @@ module ProjectSideStandIns
 
     def start_dry_run
       @dry_run = true
+    end
+  end
+
+  # The tests of a dry run, with a recorder of their own and a loader whose
+  # check passes, so a dry run in this process leaves its recorder alone.
+  module DryRunTests
+    def self.new(runner, test_ids)
+      Stryker::Runtime::DryRunTests.new(runner, test_ids, Stryker::Runtime::Recorder.new, Loader.new)
     end
   end
 

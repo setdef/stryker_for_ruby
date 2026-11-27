@@ -1,11 +1,15 @@
 module Stryker
   module Isolation
-    # What a fresh process does with its run, in its project
-    # process: it reads its run from a file, checks that the run's mutant
-    # is the one that `STRYKER_ACTIVE_MUTANT` made active before anything
-    # loaded, loads the project's tests, and runs the run's tests, stopping
-    # at the first that fails. It writes each test's start and result to
-    # another file as it happens, and then ends the process.
+    # What a fresh process does with its run, in its project process: it
+    # reads its run from a file, which holds a mutant run or the dry run, in
+    # the line that the parent that forks gets for the same run, checks
+    # that the mutant that `STRYKER_ACTIVE_MUTANT` made active before
+    # anything loaded is the one the run needs, and then runs it, as
+    # `Stryker::Isolation::FreshMutantRun` or
+    # `Stryker::Isolation::FreshDryRun`. It writes each test's start and
+    # result to another file as it happens, and then ends the process. When
+    # the active mutant isn't the one the run needs, its results hold that
+    # error, and no test runs.
     #
     # The run comes in a file, and the results go to one, because Ruby on
     # Windows hands a new process no pipe beyond its standard input,
@@ -18,8 +22,8 @@ module Stryker
     # # the process ends here
     # ```
     class FreshProcess
-      # The text of the error for a run of another mutant than the active
-      # one.
+      # The text of the error for a run that needs another mutant active
+      # than the one that is, or none.
       OTHER_MUTANT: String
 
       # The test runner adapter.
@@ -45,19 +49,24 @@ module Stryker
       # - `results_path`: String, the path of the results' file.
       def initialize: (_TestRunner runner, String run_path, String results_path) -> void
 
-      # Runs the run in this process, and ends it. When the run's mutant
-      # isn't the active one, its results hold that error, and no test
-      # runs.
+      # Runs the run in this process, and ends it.
       #
       # - `finisher`: Stryker::Isolation::Finisher, what ends the process.
       # - `holder`: Stryker::Runtime::_Holder, what holds the active
       #   mutant's ID, `Stryker::Active` by default.
-      def call: (?Finisher finisher, ?Runtime::_Holder holder) -> void
+      # - `dry_run`: `Stryker::Runtime::DryRunTests`, what runs the dry
+      #   run's tests, or a stand-in in a test.
+      def call: (?Finisher finisher, ?Runtime::_Holder holder, ?singleton(Runtime::DryRunTests) dry_run) -> void
 
       private
 
-      # Reads the run, checks its mutant, loads the tests, and runs them.
-      def run_tests: (RunReport report, Integer? active) -> Array[TestResult]
+      # What runs the run that the run's file holds.
+      def work: (singleton(Runtime::DryRunTests) dry_run) -> (FreshMutantRun | FreshDryRun)
+
+      # Returns `work` when `active` is the mutant its run needs active, and
+      # raises `Stryker::Isolation::Error`, naming the run by its relay key,
+      # otherwise.
+      def checked: (FreshMutantRun | FreshDryRun work, Integer? active) -> (FreshMutantRun | FreshDryRun)
     end
   end
 end

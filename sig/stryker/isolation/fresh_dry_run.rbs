@@ -1,0 +1,42 @@
+module Stryker
+  module Isolation
+    # The dry run in a fresh process with no mutant active. It loads the
+    # project's tests, which leaves the hits made while they load in the
+    # static bucket that the runtime readied when it loaded, runs every
+    # test once through `Stryker::Runtime::DryRunTests`, stopping at the
+    # first that fails, and then the loading check, and writes what the dry
+    # run found, as `Stryker::Isolation::ForkedDryRun` does in a forked
+    # child. Unlike the forked child, it readies no dry run of its own,
+    # because nothing before it recorded hits in the process.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::FreshDryRun.new(runner, dry_run, Stryker::Runtime::DryRunTests).call(report)
+    # ```
+    class FreshDryRun
+      # The dry run.
+      attr_reader run: DryRun
+
+      # The test runner adapter.
+      @runner: _TestRunner
+
+      # What runs the dry run's tests.
+      @tests: singleton(Runtime::DryRunTests)
+
+      # Builds the dry run.
+      #
+      # - `runner`: Stryker::_TestRunner, the test runner adapter.
+      # - `run`: Stryker::Isolation::DryRun, the dry run.
+      # - `tests`: `Stryker::Runtime::DryRunTests`, or a stand-in in a test.
+      def initialize: (_TestRunner runner, DryRun run, singleton(Runtime::DryRunTests) tests) -> void
+
+      # Loads the tests, runs each once through `report`, and writes what
+      # the dry run found to it.
+      #
+      # - `report`: Stryker::Isolation::RunReport, where each test's start
+      #   and result, and what the dry run found, go.
+      def call: (RunReport report) -> nil
+    end
+  end
+end
