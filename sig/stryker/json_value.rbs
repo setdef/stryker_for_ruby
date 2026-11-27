@@ -75,7 +75,10 @@ module Stryker
     # nil, an Array, or a Hash. A member that holds another value holds its
     # `as_json`, and each String is valid UTF-8, as the module's description
     # says.
-    def as_json: () -> Hash[String, json_value]
+    #
+    # - `options`: the options that ActiveSupport passes to `as_json`, a Hash
+    #   or nil. A value ignores them.
+    def as_json: (?Hash[Symbol, Object]? options) -> Hash[String, json_value]
 
     # The value as one line of JSON, with no line break in it, from
     # `JSON.generate`. A pipe carries one such line for each value. Raises

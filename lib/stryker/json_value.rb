@@ -27,7 +27,7 @@ module Stryker
       text.to_s.encode("UTF-8", invalid: :replace, undef: :replace).scrub
     end
 
-    def as_json
+    def as_json(_options = nil)
       JsonValue.plain_hash(self)
     end
 

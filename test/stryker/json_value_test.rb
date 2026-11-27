@@ -24,6 +24,14 @@ class JsonValueTest < Minitest::Test
     assert_equal({ "Shop::DiscountTest#test_rate": [3, 4] }.transform_keys(&:to_s), dry_run_result.as_json["buckets"])
   end
 
+  def test_a_value_ignores_the_options_that_active_support_passes
+    assert_equal(position.as_json, position.as_json({ only: [:line] }.freeze))
+  end
+
+  def test_a_value_takes_the_nil_that_active_support_passes_by_default
+    assert_equal(position.as_json, position.as_json(nil))
+  end
+
   def test_a_value_is_one_line_of_json
     assert_equal('{"line":8,"column":3}', position.to_json)
   end
