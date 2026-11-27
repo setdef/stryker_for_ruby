@@ -2,9 +2,9 @@ module Stryker
   # The port where **Stryker (for Ruby)** meets a test framework: it lists the
   # project's tests, and runs a chosen set of them, one at a time, in a
   # project process. `Stryker::TestRunners::MinitestRunner` is the adapter
-  # for Minitest 6. [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-ports)
+  # for Minitest 6. [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-ports)
   # shows where it fits, and
-  # [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/test-runners.md)
+  # [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/test-runners.md)
   # specifies the adapters.
   #
   # Ruby checks nothing about the interface: any object with these two

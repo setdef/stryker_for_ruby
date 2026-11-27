@@ -6,7 +6,7 @@ require_relative("../../test_helper")
 require_relative("../../support/site_case")
 
 # Checks the traps at sites that hold a switch, from the list in
-# docs/design/mutant-placement.md. In each, the switch and the plain mutant
+# docs/contributors/design/mutant-placement.md. In each, the switch and the plain mutant
 # don't run alike, which the design accepts.
 class TrapSitesTest < Minitest::Test
   include SiteCase

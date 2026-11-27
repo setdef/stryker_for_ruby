@@ -4,7 +4,7 @@ Each file in this folder records one architecture decision: a choice that the st
 
 The records follow [MADR](https://adr.github.io/madr/) 4.0.0. A record's status is `proposed` until the code does what it says, and `accepted` from then on. A record that stops being true is replaced by a new record with the next number and deleted, so every record here is current. Numbers are never reused.
 
-The keeper of this log writes and numbers the records. [AGENTS.md](../../AGENTS.md) says how everyone else reports a decision.
+The keeper of this log writes and numbers the records. [AGENTS.md](../../../AGENTS.md) says how everyone else reports a decision.
 
 | Number | Decision | Status |
 | - | - | - |

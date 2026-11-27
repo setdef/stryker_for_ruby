@@ -2,7 +2,7 @@ module Stryker
   module Isolation
     # The `Stryker::_Isolation` adapter for static mutants, on Linux,
     # macOS, and Windows, as
-    # [Static mutants on every system](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#static-mutants-on-every-system)
+    # [Static mutants on every system](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#static-mutants-on-every-system)
     # specifies. Each run gets a fresh project process, with its mutant
     # named in `STRYKER_ACTIVE_MUTANT` before the process starts, so the
     # mutant's switch takes the mutated branch while its file loads. The

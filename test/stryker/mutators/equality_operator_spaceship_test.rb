@@ -5,7 +5,7 @@ require "stryker/mutators/equality_operator"
 require_relative("../../support/mutator_case")
 
 # Checks the swap that EqualityOperator makes of <=>, and the calls it makes no
-# swap of, from its section of docs/design/mutators.md.
+# swap of, from its section of docs/contributors/design/mutators.md.
 class EqualityOperatorSpaceshipTest < Minitest::Test
   include MutatorCase
 

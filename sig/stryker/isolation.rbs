@@ -9,7 +9,7 @@ module Stryker
   #
   # An adapter judges each run by what its process said as each test
   # finished, as
-  # [How a run's outcome becomes a status](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#how-a-runs-outcome-becomes-a-status)
+  # [How a run's outcome becomes a status](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#how-a-runs-outcome-becomes-a-status)
   # specifies: a failed test is `Killed`, whatever the process did after
   # it.
   #
@@ -44,7 +44,7 @@ module Stryker
 
   # The adapters of the `Stryker::_Isolation` port, and the code that runs
   # each mutant run in a clean process.
-  # [Isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#isolation)
+  # [Isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#isolation)
   # specifies them.
   #
   # Part of it runs in the orchestrator: the adapters, which start the

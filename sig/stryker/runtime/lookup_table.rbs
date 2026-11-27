@@ -2,7 +2,7 @@ module Stryker
   module Runtime
     # The table that the loader's hook searches for the cache file that holds
     # a path's instrumented source, as
-    # [Finding an instrumented file](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#finding-an-instrumented-file)
+    # [Finding an instrumented file](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#finding-an-instrumented-file)
     # specifies. `Stryker::Runtime::Cache.read` builds it from the cache's
     # index. It is shareable, so the hook reads it in any Ractor.
     #

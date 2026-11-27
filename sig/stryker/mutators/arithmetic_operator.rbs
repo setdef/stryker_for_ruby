@@ -22,7 +22,7 @@ module Stryker
     # `names * ", "`, the operator
     # repeats, formats, or joins, and a mutant raises `NoMethodError` at the
     # first test that runs it. Ruby's `**`, `<<`, and `>>` get no mutant.
-    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#arithmeticoperator)
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#arithmeticoperator)
     # specifies the pairs and the reasons.
     #
     # ## Examples

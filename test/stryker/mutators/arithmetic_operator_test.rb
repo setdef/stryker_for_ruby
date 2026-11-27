@@ -5,7 +5,7 @@ require "stryker/mutators/arithmetic_operator"
 require_relative("../../support/mutator_case")
 
 # Checks the pairs of ArithmeticOperator and the calls it makes no mutant of,
-# from its section of docs/design/mutators.md.
+# from its section of docs/contributors/design/mutators.md.
 class ArithmeticOperatorTest < Minitest::Test
   include MutatorCase
 

@@ -2,7 +2,7 @@ module Stryker
   module Isolation
     # The entry point of every project process that an isolation adapter
     # starts, as
-    # [The entry point](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-entry-point)
+    # [The entry point](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-entry-point)
     # specifies. The orchestrator starts the process with an array of
     # arguments: the running Ruby, `-r` with the path of this file, `-e`
     # with `Stryker::Isolation::ProjectProcess.main`, `--`, and then the

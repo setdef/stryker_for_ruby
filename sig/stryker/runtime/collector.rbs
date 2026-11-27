@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The collector of a process that records hits, as
-    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#ractors)
     # specifies. A Ractor other than the main one can't reach the recorder,
     # so a holder there sends each message to the collector, whose Ractor
     # keeps it until the recorder drains it.

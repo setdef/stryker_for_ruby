@@ -2,7 +2,7 @@ module Stryker
   module Testing
     module IsolationContract
       # The contract's test that each run starts clean, as
-      # [ADR 0002](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/decisions/0002-every-mutant-runs-in-a-clean-process.md)
+      # [ADR 0002](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/decisions/0002-every-mutant-runs-in-a-clean-process.md)
       # records.
       module State : ::Minitest::Test, _IsolationHost
         include Sample

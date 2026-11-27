@@ -31,7 +31,7 @@ module Stryker
     # script, `__FILE__ == $0` or `__FILE__ == $PROGRAM_NAME`, in either
     # order, because the `true` mutant would run the script's code inside the
     # test process.
-    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#equalityoperator)
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#equalityoperator)
     # specifies the pairs and the reasons.
     #
     # ## Examples

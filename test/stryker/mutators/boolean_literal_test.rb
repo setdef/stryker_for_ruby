@@ -6,7 +6,7 @@ require "stryker/mutators/walk"
 require_relative("../../support/mutator_case")
 
 # Checks the pairs of BooleanLiteral and the nodes it makes no mutant of, from
-# its section of docs/design/mutators.md.
+# its section of docs/contributors/design/mutators.md.
 class BooleanLiteralTest < Minitest::Test
   include MutatorCase
 

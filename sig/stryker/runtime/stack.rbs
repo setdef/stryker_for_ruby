@@ -2,7 +2,7 @@ module Stryker
   module Runtime
     # Tells whether the code that is running runs while a file loads, from
     # the call stack, as
-    # [The stack check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-stack-check)
+    # [The stack check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-stack-check)
     # specifies.
     #
     # The outermost frame of a file's load is its top-level frame. Its

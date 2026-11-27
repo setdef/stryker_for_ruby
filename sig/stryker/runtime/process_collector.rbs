@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The collector that a process records hits with, as
-    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-collector-ractor)
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-collector-ractor)
     # specifies: which Stryker::Runtime::Collector it is, whether its Ractor
     # has started, and the one dry run that a process may ready. It holds no
     # collector until a dry run readies one, and holds none again in a

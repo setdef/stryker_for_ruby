@@ -10,7 +10,7 @@ An adapter loads in a project process, so it uses only the standard library and 
 - **`run`** runs the tests it is given, in that order, one at a time. It tells the observer when each test starts and when it finishes, so the hit recorder makes each test's bucket current while that test runs ([Coverage](coverage.md#hits)). With `bail` true, it stops after the first test that fails, because one failure kills the mutant.
 - **A test's time** is measured with `Process.clock_gettime(Process::CLOCK_MONOTONIC)`, in milliseconds, so a change to the system clock during a run doesn't change it.
 
-The [contract tests](architecture.md#contract-tests) hold every adapter to this, and [`Stryker::Testing::TestRunnerContract`](../../sig/stryker/testing/test_runner_contract.rbs) says what they check.
+The [contract tests](architecture.md#contract-tests) hold every adapter to this, and [`Stryker::Testing::TestRunnerContract`](../../../sig/stryker/testing/test_runner_contract.rbs) says what they check.
 
 ## Minitest
 

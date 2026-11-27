@@ -1,7 +1,7 @@
 module Stryker
   module Isolation
     # The time limit of one run, in two parts, as
-    # [Time limits and kills](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#time-limits-and-kills)
+    # [Time limits and kills](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#time-limits-and-kills)
     # explains. Until the run's first test starts, its process has
     # `START_SECONDS` to start and load the tests. From that start, the run
     # has its time limit. It reads the monotonic clock, so a change to the

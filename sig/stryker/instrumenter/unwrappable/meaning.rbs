@@ -5,7 +5,7 @@ module Stryker
       # that parentheses around them would give another meaning, so that a
       # switch there would make code that runs differently. From the
       # placement table in
-      # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
+      # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutant-placement.md#kinds-of-site),
       # that is true of:
       #
       # - a regexp with named captures on the left of `=~`, so the switch

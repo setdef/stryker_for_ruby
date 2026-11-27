@@ -8,7 +8,7 @@ module Stryker
     # the first read from a worker also waits for the worker to start, and
     # because a file of 30 KB parses in about a millisecond, less time than the
     # system takes to switch to the worker and back. The page
-    # `docs/design/loading-and-isolation.md` has the measurements for both
+    # `docs/contributors/design/loading-and-isolation.md` has the measurements for both
     # numbers.
     module ParseLimit
       # How many times the time of one parse in this process a read from a

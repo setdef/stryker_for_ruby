@@ -170,7 +170,7 @@ These sites get no mutant from any mutator, and no switch. The table gives each 
 
 ### Test files
 
-The default of the `mutate` option leaves out test files ([`mutate`](../configuration.md#mutate)), as StrykerJS's default leaves out `__tests__` directories and file names that end in `test` or `spec`. A pattern that the project writes can still match a test file, and that file then gets mutants: no check stops it, as none stops it in StrykerJS.
+The default of the `mutate` option leaves out test files ([`mutate`](../../configuration.md#mutate)), as StrykerJS's default leaves out `__tests__` directories and file names that end in `test` or `spec`. A pattern that the project writes can still match a test file, and that file then gets mutants: no check stops it, as none stops it in StrykerJS.
 
 ## Equivalent mutants
 

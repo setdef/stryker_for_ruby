@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The override of `prepend` that keeps the loader's hook in front, as
-    # [Keeping the hook ahead of Bootsnap](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#keeping-the-hook-ahead-of-bootsnap)
+    # [Keeping the hook ahead of Bootsnap](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#keeping-the-hook-ahead-of-bootsnap)
     # specifies. `Stryker::Runtime::Loader.install` prepends it to the
     # singleton class of `RubyVM::InstructionSequence`'s singleton class, so
     # it runs for every `prepend` on that singleton class.

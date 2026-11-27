@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The loader's hook, as
-    # [The `load_iseq` hook](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-load_iseq-hook)
+    # [The `load_iseq` hook](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-load_iseq-hook)
     # specifies. Before CRuby compiles a file it loads from disk, it calls
     # `RubyVM::InstructionSequence.load_iseq(path)`, and runs what that
     # returns in place of the file, or compiles the file itself when it

@@ -2,7 +2,7 @@ module Stryker
   module Runtime
     # The hit recorder: it records which mutants' sites ran, by mutant ID,
     # in the static bucket or in the bucket of the test that ran them, as
-    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#hits)
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#hits)
     # specifies. It is the dry run's `_TestObserver`: the test runner
     # adapter calls `test_started` before each test and `test_finished`
     # after it.

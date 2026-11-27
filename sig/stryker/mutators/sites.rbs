@@ -2,7 +2,7 @@ module Stryker
   module Mutators
     # Leaves out of a walk the sites that no mutator makes a mutant of, from
     # the table of
-    # [Sites that get no mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#sites-that-get-no-mutant)
+    # [Sites that get no mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#sites-that-get-no-mutant)
     # that belong to the tree and not to one mutator:
     #
     # - the arguments of a call to `require`, `require_relative`, `load`, or

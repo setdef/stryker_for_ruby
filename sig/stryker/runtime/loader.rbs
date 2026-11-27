@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The loader, as
-    # [Loading instrumented code](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#loading-instrumented-code)
+    # [Loading instrumented code](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#loading-instrumented-code)
     # specifies: it serves each instrumented file's instrumented source in
     # place of the file, under the file's path, so `__FILE__`,
     # `require_relative`, `$LOADED_FEATURES`, and backtraces name the
@@ -83,7 +83,7 @@ module Stryker
       def self.serve: (String path, ?Ractor | Object ractor) -> RubyVM::InstructionSequence?
 
       # The loading check, as
-      # [The loading check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-loading-check)
+      # [The loading check](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-loading-check)
       # specifies. The dry run calls it once its tests have run. Returns nil
       # when the hook served every instrumented file in `features`. Raises
       # Stryker::Runtime::LoadingError otherwise, listing each instrumented

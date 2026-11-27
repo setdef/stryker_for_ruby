@@ -15,7 +15,7 @@ This page lists the problems found so far on Ruby 3.3 and 3.4. The project doesn
 
 **Ruby 3.3 and 3.4.** The runtime records a hit from code that runs in a Ractor other than the main one by sending it to a collector Ractor, through a `Ractor::Port`. Ruby 3.3 and 3.4 have no `Ractor::Port`, and a send from a thread inside a non-main Ractor hangs there, so no mechanism records such a hit.
 
-In a process that records hits, such as the parent that forks, the project's first `Ractor.new` with a block raises `NameError` (`uninitialized constant Ractor::Port`), because the runtime starts the collector's Ractor there. The error stops the code that made the Ractor. A project that makes no Ractor is not affected. [Coverage](design/coverage.md#ractors) has the design.
+In a process that records hits, such as the parent that forks, the project's first `Ractor.new` with a block raises `NameError` (`uninitialized constant Ractor::Port`), because the runtime starts the collector's Ractor there. The error stops the code that made the Ractor. A project that makes no Ractor is not affected. [Coverage](contributors/design/coverage.md#ractors) has the design.
 
 ## A fork while a Ractor is running crashes the child
 
@@ -27,4 +27,4 @@ In a process that records hits, such as the parent that forks, the project's fir
 
 ## A private index method called through `self` in a multiple assignment
 
-**Ruby 3.3.** In `self[:k], y = 2, 3`, where `[]=` is private, Ruby 3.3 calls the method through `self`, and Ruby 3.4 and later raise `NoMethodError`. Ruby calls a private method through a receiver only when the receiver is the keyword `self`, so the instrumenter never wraps a `self` receiver in a switch ([Mutant placement](design/mutant-placement.md#kinds-of-site)). A mutant that replaces that `self` with another receiver changes what the program prints on Ruby 3.3 only.
+**Ruby 3.3.** In `self[:k], y = 2, 3`, where `[]=` is private, Ruby 3.3 calls the method through `self`, and Ruby 3.4 and later raise `NoMethodError`. Ruby calls a private method through a receiver only when the receiver is the keyword `self`, so the instrumenter never wraps a `self` receiver in a switch ([Mutant placement](contributors/design/mutant-placement.md#kinds-of-site)). A mutant that replaces that `self` with another receiver changes what the program prints on Ruby 3.3 only.

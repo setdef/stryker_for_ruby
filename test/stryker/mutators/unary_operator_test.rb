@@ -5,7 +5,7 @@ require "stryker/mutators/unary_operator"
 require_relative("../../support/mutator_case")
 
 # Checks the pairs of UnaryOperator and the nodes it makes no mutant of, from
-# its section of docs/design/mutators.md.
+# its section of docs/contributors/design/mutators.md.
 class UnaryOperatorTest < Minitest::Test
   include MutatorCase
 

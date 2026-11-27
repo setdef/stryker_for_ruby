@@ -2,7 +2,7 @@ module Stryker
   module Isolation
     # The `Stryker::_Isolation` adapter for runtime mutants on Linux and
     # macOS, as
-    # [Forking on Linux and macOS](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#forking-on-linux-and-macos)
+    # [Forking on Linux and macOS](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#forking-on-linux-and-macos)
     # specifies. `start` starts a project process, the parent, which loads
     # the project's code and tests once and runs no test. `run_all` gives
     # the parent each run, keeping at most `concurrency` in it at once, and

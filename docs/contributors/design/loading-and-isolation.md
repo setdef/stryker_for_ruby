@@ -300,7 +300,7 @@ The hook reads the cache through a shareable table, so it works in a non-main Ra
 
 The hook records the files it served only in the main Ractor, because the loading check reads only `$LOADED_FEATURES`, and a `load` adds nothing to it. A `require` in a non-main Ractor runs in the main Ractor, where the hook records the file. On Ruby 4.1, a file that sets a constant can't load in a non-main Ractor at all, with or without **Stryker (for Ruby)**.
 
-Ruby 3.3 and 3.4 are unsupported. [Ruby 3.3 and 3.4](../older-ruby.md) lists what goes wrong in a non-main Ractor there.
+Ruby 3.3 and 3.4 are unsupported. [Ruby 3.3 and 3.4](../../older-ruby.md) lists what goes wrong in a non-main Ractor there.
 
 ### Lookup tables
 

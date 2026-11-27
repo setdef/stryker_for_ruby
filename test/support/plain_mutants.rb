@@ -6,7 +6,7 @@ require_relative("heredoc_bodies")
 
 # Makes the plain mutant for SiteCase: the original file with the source of
 # the node that a mutant's switch wraps, with the edit made, in parentheses,
-# as docs/design/mutant-placement.md defines it. It follows the placement
+# as docs/contributors/design/mutant-placement.md defines it. It follows the placement
 # design and not the instrumenter's code, so that it checks that code.
 module PlainMutants
   include HeredocBodies

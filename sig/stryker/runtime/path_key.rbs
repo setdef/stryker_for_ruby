@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The form of a path that the loader and the stack check compare, as
-    # [Paths on Windows](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#paths-on-windows)
+    # [Paths on Windows](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#paths-on-windows)
     # specifies. Two spellings of one file on Windows have the same key, so
     # the loader's hook, the loading check, and the stack check treat them
     # as one file.

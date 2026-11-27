@@ -14,8 +14,8 @@ module Stryker
   # The part of **Stryker (for Ruby)** that loads in a process that runs the
   # project's code: the holder of the active mutant's ID, and the hit
   # recorder, as
-  # [Loading and isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-active-mutants-holder)
-  # and [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md)
+  # [Loading and isolation](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-active-mutants-holder)
+  # and [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md)
   # specify. It loads nothing outside the standard library.
   #
   # `require "stryker/runtime"` starts the runtime from the environment
@@ -33,7 +33,7 @@ module Stryker
   # process's collector Ractor starts at the project's first `Ractor.new`,
   # and a hit from another Ractor reaches the recorder in every process that
   # records hits, as
-  # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+  # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#ractors)
   # specifies. A project that makes no Ractor gets none from the runtime.
   # A process that forks calls `Stryker::Runtime::RECORDER.drain` before
   # each fork, so the hits that Ractors made while it loaded are in the

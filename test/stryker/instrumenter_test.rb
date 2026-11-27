@@ -6,7 +6,7 @@ require_relative("../test_helper")
 require_relative("../support/site_case")
 
 # Checks the instrumented source for the examples in
-# docs/design/mutant-placement.md, the mutants that get no switch, the
+# docs/contributors/design/mutant-placement.md, the mutants that get no switch, the
 # errors, and the hits that switches record.
 class InstrumenterTest < Minitest::Test
   include SiteCase

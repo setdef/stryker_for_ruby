@@ -233,7 +233,7 @@ How many minutes the dry run's tests may take, from the start of the first test 
 
 The names of the mutators that make no mutant, such as `"BooleanLiteral"`. The default is an empty list.
 
-A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](design/mutators.md#the-catalog) lists the names.
+A name matches a mutator's name exactly, with its letter case: `Equality` is the name of Stryker.NET's mutator, and the name here is `EqualityOperator`. A name that no mutator has is an error that lists the valid names. StrykerJS ignores such a name, so a misspelled name would leave its mutator running, and the run stops here instead. [Mutators](contributors/design/mutators.md#the-catalog) lists the names.
 
 ### `incremental`
 

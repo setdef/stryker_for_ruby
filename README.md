@@ -24,7 +24,7 @@ For the full list of configuration options available in **Stryker (for Ruby)**, 
 
 ## Supported Mutations
 
-For the full list of all available mutations, see [the catalog of mutators](./docs/design/mutators.md#the-catalog).
+For the full list of all available mutations, see [the catalog of mutators](./docs/contributors/design/mutators.md#the-catalog).
 
 
 ## Copyright & License

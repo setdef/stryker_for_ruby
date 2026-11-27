@@ -7,7 +7,7 @@ module Stryker
   # publishes them. There is one adapter for each name in the `reporters`
   # option. `Stryker::Reporters::JsonReport` and
   # `Stryker::Reporters::ClearText` are two of them.
-  # [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-ports)
+  # [The ports](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-ports)
   # shows where it fits, and `Stryker::Testing::ReporterContract` holds every
   # adapter to the same behavior.
   #

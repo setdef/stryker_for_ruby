@@ -5,7 +5,7 @@ module Stryker
     # what the nodes further up allow.
     #
     # Only a node of a kind that a row of the placement table in
-    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site)
+    # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutant-placement.md#kinds-of-site)
     # names as holding a switch can hold one, such as a `CallNode`, a
     # `StringNode`, or a `DefNode`. A node of any other kind, such as a
     # `ClassNode`, a `ForNode`, a `MatchLastLineNode`, or a kind that a

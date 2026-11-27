@@ -4,7 +4,7 @@ module Stryker
       # Finds the nodes of a kind that `Stryker::Instrumenter::Holder` lists
       # that can't stand in parentheses where they are, so that a switch there
       # would make code that doesn't parse. From the placement table in
-      # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutant-placement.md#kinds-of-site),
+      # [Mutant placement](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutant-placement.md#kinds-of-site),
       # that is true of:
       #
       # - a word of a `%w[]`, `%i[]`, `%W[]`, or `%I[]` array;

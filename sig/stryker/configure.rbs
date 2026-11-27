@@ -2,7 +2,7 @@ module Stryker
   # The first stage of a run: reads the configuration file and the options
   # from the command line, checks every option, and returns one
   # `Stryker::Config`, as
-  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-pipeline)
+  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-pipeline)
   # describes. [Configuration](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/configuration.md)
   # lists every option for users.
   #

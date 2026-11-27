@@ -16,7 +16,7 @@ flowchart TB
   L --> PL["Plan mutant runs"]
 ```
 
-- **Configure.** A config source adapter reads `stryker.config.json` or `stryker.config.yml`, and `Configure.call` merges the file with the command line's options and the defaults, checks every option, and returns one `Config` value. [Configuration](../configuration.md) lists the options, their defaults, and the checks.
+- **Configure.** A config source adapter reads `stryker.config.json` or `stryker.config.yml`, and `Configure.call` merges the file with the command line's options and the defaults, checks every option, and returns one `Config` value. [Configuration](../../configuration.md) lists the options, their defaults, and the checks.
 - **Parse and find sites.** Prism parses each file, and each mutator walks the tree and returns a `Mutant` for each change it makes: the mutator's name and a text edit on the source ([Mutators](mutators.md) specifies the catalog).
 - **Instrument.** The instrumenter produces instrumented source for each file, with every mutant in the file behind a switch, and writes it to a cache outside the project. [Mutant placement](mutant-placement.md) specifies where each switch goes and where each mutant's text comes from. A file with many mutants has the validity checks of its mutants spread over a pool of parse workers ([Parsing plain mutants](loading-and-isolation.md#parsing-plain-mutants)).
 - **Load.** In each project process, the loader installs its `load_iseq` hook, and the test runner adapter loads the project's test helper and tests, which load the instrumented code through the hook. [Loading and isolation](loading-and-isolation.md#loading-instrumented-code) specifies the hook.
@@ -142,29 +142,29 @@ A port says what the core needs, and nothing about how an adapter does it:
 
 - **`_TestRunner`** lists and runs the project's tests in one framework. Its adapter is `TestRunners::MinitestRunner`, which [Test runners](test-runners.md) specifies.
 - **`_Isolation`** runs mutant runs, each in a process that ran no test before it. Its adapters are `Isolation::ForkPerRun` and `Isolation::FreshProcesses`, which [Loading and isolation](loading-and-isolation.md#isolation) specifies.
-- **`_Reporter`** receives each domain event of a run. Its adapters are `Reporters::JsonReport` and `Reporters::ClearText`, which [Configuration](../configuration.md#reporters) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
-- **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../configuration.md#the-configuration-file) says how to use.
+- **`_Reporter`** receives each domain event of a run. Its adapters are `Reporters::JsonReport` and `Reporters::ClearText`, which [Configuration](../../configuration.md#reporters) says how to use. A reporter that needs every result builds its output when it receives `Events::RunCompleted`.
+- **`_ConfigSource`** reads the options of one kind of configuration file. Its adapters are `ConfigSources::JsonFile` and `ConfigSources::YamlFile`, which [Configuration](../../configuration.md#the-configuration-file) says how to use.
 
 ### Contract tests
 
-`require "stryker/testing"` loads one Minitest module for each of these ports that has an adapter: `Stryker::Testing::TestRunnerContract`, `ConfigSourceContract`, and `ReporterContract`. Each holds the tests that every adapter of its port must pass, and the gem's adapters pass them, so an adapter written outside the gem is held to the same behavior. The RBS documentation of [`Stryker::Testing`](../../sig/stryker/testing.rbs) says how to use them.
+`require "stryker/testing"` loads one Minitest module for each of these ports that has an adapter: `Stryker::Testing::TestRunnerContract`, `ConfigSourceContract`, and `ReporterContract`. Each holds the tests that every adapter of its port must pass, and the gem's adapters pass them, so an adapter written outside the gem is held to the same behavior. The RBS documentation of [`Stryker::Testing`](../../../sig/stryker/testing.rbs) says how to use them.
 
 ## Values and events
 
-Every value that passes between stages is a `Data.define` class: immutable and compared by value. Each one's fields are in its RBS documentation, which the table links. The ones that cross a pipe between processes also convert to and from JSON, as [`Stryker::JsonValue`](../../sig/stryker/json_value.rbs) says. A project process loads them, so they use only the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
+Every value that passes between stages is a `Data.define` class: immutable and compared by value. Each one's fields are in its RBS documentation, which the table links. The ones that cross a pipe between processes also convert to and from JSON, as [`Stryker::JsonValue`](../../../sig/stryker/json_value.rbs) says. A project process loads them, so they use only the standard library ([ADR 0003](../decisions/0003-the-processes-that-load-the-projects-code-load-only-stryker-for-rubys-runtime-which-depends-on-nothing-outside-the-standard-library.md)).
 
 | Value | What it carries |
 | - | - |
-| [`Config`](../../sig/stryker/config.rbs) | The options of the run, after the file and the command line are merged, from Configure to every stage after it. |
-| [`Location`](../../sig/stryker/location.rbs) | The stretch of a file that a mutant changes, as the report schema gives it. |
-| [`Mutant`](../../sig/stryker/mutant.rbs) | One change to a file: its ID, its mutator's name, and its text edit, from Parse and find sites to Instrument. |
-| [`Test`](../../sig/stryker/test.rbs) | One test of the project, from the test runner adapter to the stages that run tests. |
-| [`TestResult`](../../sig/stryker/test_result.rbs) | What happened when one test ran, from the test runner adapter to the stages that judge it. |
-| [`DryRunResult`](../../sig/stryker/dry_run_result.rbs) | What a dry run of every test found, which says which tests reach which mutants. |
-| [`MutantRun`](../../sig/stryker/mutant_run.rbs) | One run of a chosen set of tests with one mutant active. |
-| [`MutantResult`](../../sig/stryker/mutant_result.rbs) | What a run found out about one mutant, in the terms of the report. |
+| [`Config`](../../../sig/stryker/config.rbs) | The options of the run, after the file and the command line are merged, from Configure to every stage after it. |
+| [`Location`](../../../sig/stryker/location.rbs) | The stretch of a file that a mutant changes, as the report schema gives it. |
+| [`Mutant`](../../../sig/stryker/mutant.rbs) | One change to a file: its ID, its mutator's name, and its text edit, from Parse and find sites to Instrument. |
+| [`Test`](../../../sig/stryker/test.rbs) | One test of the project, from the test runner adapter to the stages that run tests. |
+| [`TestResult`](../../../sig/stryker/test_result.rbs) | What happened when one test ran, from the test runner adapter to the stages that judge it. |
+| [`DryRunResult`](../../../sig/stryker/dry_run_result.rbs) | What a dry run of every test found, which says which tests reach which mutants. |
+| [`MutantRun`](../../../sig/stryker/mutant_run.rbs) | One run of a chosen set of tests with one mutant active. |
+| [`MutantResult`](../../../sig/stryker/mutant_result.rbs) | What a run found out about one mutant, in the terms of the report. |
 
-A run publishes domain events, each also a `Data.define` value ([`Stryker::Events`](../../sig/stryker/events.rbs)), and the core hands each event to every reporter:
+A run publishes domain events, each also a `Data.define` value ([`Stryker::Events`](../../../sig/stryker/events.rbs)), and the core hands each event to every reporter:
 
 | Event | Published when |
 | - | - |

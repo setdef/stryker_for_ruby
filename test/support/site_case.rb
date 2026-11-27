@@ -10,7 +10,7 @@ require_relative("plain_mutants")
 require_relative("pooled_instrumenting")
 
 # Runs a kind of site from the placement table in
-# docs/design/mutant-placement.md, as ADR 0001's Confirmation asks: the
+# docs/contributors/design/mutant-placement.md, as ADR 0001's Confirmation asks: the
 # instrumented file with no mutant active must print what the original
 # prints, and with each mutant active, what the plain mutant prints. The plain
 # mutant is the original file with the source of the node that the switch

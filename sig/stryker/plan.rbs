@@ -1,7 +1,7 @@
 module Stryker
   # The stage that decides, from what the dry run found, how each mutant is
   # tested, as
-  # [The plan](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-plan)
+  # [The plan](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-plan)
   # explains. A mutant that no test that passed reached gets the status
   # `NoCoverage` and doesn't run. A static mutant gets a static run of every
   # test that passed. Any other mutant gets a runtime run of the tests that

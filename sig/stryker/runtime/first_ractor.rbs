@@ -3,7 +3,7 @@ module Stryker
     # The module that the runtime prepends to `Ractor`'s singleton class in a
     # process that records hits, so that the process's collector Ractor starts at the project's first `Ractor.new`,
     # as
-    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#ractors)
+    # [Ractors](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#ractors)
     # specifies. A project that makes no Ractor then gets none from the
     # runtime.
     #

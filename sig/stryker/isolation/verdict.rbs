@@ -1,7 +1,7 @@
 module Stryker
   module Isolation
     # Turns how one run went into its `Stryker::MutantResult`, as
-    # [How a run's outcome becomes a status](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#how-a-runs-outcome-becomes-a-status)
+    # [How a run's outcome becomes a status](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#how-a-runs-outcome-becomes-a-status)
     # specifies. Of the run's messages and its process's ending, the first
     # of these that holds gives the status:
     #

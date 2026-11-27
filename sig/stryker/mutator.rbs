@@ -2,7 +2,7 @@ module Stryker
   # Finds the sites of one kind in a parsed file, and says what each mutant
   # at a site changes. `Stryker::Mutators::Walk` calls `edits` once for each
   # node of a file, in the order of the tree, and turns the edits into
-  # `Stryker::Mutant` values. [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md)
+  # `Stryker::Mutant` values. [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md)
   # specifies each mutator's pairs.
   #
   # Ruby checks nothing about the interface: any object with these two
@@ -13,7 +13,7 @@ module Stryker
   #
   # A mutator keeps no state between calls. The walk leaves out the sites
   # that no mutator makes a mutant of ([Sites that get no
-  # mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#sites-that-get-no-mutant)),
+  # mutant](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#sites-that-get-no-mutant)),
   # so a mutator applies only the rules of its own section.
   interface _Mutator
     # The mutator's name in the report's `mutatorName` field, such as

@@ -3,7 +3,7 @@ module Stryker
     # The `Stryker::_TestRunner` adapter for Minitest 6. It loads a
     # project's test helper and test files into the process it runs in,
     # lists the tests they define, and runs a chosen set of them one at a
-    # time, as [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/test-runners.md#minitest)
+    # time, as [Test runners](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/test-runners.md#minitest)
     # specifies.
     #
     # It loads only the standard library until `load_tests` runs. Minitest

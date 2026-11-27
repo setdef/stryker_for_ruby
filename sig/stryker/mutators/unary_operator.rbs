@@ -23,7 +23,7 @@ module Stryker
     # defines and most other classes don't, so it would raise `NoMethodError`
     # for a `Vector` or a `Money`. A `-` or a `+` on a string literal, such as
     # `-"draft"`, gets no mutant, because it sets whether the string is frozen.
-    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/mutators.md#unaryoperator)
+    # [Mutators](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#unaryoperator)
     # specifies the pairs and the reasons.
     #
     # ## Examples

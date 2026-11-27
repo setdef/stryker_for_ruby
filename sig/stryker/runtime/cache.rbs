@@ -1,7 +1,7 @@
 module Stryker
   module Runtime
     # The cache of instrumented source, as
-    # [The cache](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-cache)
+    # [The cache](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-cache)
     # specifies: a temporary directory outside the project, which the
     # orchestrator makes and writes with `write`, and which each project
     # process reads with `read`. `read` builds the

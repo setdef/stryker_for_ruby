@@ -5,7 +5,7 @@ module Stryker
   # every result, such as the JSON reporter, builds its output when it
   # receives `Stryker::Events::RunCompleted`, and one that shows progress
   # acts on each `Stryker::Events::MutantTested`.
-  # [The architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#values-and-events)
+  # [The architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#values-and-events)
   # says when each is published.
   #
   # An event is a value: two events with equal members are equal. An event

@@ -1,7 +1,7 @@
 module Stryker
   module Isolation
     # Writes messages to a pipe or a file, one JSON object per line, as
-    # [The protocol](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/loading-and-isolation.md#the-protocol)
+    # [The protocol](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/loading-and-isolation.md#the-protocol)
     # specifies. It turns sync mode on, so each line reaches the pipe or the
     # file at once and survives the process's `exit!`. Each line goes in one
     # write under a lock, so the lines of two threads never mix.

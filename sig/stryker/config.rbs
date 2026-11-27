@@ -2,7 +2,7 @@ module Stryker
   # Every option of a run that the stages use, after the
   # configuration file and the command line are merged: Configure builds one
   # and hands it to the stages, as
-  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/architecture.md#the-pipeline)
+  # [the architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#the-pipeline)
   # describes. Its options have StrykerJS's names and defaults, taken from
   # StrykerJS's `packages/api/schema/stryker-core.json`, and each field has a
   # Ruby name. `Stryker::Config::OPTIONS` pairs each option's camelCase name

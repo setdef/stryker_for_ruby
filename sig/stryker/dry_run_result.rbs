@@ -44,7 +44,7 @@ module Stryker
     attr_reader static_bucket: Array[Integer]
 
     # The path of each file that began to load during a test, as
-    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/design/coverage.md#the-known-gap)
+    # [Coverage](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/coverage.md#the-known-gap)
     # says. The dry run reports them so that a reader can see which results
     # rest on the rule for such files.
     attr_reader files_loaded_in_tests: Array[String]

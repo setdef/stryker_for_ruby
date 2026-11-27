@@ -7,7 +7,7 @@ require_relative("../../support/mutator_case")
 
 # Checks that LogicalOperator and BooleanLiteral make no mutant of a node whose
 # condition or operand is the check that a file is the script that runs, from
-# the sites that get no mutant in docs/design/mutators.md. Such a mutant runs
+# the sites that get no mutant in docs/contributors/design/mutators.md. Such a mutant runs
 # the file's script code inside the test process.
 class ScriptGuardSitesTest < Minitest::Test
   include MutatorCase

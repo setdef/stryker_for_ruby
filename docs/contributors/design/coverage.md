@@ -114,7 +114,7 @@ Counting every hit on another thread or fiber as static was rejected. In a test 
 
 ## Ractors
 
-A hit made in the main Ractor goes straight to the recorder. A hit made in another Ractor can't: the standard library has no mutable structure that Ractors can share, Ractor-local storage can't be read by another Ractor, and a frozen IO can't be written. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux. [Loading and isolation](loading-and-isolation.md#ractors) says how the switch reads the active mutant's ID in a Ractor, and how the hook and the lookup tables behave there. Ruby 3.3 and 3.4 have no `Ractor::Port`, which this design needs, so they are unsupported: [Ruby 3.3 and 3.4](../older-ruby.md#a-hit-from-a-non-main-ractor-cant-be-recorded) says what happens there.
+A hit made in the main Ractor goes straight to the recorder. A hit made in another Ractor can't: the standard library has no mutable structure that Ractors can share, Ractor-local storage can't be read by another Ractor, and a frozen IO can't be written. The probes ([#13](https://github.com/setdef/stryker_for_ruby/issues/13)) ran Ruby 3.3, 3.4, 4.0, and 4.1-dev on macOS, and 3.3, 3.4, and 4.0 on Linux. [Loading and isolation](loading-and-isolation.md#ractors) says how the switch reads the active mutant's ID in a Ractor, and how the hook and the lookup tables behave there. Ruby 3.3 and 3.4 have no `Ractor::Port`, which this design needs, so they are unsupported: [Ruby 3.3 and 3.4](../../older-ruby.md#a-hit-from-a-non-main-ractor-cant-be-recorded) says what happens there.
 
 ### The collector Ractor
 
