@@ -27,16 +27,6 @@ module Stryker
       # parent loaded the tests and takes runs.
       def ready: () -> nil
 
-      # Writes `{"load_error":...}`, which tells the orchestrator that the
-      # project's tests raised while the parent loaded them, in place of
-      # `{"ready":true}`. The line holds the exception's class and message,
-      # such as `"NameError: uninitialized constant Shop"`. Any other failure
-      # before the parent is ready is only the `{"error":...}` line that
-      # `conclude` writes.
-      #
-      # - `error`: Exception, what the tests raised.
-      def unloaded: (Exception error) -> nil
-
       # Writes the ID of the child that runs `run`.
       #
       # - `run`: the run, a Stryker::MutantRun or the dry run.

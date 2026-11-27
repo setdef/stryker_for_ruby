@@ -31,6 +31,16 @@ module Stryker
       # other exception through.
       def conclude: () { () -> void } -> Integer
 
+      # Writes `{"load_error":...}`, which tells the orchestrator that the
+      # project's tests raised while the process loaded them, in place of
+      # what it writes once they loaded. The line holds the exception's class
+      # and message, such as `"NameError: uninitialized constant Shop"`. Any
+      # other failure before the tests loaded is only the `{"error":...}`
+      # line that `conclude` writes.
+      #
+      # - `error`: Exception, what the tests raised.
+      def unloaded: (Exception error) -> nil
+
       private
 
       # Writes `message` as one line of JSON, as `Stryker::JsonValue.plain`

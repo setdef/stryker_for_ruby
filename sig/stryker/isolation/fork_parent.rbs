@@ -72,11 +72,6 @@ module Stryker
       # - `commands`: Stryker::Isolation::LineReader, the reader of the
       #   parent's standard input.
       def ready: (LineReader commands) -> Orders
-
-      # Loads the tests through the test runner adapter, and returns them.
-      # When they raise, it tells the relay, and raises the same exception
-      # again.
-      def loaded_tests: () -> Array[Test]
     end
   end
 end

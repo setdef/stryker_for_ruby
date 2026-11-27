@@ -25,6 +25,10 @@ module Stryker
         1
       end
 
+      def unloaded(error)
+        write(load_error: "#{error.class}: #{error}")
+      end
+
       private def write(message)
         # One write for each line, under a lock, so that lines from two
         # threads never mix, and a line the reader gets is whole unless the

@@ -1,0 +1,25 @@
+module Stryker
+  module Isolation
+    # Loads the project's tests in a project process, and tells the
+    # orchestrator when they raise, so that it can tell what the project's
+    # tests raised from a fault of **Stryker (for Ruby)** by where it was
+    # raised, never by its message.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # tests = Stryker::Isolation::LoadedTests.of(runner, relay)
+    # ```
+    module LoadedTests
+      # The tests that `runner` loads. When loading them raises a
+      # StandardError, a ScriptError, or SystemExit, it writes
+      # `{"load_error":...}` with `writer` and raises the same exception
+      # again.
+      #
+      # - `runner`: Stryker::_TestRunner, the test runner adapter.
+      # - `writer`: Stryker::Isolation::LineWriter, where the process's
+      #   lines go.
+      def self.of: (_TestRunner runner, LineWriter writer) -> Array[Test]
+    end
+  end
+end
