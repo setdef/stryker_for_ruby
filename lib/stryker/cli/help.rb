@@ -10,7 +10,7 @@ module Stryker
         Usage: stryker <command> [options]
 
         Commands:
-          run [configFile]   Check the configuration
+          run [configFile]   Run mutation testing
           help [command]     Show this help, or the help for one command
 
         Options:
@@ -24,10 +24,12 @@ module Stryker
         Usage: stryker run [options] [configFile]
 
         Reads configFile, or stryker.config.json or stryker.config.yml in the current
-        directory, and checks every option. A flag replaces the file's value for its
-        option, and every option is a flag: the kebab-case form of its name, with its
-        dots kept. A run isn't built yet, so the command stops with status 2 after
-        the checks.
+        directory, and checks every option. Then it puts each mutant into the files
+        that mutate selects, runs the tests against it, and reports each mutant that
+        no test caught. A flag replaces the file's value for its option, and every
+        option is a flag: the kebab-case form of its name, with its dots kept. A run
+        on Windows, which has no fork, isn't built yet: there the command stops with
+        status 2 after the checks.
 
         Options:
       TEXT

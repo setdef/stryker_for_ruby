@@ -1,6 +1,6 @@
 # Configuration
 
-This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it is for. A run isn't built yet: `stryker run` reads the configuration, checks it, and stops with status 2. This page describes what the command does now, and says what a run will use an option for only where you need that to fill the option in. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), except `mutate` and `testRunner`, whose defaults are for Ruby, and the options that mean nothing in Ruby, which are left out.
+This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it does. A run works on Linux and macOS, with Minitest. On Windows, where Ruby has no `fork`, a run isn't built yet: `stryker run` checks the configuration and then stops with status 2. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), except `mutate` and `testRunner`, whose defaults are for Ruby, and the options that mean nothing in Ruby, which are left out.
 
 ## Where options come from
 
@@ -35,7 +35,7 @@ The `stryker` command takes these words:
 
 | Command line | What it does |
 | - | - |
-| `stryker run [configFile]` | Checks the configuration, then stops with status 2. |
+| `stryker run [configFile]` | Checks the configuration, then runs mutation testing. |
 | `stryker help [command]` | Writes the overview of the commands, or the help of one command, to standard output. |
 | `stryker -h`, `stryker --help` | The same as `stryker help`. After `run`, `-h` or `--help` writes the help of `stryker run` and does nothing else. |
 | `stryker --version` | Writes the version to standard output. |
@@ -47,7 +47,13 @@ There is no `-v`, because other tools use it for both "verbose" and "version". A
 Unknown command "hlep". Did you mean "help"? Run "stryker help" for the commands.
 ```
 
-A run isn't built yet. `stryker run` reads the file and the flags and runs every check, and with no problem it writes `A run isn't built yet: the command reads and checks the configuration, and then stops.` to standard error and exits with status 2.
+`stryker run` reads the file and the flags and runs every check. With no problem, it finds the files that [`mutate`](#mutate) selects, makes their mutants, runs every test once with no mutant active, and then runs the tests against each mutant, each run in a process of its own, up to [`concurrency`](#concurrency) at once. Each reporter in the [`reporters`](#reporters) list writes the results when the last mutant's run ends.
+
+On Windows, where Ruby has no `fork`, the command stops after the checks, writes this to standard error, and exits with status 2:
+
+```text
+A run on Windows isn't built yet: Stryker (for Ruby) runs each runtime mutant in a process forked from one that loaded the project, and Windows has no fork.
+```
 
 #### Flags
 
@@ -80,21 +86,22 @@ The flag --test-runner needs a value. Run "stryker help run" for the flags.
 
 | Status | When |
 | - | - |
-| 0 | `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, and `stryker run -h` wrote their text. |
-| 2 | The command couldn't do what you asked: a command line, flag, or configuration error, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. `stryker run` also exits with 2 when its checks find no problem, because a run isn't built. |
-| 128 plus the signal's number | A signal ended `stryker run`: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. |
+| 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, and `stryker run -h` also exit with 0 when they have written their text. |
+| 1 | The run finished, and its score is below `thresholds.break`. |
+| 2 | The run couldn't finish: a command line, flag, or configuration error, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. An error in **Stryker (for Ruby)** writes its backtrace and the address to report it at. |
+| 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. It ends every process that the run started and deletes its temporary files before it exits. A second signal stops that cleanup and leaves the temporary files. |
 
-The command gives no status 1 today. `stryker help run` lists it for a score below `thresholds.break`, which only a run has.
+A dry run fails, and no mutant runs, when a test fails with no mutant active, when the tests take longer than [`dryRunTimeoutMinutes`](#dryruntimeoutminutes), or when a file that `mutate` selects loaded without its mutants, as it can when another library loads Ruby files itself. The message says which test failed, or what went wrong.
 
 #### Output
 
-Help and the version go to standard output. Errors go to standard error, and so does the overview that `stryker` writes when it has no words.
+Help, the version, and the report of a run go to standard output. Errors go to standard error, and so does the overview that `stryker` writes when it has no words, so `stryker run > report.txt` holds the report and nothing else. The output of the project's tests goes to files in a temporary folder, and to neither stream.
 
-Nothing that the command writes has color. `stryker run` accepts `--no-color`, and the flag changes nothing today.
+Output has no color when standard output isn't a terminal, when the `NO_COLOR` environment variable has a value, when `TERM` is `dumb`, and with `--no-color`. A report that goes to a file has no color.
 
 ## Checks
 
-Before it does anything else, `stryker run` checks every option in the file and on the command line, including a file option that a flag replaces. The message has one line for each problem, and each line says which file or flag the value came from. The command exits with status 2.
+Before it does anything else, `stryker run` checks every option in the file and on the command line, including a file option that a flag replaces. A run with a problem stops before it reads any file to mutate. The message has one line for each problem, and each line says which file or flag the value came from. The command exits with status 2.
 
 - **An option that doesn't exist** is an error that suggests the nearest name:
 
@@ -119,11 +126,9 @@ Before it does anything else, `stryker run` checks every option in the file and 
 - **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
 - **A pattern in `mutate` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
 
-The checks read the type of `testRunner` and `reporters`. They don't check that a test runner or a reporter with that name exists.
+The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter with those names exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
 
 ## Options
-
-Each entry says what the option is for. Where an option's effect is on a run, the entry says what a run will use it for, so that you can fill it in. `stryker run` reads and checks every option, and nothing else uses one today.
 
 | Option | Type | Default |
 | - | - | - |
@@ -153,55 +158,101 @@ A mutant in a test file changes the test that judges it, so the default leaves t
 
 A pattern that resolves outside the project's root is an error, such as `../shared/lib/**/*.rb`, or an absolute path to a folder that isn't inside the root. A pattern that goes up and comes back, such as `lib/../app/**/*.rb`, resolves inside the root and is fine. The check reads the text of the pattern, so it doesn't expand `{a,b}` alternatives. A `~` is an ordinary character, as it is in a glob, so `~/lib/**/*.rb` is a folder named `~` inside the root.
 
+The patterns apply in order, as StrykerJS applies them: a pattern adds the files it matches, and a pattern that starts with `!` takes away, from the files that the patterns before it added, those it matches. So `["lib/**/*.rb", "!lib/generated/**/*.rb", "lib/generated/schema.rb"]` mutates `lib/generated/schema.rb` and no other file in `lib/generated`. A folder is never selected, whatever its name.
+
 An empty list selects no file.
+
+**Stryker (for Ruby)** mutates Ruby files only. When a pattern matches an ERB template, a file whose name ends in `.erb`, the run stops before it reads any file, with an error that gives the template's path. The default patterns select the templates in `lib` and `app`, so a project that has any needs a pattern that leaves them out, such as `"!**/*.erb"`.
 
 ### `testRunner`
 
-The name of the test runner for the project's tests, such as `minitest` or `rspec`.
+The name of the test runner for the project's tests. The one test runner is `minitest`, for Minitest 6. Any other name, `rspec` included, stops the run before it reads any file, with an error that gives the names it takes:
+
+```text
+Stryker (for Ruby) has no test runner named "rspec". The testRunner option takes "minitest".
+```
 
 With no value, the project's folders choose it: `minitest` when the project has a `test/` folder, and `rspec` when it has a `spec/` folder. A project with neither, or with both, is an error that asks you to set `testRunner` in the configuration file or pass `--test-runner`. A file called `test` isn't a `test/` folder.
 
 ### `reporters`
 
-A list of reporter names. The default is `clear-text`, `progress`, and `html`. For `clear-text`, a run will write a summary of its results to standard output. For `json`, it will write the report to `reports/mutation/mutation.json` in the project's root, in the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) that the Stryker tools share.
+A list of reporter names. The default is `clear-text`, `progress`, and `html`, as in StrykerJS. The reporters are `clear-text` and `json`. A name that isn't one of them stops the run before it reads any file, so a run with the default stops too, because the default holds `progress` and `html`:
+
+```text
+Stryker (for Ruby) has no reporter named "progress" or "html". The reporters option takes "clear-text" and "json".
+```
+
+Set the option to the reporters you want, as in `stryker run --reporters clear-text,json`. Each reporter runs once, even when the list holds its name twice.
+
+#### The `clear-text` reporter
+
+Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. The summary has three parts:
+
+1. A description of each mutant that no test caught, which has the status `Survived` or `NoCoverage`. It gives the status and the mutator, the file with the line and column of the mutant, the original lines with `-` before each, and the lines with the mutant in place with `+` before each. For a survivor, it then lists the first three tests that ran against the mutant and counts the rest, as `and 2 more tests!`. For a static survivor, it says `Ran all tests for this mutant.` A mutant that a test killed, or that ended with an error or a timeout, gets no description.
+2. The line `Ran 1.25 tests per mutant on average.`, with the number of tests that finished, over all mutants, divided by the number of mutants. For a run with no mutants, the number is `NaN`.
+3. A table of the [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) of all files, of each folder, and of each file, with the counts of killed, timed-out, surviving, uncovered, and errored mutants. The folders that every file shares are left out of the names. Folders come before files, and each group is in the order of the names. The `total` column is the score of all valid mutants, and the `covered` column leaves out the mutants that no test reached. A score is `n/a` when no mutant is valid.
+
+The reporter paints the file and location, the lines with `-` and `+`, and each score with ANSI colors: a score at or above [`thresholds.high`](#thresholdshigh) is green, one at or above [`thresholds.low`](#thresholdslow) is yellow, a lower one is red, and `n/a` is gray. It paints nothing when standard output isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`.
+
+#### The `json` reporter
+
+Writes the run's report to `reports/mutation/mutation.json` in the project's root, once, when the run ends. It creates the folders, and replaces the report of an earlier run. A run that stops before it ends leaves the file as it was. When a file that has a mutant, or a test file, no longer exists at the end of the run, the reporter stops with that error and writes no report.
+
+The report is one line of JSON in the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) (schema version `1.0`) that the Stryker tools share, so any viewer of that schema reads it. `files` holds each file that has a mutant, by its path from the project's root, with its language, `ruby`, its source, and its mutants. `testFiles` holds each test file by its path, with its source and its tests: each test's `id`, `name`, and `location`. A test with no file goes under the empty name, with no source. A field with no value is left out of a mutant or a test.
+
+| Field of a mutant | What it holds |
+| - | - |
+| `id` | The mutant's number in the run, as a string. |
+| `mutatorName` | The name of the mutator that made the mutant. |
+| `replacement` | The text that replaces the range in `location`. |
+| `location` | The range in the file that the mutant replaces: `start` and `end`, each with a `line` and a `column` counted from 1. `end` is just after the range. Columns count UTF-16 code units, as JavaScript counts the index of a character in a string, so an emoji takes two columns. |
+| `status` | `Killed`, `Survived`, `NoCoverage`, `CompileError`, `RuntimeError`, `Timeout`, or `Ignored`. |
+| `statusReason` | Why the mutant has that status, for a status that has a reason. |
+| `coveredBy` | The IDs of the tests that reached the mutant. |
+| `killedBy` | The ID of the test that killed the mutant. |
+| `testsCompleted` | How many tests finished in the mutant's run. |
+| `duration` | The run's time in milliseconds. |
+| `static` | Whether the mutant was static, so its run was a fresh process with the mutant active before any file loaded. |
 
 ### `concurrency`
 
-The number of project processes that a run will start at once. It takes a whole number of 1 or more, or a percentage string from `"0%"` to `"100%"` that is a share of the logical processors. A percentage rounds half up, as StrykerJS rounds it, and never gives fewer than 1. On a machine with 8 processors, `"50%"` is 4, `"100%"` is 8, and `"1%"` is 1.
+How many project processes run at once. It takes a whole number of 1 or more, or a percentage string from `"0%"` to `"100%"` that is a share of the logical processors. A percentage rounds half up, as StrykerJS rounds it, and never gives fewer than 1. On a machine with 8 processors, `"50%"` is 4, `"100%"` is 8, and `"1%"` is 1.
 
 With no value, a machine with 1 to 4 processors uses that many, and a machine with more uses one fewer: 7 on a machine with 8.
 
-A whole number may be more than the number of processors.
+A whole number may be more than the number of processors. Each project process loads your code, so more processes use more memory.
 
 ### `thresholds.high`
 
-The mutation score, as a percentage, at or above which a report will count the score as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number, and the configuration holds it as `80`. A fraction such as `82.5` is an error, because the JSON report holds this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. A report will use it to color the score. It can't be below `thresholds.low`.
+The mutation score, as a percentage, at or above which the score counts as high. It takes a whole number from 0 to 100, such as `80`. `80.0` counts as a whole number, and the configuration holds it as `80`. A fraction such as `82.5` is an error, because the JSON report holds this threshold as an integer and a report with a fraction would fail its schema. The default is `80`. Reports use it to color the score. It can't be below `thresholds.low`.
 
 ### `thresholds.low`
 
-The mutation score, as a percentage, below which a report will count the score as low. It takes a whole number from 0 to 100, such as `60`. A fraction is an error, for the reason that `thresholds.high` gives. The default is `60`. A report will use it to color the score. It can't be above `thresholds.high`.
+The mutation score, as a percentage, below which the score counts as low. It takes a whole number from 0 to 100, such as `60`. A fraction is an error, for the reason that `thresholds.high` gives. The default is `60`. Reports use it to color the score. It can't be above `thresholds.high`.
 
 ### `thresholds.break`
 
-The mutation score, as a percentage, below which a run will exit with status 1. It takes any number from 0 to 100, such as `80.5`, or null. Unlike `thresholds.high` and `thresholds.low`, it may be a fraction, because it never reaches the report. The default is null, which sets no limit. `0` is a limit that no score is below.
+The mutation score, as a percentage, below which the run exits with status 1. It takes any number from 0 to 100, such as `80.5`, or null. Unlike `thresholds.high` and `thresholds.low`, it may be a fraction, because it never reaches the report. The default is null, which sets no limit. `0` is a limit that no score is below. Set it in CI to fail a build when the tests get weaker: `stryker run --thresholds.break 75`.
 
 ### `timeoutMS`
 
-The milliseconds that a run will add to the dry-run time of a mutant's tests, to make the mutant's time limit. It takes any number of 0 or more, such as `2500.5`. The default is `5000`.
+The milliseconds that a run's time limit adds to the dry-run time of its tests. It takes any number of 0 or more, such as `2500.5`. The default is `5000`. Raise it on a busy machine, so that a slow run isn't taken for an infinite loop.
 
 ### `timeoutFactor`
 
-How many times the dry-run time of a mutant's tests the mutant's run may take, before `timeoutMS` is added. It takes any number of 0 or more. The default is `1.5`.
+How many times the dry-run time of a run's tests a run may take, before `timeoutMS` is added. It takes any number of 0 or more. The default is `1.5`. Raise it when mutants make the code slower without making it loop forever. Use `timeoutMS` for a mutant that loops forever.
 
-The limit of a mutant's run will be the dry-run time of its tests, times `timeoutFactor`, plus `timeoutMS`, plus the dry run's overhead, rounded up to a whole millisecond, as in StrykerJS. The overhead is the test runner's time between tests in the dry run.
+A run's limit is the dry-run time of the run's tests, times `timeoutFactor`, plus `timeoutMS`, plus the dry run's overhead, rounded up to a whole millisecond, as in StrykerJS:
 
 ```text
-limit = dry-run time of the mutant's tests × timeoutFactor + timeoutMS + overhead
+limit = dry-run time of the run's tests × timeoutFactor + timeoutMS + overhead
 ```
+
+A run of a mutant that tests reach has the tests that passed and reached it. A run of a static mutant has every test that passed in the dry run. The overhead is the dry run's time from the start of its first test to the end of its last, less the sum of its tests' times: the test runner's time between tests. With the defaults, a mutant reached by two tests that took 100 ms and 20 ms, in a dry run whose overhead was 30 ms, has a limit of 1.5 × 120 + 5000 + 30 = 5210 ms. A run that passes its limit gives its mutant the status `Timeout`.
 
 ### `dryRunTimeoutMinutes`
 
-How many minutes the dry run's tests may take, from the start of the first test to the end of the last. It takes any number of 0 or more, such as `0.5`. The default is `5`, as in StrykerJS.
+How many minutes the dry run's tests may take, from the start of the first test to the end of the last. It takes any number of 0 or more, such as `0.5`. The default is `5`, as in StrykerJS. A dry run that takes longer fails the run, with an error that names this option. Raise it for a test suite that takes longer than 5 minutes to run once.
 
 ### `mutator.excludedMutations`
 

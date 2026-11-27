@@ -1,0 +1,7 @@
+{
+  "mutate": ["lib/**/*.rb"],
+  "testRunner": "minitest",
+  "reporters": ["json", "clear-text"],
+  "concurrency": 4,
+  "timeoutMS": 1000
+}

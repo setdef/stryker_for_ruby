@@ -32,12 +32,13 @@ module Stryker
     # - `stderr`: where errors and progress go. It defaults to `$stderr`.
     # - `env`: Hash, the environment, for `NO_COLOR` and `TERM`. It defaults
     #   to a copy of `ENV`.
-    # - `pipeline`: what `run` hands its config to, as
-    #   Stryker::CLI::RunCommand describes. It defaults to a pipeline that
-    #   says a run isn't built yet.
     # - `root`: String, the project's root. It defaults to the current
     #   directory.
-    def initialize: (?stdout: IO | StringIO, ?stderr: IO | StringIO, ?env: Hash[String, String], ?pipeline: _Pipeline, ?root: String) -> void
+    # - `pipeline`: what `run` hands its config to, as
+    #   Stryker::CLI::RunCommand describes. It defaults to
+    #   Stryker::CLI::MutationTesting for `root`, which runs mutation
+    #   testing.
+    def initialize: (?stdout: IO | StringIO, ?stderr: IO | StringIO, ?env: Hash[String, String], ?root: String, ?pipeline: _Pipeline) -> void
 
     # Runs the words of a command line, without the program's name, and
     # returns the exit status: 0 when it did what was asked, and 2 for a

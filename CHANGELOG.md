@@ -6,8 +6,14 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Rel
 
 ## [Unreleased]
 
+### Added
+
+- `stryker run` runs mutation testing on Linux and macOS, for a project that tests with Minitest. It mutates the Ruby files that `mutate` selects, runs every test once, runs the tests against each mutant in a process of its own, and reports with `clear-text` on standard output and `json` in `reports/mutation/mutation.json`. It exits with status 1 when the mutation score is below `thresholds.break`. The report has color on a terminal, and none with `--no-color`, `NO_COLOR`, or `TERM=dumb`.
+- `stryker run` stops before it reads a file to mutate, with an error that says why, when `testRunner` isn't `minitest`, when `reporters` holds a name other than `clear-text` and `json`, or when `mutate` selects an ERB template. The default `reporters` holds `progress` and `html`, so set the option, as in `--reporters clear-text,json`.
+
 ### Changed
 
+- On Windows, `stryker run` stops after its checks with an error that says a run on Windows isn't built yet.
 - `thresholds.high` and `thresholds.low` take only whole numbers from 0 to 100, as the JSON report's schema requires. A fraction such as `82.5` is now an error that says so, where the configuration took it and the report then failed its schema. `thresholds.break` still takes any number from 0 to 100.
 
 ### Fixed

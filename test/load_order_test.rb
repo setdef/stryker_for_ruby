@@ -20,7 +20,8 @@ class LoadOrderTest < Minitest::Test
   private_constant(:ROOT, :PROBE)
 
   def test_every_test_file_starts_simplecov_before_lib_loads
-    paths = Dir.glob("test/**/*.rb", base: ROOT)
+    # The test task leaves out the sample projects in test/fixtures.
+    paths = Dir.glob("test/**/*.rb", base: ROOT) - Dir.glob("test/fixtures/**/*", base: ROOT)
     late = probe_all(paths).filter_map { |path, success| path unless success }
 
     assert_empty(late, "These files load a lib file before SimpleCov starts.")

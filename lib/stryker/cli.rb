@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
 require_relative("cli/information")
+require_relative("cli/mutation_testing")
 require_relative("cli/run")
 require_relative("cli/run_command")
 require_relative("cli/streams")
-require_relative("cli/unbuilt_pipeline")
 
 module Stryker
   class CLI
@@ -12,7 +12,7 @@ module Stryker
       new(**settings).call(argv)
     end
 
-    def initialize(stdout: $stdout, stderr: $stderr, env: ENV.to_h, pipeline: UnbuiltPipeline.new, root: Dir.pwd)
+    def initialize(stdout: $stdout, stderr: $stderr, env: ENV.to_h, root: Dir.pwd, pipeline: MutationTesting.new(root))
       streams = Streams.new(stdout, stderr)
       @information = Information.new(streams)
       @run = RunCommand.new(run: Run.new(pipeline:, streams:, env:, root:), streams:)

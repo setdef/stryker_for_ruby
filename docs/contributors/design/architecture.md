@@ -32,7 +32,7 @@ flowchart TB
 
 `Stryker::Pipeline` runs every stage after Configure, and owns what a run starts, for exactly as long as the run lasts. It writes the cache to a directory that it makes with `Dir.mktmpdir`, starts two isolation adapters, sends the dry run and each runtime mutant's run to one of them and each static mutant's run to the other, and then stops both adapters and deletes the directory. It does that last part in `ensure` clauses, so it happens however the run ends: when it finishes, when a stage raises, and when INT or TERM arrives. Ruby raises a `SignalException` in the main thread for either signal, so the same clauses run, and the command then exits with 128 plus the signal's number. A second signal during that cleanup ends the cleanup, as a second signal ends a StrykerJS run at once. The fork parent then ends its children and itself, because the orchestrator's exit closes the parent's standard input.
 
-The pipeline holds no code for a system or a report format: its caller builds the isolation adapters and the reporters and hands them to it.
+The pipeline holds no code for a system or a report format. `CLI::MutationTesting`, which `stryker run` hands the checked config to, builds the isolation adapters and the reporters and hands them to it: `Isolation::ForkPerRun` for the dry run and the runtime mutants and `Isolation::FreshProcesses` for the static mutants where Ruby has `fork`, and one reporter for each name in the `reporters` option. Where Ruby has no `fork`, as on Windows, it stops the run before any file is read, because a dry run and runtime mutants without `fork` aren't built ([#37](https://github.com/setdef/stryker_for_ruby/issues/37)).
 
 ## Two kinds of process
 
@@ -223,6 +223,7 @@ Stages never call a reporter directly, so adding a reporter changes no stage.
 | Giving each mutant of a run its ID | Parse and find sites |
 | Producing instrumented source, and the `CompileError` result of each mutant that isn't valid Ruby | the instrumenter |
 | Keeping the cache and every process of a run for exactly as long as the run lasts, sending each run to the adapter for its kind of mutant, and handing each event to every reporter | the pipeline |
+| Choosing the isolation adapters for the system, and the reporters by name | `CLI::MutationTesting` |
 | Serving instrumented source to Ruby, and checking that every loaded instrumented file came through the hook | the loader |
 | Listing tests, running a chosen set, and marking where each test starts and ends | the test runner adapter for its framework ([Test runners](test-runners.md)) |
 | Recording which tests reach which mutants | the hit recorder in the Stryker runtime |
