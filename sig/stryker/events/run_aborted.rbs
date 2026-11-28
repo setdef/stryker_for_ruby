@@ -1,12 +1,15 @@
 module Stryker
   module Events
-    # Published when a run stops before its last result is collected: a stage
-    # raised, or a signal such as INT or TERM ended the run. It comes after
-    # the pipeline has stopped both isolation adapters and deleted its cache,
-    # and before the exception leaves the pipeline, so a reporter that has
-    # drawn part of a line can end it before the command writes the error.
-    # A run that completes publishes `Stryker::Events::RunCompleted` and
-    # never this event.
+    # Published when a run stops before it ends: a stage raised, a signal such
+    # as INT or TERM ended the run, or a reporter raised as it heard
+    # `Stryker::Events::RunCompleted`. It comes after the pipeline has stopped
+    # both isolation adapters and deleted its cache, and before the exception
+    # leaves the pipeline, so a reporter that has drawn part of a line can end
+    # it before the command writes the error. A reporter that heard
+    # `Stryker::Events::RunCompleted` hears this event too when a reporter
+    # raised as it heard that, so a reporter does nothing for this event once
+    # it has ended what it showed. A run that completes with no reporter
+    # raising never publishes this event.
     #
     # ## Examples
     #

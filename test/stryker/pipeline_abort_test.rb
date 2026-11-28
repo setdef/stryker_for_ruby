@@ -48,4 +48,64 @@ class PipelineAbortTest < Minitest::Test
 
     assert_equal([true, "\e[K\n"], [terminal.string.include?("\r"), terminal.string[-4..]])
   end
+
+  def test_the_error_of_the_run_leaves_when_a_reporter_raises_as_it_hears_that_the_run_aborted
+    error = RuntimeError.new("boom")
+    @reporters.unshift(FailingReporter.new(ArgumentError.new("reporter"), on: Stryker::Events::RunAborted))
+
+    assert_same(error, assert_raises(RuntimeError) { run_pipeline(Isolations.new(found:, raises: error)) })
+  end
+
+  def test_every_reporter_hears_that_the_run_aborted_though_one_before_it_raises
+    @reporters.unshift(FailingReporter.new(ArgumentError.new("reporter"), on: Stryker::Events::RunAborted))
+    assert_raises(RuntimeError) { run_pipeline(Isolations.new(found:, raises: RuntimeError)) }
+
+    assert_equal([1, 1, 1], aborts(@reporters).map(&:size))
+  end
+
+  def test_each_error_that_stops_a_stage_ends_the_run_with_that_error_for_the_reporters
+    [LoadError, NoMemoryError, SystemStackError, SecurityError, SystemExit, Interrupt].each do |error|
+      @reporters = [Reporter.new]
+
+      assert_raises(error) { run_pipeline(Isolations.new(found:, raises: error)) }
+      assert_equal([error], aborts(@reporters).first.map { |event| event.error.class }, error.inspect)
+    end
+  end
+
+  def test_a_reporter_that_raises_as_the_run_completes_ends_the_run_with_its_error_for_every_reporter
+    error = RuntimeError.new("reporter")
+    @reporters.unshift(FailingReporter.new(error, on: Stryker::Events::RunCompleted))
+
+    assert_same(error, assert_raises(RuntimeError) { run_pipeline(Isolations.new(found:)) })
+    assert_equal([[error]] * 3, aborts(@reporters).map { |events| events.map(&:error) })
+  end
+
+  def test_a_reporter_hears_that_the_run_aborted_after_it_heard_that_the_run_completed
+    @reporters.unshift(FailingReporter.new(RuntimeError.new("reporter"), on: Stryker::Events::RunCompleted))
+    assert_raises(RuntimeError) { run_pipeline(Isolations.new(found:)) }
+
+    ending = @reporters.last.events.last(2)
+
+    assert_equal([Stryker::Events::RunCompleted, Stryker::Events::RunAborted], ending.map(&:class))
+  end
+
+  def test_a_signal_that_comes_as_the_run_completes_ends_the_run_with_that_signal_for_every_reporter
+    @reporters.unshift(FailingReporter.new(Interrupt, on: Stryker::Events::RunCompleted))
+
+    assert_raises(Interrupt) { run_pipeline(Isolations.new(found:)) }
+    assert_equal([1, 1, 1], aborts(@reporters).map(&:size))
+  end
+
+  def test_the_progress_line_is_ended_once_when_the_run_aborts_after_it_completed_for_that_reporter
+    terminal = StringIO.new
+    @reporters << Stryker::Reporters::Progress.animated(io: terminal, columns: 80, color: false)
+    @reporters << FailingReporter.new(RuntimeError.new("late"), on: Stryker::Events::RunCompleted)
+    assert_raises(RuntimeError) { run_pipeline(Isolations.new(found:)) }
+
+    assert_equal([true, "\e[K\n"], [terminal.string.include?("\r"), terminal.string[-4..]])
+  end
+
+  private def aborts(reporters)
+    reporters.map { |reporter| reporter.events.grep(Stryker::Events::RunAborted) }
+  end
 end

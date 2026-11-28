@@ -207,9 +207,9 @@ A run publishes domain events, each also a `Data.define` value ([`Stryker::Event
 | `Events::PlanReady` | every mutant has a status or a run |
 | `Events::MutantTested` | a result is collected |
 | `Events::RunCompleted` | the last result is collected |
-| `Events::RunAborted` | a stage raises or a signal ends the run, after both adapters stop and before the error leaves the pipeline |
+| `Events::RunAborted` | a stage raises, a signal ends the run, or a reporter raises as it hears `RunCompleted`, after both adapters stop and before the error leaves the pipeline |
 
-Stages never call a reporter directly, so adding a reporter changes no stage. A reporter that raises doesn't keep the others from hearing the event: each hears it before the first error leaves.
+Stages never call a reporter directly, so adding a reporter changes no stage. A reporter that raises doesn't keep the others from hearing the event: each hears it before the first error leaves. The error that leaves the pipeline is always the run's own: a reporter that raises as it hears `RunAborted` loses to the error that aborted the run. A reporter that raised on `RunCompleted` makes the pipeline publish `RunAborted` after it, so a reporter that heard both ends what it shows once.
 
 ## Where each responsibility lives
 

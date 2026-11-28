@@ -20,7 +20,11 @@ module Stryker
   # exception leaves. A second signal during that cleanup ends it. Once the
   # cleanup is done, and before the exception leaves, it hands every reporter
   # `Stryker::Events::RunAborted`, so a reporter can end what it has drawn
-  # before the command writes the error.
+  # before the command writes the error. It does so for any exception that
+  # a stage raises, and for one that a reporter raises as it hears
+  # `Stryker::Events::RunCompleted`. The exception that leaves is the run's
+  # own, never one that a reporter raised as it heard
+  # `Stryker::Events::RunAborted`.
   #
   # ## Examples
   #
@@ -68,14 +72,18 @@ module Stryker
     private
 
     # Finds the mutants of the files that `config` selects, tests them, and
-    # returns the result of every mutant. Hands every reporter
-    # `Stryker::Events::RunAborted`, and raises again, when a stage raises or
-    # a signal ends the run.
+    # returns the result of every mutant.
     def run_stages: (Config config) -> Array[MutantResult]
 
-    # Hands every reporter `Stryker::Events::RunAborted` with `error`, and
-    # raises `error` again.
-    def aborted: (Exception error) -> bot
+    # Finds the mutants of the files that `config` selects, tests them, hands
+    # every reporter `Stryker::Events::RunCompleted`, and returns the result
+    # of every mutant.
+    def completed: (Config config) -> Array[MutantResult]
+
+    # Does nothing when `error` is nil. Otherwise hands every reporter
+    # `Stryker::Events::RunAborted` with `error`, and raises `error` again,
+    # whatever a reporter raises as it hears the event.
+    def aborted: (Exception? error) -> void
 
     # Finds the mutants of the files that `config` selects, and instruments
     # them, with the warnings going to the stream the pipeline was given.

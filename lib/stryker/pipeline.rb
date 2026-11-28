@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require "English"
 require "tmpdir"
 require_relative "events/run_aborted"
 require_relative "events/run_completed"
@@ -8,6 +7,7 @@ require_relative "instrumentation"
 require_relative "metrics"
 require_relative "pipeline/broadcast"
 require_relative "pipeline/isolations"
+require_relative "pipeline/raised"
 require_relative "pipeline/trial"
 require_relative "runtime/cache"
 require_relative "source_files"
@@ -25,20 +25,29 @@ module Stryker
     end
 
     def call(config)
+      # @type var results: Array[MutantResult]
+      results = []
+      aborted(Raised.by { results = completed(config) })
+      Metrics.count(results.map(&:status)).mutation_score
+    end
+
+    private def completed(config)
       results = run_stages(config)
       @broadcast.call(Events::RunCompleted.new(results:))
-      Metrics.count(results.map(&:status)).mutation_score
+      results
     end
 
     private def run_stages(config)
       instrumented = instrument(config)
       Dir.mktmpdir(CACHE) { |cache| tested(config, cache, instrumented) }
-    rescue StandardError, SignalException
-      aborted(_ = $ERROR_INFO)
     end
 
     private def aborted(error)
-      @broadcast.call(Events::RunAborted.new(error:))
+      return unless error
+
+      # The error that stopped the run leaves, not one that a reporter raised
+      # as it heard so.
+      Raised.by { @broadcast.call(Events::RunAborted.new(error:)) }
       raise(error)
     end
 
