@@ -36,7 +36,8 @@ module Stryker
       # - `elapsed`: Float, the seconds since the run started.
       def update: (ProgressTally tally, Float elapsed) -> void
 
-      # Ends the line it drew, and does nothing when it drew none.
+      # Ends the line it drew, and does nothing when it drew none or ended it
+      # already.
       def finish: () -> void
     end
   end

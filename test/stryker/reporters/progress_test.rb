@@ -67,6 +67,14 @@ class ProgressTest < Minitest::Test
     assert_equal("\e[K\n", @io.string[-4..])
   end
 
+  def test_ends_the_line_once_when_the_run_is_aborted_after_it_completed
+    build(terminal: true)
+    start
+    hear(ProgressRun.completed, ProgressRun.aborted)
+
+    assert_equal("\e[K\n", @io.string[-4..])
+  end
+
   def test_ends_no_line_when_the_run_is_aborted_before_it_drew_one
     build(terminal: true)
     hear(ProgressRun.dry_run, ProgressRun.aborted)

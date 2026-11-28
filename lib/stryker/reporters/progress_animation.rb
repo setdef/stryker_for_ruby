@@ -23,7 +23,10 @@ module Stryker
       end
 
       def finish
-        @io.write("\n") if @drawn
+        return unless @drawn
+
+        @io.write("\n")
+        @drawn = false
       end
     end
   end
