@@ -48,4 +48,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `stryker` command, with `stryker run [configFile]`, `stryker help [command]`, `-h`, `--help`, and `--version`, a flag for every option, and the exit statuses 0, 1, 2, and 128 plus the signal's number. `stryker run` checks the configuration and then stops with status 2, because a run isn't built yet.
 
 [Unreleased]: https://github.com/setdef/stryker_for_ruby/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/setdef/stryker_for_ruby/releases/tag/v0.2.0
 [0.1.0]: https://github.com/setdef/stryker_for_ruby/releases/tag/v0.1.0
