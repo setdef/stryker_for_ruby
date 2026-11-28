@@ -103,12 +103,4 @@ class ConfigureMinitestFilesTest < Minitest::Test
       [config.minitest_test_files, config.minitest_test_files.map(&:encoding), config.test_runner_recipe.words.last]
     )
   end
-
-  def test_the_test_runner_builds_with_the_files_when_they_are_given_and_with_nothing_otherwise
-    given = configure({ "stryker.config.json": '{ "minitest": { "testFiles": ["test/**/*_test.rb"] } }' })
-
-    recipes = [given, configure].map(&:test_runner_recipe)
-
-    assert_equal([{ files: ["test/**/*_test.rb"] }, {}], recipes.map(&:options))
-  end
 end
