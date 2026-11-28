@@ -1,14 +1,15 @@
 module Stryker
   module Isolation
     # What a forked child does with what it runs: it runs it in this
-    # process, writes what happens to its pipe, and ends the process.
+    # process and writes what happens to its pipe.
     # `Stryker::Isolation::ForkedRun` is one, for a mutant run.
     interface _ForkedWork
-      # Runs the work's run in this process, writes what happens to
-      # `writer`, and ends the process.
+      # Runs the work's run in this process and writes what happens to
+      # `report`.
       #
-      # - `writer`: IO, the child's end of its pipe to the parent.
-      def call: (IO writer) -> void
+      # - `report`: Stryker::Isolation::RunReport, the writer of the child's
+      #   lines.
+      def call: (RunReport report) -> void
     end
 
     # The lines that the orchestrator gives the parent that forks, on the

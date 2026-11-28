@@ -43,10 +43,10 @@ class ProjectSideTest < Minitest::Test
     process = FakeProcess.new
     streams = Calls.new
     forked_run = Calls.new
-    Stryker::Isolation::Forking.new(streams, process).child(sample_run(7), forked_run, :writer)
+    Stryker::Isolation::Forking.new(streams, process).child(sample_run(7), forked_run, StringIO.new)
 
-    assert_equal([[[:setpgid, 0, 0]], [["7"]]], [process.calls, streams.calls])
-    assert_equal([[:writer]], forked_run.calls)
+    assert_equal([[[:setpgid, 0, 0], [:exit!, 0]], [["7"]]], [process.calls, streams.calls])
+    assert_kind_of(Stryker::Isolation::RunReport, forked_run.calls.dig(0, 0))
   end
 
   # macOS refuses the child's setpgid now and then when the parent's ran at
@@ -54,15 +54,15 @@ class ProjectSideTest < Minitest::Test
   def test_a_forked_child_that_leads_its_group_when_its_setpgid_is_refused_runs_its_run
     process = FakeProcess.new(setpgid_error: Errno::EPERM)
     forked_run = Calls.new
-    Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), forked_run, :writer)
+    Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), forked_run, StringIO.new)
 
-    assert_equal([[:writer]], forked_run.calls)
+    assert_equal(1, forked_run.calls.size)
   end
 
   def test_a_forked_child_outside_its_own_group_when_its_setpgid_is_refused_raises
     process = FakeProcess.new(setpgid_error: Errno::EPERM, pgrp: 1)
 
-    assert_raises(Errno::EPERM) { Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), Calls.new, :writer) }
+    assert_raises(Errno::EPERM) { Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), Calls.new, StringIO.new) }
   end
 
   def test_forking_gives_the_end_of_each_childs_standard_error
@@ -81,10 +81,10 @@ class ProjectSideTest < Minitest::Test
     runner = Runner.new
     runtime = Runtime.new
     writer = StringIO.new
-    Stryker::Isolation::ForkedRun.new(runner, sample_run(9), Finisher.new, runtime).call(writer)
+    Stryker::Isolation::ForkedRun.new(runner, sample_run(9), runtime).call(Stryker::Isolation::RunReport.new(writer))
 
     assert_equal([9, [[:run, ["SampleTest#test_value"], true]]], [runtime.active, runner.calls])
-    assert_equal(%w[started finished ended], kinds(writer.string))
+    assert_equal(%w[started finished], kinds(writer.string))
   end
 
   def refusal(argv)

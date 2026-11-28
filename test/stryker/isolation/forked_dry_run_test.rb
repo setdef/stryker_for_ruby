@@ -3,6 +3,7 @@
 require_relative("../../support/project_side_stand_ins")
 require "stringio"
 require "stryker/isolation/forked_dry_run"
+require "stryker/isolation/run_report"
 
 # What the dry run's forked child does, with stand-ins for what would end the
 # process, start the dry run, or load the project, so it runs in this process
@@ -17,7 +18,9 @@ class ForkedDryRunTest < Minitest::Test
     finisher = Finisher.new
     writer = StringIO.new
     tests = Stryker::Runtime::DryRunTests.new(Runner.new, %w[A#test_a B#test_b], Stryker::Runtime::Recorder.new, loader)
-    Stryker::Isolation::ForkedDryRun.new(tests, finisher, runtime).call(writer)
+    work = Stryker::Isolation::ForkedDryRun.new(tests, runtime)
+    report = Stryker::Isolation::RunReport.new(writer)
+    finisher.call(report) { work.call(report) }
     [runtime, finisher, writer.string.lines.map { |line| JSON.parse(line) }]
   end
 

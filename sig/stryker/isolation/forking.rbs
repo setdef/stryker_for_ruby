@@ -19,11 +19,15 @@ module Stryker
       # `Process`, or a stand-in in a test.
       @process: singleton(::Process)
 
+      # What ends each child.
+      @finisher: Finisher
+
       # Builds the forking.
       #
       # - `streams`: Stryker::Isolation::ForkedStreams, what each child
       #   changes about its streams.
-      # - `process`: `Process`, or a stand-in in a test.
+      # - `process`: `Process`, or a stand-in in a test, whose `fork`,
+      #   `setpgid`, and `exit!` the forking and its children use.
       def initialize: (ForkedStreams streams, ?singleton(::Process) process) -> void
 
       # Forks a child that runs `run` through `child`, and returns the
@@ -39,8 +43,9 @@ module Stryker
       # What the child does right after the fork: it leads a new process
       # group, so killing the group ends what its tests start too; changes
       # its streams to the files of `run`'s output name, as
-      # `Stryker::Isolation::ForkedStreams` does; and does `work`, writing
-      # to `writer`. It ends the process.
+      # `Stryker::Isolation::ForkedStreams` does; does `work`, writing to
+      # `writer`; and ends the process with `exit!`, through
+      # `Stryker::Isolation::Finisher`.
       #
       # - `run`: what the child runs.
       # - `work`: what the child does with it.

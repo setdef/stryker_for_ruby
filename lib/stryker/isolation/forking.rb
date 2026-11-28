@@ -1,11 +1,15 @@
 # frozen_string_literal: true
 
+require_relative "finisher"
+require_relative "run_report"
+
 module Stryker
   module Isolation
     class Forking
       def initialize(streams, process = Process)
         @streams = streams
         @process = process
+        @finisher = Finisher.new(process)
       end
 
       def start(run, work)
@@ -18,7 +22,8 @@ module Stryker
       def child(run, work, writer)
         lead_group
         @streams.call(run.output_name)
-        work.call(writer)
+        report = RunReport.new(writer)
+        @finisher.call(report) { work.call(report) }
       end
 
       def errors(run)

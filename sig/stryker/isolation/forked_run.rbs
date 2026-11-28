@@ -3,13 +3,13 @@ module Stryker
     # What a forked child does with its run: it makes the run's mutant
     # active, runs the run's tests through the test runner adapter,
     # stopping at the first that fails, and writes each test's start and
-    # result to its pipe as it happens. Then it ends the child with `exit!`.
+    # result to its pipe as it happens. `Stryker::Isolation::Forking` ends
+    # the child once the run is done.
     #
     # ## Examples
     #
     # ```ruby
-    # Stryker::Isolation::ForkedRun.new(runner, run).call(writer)
-    # # the child ends here
+    # Stryker::Isolation::ForkedRun.new(runner, run).call(report)
     # ```
     class ForkedRun
       # The test runner adapter, with the tests loaded in the parent.
@@ -17,9 +17,6 @@ module Stryker
 
       # The run.
       @run: MutantRun
-
-      # What ends the child.
-      @finisher: Finisher
 
       # What makes the mutant active: `Stryker::Runtime`, or a stand-in in
       # a test.
@@ -30,15 +27,15 @@ module Stryker
       # - `runner`: Stryker::_TestRunner, the adapter whose tests the parent
       #   loaded.
       # - `run`: Stryker::MutantRun, the run.
-      # - `finisher`: Stryker::Isolation::Finisher, what ends the child.
       # - `runtime`: `Stryker::Runtime`, or a stand-in in a test.
-      def initialize: (_TestRunner runner, MutantRun run, ?Finisher finisher, ?singleton(Runtime) runtime) -> void
+      def initialize: (_TestRunner runner, MutantRun run, ?singleton(Runtime) runtime) -> void
 
-      # Runs the run in this process, writes what happens to `writer`, and
-      # ends the process.
+      # Makes the run's mutant active and runs the run's tests, stopping at
+      # the first that fails, through `report`, and returns their results.
       #
-      # - `writer`: IO, the child's end of its pipe to the parent.
-      def call: (IO writer) -> void
+      # - `report`: Stryker::Isolation::RunReport, where each test's start
+      #   and result go.
+      def call: (RunReport report) -> Array[TestResult]
     end
   end
 end

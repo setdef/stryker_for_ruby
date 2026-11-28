@@ -6,21 +6,17 @@ module Stryker
     # start and result to its pipe as it happens, and then writes the whole
     # `Stryker::DryRunResult` on a line of its own, `{"result":{...}}`,
     # before `{"ended":true}`. A failed loading check, or anything else the
-    # run raises, is the run's `{"error":...}` line instead. Then it ends
-    # the child with `exit!`.
+    # run raises, is the run's `{"error":...}` line instead.
+    # `Stryker::Isolation::Forking` ends the child once the dry run is done.
     #
     # ## Examples
     #
     # ```ruby
-    # Stryker::Isolation::ForkedDryRun.new(Stryker::Runtime::DryRunTests.new(runner, test_ids)).call(writer)
-    # # the child ends here
+    # Stryker::Isolation::ForkedDryRun.new(Stryker::Runtime::DryRunTests.new(runner, test_ids)).call(report)
     # ```
     class ForkedDryRun
       # What runs every test and returns what the dry run found.
       @tests: Runtime::DryRunTests
-
-      # What ends the child.
-      @finisher: Finisher
 
       # What starts the dry run's recording: `Stryker::Runtime`, or a
       # stand-in in a test.
@@ -29,15 +25,15 @@ module Stryker
       # Builds the dry run's work.
       #
       # - `tests`: Stryker::Runtime::DryRunTests, what runs every test.
-      # - `finisher`: Stryker::Isolation::Finisher, what ends the child.
       # - `runtime`: `Stryker::Runtime`, or a stand-in in a test.
-      def initialize: (Runtime::DryRunTests tests, ?Finisher finisher, ?singleton(Runtime) runtime) -> void
+      def initialize: (Runtime::DryRunTests tests, ?singleton(Runtime) runtime) -> void
 
-      # Runs the dry run in this process, writes what happens to `writer`,
-      # and ends the process.
+      # Starts the dry run's recording, runs every test through `report`,
+      # and writes what the dry run found to it.
       #
-      # - `writer`: IO, the child's end of its pipe to the parent.
-      def call: (IO writer) -> void
+      # - `report`: Stryker::Isolation::RunReport, where each test's start
+      #   and result, and then the dry run's result, go.
+      def call: (RunReport report) -> void
     end
   end
 end
