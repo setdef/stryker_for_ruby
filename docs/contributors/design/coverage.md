@@ -75,17 +75,124 @@ After each such load, the next hit of each mutant on each thread is checked agai
 
 A mutant that a file's load reaches twice is checked once, so the second hit lands in the test's bucket as well as the first in the static bucket. The plan gives a mutant with a static hit a static run whatever its tests' buckets hold, so the result is the same.
 
-One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3.14, 3.4.13, and 4.0.10 with YJIT off or on, under a UTF-8 locale and under the C locale. Each figure is the median of 15 rounds, and the range runs from the cheapest to the dearest of those combinations, on a machine that other work shared:
+One check costs this much, measured as [Measuring the check](#measuring-the-check) says. Each figure is the median of 15 rounds, and each range runs from the cheapest to the costliest of six combinations: Ruby 3.3.14, 3.4.13, and 4.0.10, each with YJIT off and on.
 
-| Frames on the stack | One check |
-| - | - |
-| 25 | 2.3 to 3.7 µs |
-| 105 | 8.0 to 13.0 µs |
-| 305 | 22 to 37 µs |
+| Frames on the stack | UTF-8 locale | C locale, path of ASCII bytes | C locale, path with a byte beyond ASCII |
+| - | - | - | - |
+| 25 | 1.9 to 3.3 µs | 1.9 to 4.0 µs | 2.8 to 6.1 µs |
+| 105 | 7.5 to 13.7 µs | 7.5 to 16.1 µs | 11.2 to 23.4 µs |
+| 305 | 22 to 40 µs | 22 to 47 µs | 33 to 70 µs |
 
-Under the C locale Ruby tags each frame's path US-ASCII or binary, and the check leaves a path of only ASCII bytes as it is, because a `Hash` finds the key of such a path whatever its tag. Only a path with a byte beyond ASCII is copied and tagged UTF-8. Telling whether a path is ASCII costs the C locale up to 15% more than the UTF-8 locale, for the same Ruby and depth.
+Under the C locale Ruby tags each frame's path US-ASCII or binary. The check copies a frame's path and tags the copy UTF-8 only when the path has a byte beyond ASCII, and leaves a path of only ASCII bytes as it is, because a `Hash` finds the key of such a path whatever its tag. In each of the six combinations, at each depth, a check on paths with a byte beyond ASCII cost 1.3 to 2.3 times a check on paths of ASCII bytes, both under the C locale. The first two columns overlap, and which of them cost more changed from one combination to the next, so the measurement doesn't separate them.
 
 A test body has 18 to 25 frames under Minitest, RSpec, and Rails.
+
+### Measuring the check
+
+The script below times the check at three stack depths. It builds a stack by calling a method that calls itself, which adds one Ruby frame for each call, and it counts the frames the check walks with a `Set` that counts its lookups, because the check makes one lookup for each frame. The set it checks holds one path that no frame has, so every check walks the whole stack and returns false. A round times 20,000 checks, one round is discarded as a warm-up, and the figure is the median of the next 15. The counted stack and the timed stack are built by the same calls, so the frame count in the output is the depth that was timed.
+
+<!-- SPDX-SnippetBegin -->
+<!-- SPDX-License-Identifier: MIT-0 -->
+<!-- SPDX-SnippetCopyrightText: 2026 setdef -->
+```ruby
+# measure.rb
+require "stryker/runtime"
+
+# Times a check at the depth of the stack that calls its methods.
+class Measurement
+  # A Set that counts its lookups. A check makes one lookup for each frame.
+  class CountingSet < Set
+    # Counts the lookup, then answers it as a Set does.
+    def include?(path)
+      @lookups = lookups + 1
+      super
+    end
+
+    # How many lookups the set has answered.
+    def lookups
+      @lookups ||= 0
+    end
+  end
+
+  CALLS = 20_000
+  ROUNDS = 15
+  # No frame has this path, so a check walks the whole stack.
+  OTHER_PATHS = Set["/other/file.rb"].freeze
+  LINE = "Ruby %<ruby>s%<yjit>s, LC_ALL=%<locale>s, %<file>s (%<bytes>d bytes, tagged %<tag>s): " \
+    "%<frames>d frames, %<micros>.2f us".freeze
+  private_constant :CALLS, :ROUNDS, :OTHER_PATHS, :LINE
+
+  # Adds one frame for each of the levels, then yields.
+  def self.descend(levels, &)
+    levels.zero? ? yield : descend(levels - 1, &)
+  end
+
+  # The microseconds that one check took, over a number of calls.
+  def microseconds(paths, calls)
+    start = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+    calls.times { Stryker::Runtime::Stack.loading?(paths) }
+    (Process.clock_gettime(Process::CLOCK_MONOTONIC) - start) / calls * 1_000_000
+  end
+
+  # The microseconds of each round.
+  def samples(paths, calls, rounds)
+    Array.new(rounds) { microseconds(paths, calls) }
+  end
+
+  # The number of frames the check walks. It calls `samples` from a method
+  # of one frame, as median_micros does, so the stack it counts is the stack
+  # that median_micros times.
+  def frames
+    paths = CountingSet.new(OTHER_PATHS)
+    samples(paths, 1, 1)
+    paths.lookups
+  end
+
+  # The median of the timed rounds, after one round that warms up the check.
+  def median_micros
+    samples(OTHER_PATHS, CALLS, 1)
+    samples(OTHER_PATHS, CALLS, ROUNDS).sort[ROUNDS / 2]
+  end
+
+  # One line: the Ruby, the locale, the file, the frame count, and the time.
+  def report
+    format(LINE, **setting, frames:, micros: median_micros)
+  end
+
+  private def setting
+    {
+      ruby: RUBY_VERSION,
+      yjit: RubyVM::YJIT.enabled? ? " YJIT" : "",
+      locale: ENV.fetch("LC_ALL"),
+      file: File.join(File.basename(__dir__), File.basename(__FILE__)),
+      bytes: __FILE__.bytesize,
+      tag: __FILE__.encoding,
+    }
+  end
+end
+
+# Chosen so that the stack holds 25, 105, and 305 frames.
+[11, 91, 291].each do |extra|
+  Measurement.descend(extra) { puts Measurement.new.report }
+end
+```
+<!-- SPDX-SnippetEnd -->
+
+Make a temporary folder whose path has only ASCII bytes, and save the script in it twice: as `invoice/measure.rb` and as `café/measure.rb`. The first gives the check frames whose absolute path has only ASCII bytes, and the second frames whose path has a byte beyond ASCII (`é`). The absolute paths were 73 and 71 bytes long. From that folder, with `$repo` the root of this repository, run each of the three commands under each Ruby, with `ruby --yjit` and with `ruby`:
+
+```sh
+LC_ALL=C.UTF-8 ruby -I "$repo/lib" invoice/measure.rb # a UTF-8 locale
+LC_ALL=C ruby -I "$repo/lib" invoice/measure.rb       # the C locale, a path of ASCII bytes
+LC_ALL=C ruby -I "$repo/lib" café/measure.rb          # the C locale, a path with a byte beyond ASCII
+```
+
+Each run prints one line for each depth, with the Ruby version, whether YJIT is on, the locale, the file, the tag Ruby gave the path, the frame count, and the median time of one check. The depths are 25, 105, and 305 frames. A line looks like this:
+
+```text
+Ruby 4.0.10, LC_ALL=C, café/measure.rb (16 bytes, tagged US-ASCII): 25 frames, 5.33 us
+```
+
+The figures in the table are from one such run of every combination, on Linux, on a machine that other programs could use at the same time. The script times the whole check. It doesn't isolate what any part of the check costs, such as reading the label, testing the encoding, or copying a path.
 
 ### What the probes found
 
