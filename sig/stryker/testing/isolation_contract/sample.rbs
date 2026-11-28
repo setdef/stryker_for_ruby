@@ -10,9 +10,10 @@ module Stryker
         # runs static mutants, yields it, and removes it.
         def with_sample: [T] () { (SampleProject sample) -> T } -> T
 
-        # Starts the adapter for `sample`, runs `runs`, stops it, and
-        # returns each result by its mutant's ID.
-        def isolated: (SampleProject sample, Array[MutantRun] runs, ?concurrency: Integer) -> Hash[Integer, MutantResult]
+        # Starts the adapter for `sample`, runs each batch of runs in turn,
+        # each after the one before has ended, stops the adapter, and returns
+        # each result by its mutant's ID.
+        def isolated: (SampleProject sample, *Array[MutantRun] batches, ?concurrency: Integer) -> Hash[Integer, MutantResult]
 
         # The result of one run of mutant `mutant_id` with the sample tests
         # `names`, in a sample project of its own.

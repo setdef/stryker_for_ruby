@@ -10,14 +10,8 @@ module Stryker
         # A run that changes a global, a constant's contents, a class
         # variable, and an environment variable, and defines a constant,
         # leaves each run after it unchanged. The run that changes the state
-        # ends before any run that checks starts.
+        # ends before any run that checks starts, and one adapter runs both.
         def test_a_run_that_changes_state_leaves_the_next_run_unchanged: () -> void
-
-        private
-
-        # Runs the sample's run that changes state alone, then the runs
-        # that check it together, and returns each result by its mutant's ID.
-        def changed_then_checked: (SampleProject sample) -> Hash[Integer, MutantResult]
       end
     end
   end

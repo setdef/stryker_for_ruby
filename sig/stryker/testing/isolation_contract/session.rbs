@@ -25,9 +25,10 @@ module Stryker
         # - `concurrency`: Integer, how many runs go at once.
         def initialize: (_IsolationHost host, SampleProject sample, Integer concurrency) -> void
 
-        # Runs `runs`, stops the adapter, and returns each result by its
-        # mutant's ID.
-        def results: (Array[MutantRun] runs) -> Hash[Integer, MutantResult]
+        # Runs each batch of runs in turn, the next after the one before has
+        # ended, stops the adapter, and returns each result by its mutant's
+        # ID.
+        def results: (*Array[MutantRun] batches) -> Hash[Integer, MutantResult]
 
         # Runs the sample project's hanging runs, raises from the block at
         # the first result, and returns the recorded processes still
@@ -35,6 +36,11 @@ module Stryker
         # `run_all` doesn't raise, it returns what `run_all` returned, which
         # is no list of processes, so the contract's test fails.
         def running_after_a_raise: () -> top
+
+        private
+
+        # Runs `runs` and returns their results in the order they end.
+        def collected: (Array[MutantRun] runs) -> Array[MutantResult]
       end
     end
   end

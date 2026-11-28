@@ -78,12 +78,8 @@ module Stryker
           ids.map { |id| run(id, name) }
         end
 
-        def changing_run
-          run(SampleSuite::CHANGER, :changes_state)
-        end
-
-        def checking_runs
-          SampleSuite::CHECKS.map { |check, id| run(id, check) }
+        def state_batches
+          [[run(SampleSuite::CHANGER, :changes_state)], SampleSuite::CHECKS.map { |check, id| run(id, check) }]
         end
 
         def remove

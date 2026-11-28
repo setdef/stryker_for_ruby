@@ -11,8 +11,8 @@ module Stryker
           SampleProject.open(static: runs_static_mutants?, &)
         end
 
-        private def isolated(sample, runs, concurrency: 1)
-          Session.new(self, sample, concurrency).results(runs)
+        private def isolated(sample, *batches, concurrency: 1)
+          Session.new(self, sample, concurrency).results(*batches)
         end
 
         private def isolated_one(mutant_id, *names, timeout_ms: SampleProject::TIME_LIMIT_MS)

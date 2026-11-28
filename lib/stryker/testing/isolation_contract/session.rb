@@ -13,15 +13,11 @@ module Stryker
           @isolation.start(Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency:))
         end
 
-        def results(runs)
-          # @type var results: Array[MutantResult]
-          results = []
-          begin
-            @isolation.run_all(runs) { |result| results << result }
-          ensure
-            @isolation.stop
-          end
+        def results(*batches)
+          results = batches.flat_map { |runs| collected(runs) }
           results.to_h { |result| [result.mutant.id, result] }
+        ensure
+          @isolation.stop
         end
 
         def running_after_a_raise
@@ -31,6 +27,13 @@ module Stryker
           SampleProcesses.running(@sample.root)
         ensure
           @isolation.stop
+        end
+
+        private def collected(runs)
+          # @type var results: Array[MutantResult]
+          results = []
+          @isolation.run_all(runs) { |result| results << result }
+          results
         end
       end
     end
