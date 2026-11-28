@@ -68,6 +68,12 @@ class ConfigureMinitestFilesTest < Minitest::Test
     )
   end
 
+  def test_a_bang_is_an_ordinary_character_so_a_pattern_that_starts_with_one_stays_inside_the_root
+    patterns = ["!../x/*_test.rb"]
+
+    assert_equal(patterns, configure({}, options: { "minitest.testFiles": patterns }).minitest_test_files)
+  end
+
   def test_a_pattern_with_a_nul_byte_is_an_error_that_names_it
     message = refusal({ "stryker.config.json": '{ "minitest": { "testFiles": ["test/\u0000x"] } }' })
 

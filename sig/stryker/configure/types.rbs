@@ -35,7 +35,9 @@ module Stryker
       AS_GIVEN: ^(Object? value) -> Object?
 
       # The names of the options whose value is a list of file patterns, which
-      # the checks of patterns read: `mutate` and `minitest.testFiles`.
+      # the checks of patterns read: `mutate` and `minitest.testFiles`. Only
+      # in `mutate` does a leading `!` leave files out; in `minitest.testFiles`
+      # it is an ordinary character, and the checks read it as one.
       PATTERN_LISTS: Array[String]
 
       # The form of a percentage for `concurrency`: 0 to 100, with a percent

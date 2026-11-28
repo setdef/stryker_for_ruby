@@ -2,12 +2,19 @@ module Stryker
   class Configure
     module Checks
       # Checks that each pattern of `mutate` or `minitest.testFiles` resolves
-      # inside the project's root. It applies to no other option. A pattern is outside when its
-      # path, with the dots resolved and the leading `!` dropped, is neither
-      # the root nor inside it. It reads only the text of the path: a glob
-      # wildcard or a brace alternative is part of a name, so `{lib,../x}/*`
-      # isn't expanded.
+      # inside the project's root. It applies to no other option. A pattern
+      # is outside when its path, with the dots resolved, is neither the root
+      # nor inside it. The path of a `mutate` pattern leaves out the leading
+      # `!`, which marks a pattern that leaves files out. In
+      # `minitest.testFiles` a `!` is an ordinary character, so `!../x` is a
+      # folder named `!..` inside the root. The check reads only the text of
+      # the path: a glob wildcard or a brace alternative is part of a name,
+      # so `{lib,../x}/*` isn't expanded.
       class OutsidePatterns
+        # The prefix that leaves files out, for each option whose patterns
+        # have one, by the option's name as a Symbol: `mutate`.
+        LEAVE_OUT: Hash[Symbol, String]
+
         @setting: Setting
         @root: String
 

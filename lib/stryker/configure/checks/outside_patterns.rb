@@ -6,6 +6,9 @@ module Stryker
   class Configure
     module Checks
       class OutsidePatterns
+        LEAVE_OUT = { mutate: "!" }.freeze
+        private_constant(:LEAVE_OUT)
+
         def initialize(setting, root)
           @setting = setting
           @root = File.expand_path(root)
@@ -21,7 +24,7 @@ module Stryker
         end
 
         private def outside?(pattern)
-          path = File.absolute_path(pattern.delete_prefix("!"), @root)
+          path = File.absolute_path(pattern.delete_prefix(LEAVE_OUT.fetch(@setting.name.to_sym, "")), @root)
           path != @root && !path.start_with?(File.join(@root, ""))
         end
       end
