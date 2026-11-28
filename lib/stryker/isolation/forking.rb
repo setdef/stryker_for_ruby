@@ -20,10 +20,15 @@ module Stryker
       end
 
       def child(run, work, writer)
-        lead_group
-        @streams.call(run.output_name)
         report = RunReport.new(writer)
-        @finisher.call(report) { work.call(report) }
+        # Inside the finisher, so that a raise in the setup is the run's
+        # error, as one in the run is, and ends the child with exit!. The
+        # child's pipe is open from the fork, so the error can be written.
+        @finisher.call(report) do
+          lead_group
+          @streams.call(run.output_name)
+          work.call(report)
+        end
       end
 
       def errors(run)

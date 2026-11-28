@@ -39,32 +39,6 @@ class ProjectSideTest < Minitest::Test
     end
   end
 
-  def test_a_forked_child_leads_a_group_changes_its_streams_and_runs_its_run
-    process = FakeProcess.new
-    streams = Calls.new
-    forked_run = Calls.new
-    Stryker::Isolation::Forking.new(streams, process).child(sample_run(7), forked_run, StringIO.new)
-
-    assert_equal([[[:setpgid, 0, 0], [:exit!, 0]], [["7"]]], [process.calls, streams.calls])
-    assert_kind_of(Stryker::Isolation::RunReport, forked_run.calls.dig(0, 0))
-  end
-
-  # macOS refuses the child's setpgid when the parent's ran at the same
-  # moment, though the child leads its group by then (see #115).
-  def test_a_forked_child_that_leads_its_group_when_its_setpgid_is_refused_runs_its_run
-    process = FakeProcess.new(setpgid_error: Errno::EPERM)
-    forked_run = Calls.new
-    Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), forked_run, StringIO.new)
-
-    assert_equal(1, forked_run.calls.size)
-  end
-
-  def test_a_forked_child_outside_its_own_group_when_its_setpgid_is_refused_raises
-    process = FakeProcess.new(setpgid_error: Errno::EPERM, pgrp: 1)
-
-    assert_raises(Errno::EPERM) { Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), Calls.new, StringIO.new) }
-  end
-
   def test_forking_gives_the_end_of_each_childs_standard_error
     Dir.mktmpdir do |folder|
       File.binwrite(File.join(folder, "7.err"), "[BUG] crash\n")

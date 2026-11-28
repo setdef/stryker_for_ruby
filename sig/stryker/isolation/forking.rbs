@@ -45,7 +45,9 @@ module Stryker
       # its streams to the files of `run`'s output name, as
       # `Stryker::Isolation::ForkedStreams` does; does `work`, writing to
       # `writer`; and ends the process with `exit!`, through
-      # `Stryker::Isolation::Finisher`.
+      # `Stryker::Isolation::Finisher`. A raise in any of these steps is
+      # written to `writer` as the run's error, and ends the process the
+      # same way.
       #
       # - `run`: what the child runs.
       # - `work`: what the child does with it.
