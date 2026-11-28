@@ -74,7 +74,8 @@ module Stryker
       HELPER: String
 
       # The default patterns of the test files, from the project's root:
-      # Minitest::TestTask's defaults.
+      # Minitest::TestTask's defaults. The `minitest.testFiles` option
+      # replaces them.
       FILES: Array[String]
 
       # The default folders to put on `$LOAD_PATH`, from the project's root:
@@ -87,7 +88,10 @@ module Stryker
       # - `helper`: String, the test helper's path from `root`, which
       #   `load_tests` loads first when the file exists. `HELPER` by default.
       # - `files`: Array of String, glob patterns from `root` that match
-      #   the test files. `FILES` by default.
+      #   the test files, which a project process takes from the
+      #   `minitest.testFiles` option. `FILES` by default. A pattern that
+      #   matches no file loads nothing, and one that matches a folder makes
+      #   `load_tests` raise LoadError.
       # - `libs`: Array of String, folders from `root` to put on
       #   `$LOAD_PATH`. `LIBS` by default.
       def initialize: (String root, ?helper: String, ?files: Array[String], ?libs: Array[String]) -> void

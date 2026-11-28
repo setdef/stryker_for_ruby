@@ -21,6 +21,8 @@ module Stryker
         # @dynamic description, test, conversion
       end
 
+      PATTERN_LISTS = %w[mutate minitest.testFiles].freeze
+
       PERCENT = /\A(?:100|[1-9]?[0-9])%\z/
 
       def self.list_of(what)
@@ -70,9 +72,10 @@ module Stryker
         dryRunTimeoutMinutes: number("a number of minutes, 0 or more", 0..),
         "mutator.excludedMutations": list_of("mutator names"),
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
+        "minitest.testFiles": list_of("file patterns"),
       }
       KINDS = Hash.new(anything).merge!(options.transform_keys(&:to_s)).freeze
-      public_constant(:AS_GIVEN, :PERCENT, :KINDS)
+      public_constant(:AS_GIVEN, :PATTERN_LISTS, :PERCENT, :KINDS)
     end
   end
 end

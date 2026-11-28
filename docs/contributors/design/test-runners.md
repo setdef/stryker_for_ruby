@@ -24,6 +24,15 @@ Everything `load_tests` returns must be the same in every process, because each 
 
 `Minitest::Test.runnable_methods` seeds Ruby's random numbers with `Minitest.seed`, and raises `TypeError` while it is nil. `Minitest.run` sets it, and the adapter never calls `Minitest.run`, so the adapter sets it to 0 when the project hasn't set it. A class in Minitest's default random order seeds them each time `run_suite` runs it, so each of its tests starts with the same random numbers in every process.
 
+### Choosing the test files
+
+The [`minitest.testFiles` option](../../configuration.md#minitesttestfiles) sets the patterns of the test files, and the adapter's `files` keyword holds them. The default patterns live in one place, `MinitestRunner::FILES`: a config that has no `minitest.testFiles` holds nothing for it, and the adapter then uses its default. A value replaces the default, because a list that added to it could never leave one of its patterns out.
+
+The patterns reach a project process as keywords in a JSON word on the process's command line ([The entry point](loading-and-isolation.md#the-entry-point)), and the adapter expands them in the process, in the project's root, with `Root#files`. Two other ways lost:
+
+- **An environment variable** would show the patterns to the project's tests and to every process they start.
+- **A list of files that the orchestrator expanded** would have to fit a command line, which Windows limits to 32,767 characters, and would make the orchestrator and the adapter each own a copy of how patterns match files.
+
 ### Why the adapter empties Minitest's list of classes
 
 `require "minitest/autorun"`, which most projects' helpers run, registers an `at_exit` block that runs every class in `Minitest::Runnable.runnables`. A project process that exits normally runs it.

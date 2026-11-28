@@ -1,8 +1,8 @@
 module Stryker
   class Configure
     module Checks
-      # Checks that each pattern of `mutate` resolves inside the project's
-      # root. It applies to no other option. A pattern is outside when its
+      # Checks that each pattern of `mutate` or `minitest.testFiles` resolves
+      # inside the project's root. It applies to no other option. A pattern is outside when its
       # path, with the dots resolved and the leading `!` dropped, is neither
       # the root nor inside it. It reads only the text of the path: a glob
       # wildcard or a brace alternative is part of a name, so `{lib,../x}/*`

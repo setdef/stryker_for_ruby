@@ -1,6 +1,6 @@
 # Configuration
 
-This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it does. A run works on Linux and macOS, with Minitest. On Windows, where Ruby has no `fork`, a run isn't built yet: `stryker run` checks the configuration and then stops with status 2. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), except `mutate` and `testRunner`, whose defaults are for Ruby, and the options that mean nothing in Ruby, which are left out.
+This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it does. A run works on Linux and macOS, with Minitest. On Windows, where Ruby has no `fork`, a run isn't built yet: `stryker run` checks the configuration and then stops with status 2. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), except `mutate` and `testRunner`, whose defaults are for Ruby, `minitest.testFiles`, which sets what only the Minitest test runner reads, as `tap.testFiles` does for StrykerJS's tap test runner, and the options that mean nothing in Ruby, which are left out.
 
 ## Where options come from
 
@@ -14,7 +14,7 @@ A value on the command line replaces the file's value for that option. A list, s
 
 ### The configuration file
 
-A configuration file is JSON or YAML, and holds one object whose keys are option names. Nested options have a parent key: `thresholds` holds `high`, `low`, and `break`, and `mutator` holds `excludedMutations`. This page writes a nested option with a dot, as `thresholds.break`. In a file, either spelling works: a `thresholds` object with a `break` key, or the key `"thresholds.break"`. A file that gives one option in both spellings is an error, because it doesn't say which value to use.
+A configuration file is JSON or YAML, and holds one object whose keys are option names. Nested options have a parent key: `thresholds` holds `high`, `low`, and `break`, `mutator` holds `excludedMutations`, and `minitest` holds `testFiles`. This page writes a nested option with a dot, as `thresholds.break`. In a file, either spelling works: a `thresholds` object with a `break` key, or the key `"thresholds.break"`. A file that gives one option in both spellings is an error, because it doesn't say which value to use.
 
 **Stryker (for Ruby)** looks for these files in the project's root, in this order:
 
@@ -63,7 +63,7 @@ Each flag writes its value as text, and the command turns the text into the type
 
 | Type of the option | Text of the flag |
 | - | - |
-| list of strings (`mutate`, `reporters`, `mutator.excludedMutations`) | Items separated by commas, such as `--reporters clear-text,json`. A comma inside braces is part of the item, so `--mutate "lib/{a,b}/**/*.rb"` is one pattern. The flag adds to its list each time it appears, and empty text gives an empty list. |
+| list of strings (`mutate`, `reporters`, `mutator.excludedMutations`, `minitest.testFiles`) | Items separated by commas, such as `--reporters clear-text,json`. A comma inside braces is part of the item, so `--mutate "lib/{a,b}/**/*.rb"` is one pattern. The flag adds to its list each time it appears, and empty text gives an empty list. |
 | number (`timeoutMS`, `timeoutFactor`, `dryRunTimeoutMinutes`) | `80` is a whole number, and `80.5` or `1e3` is a decimal. |
 | whole number (`thresholds.high`, `thresholds.low`) | A whole number such as `80`. `80.0` counts as one, and a decimal such as `80.5` is an error. |
 | `concurrency` | A whole number such as `4`, or a percentage such as `50%`. |
@@ -132,8 +132,8 @@ Before it does anything else, `stryker run` checks every option in the file and 
 
 - **A `thresholds.high` below `thresholds.low`** is an error that gives both options and where each value came from. An option that no file or flag sets counts with its default, so `thresholds.high` of `50` alone is below the default `thresholds.low` of `60`. Equal values are fine ([`thresholds.high`](#thresholdshigh)).
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
-- **A pattern in `mutate` that resolves outside the project's root** is an error ([`mutate`](#mutate)).
-- **A pattern in `mutate` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
+- **A pattern in `mutate` or `minitest.testFiles` that resolves outside the project's root** is an error ([`mutate`](#mutate), [`minitest.testFiles`](#minitesttestfiles)).
+- **A pattern in `mutate` or `minitest.testFiles` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
 
 The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter that you name exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
 
@@ -153,6 +153,7 @@ The checks read the type of `testRunner` and `reporters`. Once they pass, and be
 | [`dryRunTimeoutMinutes`](#dryruntimeoutminutes) | number of 0 or more | `5` |
 | [`mutator.excludedMutations`](#mutatorexcludedmutations) | list of strings | none |
 | [`incremental`](#incremental) | boolean | `false` |
+| [`minitest.testFiles`](#minitesttestfiles) | list of strings | `test/**/test_*.rb` and `test/**/*_test.rb` |
 
 ### `mutate`
 
@@ -329,6 +330,37 @@ A name matches a mutator's name exactly, with its letter case: `Equality` is the
 ### `incremental`
 
 A boolean. The default is `false`.
+
+### `minitest.testFiles`
+
+The test files that the `minitest` test runner loads: a list of glob patterns, relative to the project's root. The default is `test/**/test_*.rb` and `test/**/*_test.rb`, the files that Minitest 6's `Minitest::TestTask` loads.
+
+A value that you give replaces the default and never adds to it. A project that keeps tests in `plugins/*/test` as well lists the default patterns too:
+
+```yaml
+minitest:
+  testFiles:
+    - test/**/test_*.rb
+    - test/**/*_test.rb
+    - plugins/*/test/*_test.rb
+```
+
+The same value as a flag:
+
+```sh
+stryker run --minitest.test-files "test/**/test_*.rb,test/**/*_test.rb,plugins/*/test/*_test.rb"
+```
+
+A run with `testFiles` that leaves out a folder of tests has no test in that folder. A mutant that only those tests reach has the status `NoCoverage`, and the report doesn't say why.
+
+The patterns follow the same rules as those of [`mutate`](#mutate), with these differences:
+
+- A pattern that starts with `!` leaves nothing out. The `!` is an ordinary character in a file name, so the pattern matches only a file whose name starts with `!`.
+- A pattern that matches a folder stops the run with status 2, with an error that says the tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
+- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and every mutant has the status `NoCoverage`.
+- A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
+
+The test runner loads `test/test_helper.rb` first when the project has one, whatever `testFiles` holds. Then it loads each file that a pattern matches once, in the order of the files' paths, even when two patterns match the same file. Every project process loads these files, so a pattern that matches files that aren't tests loads them in each process.
 
 ## Disable comments
 

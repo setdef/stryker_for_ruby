@@ -17,6 +17,7 @@ module Stryker
     :dry_run_timeout_minutes,
     :excluded_mutations,
     :incremental,
+    :minitest_test_files,
     :given
   )
     OPTIONS = {
@@ -32,6 +33,7 @@ module Stryker
       dryRunTimeoutMinutes: :dry_run_timeout_minutes,
       "mutator.excludedMutations": :excluded_mutations,
       incremental: :incremental,
+      "minitest.testFiles": :minitest_test_files,
     }.transform_keys(&:to_s).freeze
     NO_EXCLUDED_MUTATIONS = Array(nil).freeze
     NONE_GIVEN = Array(nil).freeze
@@ -45,6 +47,7 @@ module Stryker
       dry_run_timeout_minutes: 5,
       excluded_mutations: NO_EXCLUDED_MUTATIONS,
       incremental: false,
+      minitest_test_files: nil,
     }.freeze
     public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS, :NONE_GIVEN)
 
@@ -60,10 +63,11 @@ module Stryker
     end
 
     def test_runner_recipe
-      TestRunners::Recipe.new(test_runner)
+      TestRunners::Recipe.new(test_runner, { files: minitest_test_files }.compact)
     end
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break
-    # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental, given
+    # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental
+    # @dynamic minitest_test_files, given
   end
 end

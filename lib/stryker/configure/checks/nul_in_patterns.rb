@@ -14,7 +14,7 @@ module Stryker
         end
 
         def to_a
-          return [] unless @setting.name == "mutate"
+          return [] unless Types::PATTERN_LISTS.include?(@setting.name)
 
           Types.strings(@setting.value).filter_map do |pattern|
             next unless pattern.include?(NUL)

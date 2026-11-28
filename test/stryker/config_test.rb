@@ -20,6 +20,7 @@ class ConfigTest < Minitest::Test
     dry_run_timeout_minutes: 10,
     excluded_mutations: ["StringLiteral"],
     incremental: true,
+    minitest_test_files: ["test/**/*_test.rb"],
   }.freeze
   DEFAULTS = {
     reporters: %w[clear-text progress html],
@@ -31,6 +32,7 @@ class ConfigTest < Minitest::Test
     dry_run_timeout_minutes: 5,
     excluded_mutations: [],
     incremental: false,
+    minitest_test_files: nil,
   }.freeze
   private_constant(:GIVEN, :DEFAULTS)
 
@@ -93,12 +95,19 @@ class ConfigTest < Minitest::Test
   def test_the_option_names_are_strykerjss
     names = %w[mutate testRunner reporters concurrency thresholds.high thresholds.low thresholds.break]
     names.push("timeoutMS", "timeoutFactor", "dryRunTimeoutMinutes", "mutator.excludedMutations", "incremental")
+    names.push("minitest.testFiles")
 
     assert_equal(names, Stryker::Config::OPTIONS.keys)
   end
 
   def test_the_options_pair_with_every_field_once
     assert_equal(Stryker::Config.members.sort - [:given], Stryker::Config::OPTIONS.values.sort)
+  end
+
+  def test_the_test_runner_is_built_with_the_files_it_is_given_and_with_no_keyword_when_there_are_none
+    recipes = [config(minitest_test_files: ["t/*.rb"]), config].map(&:test_runner_recipe)
+
+    assert_equal([{ files: ["t/*.rb"] }, {}], recipes.map(&:options))
   end
 
   def test_the_arrays_of_the_defaults_are_frozen

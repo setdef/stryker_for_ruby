@@ -46,19 +46,21 @@ module DryRunCase
     file
   end
 
-  # Writes the project with +tests+ as the body of its one test class.
-  def project(tests)
+  # Writes the project with +tests+ as the body of its one test class, in
+  # the file at +path+.
+  def project(tests, path = "test/shop_test.rb")
     library = write("lib/shop.rb", LIBRARY)
     Stryker::Runtime::Cache.write(@cache, { library => LIBRARY })
     write("test/test_helper.rb", HELPER)
-    write("test/shop_test.rb", "require \"test_helper\"\n\nclass ShopTest < Minitest::Test\n#{tests}\nend\n")
+    write(path, "require \"test_helper\"\n\nclass ShopTest < Minitest::Test\n#{tests}\nend\n")
   end
 
   # Writes the project of +tests+, and yields the started adapter and the
-  # config, with a limit of +minutes+ for the dry run, until the block ends.
-  def started(tests, minutes)
-    project(tests)
-    config = Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", dry_run_timeout_minutes: minutes)
+  # config, with a limit of +minutes+ for the dry run and the options of
+  # the config as keywords, until the block ends.
+  def started(tests, minutes, path: "test/shop_test.rb", **)
+    project(tests, path)
+    config = Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", dry_run_timeout_minutes: minutes, **)
     isolation = dry_run_isolation(@cache, @root)
     isolation.start(config)
     begin
@@ -70,8 +72,8 @@ module DryRunCase
 
   # Writes the project of +tests+, and runs its dry run with a limit of
   # +minutes+.
-  def dry_run(tests, minutes: 5)
-    started(tests, minutes) { |isolation, config| isolation.dry_run(config) }
+  def dry_run(tests, minutes: 5, **)
+    started(tests, minutes, **) { |isolation, config| isolation.dry_run(config) }
   end
 
   # Runs the dry run of a project whose one test reaches mutant 2, and then
@@ -99,6 +101,28 @@ module DryRunCase
     assert_equal([1], found.static_bucket)
     assert_equal([[], [2]], found.buckets.values_at("ShopTest#test_rate", "ShopTest#test_total"))
     assert_equal(%w[passed passed], found.results.map(&:status))
+  end
+
+  PLUGIN_TESTS = "plugins/cart/test/shop_test.rb"
+  TOTAL = "  def test_total = assert_equal(20, Shop.total(10))"
+  private_constant(:PLUGIN_TESTS, :TOTAL)
+
+  def test_the_dry_run_loads_the_test_files_that_minitest_test_files_names
+    found = dry_run(TOTAL, path: PLUGIN_TESTS, minitest_test_files: ["plugins/*/test/*_test.rb"])
+
+    assert_equal(["ShopTest#test_total"], found.results.map { |result| result.test.id })
+  end
+
+  def test_the_dry_run_loads_only_the_test_files_that_minitest_test_files_names
+    found = dry_run(TOTAL, minitest_test_files: ["plugins/*/test/*_test.rb"])
+
+    assert_empty(found.results)
+  end
+
+  def test_a_test_file_outside_the_default_files_is_not_loaded_when_minitest_test_files_is_not_given
+    found = dry_run(TOTAL, path: PLUGIN_TESTS)
+
+    assert_empty(found.results)
   end
 
   def test_a_test_that_fails_with_no_mutant_active_fails_the_dry_run

@@ -12,7 +12,8 @@ module Stryker
   # 2. the configuration file;
   # 3. the defaults. `Stryker::Config::DEFAULTS` has them, and Configure
   #    works out the three that depend on the project or the machine:
-  #    `mutate`, `testRunner`, and `concurrency`.
+  #    `mutate`, `testRunner`, and `concurrency`. `minitest.testFiles` has
+  #    none: the Minitest test runner holds the default.
   #
   # Before it resolves anything, Configure checks every option in the file
   # and on the command line, including the ones that a higher source
@@ -22,8 +23,8 @@ module Stryker
   # option, the type it takes, and the value), a name in
   # `mutator.excludedMutations` that no mutator has (the line lists the valid
   # names), an option that the file gives in both of its spellings (the line
-  # names both keys), a pattern in `mutate` that resolves outside the project's
-  # root or holds a NUL byte, or a `thresholds.high` below `thresholds.low`. Each line says where
+  # names both keys), a pattern in `mutate` or `minitest.testFiles` that resolves
+  # outside the project's root or holds a NUL byte, or a `thresholds.high` below `thresholds.low`. Each line says where
   # the value came from: the file, the flag, or the default.
   #
   # Configure parses no `argv`: the `stryker` command does, and passes the

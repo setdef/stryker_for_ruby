@@ -38,6 +38,7 @@ class ConfigureTest < Minitest::Test
     dry_run_timeout_minutes: 10,
     excluded_mutations: ["BooleanLiteral"],
     incremental: true,
+    minitest_test_files: nil,
   }.freeze
   private_constant(:FILE, :JSON_FILE, :FROM_FILE)
 

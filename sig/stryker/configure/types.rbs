@@ -34,6 +34,10 @@ module Stryker
       # The conversion of a kind that holds a value as it was given.
       AS_GIVEN: ^(Object? value) -> Object?
 
+      # The names of the options whose value is a list of file patterns, which
+      # the checks of patterns read: `mutate` and `minitest.testFiles`.
+      PATTERN_LISTS: Array[String]
+
       # The form of a percentage for `concurrency`: 0 to 100, with a percent
       # sign.
       PERCENT: Regexp

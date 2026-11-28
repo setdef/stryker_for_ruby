@@ -12,7 +12,7 @@ module Stryker
         end
 
         def to_a
-          return [] unless @setting.name == "mutate"
+          return [] unless Types::PATTERN_LISTS.include?(@setting.name)
 
           outside = Types.strings(@setting.value).filter { |pattern| outside?(pattern) }
           outside.map do |pattern|
