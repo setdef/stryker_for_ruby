@@ -41,6 +41,15 @@ module Stryker
     # that would hold one.
     NO_EXCLUDED_MUTATIONS: Array[String]
 
+    # The keywords of each test runner's constructor that the config gives,
+    # by the test runner's name: each keyword with the field that holds its
+    # value. An option under a test runner's own name, such as
+    # `minitest.testFiles`, reaches only that test runner, so a name that
+    # isn't here, and a field whose value is nil, give a test runner no
+    # keyword. The table lives here, in the orchestrator, because the project
+    # process, which builds the test runner, loads nothing of the config.
+    RUNNER_KEYWORDS: Hash[String, Hash[Symbol, Symbol]]
+
     # The default of each field that has one, other than `concurrency`, whose
     # default depends on the machine. Every field has one except `mutate` and
     # `test_runner`. `minitest_test_files` has nil, because the Minitest test
@@ -120,8 +129,10 @@ module Stryker
     attr_reader given: Array[Symbol]
 
     # How a project process builds the test runner for this config: the
-    # test runner's name, with `files:` set to `minitest_test_files` when
-    # that holds patterns, and no options otherwise.
+    # test runner's name, and the keywords that `RUNNER_KEYWORDS` has for that
+    # name, each with the value of its field when the field holds one. A test
+    # runner that the table lacks gets no keywords, whatever options the
+    # config holds for other test runners.
     def test_runner_recipe: () -> TestRunners::Recipe
 
     # The number of project processes to run at once when no option says: the

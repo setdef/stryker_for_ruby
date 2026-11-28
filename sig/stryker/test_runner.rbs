@@ -67,4 +67,17 @@ module Stryker
     # Called just after the test of `result` finishes.
     def test_finished: (TestResult result) -> void
   end
+
+  # The class of a test runner adapter: what builds one in a project process.
+  # `Stryker::TestRunners::Recipe` builds an adapter from this and the
+  # keywords that the orchestrator wrote for it, so an adapter takes the
+  # project's root and then its own options as keywords.
+  interface _TestRunnerClass
+    # Builds the adapter in the project's `root`, with the options that its
+    # recipe holds, none of which it needs to take.
+    #
+    # - `root`: String, the project's root.
+    # - `options`: the adapter's own keywords.
+    def new: (String root, **Object? options) -> _TestRunner
+  end
 end

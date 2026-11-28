@@ -49,7 +49,10 @@ module Stryker
       incremental: false,
       minitest_test_files: nil,
     }.freeze
-    public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS, :NONE_GIVEN)
+    RUNNER_KEYWORDS = Hash.new(Hash(nil).freeze).merge!(
+      { minitest: { files: :minitest_test_files }.freeze }.transform_keys(&:to_s)
+    ).freeze
+    public_constant(:OPTIONS, :DEFAULTS, :NO_EXCLUDED_MUTATIONS, :NONE_GIVEN, :RUNNER_KEYWORDS)
 
     def self.default_concurrency(processors = Etc.nprocessors)
       return processors if processors <= 4
@@ -63,7 +66,8 @@ module Stryker
     end
 
     def test_runner_recipe
-      TestRunners::Recipe.new(test_runner, { files: minitest_test_files }.compact)
+      values = RUNNER_KEYWORDS[test_runner].transform_values { |field| public_send(field) }
+      TestRunners::Recipe.new(test_runner, values.compact)
     end
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break

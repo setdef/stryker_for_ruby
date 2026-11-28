@@ -110,6 +110,12 @@ class ConfigTest < Minitest::Test
     assert_equal([{ files: ["t/*.rb"] }, {}], recipes.map(&:options))
   end
 
+  def test_the_options_of_one_test_runner_reach_no_other
+    recipe = config(test_runner: "rspec", minitest_test_files: ["t/*.rb"]).test_runner_recipe
+
+    assert_equal(["rspec", {}], [recipe.name, recipe.options])
+  end
+
   def test_the_arrays_of_the_defaults_are_frozen
     defaults = Stryker::Config::DEFAULTS.values_at(:reporters, :excluded_mutations)
 

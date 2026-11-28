@@ -42,14 +42,14 @@ module Stryker
       # - `runners`: Hash, the adapters by name.
       # - `root`: String, the project's root.
       # - `words`: Array of String, the name and the options.
-      def self.build_from_words: (Hash[String, singleton(MinitestRunner)] runners, String root, Array[String] words) -> MinitestRunner
+      def self.build_from_words: (Hash[String, _TestRunnerClass] runners, String root, Array[String] words) -> _TestRunner
 
       # Returns the adapter that `runners` holds under `name`. Raises
       # ArgumentError, naming it, when there is none.
       #
       # - `runners`: Hash, the adapters by name.
       # - `name`: String, the adapter's name.
-      def self.runner: (Hash[String, singleton(MinitestRunner)] runners, String? name) -> singleton(MinitestRunner)
+      def self.runner: (Hash[String, _TestRunnerClass] runners, String? name) -> _TestRunnerClass
 
       # Reads the keywords from the word that holds them, a JSON object.
       def self.keywords: (String? word) -> Hash[Symbol, Array[String]]
@@ -74,7 +74,7 @@ module Stryker
       #
       # - `runners`: Hash, the adapters by name.
       # - `root`: String, the project's root.
-      def build: (Hash[String, singleton(MinitestRunner)] runners, String root) -> MinitestRunner
+      def build: (Hash[String, _TestRunnerClass] runners, String root) -> _TestRunner
     end
   end
 end
