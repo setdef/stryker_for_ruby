@@ -134,7 +134,6 @@ Before it does anything else, `stryker run` checks every option in the file and 
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
 - **A pattern in `mutate` or `minitest.testFiles` that resolves outside the project's root** is an error ([`mutate`](#mutate), [`minitest.testFiles`](#minitesttestfiles)).
 - **A pattern in `mutate` or `minitest.testFiles` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
-- **A pattern in `minitest.testFiles` whose bytes aren't valid UTF-8** is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8.
 
 The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter that you name exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
 
@@ -360,7 +359,6 @@ The patterns follow the same rules as those of [`mutate`](#mutate), with these d
 - A pattern that matches a folder stops the run with status 2, with an error that says the tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
 - A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and every mutant has the status `NoCoverage`.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
-- A pattern whose bytes aren't valid UTF-8 is an error, which it isn't for `mutate`.
 
 The test runner loads `test/test_helper.rb` first when the project has one, whatever `testFiles` holds. Then it loads each file that a pattern matches once, in the order of the files' paths, even when two patterns match the same file. Every project process loads these files, so a pattern that matches files that aren't tests loads them in each process.
 

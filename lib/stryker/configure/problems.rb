@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative("checks/given_twice")
-require_relative("checks/not_utf8_in_process_options")
 require_relative("checks/nul_in_patterns")
 require_relative("checks/outside_patterns")
 require_relative("checks/threshold_order")
@@ -32,7 +31,6 @@ module Stryker
           Checks::UnknownOption.new(setting),
           Checks::WrongType.new(setting),
           Checks::NulInPatterns.new(setting),
-          Checks::NotUtf8InProcessOptions.new(setting),
           Checks::OutsidePatterns.new(setting, @root),
           Checks::UnknownMutators.new(setting),
         ]

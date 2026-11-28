@@ -22,17 +22,11 @@ module Stryker
       end
 
       PATTERN_LISTS = %w[mutate minitest.testFiles].freeze
-      PROCESS_OPTIONS = %w[minitest.testFiles].freeze
-      AS_UTF8 = -> (items) { strings(items).map { |item| item.dup.force_encoding(Encoding::UTF_8) } }
 
       PERCENT = /\A(?:100|[1-9]?[0-9])%\z/
 
-      def self.list_of(what, conversion = AS_GIVEN)
-        Kind.new(
-          "an array of #{what}, written as strings",
-          -> (value) { value.is_a?(Array) && value.all?(String) },
-          conversion
-        )
+      def self.list_of(what)
+        Kind.new("an array of #{what}, written as strings", -> (value) { value.is_a?(Array) && value.all?(String) })
       end
 
       def self.number(description, range, conversion = AS_GIVEN)
@@ -78,10 +72,10 @@ module Stryker
         dryRunTimeoutMinutes: number("a number of minutes, 0 or more", 0..),
         "mutator.excludedMutations": list_of("mutator names"),
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
-        "minitest.testFiles": list_of("file patterns", AS_UTF8),
+        "minitest.testFiles": list_of("file patterns"),
       }
       KINDS = Hash.new(anything).merge!(options.transform_keys(&:to_s)).freeze
-      public_constant(:AS_GIVEN, :AS_UTF8, :PATTERN_LISTS, :PROCESS_OPTIONS, :PERCENT, :KINDS)
+      public_constant(:AS_GIVEN, :PATTERN_LISTS, :PERCENT, :KINDS)
     end
   end
 end
