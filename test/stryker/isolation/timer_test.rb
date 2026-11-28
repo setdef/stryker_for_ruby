@@ -23,11 +23,12 @@ class TimerTest < Minitest::Test
   end
 
   def test_a_later_test_starts_no_new_limit
-    timer = Stryker::Isolation::Timer.new(50, 0)
+    now = 100.0
+    timer = Stryker::Isolation::Timer.new(50, 0, clock: -> { now })
     timer.tests_started
     # Past the limit of the first test, so a second start that set a new
     # limit would leave time.
-    sleep(0.06)
+    now += 0.06
     timer.tests_started
 
     assert_in_delta(0.0, timer.left)
