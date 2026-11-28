@@ -6,8 +6,8 @@ require_relative "process_group"
 module Stryker
   module Isolation
     class Custody
-      def initialize(fresh, process = Process)
-        @fresh = fresh
+      def initialize(made, process = Process)
+        @made = made
         @process = process
         @pid = nil
         @child = nil
@@ -35,7 +35,7 @@ module Stryker
         # The folder outlives the process, which writes into it.
         end_process
       ensure
-        @fresh.remove
+        @made.remove
       end
 
       private def end_process

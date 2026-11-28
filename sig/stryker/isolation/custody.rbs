@@ -2,8 +2,8 @@ module Stryker
   module Isolation
     # What a launch has started, from the moment its process starts until a
     # watch holds it. When the launch fails in that time, or a signal ends
-    # it, the custody ends the process, and then deletes the run's folder,
-    # which the process writes into.
+    # it, the custody ends the process, and then removes what the launch
+    # made, such as the run's folder, which the process writes into.
     #
     # ## Examples
     #
@@ -14,8 +14,16 @@ module Stryker
     # end
     # ```
     class Custody
-      # The run whose folder the custody deletes when the launch fails.
-      @fresh: FreshRun
+      # What a launch made, and a custody removes: a run's folder, or the
+      # fork parent's folder and pipes.
+      interface _Made
+        # Deletes what the launch made.
+        def remove: () -> void
+      end
+
+      # What the launch made, which the custody removes when the launch
+      # fails.
+      @made: _Made
 
       # `Process`, or a stand-in in a test.
       @process: singleton(::Process)
@@ -28,15 +36,16 @@ module Stryker
 
       # Builds the custody of a launch that has started nothing.
       #
-      # - `fresh`: Stryker::Isolation::FreshRun, the run.
+      # - `made`: what the launch made, which answers `remove` by deleting it:
+      #   a `Stryker::Isolation::FreshRun`, say.
       # - `process`: `Process`, or a stand-in in a test.
-      def initialize: (FreshRun fresh, ?singleton(::Process) process) -> void
+      def initialize: (_Made made, ?singleton(::Process) process) -> void
 
       # Yields the custody, and returns what the block returns. A signal
       # that arrives while the block runs waits until it ends. When the
       # block raises, or a signal waits, the process the custody holds is
-      # ended and the run's folder deleted, and the error reaches the caller
-      # unchanged.
+      # ended and what the launch made removed, and the error reaches the
+      # caller unchanged.
       def around: [T] () { (Custody custody) -> T } -> T
 
       # Holds the process whose ID is `pid`, and returns the handle over it.
@@ -46,8 +55,8 @@ module Stryker
 
       private
 
-      # Ends the process the custody holds, if any, and then deletes the
-      # run's folder.
+      # Ends the process the custody holds, if any, and then removes what the
+      # launch made.
       def abandon: () -> void
 
       # Ends the process the custody holds: through its handle once it has
