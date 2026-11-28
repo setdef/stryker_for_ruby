@@ -16,6 +16,12 @@ module Stryker
     # # => 3, or nil when the KILL ended it first
     # ```
     class ChildProcess
+      # The longest wait, in seconds, for a process to be reapable once its
+      # pipe has ended: the system can let it be reaped a moment after its
+      # pipe ends, up to 1.1 ms after on macOS, where a third of the
+      # processes measured weren't reapable at once.
+      ENDING_SECONDS: Float
+
       # How long a reap with a moment pauses between two asks, in seconds.
       PAUSE_SECONDS: Float
 

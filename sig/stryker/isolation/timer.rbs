@@ -23,6 +23,14 @@ module Stryker
       # load them.
       START_SECONDS: Integer
 
+      # The longest wait, in seconds, while a run needs a look whatever its
+      # pipe does: while a fresh process has started no test, because the
+      # start of its first test shows only in its results file, so the run's
+      # time limit starts at most this much after its first test does; and
+      # while a process's pipe has ended and the process can't be reaped yet,
+      # as when it moved its standard output.
+      POLL_SECONDS: Float
+
       # The run's time limit, in milliseconds, until its first test starts,
       # and none after.
       @awaiting_test: Array[Integer]

@@ -79,7 +79,7 @@ module Stryker
 
       # The seconds until the run needs another look whatever its pipe does:
       # what is left of its time, or at most
-      # `Stryker::Isolation::FreshRun::Running::POLL_SECONDS` while it has
+      # `Stryker::Isolation::Timer::POLL_SECONDS` while it has
       # started no test, or while its pipe has ended and its process hasn't.
       def wake_in: () -> Float
 

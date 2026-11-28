@@ -6,7 +6,9 @@ require_relative "timer"
 module Stryker
   module Isolation
     class ChildProcess
+      ENDING_SECONDS = 0.01
       PAUSE_SECONDS = 0.0001
+      public_constant(:ENDING_SECONDS)
       private_constant(:PAUSE_SECONDS)
 
       attr_reader :pid

@@ -16,20 +16,6 @@ module Stryker
       # # => a Stryker::Isolation::FreshRun::Reaped
       # ```
       class Running < Stage
-        # The longest wait, in seconds, while the run needs a look whatever
-        # its pipe does: while its process has started no test, because the
-        # start of the first test shows only in the results file, so the run's
-        # time limit starts at most this much after its first test does; and
-        # while its pipe has ended and its process hasn't, as when the process
-        # moved its standard output.
-        POLL_SECONDS: Float
-
-        # The longest wait, in seconds, for a process to be reapable once its
-        # pipe has ended: the system can let it be reaped a moment after its
-        # pipe ends, up to 1.1 ms after on macOS, where a third of the
-        # processes measured weren't reapable at once.
-        ENDING_SECONDS: Float
-
         # The run's folder.
         @folder: FreshFolder
 
@@ -57,11 +43,13 @@ module Stryker
         # Copies what the process wrote to its standard output, if `ready`
         # holds the pipe, starts the time limit once the results file shows
         # that the first test started, and reaps the process once its pipe has
-        # ended, if it has ended too, waiting at most `ENDING_SECONDS` on the
+        # ended, if it has ended too, waiting at most
+        # `Stryker::Isolation::ChildProcess::ENDING_SECONDS` on the
         # look that finds the pipe ended.
         def take: (Array[IO] ready) -> nil
 
-        # What is left of the run's time, or at most `POLL_SECONDS` while the
+        # What is left of the run's time, or at most
+        # `Stryker::Isolation::Timer::POLL_SECONDS` while the
         # run needs a look whatever its pipe does.
         def wake_in: () -> Float
 
@@ -86,7 +74,7 @@ module Stryker
         def first_test: () -> nil
 
         # Whether the run needs a look whatever its pipe does, as
-        # `POLL_SECONDS` says.
+        # `Stryker::Isolation::Timer::POLL_SECONDS` says.
         def polled?: () -> bool
       end
     end

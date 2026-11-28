@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../child_process"
+require_relative "../timer"
 require_relative "reaped"
 require_relative "stage"
 
@@ -7,10 +9,6 @@ module Stryker
   module Isolation
     class FreshRun
       class Running < Stage
-        POLL_SECONDS = 0.1
-        ENDING_SECONDS = 0.01
-        public_constant(:ENDING_SECONDS, :POLL_SECONDS)
-
         def initialize(folder, child, output, timer)
           super()
           @folder = folder
@@ -28,13 +26,13 @@ module Stryker
           # The pipe ends when the process does, unless the process handed its
           # standard output on, or moved it. The system can take a moment more
           # to let an ending process be reaped.
-          @output.take(ready) { @child.reap(ENDING_SECONDS) }
+          @output.take(ready) { @child.reap(ChildProcess::ENDING_SECONDS) }
           first_test
         end
 
         def wake_in
           left = @timer.left
-          polled? ? [left, POLL_SECONDS].min : left
+          polled? ? [left, Timer::POLL_SECONDS].min : left
         end
 
         def done?

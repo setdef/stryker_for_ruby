@@ -4,7 +4,8 @@ module Stryker
   module Isolation
     class Timer
       START_SECONDS = 300
-      public_constant(:START_SECONDS)
+      POLL_SECONDS = 0.1
+      public_constant(:POLL_SECONDS, :START_SECONDS)
 
       def self.now
         # Monotonic, so a change to the system clock during a run changes no
