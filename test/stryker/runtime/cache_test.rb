@@ -100,6 +100,26 @@ class CacheTest < Minitest::Test
     assert_equal(%w[1 2], [utf8, binary].map { |path| text(cache, path).chomp })
   end
 
+  # A file name on Linux can hold any bytes, so a path can be neither valid
+  # UTF-8 nor a letter of any encoding. Ruby tags one from the file system
+  # as UTF-8 under a UTF-8 locale and as binary elsewhere, and the cache reads
+  # it back under either tag.
+  def test_a_path_that_is_not_valid_utf8_is_found_under_either_tag
+    broken = "/app/lib/caf\xE9.rb"
+    Stryker::Runtime::Cache.write(directory, { broken => "1\n" })
+    cache = Stryker::Runtime::Cache.read(directory, nil)
+
+    assert_equal(%w[1 1], [broken, broken.b].map { |path| text(cache, path).chomp })
+  end
+
+  def test_a_path_that_is_not_valid_utf8_keeps_its_bytes_beside_a_path_that_is_valid
+    paths = ["/app/lib/caf\xE9.rb", "/app/lib/café.rb", "/app/lib/\xFF.rb".b]
+    Stryker::Runtime::Cache.write(directory, paths.to_h { |path| [path, "#{path.bytesize}\n"] })
+    cache = Stryker::Runtime::Cache.read(directory, nil)
+
+    assert_equal(paths.map { |path| "#{path.bytesize}\n" }, paths.map { |path| text(cache, path) })
+  end
+
   def test_no_sources_make_an_empty_cache
     assert_empty([written.files, written.names].flat_map(&:to_a))
   end

@@ -51,7 +51,10 @@ module Stryker
       end
 
       def self.table(directory)
-        paths = text(File.join(directory, INDEX)).split(SEPARATOR)
+        # The index stays binary: a path from a file name that isn't valid
+        # UTF-8 would make a UTF-8 string raise when it is split, and
+        # PathKey tags each key as the lookups need.
+        paths = File.binread(File.join(directory, INDEX)).split(SEPARATOR)
         paths.each_with_index.to_h { |path, place| [path, entry(directory, place)] }
       end
       private_class_method(:entry, :index, :table)
