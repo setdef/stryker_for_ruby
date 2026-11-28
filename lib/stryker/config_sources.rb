@@ -2,6 +2,7 @@
 
 require_relative("config_sources/json_file")
 require_relative("config_sources/yaml_file")
+require_relative("file_name")
 
 module Stryker
   module ConfigSources
@@ -33,17 +34,19 @@ module Stryker
 
     def self.named_file(root, named)
       unless File.file?(File.expand_path(named, root))
-        raise(ConfigError, "The configuration file #{named} doesn't exist.")
+        raise(ConfigError, "The configuration file #{FileName.shown(named)} doesn't exist.")
       end
 
       source_for(root, named)
     end
 
-    def self.source_for(root, label)
-      format = FORMATS.fetch(File.extname(label).delete_prefix(".").downcase.to_sym) do
+    def self.source_for(root, named)
+      # The label is for messages, so it is the name as shown.
+      label = FileName.shown(named)
+      format = FORMATS.fetch(File.extname(named).delete_prefix(".").downcase.to_sym) do
         raise(ConfigError, "#{label} isn't a JSON or YAML file. Name a file whose name ends in .json, .yml, or .yaml.")
       end
-      Located.new(label:, source: format.new(File.expand_path(label, root), label:))
+      Located.new(label:, source: format.new(File.expand_path(named, root), label:))
     end
     private_class_method(:default_file, :both_exist, :named_file, :source_for)
   end

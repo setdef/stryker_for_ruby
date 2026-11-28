@@ -36,6 +36,12 @@ class PipelineSelectedFilesTest < Minitest::Test
     )
   end
 
+  def test_the_json_reporter_spells_a_newline_and_a_backslash_in_the_name_as_shown
+    error = assert_raises(Stryker::UnsupportedError) { selected(%w[json], "lib/caf\xE9\n\\x.rb".b) }
+
+    assert_includes(error.message, %(the file "lib/caf\\xE9\\x0A\\\\x.rb", because))
+  end
+
   def test_the_json_reporter_takes_files_whose_names_are_valid_utf8
     assert_equal(["lib/a.rb", "lib/café.rb"], selected(%w[json], "lib/a.rb", "lib/café.rb"))
   end

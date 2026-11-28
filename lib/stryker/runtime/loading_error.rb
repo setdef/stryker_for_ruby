@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../file_name"
+
 module Stryker
   module Runtime
     class LoadingError < StandardError
@@ -17,7 +19,7 @@ module Stryker
 
       private def describe
         ahead = @ahead
-        lines = [HEADING, *@files.map { |file| "  #{file}" }]
+        lines = [HEADING, *@files.map { |file| "  #{FileName.shown(file)}" }]
         lines << "#{ahead.name || ahead.inspect} defines load_iseq ahead of the hook." if ahead
         lines.join("\n")
       end

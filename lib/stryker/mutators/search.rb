@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "English"
+require_relative "../file_name"
 require_relative "candidate"
 require_relative "traversal"
 require_relative "unreadable"
@@ -31,7 +32,7 @@ module Stryker
       private def candidates_at(mutator, node, ancestors)
         Candidate.at(mutator, node, ancestors)
       rescue Unreadable
-        @warnings.puts("#{@file}:#{node.location.start_line}: warning: #{$ERROR_INFO}")
+        @warnings.puts("#{FileName.shown(@file)}:#{node.location.start_line}: warning: #{$ERROR_INFO}")
         []
       end
     end

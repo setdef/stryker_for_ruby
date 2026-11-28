@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../file_name"
 require_relative "code_lines"
 require_relative "disable_comment"
 
@@ -15,7 +16,7 @@ module Stryker
         @names = names
         @warnings = warnings
         @comments = result.comments.filter_map { |comment| DisableComment.read(comment, code) }
-        @comments.each { |comment| report(comment, "#{file}:#{comment.line}") }
+        @comments.each { |comment| report(comment, "#{FileName.shown(file)}:#{comment.line}") }
       end
 
       def reason(candidate)

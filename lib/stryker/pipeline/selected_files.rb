@@ -7,7 +7,7 @@ require_relative "../unsupported_error"
 module Stryker
   class Pipeline
     class SelectedFiles
-      NOT_UTF8 = "The json reporter can't write the file %<name>s, because JSON holds only UTF-8 text and the " \
+      NOT_UTF8 = "The json reporter can't write the file \"%<name>s\", because JSON holds only UTF-8 text and the " \
         "file's name isn't. Leave the file out of mutate, or take json out of reporters."
       private_constant(:NOT_UTF8)
 
@@ -25,7 +25,7 @@ module Stryker
 
       private def refuse(paths)
         name = paths.find { |path| !FileName.utf8?(path) }
-        raise(UnsupportedError, format(NOT_UTF8, name: name.inspect)) if name
+        raise(UnsupportedError, format(NOT_UTF8, name: FileName.shown(name))) if name
       end
     end
   end

@@ -76,6 +76,15 @@ class JsonReportTest < Minitest::Test
     )
   end
 
+  def test_spells_a_newline_and_a_backslash_in_the_name_of_a_test_file_as_shown
+    event = dry_run_in("test/a_test.rb", "test/caf\xE9\n\\x_test.rb".b)
+    error = Sample.create do |root|
+      assert_raises(Stryker::UnsupportedError) { reporter_under_test(Sample.config, root).call(event) }
+    end
+
+    assert_includes(error.message, %(the test file "test/caf\\xE9\\x0A\\\\x_test.rb", because))
+  end
+
   def test_takes_a_test_file_whose_name_is_valid_utf8_and_a_test_with_no_file
     heard = Sample.create { |root| reporter_under_test(Sample.config, root).call(dry_run_in("test/café_test.rb", nil)) }
 

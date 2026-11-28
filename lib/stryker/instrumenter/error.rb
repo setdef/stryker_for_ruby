@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "prism"
+require_relative "../file_name"
 
 module Stryker
   class Instrumenter
@@ -31,7 +32,7 @@ module Stryker
       private_class_method(:worker_failure)
 
       def self.placed(mutant)
-        "the plain mutant of mutant #{mutant.id} in #{mutant.file}"
+        "the plain mutant of mutant #{mutant.id} in #{FileName.shown(mutant.file)}"
       end
       private_class_method(:placed)
     end

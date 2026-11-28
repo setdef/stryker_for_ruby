@@ -11,7 +11,7 @@ module Stryker
   module Reporters
     class JsonReport < WholeRun
       FILE_NAME = File.join("reports", "mutation", "mutation.json")
-      NOT_UTF8 = "The json reporter can't write the test file %<name>s, because JSON holds only UTF-8 text and " \
+      NOT_UTF8 = "The json reporter can't write the test file \"%<name>s\", because JSON holds only UTF-8 text and " \
         "the file's name isn't. Rename the file, or take json out of reporters."
       public_constant(:FILE_NAME)
       private_constant(:NOT_UTF8)
@@ -29,7 +29,7 @@ module Stryker
       private def refuse_unreportable(results)
         files = results.filter_map { |result| result.test.file }
         name = files.find { |file| !FileName.utf8?(file) }
-        raise(UnsupportedError, format(NOT_UTF8, name: name.inspect)) if name
+        raise(UnsupportedError, format(NOT_UTF8, name: FileName.shown(name))) if name
       end
 
       private def publish(report)

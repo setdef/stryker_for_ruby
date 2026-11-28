@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "file_name"
 require_relative "instrumentation/result"
 require_relative "instrumentation/source_file"
 require_relative "instrumenter"
@@ -23,7 +24,7 @@ module Stryker
 
     def call(paths)
       template = paths.find { |path| File.extname(path).casecmp?(TEMPLATE) }
-      raise(UnsupportedError, format(TEMPLATES, path: template)) if template
+      raise(UnsupportedError, format(TEMPLATES, path: FileName.shown(template))) if template
 
       Instrumenter::ParsePool.open(@concurrency) { |pool| instrument(paths, pool) }
     end

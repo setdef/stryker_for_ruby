@@ -35,7 +35,7 @@ class CLIFileTest < Minitest::Test
   def test_a_file_with_a_nul_byte_is_a_config_error_that_names_the_argument
     outcome = stryker("run", "a\0b.json")
 
-    assert_equal([2, %(The configuration file "a\\u0000b.json" has a NUL byte.\n)], [outcome.status, outcome.err])
+    assert_equal([2, %(The configuration file "a\\x00b.json" has a NUL byte.\n)], [outcome.status, outcome.err])
   end
 
   def test_two_files_are_a_usage_error
