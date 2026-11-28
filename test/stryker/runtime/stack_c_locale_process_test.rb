@@ -24,4 +24,20 @@ class StackCLocaleProcessTest < Minitest::Test
       assert_equal("true\n", run_program(program, { LC_ALL: "C", LANG: "C" }).first)
     end
   end
+
+  # A path of ASCII bytes finds its UTF-8 key whatever its tag, so the check has
+  # no reason to copy and retag it.
+  def test_a_file_with_only_letters_of_ascii_in_its_name_is_found_loading_under_the_c_locale_with_no_path_retagged
+    Dir.mktmpdir do |folder|
+      file = File.join(File.realpath(folder), "invoice.rb")
+      File.write(file, "Thread.current[:found] = Stryker::Runtime::Stack.loading?(Thread.current[:paths])\n")
+      program = "require 'stryker/runtime'\nfile = Dir.glob(#{File.join(folder, '*.rb').inspect}).first\n" \
+        "Thread.current[:paths] = Set[Stryker::Runtime::PathKey.of(File.realpath(file))]\ntagged = []\n" \
+        "Stryker::Runtime::PathKey.singleton_class.prepend(Module.new do\n  " \
+        "define_method(:of) { |*a| tagged << a; super }\nend)\n" \
+        "load(file)\np [Thread.current[:found], tagged]"
+
+      assert_equal("[true, []]\n", run_program(program, { LC_ALL: "C", LANG: "C" }).first)
+    end
+  end
 end
