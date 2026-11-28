@@ -3,20 +3,35 @@ module Stryker
     # What a trial came to, and how the run ends with it: a trial that went on
     # from its dry run to its mutants tested them, whether it had a mutant or
     # not, and a trial that stopped at a dry run that found no test, which
-    # `allow_empty` allowed, tested none.
+    # `allow_empty` allowed, tested none. An outcome tells its listener which
+    # of the two it is, and the listener decides what to do about it.
     #
     # ## Examples
     #
     # ```ruby
-    # outcome = Stryker::Pipeline::Outcome.tested([])
-    # outcome.announce(broadcast, $stderr)
-    # # hands every reporter Stryker::Events::RunCompleted, with no result
-    # Stryker::Pipeline::Outcome.untested.announce(broadcast, $stderr)
-    # # writes one line to standard error and tells no reporter
+    # Stryker::Pipeline::Outcome.tested([]).tell(pipeline)
+    # # calls pipeline.completed([])
+    # Stryker::Pipeline::Outcome.untested.tell(pipeline)
+    # # calls pipeline.nothing_tested
     # ```
     module Outcome
+      # What an outcome tells what happened to.
+      interface _Listener
+        # A trial tested its mutants, with no mutant or with some.
+        def completed: (Array[MutantResult] results) -> void
+
+        # A trial stopped at its dry run, which found no test.
+        def nothing_tested: () -> void
+      end
+
       # Either outcome.
-      type t = Tested | singleton(Untested)
+      interface _Told
+        # Tells the listener what happened, and returns the results that the
+        # run came to.
+        #
+        # - `listener`: responds to `completed` and `nothing_tested`.
+        def tell: (_Listener listener) -> Array[MutantResult]
+      end
 
       # The outcome of a trial that went on from its dry run to its mutants.
       class Tested
@@ -29,37 +44,26 @@ module Stryker
         #   mutant.
         def initialize: (Array[MutantResult] results) -> void
 
-        # The result of every mutant, in the order of the mutants' IDs.
-        attr_reader results: Array[MutantResult]
-
-        # Ends the run as one that tested its mutants: hands every reporter
-        # `Stryker::Events::RunCompleted` with the results, and writes
-        # nothing to `warnings`.
+        # Calls `completed` on the listener with the results, and returns
+        # them.
         #
-        # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
-        #   to every reporter.
-        # - `warnings`: Stryker::_Warnings, where a run writes a warning.
-        def announce: (Broadcast broadcast, _Warnings warnings) -> void
+        # - `listener`: responds to `completed` and `nothing_tested`.
+        def tell: (_Listener listener) -> Array[MutantResult]
       end
 
       # The outcome of a trial that stopped at its dry run, which found no
       # test and was allowed to.
-      module Untested
-        # The line `announce` writes. Private.
-        LINE: String
+      class Untested
+        @results: Array[MutantResult]
 
-        # The results of an outcome that tested nothing: none, as StrykerJS
-        # returns none. A new empty array each time.
-        def self.results: () -> Array[MutantResult]
+        # Builds the outcome, which has no result.
+        def initialize: () -> void
 
-        # Ends the run as one that tested no mutant: writes one line to
-        # `warnings` that says why, and tells no reporter, as StrykerJS
-        # reports no mutant result.
+        # Calls `nothing_tested` on the listener, and returns no result, as
+        # StrykerJS returns none.
         #
-        # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
-        #   to every reporter.
-        # - `warnings`: Stryker::_Warnings, where a run writes a warning.
-        def self.announce: (Broadcast broadcast, _Warnings warnings) -> void
+        # - `listener`: responds to `completed` and `nothing_tested`.
+        def tell: (_Listener listener) -> Array[MutantResult]
       end
 
       # The outcome of a trial that went on from its dry run to its mutants.
@@ -69,7 +73,7 @@ module Stryker
       def self.tested: (Array[MutantResult] results) -> Tested
 
       # The outcome of a trial that stopped at its dry run.
-      def self.untested: () -> singleton(Untested)
+      def self.untested: () -> Untested
     end
   end
 end

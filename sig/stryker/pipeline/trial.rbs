@@ -39,7 +39,7 @@ module Stryker
       #   started.
       # - `instrumented`: Stryker::Instrumentation::Result, the live mutants
       #   and the results of the mutants that aren't valid Ruby.
-      def call: (Isolations isolations, Instrumentation::Result instrumented) -> Outcome::t
+      def call: (Isolations isolations, Instrumentation::Result instrumented) -> Outcome::_Told
 
       private
 
@@ -50,7 +50,7 @@ module Stryker
       # Ends a trial whose dry run found no test: raises
       # `Stryker::ConfigError` when `allow_empty` is false, and otherwise
       # returns an outcome that tested nothing.
-      def without_test: () -> singleton(Outcome::Untested)
+      def without_test: () -> Outcome::Untested
 
       # Plans the mutants from `found`, publishes the plan, and tests them.
       def planned: (Isolations isolations, Instrumentation::Result instrumented, DryRunResult found) -> Array[MutantResult]

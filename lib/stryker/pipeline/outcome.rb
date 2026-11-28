@@ -1,34 +1,27 @@
 # frozen_string_literal: true
 
-require_relative "../events/run_completed"
-
 module Stryker
   class Pipeline
     module Outcome
       class Tested
-        attr_reader :results
-
         def initialize(results)
           @results = results
         end
 
-        def announce(broadcast, _warnings)
-          broadcast.call(Events::RunCompleted.new(results:))
+        def tell(listener)
+          listener.completed(@results)
+          @results
         end
-
-        # @dynamic results
       end
 
-      module Untested
-        LINE = "The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report was written."
-        private_constant(:LINE)
-
-        def self.results
-          Array(nil)
+      class Untested
+        def initialize
+          @results = []
         end
 
-        def self.announce(_broadcast, warnings)
-          warnings.puts(LINE)
+        def tell(listener)
+          listener.nothing_tested
+          @results
         end
       end
 
@@ -37,7 +30,7 @@ module Stryker
       end
 
       def self.untested
-        Untested
+        Untested.new
       end
     end
   end

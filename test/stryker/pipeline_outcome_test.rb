@@ -1,45 +1,56 @@
 # frozen_string_literal: true
 
 require_relative("../test_helper")
-require "stringio"
 require "stryker/pipeline/outcome"
 
-# Checks how a trial's outcome ends a run: a trial that tested its mutants
-# tells the reporters the run completed, and one that stopped at a dry run that
-# found no test writes a line and tells nobody.
+# Checks what a trial's outcome tells the listener it is given: a trial that
+# tested its mutants tells it the run completed, with their results, and one
+# that stopped at a dry run that found no test tells it that nothing was tested.
 class PipelineOutcomeTest < Minitest::Test
-  def test_a_trial_that_tested_its_mutants_hands_every_reporter_a_completed_run_with_their_results
-    events = []
-    warnings = StringIO.new
+  # A listener that notes what it hears.
+  class Listener
+    attr_reader :heard
+
+    def initialize
+      @heard = []
+    end
+
+    def completed(results)
+      @heard << [:completed, results]
+    end
+
+    def nothing_tested
+      @heard << [:nothing_tested]
+    end
+  end
+  private_constant(:Listener)
+
+  def test_a_trial_that_tested_its_mutants_tells_the_listener_the_run_completed_with_their_results
+    listener = Listener.new
     results = %i[first second]
-    outcome = Stryker::Pipeline::Outcome.tested(results)
-    outcome.announce(events.method(:push), warnings)
+    Stryker::Pipeline::Outcome.tested(results).tell(listener)
 
-    assert_equal(
-      [[Stryker::Events::RunCompleted.new(results:)], "", results],
-      [events, warnings.string, outcome.results]
-    )
+    assert_equal([[:completed, results]], listener.heard)
   end
 
-  def test_a_trial_that_had_no_mutant_still_completes_the_run_with_no_result
-    events = []
-    Stryker::Pipeline::Outcome.tested([]).announce(events.method(:push), StringIO.new)
+  def test_a_trial_that_had_no_mutant_still_tells_the_listener_the_run_completed_with_no_result
+    listener = Listener.new
+    Stryker::Pipeline::Outcome.tested([]).tell(listener)
 
-    assert_equal([Stryker::Events::RunCompleted.new(results: [])], events)
+    assert_equal([[:completed, []]], listener.heard)
   end
 
-  def test_a_trial_that_stopped_at_its_dry_run_writes_one_line_and_tells_no_reporter
-    events = []
-    warnings = StringIO.new
-    Stryker::Pipeline::Outcome.untested.announce(events.method(:push), warnings)
+  def test_a_trial_that_stopped_at_its_dry_run_tells_the_listener_that_nothing_was_tested
+    listener = Listener.new
+    Stryker::Pipeline::Outcome.untested.tell(listener)
 
-    assert_equal(
-      [[], "The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report was written.\n"],
-      [events, warnings.string]
-    )
+    assert_equal([[:nothing_tested]], listener.heard)
   end
 
-  def test_a_trial_that_stopped_at_its_dry_run_holds_no_result
-    assert_empty(Stryker::Pipeline::Outcome.untested.results)
+  def test_each_outcome_returns_the_results_the_run_came_to
+    results = %i[first second]
+    outcomes = [Stryker::Pipeline::Outcome.tested(results), Stryker::Pipeline::Outcome.untested]
+
+    assert_equal([results, []], outcomes.map { |outcome| outcome.tell(Listener.new) })
   end
 end

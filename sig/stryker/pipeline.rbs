@@ -38,6 +38,9 @@ module Stryker
     # What starts the name of the cache's directory. Private.
     CACHE: String
 
+    # The line `nothing_tested` writes. Private.
+    NOTHING_TESTED: String
+
     @root: String
 
     @isolations: ^(String cache) -> [_DryRunIsolation, _Isolation]
@@ -74,17 +77,24 @@ module Stryker
     # - `config`: Stryker::Config, the checked options of the run.
     def call: (Config config) -> Float?
 
+    # Ends the run as one that tested its mutants, as an outcome tells it to:
+    # hands every reporter `Stryker::Events::RunCompleted` with the results.
+    #
+    # - `results`: Array of Stryker::MutantResult, the result of every
+    #   mutant, in the order of the mutants' IDs. Empty when the run has no
+    #   mutant.
+    def completed: (Array[MutantResult] results) -> void
+
+    # Ends the run as one that tested no mutant, as an outcome tells it to:
+    # writes one line to `warnings` that says why, and tells no reporter, as
+    # StrykerJS reports no mutant result.
+    def nothing_tested: () -> void
+
     private
 
     # Finds the mutants of the files that `config` selects, tests them, and
     # returns what the trial came to.
-    def run_stages: (Config config) -> Outcome::t
-
-    # Finds the mutants of the files that `config` selects, tests them, hands
-    # every reporter `Stryker::Events::RunCompleted`, and returns the result
-    # of every mutant, or an empty array, with no event and one line to
-    # `warnings`, when the dry run found no test.
-    def completed: (Config config) -> Array[MutantResult]
+    def run_stages: (Config config) -> Outcome::_Told
 
     # Does nothing when `error` is nil. Otherwise hands every reporter
     # `Stryker::Events::RunAborted` with `error`, and raises `error` again,
@@ -98,6 +108,6 @@ module Stryker
     def instrument: (Config config) -> Instrumentation::Result
 
     # Writes the cache, and tests the mutants with the adapters for it.
-    def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Outcome::t
+    def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Outcome::_Told
   end
 end
