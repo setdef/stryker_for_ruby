@@ -51,8 +51,9 @@ module Stryker
       # The process's status, once it has ended. Waits until it does.
       def status: () -> Process::Status
 
-      # Kills the process and its group while it runs, and waits until it
-      # has ended.
+      # Kills the process and its group while it runs, or what an ended
+      # process left running in its group, as `kill_rest` does, and waits
+      # until the process has ended.
       def stop: () -> nil
 
       private

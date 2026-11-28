@@ -4,11 +4,11 @@ require_relative("../../support/isolation_stand_ins")
 require "stryker/isolation/child"
 
 # How the orchestrator, or the fork parent, holds a process it started:
-# its waiter reaps it, and nothing kills a process that has ended.
+# its waiter reaps it, and nothing kills the process itself once it has ended.
 class ChildTest < Minitest::Test
   include IsolationStandIns
 
-  def test_a_process_that_has_ended_is_stopped_with_no_kill
+  def test_a_process_that_has_ended_is_stopped
     child = Stryker::Isolation::Child.new(ended_pid_unreaped)
     child.end_within(20)
 

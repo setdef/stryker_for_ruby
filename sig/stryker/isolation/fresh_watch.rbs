@@ -55,7 +55,8 @@ module Stryker
       # lands the run.
       def finish: () -> nil
 
-      # Kills the process while it runs, waits until it ended, and deletes
+      # Kills the process and its group while it runs, or what an ended
+      # process left running in its group, waits until it ended, and deletes
       # the run's folder.
       def stop: () -> void
     end

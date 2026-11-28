@@ -41,9 +41,10 @@ module Stryker
       end
 
       def stop
-        # Only while it runs, because once the process has ended, its ID may
-        # belong to another process.
-        kill if @waiter.alive?
+        # The process itself only while it runs, because once it has ended,
+        # its ID may belong to another process. What it left in its group
+        # dies either way.
+        @waiter.alive? ? kill : kill_rest
         @waiter.join
         nil
       end

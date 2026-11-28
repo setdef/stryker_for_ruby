@@ -72,12 +72,21 @@ class LeftoversTest < Minitest::Test
     assert_equal(["last\n"], lines)
   end
 
-  def test_stopping_a_child_that_has_ended_kills_nothing
-    # Once a process has ended, its ID may belong to another process.
+  def test_stopping_a_child_that_has_ended_ends_what_it_left_running_in_its_group
+    # Only its group: once a process has ended, its ID may belong to another
+    # process, and Windows has no groups.
     process = EndedProcess.new
     Stryker::Isolation::Child.new(FakeProcess::PID, process).stop
 
-    assert_equal([[:detach, FakeProcess::PID]], process.calls)
+    assert_equal([[:detach, FakeProcess::PID], *kills], process.calls)
+  end
+
+  def test_stopping_a_fresh_watch_whose_process_has_ended_ends_what_it_left_running_in_its_group
+    process = EndedProcess.new
+    child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
+    Stryker::Isolation::FreshWatch.new(Fresh.new, child, Stryker::Isolation::Timer.new(30_000)).stop
+
+    assert_equal([[:detach, FakeProcess::PID], *kills], process.calls)
   end
 
   def test_a_fresh_watch_ends_what_its_ended_process_left_in_its_group

@@ -60,8 +60,9 @@ module Stryker
       # subject and how the process ended.
       def finish: () { (S subject, String line) -> void } -> [S, Ending]
 
-      # Kills the process and its group, waits until it ended, and closes
-      # the pipe, for a run that nobody waits for any more.
+      # Kills the process and its group, or what an ended process left
+      # running in its group, waits until it ended, and closes the pipe, for
+      # a run that nobody waits for any more.
       def stop: () -> nil
 
       private
