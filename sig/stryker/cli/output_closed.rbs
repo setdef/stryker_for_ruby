@@ -1,0 +1,15 @@
+module Stryker
+  class CLI
+    # Raised when a write to the command's standard output or standard error
+    # fails because its reader has gone, as when `stryker help | head -1`
+    # ends `head` before the command has written everything. It is a
+    # Stryker::CLI::Output that raises it, and nothing else does: a broken
+    # pipe inside a run, such as one to a process that the run started, stays
+    # the error that the run raised.
+    #
+    # The `stryker` command writes nothing for it, and ends with status 141,
+    # the status of a program that `SIGPIPE` ends.
+    class OutputClosed < StandardError
+    end
+  end
+end

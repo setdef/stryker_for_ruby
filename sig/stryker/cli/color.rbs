@@ -19,7 +19,7 @@ module Stryker
       # Returns true when output to the stream may have color. It asks the
       # stream, so the answer for standard output can differ from the answer
       # for standard error.
-      def enabled_for?: (IO | StringIO stream) -> bool
+      def enabled_for?: (Output stream) -> bool
     end
   end
 end

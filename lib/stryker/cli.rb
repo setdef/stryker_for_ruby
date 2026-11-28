@@ -3,6 +3,7 @@
 require_relative("cli/failures")
 require_relative("cli/information")
 require_relative("cli/mutation_testing")
+require_relative("cli/output")
 require_relative("cli/run")
 require_relative("cli/run_command")
 require_relative("cli/streams")
@@ -14,14 +15,16 @@ module Stryker
     end
 
     def initialize(stdout: $stdout, stderr: $stderr, env: ENV.to_h, root: Dir.pwd, pipeline: MutationTesting.new(root))
-      streams = Streams.new(stdout, stderr)
+      @streams = Streams.new(Output.new(stdout), Output.new(stderr))
       @failures = Failures.new(stderr)
-      @information = Information.new(streams)
-      @run = RunCommand.new(run: Run.new(pipeline:, streams:, env:, root:), streams:)
+      @information = Information.new(@streams)
+      @run = RunCommand.new(run: Run.new(pipeline:, streams: @streams, env:, root:), streams: @streams)
     end
 
     def call(argv)
-      @failures.guard { dispatch(*argv) }
+      # Standard output holds what the command wrote until a flush, so the
+      # flush is where a reader that has gone shows.
+      @failures.guard { dispatch(*argv).tap { @streams.flush } }
     end
 
     private def dispatch(command = nil, *rest)

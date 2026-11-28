@@ -41,20 +41,20 @@ module Stryker
       def built: (Streams streams, Color color) -> Hash[String, _Reporter]
 
       # The names to build: those the user wrote, or the default's.
-      def names: (IO | StringIO stderr) -> Array[String]
+      def names: (Output stderr) -> Array[String]
 
       # The names that the user wrote, once each, after the check.
       def named: () -> Array[String]
 
       # The default's names that the gem has, once each. Writes the warning
       # when the default holds any that it hasn't.
-      def defaulted: (IO | StringIO stderr) -> Array[String]
+      def defaulted: (Output stderr) -> Array[String]
 
       # The names in the option, once each, in its order.
       def listed: () -> Array[String]
 
       # The `clear-text` reporter.
-      def clear_text: (IO | StringIO stdout, Color color) -> Reporters::ClearText
+      def clear_text: (Output stdout, Color color) -> Reporters::ClearText
 
       # The `json` reporter.
       def json: () -> Reporters::JsonReport

@@ -5,7 +5,9 @@ module Stryker
   # [the command line section of Configuration](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/configuration.md#the-command-line).
   #
   # The command writes only to the streams it is given, and never exits the
-  # process itself.
+  # process itself. When a write to standard output or standard error fails
+  # because its reader has gone, it writes nothing more and returns 141, as
+  # for a program that `SIGPIPE` ends.
   #
   # ## Examples
   #
@@ -18,6 +20,7 @@ module Stryker
   # # => 2
   # ```
   class CLI
+    @streams: Streams
     @failures: Failures
     @information: Information
     @run: RunCommand
@@ -46,7 +49,8 @@ module Stryker
     # command line that names no command or an unknown one. `run` returns the
     # statuses that Stryker::CLI::RunCommand lists. Any exception that ends
     # a command, other than a signal, is a bug that ends it with status 2, as
-    # Stryker::CLI::Failures describes.
+    # Stryker::CLI::Failures describes. It flushes standard output before it
+    # returns, so a reader that has gone shows in the status.
     #
     # - `argv`: Array of String, the words after `stryker`.
     #

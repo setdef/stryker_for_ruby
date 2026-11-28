@@ -7,10 +7,15 @@ require_relative("../pipeline/raised")
 require_relative("../source_error")
 require_relative("../unsupported_error")
 require_relative("bug_report")
+require_relative("output_closed")
 
 module Stryker
   class CLI
     class Failures
+      SIGNALLED = 128
+      SIGPIPE = 13
+      private_constant(:SIGNALLED, :SIGPIPE)
+
       def initialize(stderr)
         @stderr = stderr
       end
@@ -26,13 +31,15 @@ module Stryker
         when ConfigError, SourceError, UnsupportedError, Isolation::DryRunError, Isolation::TestsLoadError
           report(error.to_s)
         when SignalException then stopped(error)
+        # The number is written out because Windows has no SIGPIPE to ask for it.
+        when OutputClosed then SIGPIPE + SIGNALLED
         else bug(error)
         end
       end
 
       private def stopped(signal)
         signo = signal.signo
-        report("Stopped by #{Signal.signame(signo)}.", signo + 128)
+        report("Stopped by #{Signal.signame(signo)}.", signo + SIGNALLED)
       end
 
       private def bug(error)

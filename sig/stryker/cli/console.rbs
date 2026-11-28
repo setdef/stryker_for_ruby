@@ -3,15 +3,15 @@ module Stryker
     # A stream that the command writes to, and what it can tell about it: whether
     # it is a terminal, and how wide.
     class Console
-      @stream: IO | StringIO
+      @stream: Output
 
       # The width of a stream that can't say how wide it is. Private.
       DEFAULT_COLUMNS: Integer
 
       # Builds the console of a stream.
       #
-      # - `stream`: IO or StringIO, the stream.
-      def initialize: (IO | StringIO stream) -> void
+      # - `stream`: Stryker::CLI::Output, the stream.
+      def initialize: (Output stream) -> void
 
       # The `progress` reporter for this stream: one that redraws a bar when the
       # stream is a terminal as wide as the terminal says, or 80 columns when it

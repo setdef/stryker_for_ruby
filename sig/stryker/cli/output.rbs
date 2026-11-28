@@ -1,0 +1,46 @@
+module Stryker
+  class CLI
+    # One of the two streams that the command writes to, standard output or
+    # standard error, which turns the error of a write to a stream whose
+    # reader has gone into a Stryker::CLI::OutputClosed. The command wraps
+    # each stream in one, so the failure of a pipe that the run itself uses
+    # never looks like the failure of the command's own output.
+    #
+    # It has the parts of a stream that the command uses, and passes each to
+    # the stream. A stream that isn't a terminal holds what is written until
+    # it is flushed, so a reader that has gone shows at the flush.
+    class Output
+      @io: IO | StringIO
+
+      # Builds the wrapper.
+      #
+      # - `io`: IO or StringIO, the stream.
+      def initialize: (IO | StringIO io) -> void
+
+      # Writes each line, and the line break after it. Raises
+      # Stryker::CLI::OutputClosed when the reader has gone.
+      def puts: (*_ToS lines) -> nil
+
+      # Writes the text and returns the number of bytes. Raises
+      # Stryker::CLI::OutputClosed when the reader has gone.
+      def write: (String text) -> Integer
+
+      # Hands what the stream holds to its reader. Raises
+      # Stryker::CLI::OutputClosed when the reader has gone.
+      def flush: () -> void
+
+      # Returns true when the stream is a terminal.
+      def tty?: () -> bool
+
+      # Returns the terminal's height and width in characters, and raises
+      # NoMethodError for a stream that has no size, as a StringIO has.
+      def winsize: () -> [Integer, Integer]
+
+      private
+
+      # Returns the block's value, or raises Stryker::CLI::OutputClosed when
+      # the block raises `Errno::EPIPE`.
+      def closing: [T] () { () -> T } -> T
+    end
+  end
+end

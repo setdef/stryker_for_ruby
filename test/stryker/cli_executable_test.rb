@@ -44,6 +44,30 @@ class CLIExecutableTest < Minitest::Test
     assert_equal([["stryker"], true], [spec.executables, spec.files.include?("exe/stryker")])
   end
 
+  def test_a_closed_standard_output_ends_the_command_quietly_as_sigpipe_ends_a_program
+    assert_equal([141, ""], closed("--version", stream: :out))
+  end
+
+  def test_a_closed_standard_error_ends_the_command_quietly_as_sigpipe_ends_a_program
+    assert_equal([141, ""], closed("frobnicate", stream: :err))
+  end
+
+  # Runs the command with one stream a pipe whose reader has gone, and the
+  # other a pipe that the test reads, and gives the status and what the other
+  # stream held.
+  private def closed(*argv, stream:)
+    reader, writer = IO.pipe
+    gone_reader, gone_writer = IO.pipe
+    gone_reader.close
+    streams = (stream == :out) ? { out: gone_writer, err: writer } : { out: writer, err: gone_writer }
+    pid = Process.spawn(RbConfig.ruby, "-I", File.join(ROOT, "lib"), EXECUTABLE, *argv, **streams)
+    [writer, gone_writer].each(&:close)
+    status = Process.wait2(pid).last
+    [status.exitstatus, reader.read]
+  ensure
+    reader&.close
+  end
+
   private def stryker(*argv)
     Open3.capture3(RbConfig.ruby, "-I", File.join(ROOT, "lib"), EXECUTABLE, *argv)
   end

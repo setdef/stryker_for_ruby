@@ -32,7 +32,7 @@ module Stryker
       # written.
       #
       # - `stderr`: where the warning goes.
-      def config: (IO | StringIO stderr) -> Config
+      def config: (Output stderr) -> Config
 
       private
 

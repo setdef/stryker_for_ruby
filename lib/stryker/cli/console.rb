@@ -22,9 +22,7 @@ module Stryker
       end
 
       private def columns
-        # steep:ignore:start
         @stream.winsize.last
-        # steep:ignore:end
       rescue NoMethodError, SystemCallError
         DEFAULT_COLUMNS
       end

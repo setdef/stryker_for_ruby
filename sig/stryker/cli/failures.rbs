@@ -3,9 +3,17 @@ module Stryker
     # Turns the ways a command can fail into an exit status and a message on
     # standard error: a configuration error, a file that doesn't parse, an
     # unsupported case, a dry run that failed, tests that failed to load, a
-    # signal, and any other exception, which is a bug in Stryker (for Ruby).
+    # signal, an output whose reader has gone, and any other exception, which
+    # is a bug in Stryker (for Ruby).
     class Failures
       @stderr: IO | StringIO
+
+      # The number that a status adds to a signal's number when the signal
+      # ends the command, as a shell reports it. Private.
+      SIGNALLED: Integer
+
+      # The number of `SIGPIPE`, which Windows has no signal for. Private.
+      SIGPIPE: Integer
 
       # Builds the guard.
       #
@@ -17,6 +25,11 @@ module Stryker
       # Stryker::UnsupportedError, a Stryker::Isolation::DryRunError, or a
       # Stryker::Isolation::TestsLoadError, which are the project's or the
       # user's to fix, or 128 plus the signal's number after a signal.
+      #
+      # A Stryker::CLI::OutputClosed, which a write to a standard output or a
+      # standard error whose reader has gone raises, ends the block with 141,
+      # which is 128 plus `SIGPIPE`'s 13, and writes nothing: no message, and
+      # no bug report.
       #
       # Any other exception, whatever its class, ends the block with 2 and
       # the bug report: a `StandardError`, a `ScriptError`, a
