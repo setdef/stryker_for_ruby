@@ -22,15 +22,19 @@ module Stryker
 
       def call(isolations, instrumented)
         found = dry_run(isolations)
-        found.no_test? ? Outcome.untested : Outcome.tested(planned(isolations, instrumented, found))
+        found.no_test? ? without_test : Outcome.tested(planned(isolations, instrumented, found))
       end
 
       private def dry_run(isolations)
         found = isolations.dry_run(@config)
-        raise(ConfigError, NO_TEST) if found.no_test? && !@config.allow_empty
-
         @broadcast.call(Events::DryRunCompleted.new(result: found))
         found
+      end
+
+      private def without_test
+        raise(ConfigError, NO_TEST) unless @config.allow_empty
+
+        Outcome.untested
       end
 
       private def planned(isolations, instrumented, found)
