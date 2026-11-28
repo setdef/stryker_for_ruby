@@ -9,14 +9,15 @@ require "net/http"
 #
 # +serving+ replaces +Net::HTTP.start+ for the length of a block with one that
 # yields this object as the connection, which answers each request from a
-# table of routes. +requests+ lists the path of each request it got, and
-# +authorizations+ the Authorization header of each.
+# table of routes. +requests+ lists the path of each request it got,
+# +authorizations+ the Authorization header of each, and +hosts+ the host each
+# was made to.
 class FakeGitHub
   # The API's address, which the tests give GitHubAPI.
   API = "https://api.github.test"
   public_constant(:API)
 
-  attr_reader :requests, :authorizations
+  attr_reader :requests, :authorizations, :hosts
 
   # +routes+ maps each path, with its query, to [status, body], or to
   # something whose +call+ returns one, for a route whose answer changes from
@@ -25,6 +26,7 @@ class FakeGitHub
     @routes = routes
     @requests = []
     @authorizations = []
+    @hosts = []
   end
 
   # Calls the block with this object while Net::HTTP.start yields it.
@@ -32,7 +34,8 @@ class FakeGitHub
     Net::HTTP.stub(:start, method(:start), &)
   end
 
-  def start(_host, _port, **_options)
+  def start(host, _port, **_options)
+    @hosts << host
     yield(self)
   end
 
