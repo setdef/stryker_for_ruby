@@ -16,6 +16,10 @@ module Stryker
   # # => #<Encoding:BINARY (ASCII-8BIT)>
   # ```
   module FileName
+    # The characters that `shown` spells with a backslash before them.
+    # Private.
+    MARKED: Array[String]
+
     # The name made of `bytes`, tagged UTF-8 when its bytes are valid UTF-8
     # and binary when they aren't. The argument keeps its own tag.
     #
@@ -24,16 +28,17 @@ module Stryker
 
     # The name as text to read: each byte that isn't valid UTF-8 and each
     # byte of a control character, newline, tab, and escape included, spelled
-    # as `\xE9`, and each backslash as `\\`. A shell's `$'...'` and
-    # `printf '%b'` read the text back as the name's bytes, and no two names
-    # show the same. Any other name is the same text.
+    # as `\xE9`, and each backslash as `\\` and each single quote as `\'`. A
+    # shell's `$'...'` reads the text back as the name's bytes, and no two
+    # names show the same. Any other name is the same text.
     #
     # - `bytes`: String, the bytes of a file's name, in any encoding.
     def self.shown: (String bytes) -> String
 
     # The text of one character of the name: the escape of each of its bytes
     # when it isn't valid UTF-8 or is a control character, two backslashes for
-    # a backslash, and the character otherwise. Private.
+    # a backslash, a backslash and the quote for a single quote, and the
+    # character otherwise. Private.
     def self.spelled: (String char) -> String
 
     # The escape of each of `bytes`, such as `\xE9`. Private.

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../test_helper")
+require "strscan"
 require "stryker/file_name"
 
 # Checks how the bytes of a file's name are tagged.
@@ -40,11 +41,21 @@ class FileNameTest < Minitest::Test
     assert_equal("lib/café.rb", Stryker::FileName.shown("lib/café.rb".b))
   end
 
-  # The one rule of a shell's $'...', and of printf '%b', that shown relies on:
-  # a backslash followed by x and two hexadecimal digits is that byte, and two
-  # backslashes are one.
+  # Reads the text as a shell reads what is between the quotes of $'...': a
+  # backslash followed by x and two hexadecimal digits is that byte, a
+  # backslash before a backslash or a single quote is that character, and a
+  # single quote that follows no backslash ends the string, which is a failure.
   def decode(text)
-    text.b.gsub(/\\\\|\\x(\h\h)/n) { Regexp.last_match(1) ? Regexp.last_match(1).hex.chr : "\\" }
+    scanner = StringScanner.new(text.b)
+    name = +"".b
+    name << (scanner[1] ? scanner[1].hex.chr : scanner[2].delete_prefix("\\")) until step(scanner).nil?
+    name
+  end
+
+  def step(scanner)
+    return if scanner.eos?
+
+    scanner.scan(/\\x(\h\h)|(\\[\\']|[^\\'])/n) || flunk("#{scanner.string.inspect} is not one quoted string")
   end
 
   NAMES = [
@@ -61,6 +72,10 @@ class FileNameTest < Minitest::Test
     "lib/del\x7F.rb",
     "lib/next\u0085line.rb",
     "lib/\\\\x41.rb",
+    "lib/it's.rb",
+    "'",
+    "lib/\\'.rb",
+    "lib/\\\\'.rb",
   ].freeze
   private_constant(:NAMES)
 
@@ -87,6 +102,10 @@ class FileNameTest < Minitest::Test
       [%(lib/caf\\\\xE9.rb), %(lib/caf\\xE9.rb)],
       [Stryker::FileName.shown("lib/caf\\xE9.rb"), Stryker::FileName.shown("lib/caf\xE9.rb")]
     )
+  end
+
+  def test_a_single_quote_is_shown_with_a_backslash_before_it_so_that_it_ends_no_quoted_string
+    assert_equal(%(lib/it\\'s.rb), Stryker::FileName.shown("lib/it's.rb"))
   end
 
   def test_a_control_character_is_shown_as_the_escapes_of_its_bytes
