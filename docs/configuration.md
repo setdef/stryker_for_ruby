@@ -1,6 +1,6 @@
 # Configuration
 
-This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it does. A run works on Linux and macOS, with Minitest. On Windows, where Ruby has no `fork`, a run isn't built yet: `stryker run` checks the configuration and then stops with status 2. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), except `mutate` and `testRunner`, whose defaults are for Ruby, `minitest.testFiles`, which sets what only the Minitest test runner reads, as `tap.testFiles` does for StrykerJS's tap test runner, and the options that mean nothing in Ruby, which are left out.
+This page lists every option of **Stryker (for Ruby)**: its name, its type, its default, and what it does. A run works on Linux and macOS, with Minitest. On Windows, where Ruby has no `fork`, a run isn't built yet: `stryker run` checks the configuration and then stops with status 2. The options and their defaults are those of [StrykerJS](https://stryker-mutator.io/docs/stryker-js/configuration/), with three exceptions. `mutate` and `testRunner` have defaults for Ruby. `minitest.testFiles` sets what only the Minitest test runner reads, as `tap.testFiles` does for StrykerJS's tap test runner. The options that mean nothing in Ruby are left out.
 
 ## Where options come from
 
@@ -357,7 +357,7 @@ A run with `testFiles` that leaves out a folder of tests has no test in that fol
 The patterns follow the same rules as those of [`mutate`](#mutate), with these differences:
 
 - A pattern that starts with `!` leaves nothing out. The `!` is an ordinary character in a file name, so the pattern matches only a file whose name starts with `!`.
-- A pattern that matches a folder stops the run with status 2, with an error that says the tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
+- A pattern that matches a folder makes the project process fail to load it. The run stops with status 2, and the error says the project's tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
 - A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and every mutant has the status `NoCoverage`.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
 - A pattern whose bytes aren't valid UTF-8 is an error, which it isn't for `mutate`.

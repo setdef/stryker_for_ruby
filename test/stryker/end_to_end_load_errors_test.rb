@@ -31,6 +31,12 @@ class EndToEndLoadErrorsTest < Minitest::Test
     assert_failed_to_load(outcome, "Bundler::GemRequireError: There was an error while trying to load the gem")
   end
 
+  def test_a_test_files_pattern_that_matches_a_folder_stops_the_run_as_a_test_that_failed_to_load
+    outcome = run_in_copy("sample_project", "--minitest.test-files", "test")
+
+    assert_failed_to_load(outcome, "LoadError: cannot load such file")
+  end
+
   def assert_failed_to_load(outcome, *parts)
     assert_equal(2, outcome.status)
     return unless FORKS
