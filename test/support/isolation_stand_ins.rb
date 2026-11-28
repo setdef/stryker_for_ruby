@@ -69,6 +69,13 @@ module IsolationStandIns
     end
   end
 
+  # Spawns nothing, and raises the error that a missing project root makes.
+  class RefusingProcess
+    def spawn(*)
+      raise(Errno::ENOENT, "the project's root")
+    end
+  end
+
   # The waiter of a process that has already ended.
   class Waiter
     def join(_seconds = nil)

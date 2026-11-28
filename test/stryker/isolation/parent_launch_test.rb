@@ -11,13 +11,6 @@ require "tmpdir"
 class ParentLaunchTest < Minitest::Test
   include IsolationStandIns
 
-  # Spawns nothing, and raises the error that a missing project root makes.
-  class RefusingProcess
-    def spawn(*)
-      raise(Errno::ENOENT, "the project's root")
-    end
-  end
-
   def setup
     super
     @temporary = Dir.mktmpdir("stryker-launch-test-")
