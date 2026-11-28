@@ -36,14 +36,15 @@ module Stryker
       # The parent's process.
       @child: Child
 
-      # The pipe that carries the parent's runs.
-      @commands: IO
-
-      # The pipe that carries the parent's lines.
-      @results: IO
+      # The pipe that carries the parent's runs, and the pipe that carries
+      # its lines.
+      @pipes: [IO, IO]
 
       # The folder of the files of the parent's and its children's output.
       @folder: String
+
+      # How long the parent has to end, once its runs' pipe closes.
+      @grace: Integer | Float
 
       # Builds the handle.
       #
@@ -52,7 +53,9 @@ module Stryker
       #   read end of its pipe for results.
       # - `folder`: String, the folder of the output files, which `stop`
       #   deletes.
-      def initialize: (Child child, [IO, IO] pipes, String folder) -> void
+      # - `grace`: Integer or Float, how long the parent has to end after
+      #   `stop`: `GRACE_SECONDS` unless a test passes another.
+      def initialize: (Child child, [IO, IO] pipes, String folder, ?(Integer | Float) grace) -> void
 
       # Waits at most `seconds` for the parent to say it loaded the tests.
       # When the parent says that the project's tests raised while it loaded

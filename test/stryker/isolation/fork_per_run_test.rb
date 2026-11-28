@@ -38,6 +38,15 @@ class ForkPerRunTest < Minitest::Test
   RUBY
   private_constant(:PARENT)
 
+  # How long a stand-in parent that says nothing has to end after it is
+  # stopped. It never ends by itself, so any grace ends in its kill, and the
+  # default one would make each such test wait it out.
+  SILENT_GRACE = 0.2
+  private_constant(:SILENT_GRACE)
+
+  GRACE_SECONDS = Stryker::Isolation::ParentProcess::GRACE_SECONDS
+  private_constant(:GRACE_SECONDS)
+
   # Starts the stand-in parent in place of the real one, and keeps the folder
   # for the parent's output. With `interrupted`, the wait for the parent to
   # load raises Interrupt, as a signal that arrives then does. With
@@ -46,9 +55,10 @@ class ForkPerRunTest < Minitest::Test
   class Launch
     attr_reader :folder, :pid
 
-    def initialize(test, argument = "ready", interrupted: false, signaled: false)
+    def initialize(test, argument = "ready", interrupted: false, signaled: false, grace: GRACE_SECONDS)
       @test = test
       @argument = argument
+      @grace = grace
       @interrupted = interrupted
       @signaled = signaled
     end
@@ -58,11 +68,15 @@ class ForkPerRunTest < Minitest::Test
       results, output = IO.pipe
       @pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
       [input, output].each(&:close)
-      @folder = Dir.mktmpdir
-      parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(@pid), [commands, results], @folder)
+      parent = held([commands, results])
       parent.define_singleton_method(:await_ready) { |*| raise(Interrupt) } if @interrupted
       signal if @signaled
       parent
+    end
+
+    private def held(pipes)
+      @folder = Dir.mktmpdir
+      Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(@pid), pipes, @folder, @grace)
     end
 
     # Queues an Interrupt for the launching thread, as a signal does. The
@@ -138,7 +152,7 @@ class ForkPerRunTest < Minitest::Test
   end
 
   def test_a_parent_that_loads_no_tests_in_time_is_stopped_with_an_error_that_names_the_limit
-    parent = Launch.new(self, "silent").call("minitest")
+    parent = Launch.new(self, "silent", grace: SILENT_GRACE).call("minitest")
     error = assert_raises(Stryker::Isolation::Error) { parent.await_ready(0.5) }
 
     assert_includes(error.message, "0.5 seconds")
@@ -146,7 +160,7 @@ class ForkPerRunTest < Minitest::Test
   end
 
   def test_an_interrupt_while_the_parent_loads_ends_the_parent_and_deletes_its_output
-    launch = Launch.new(self, "silent", interrupted: true)
+    launch = Launch.new(self, "silent", interrupted: true, grace: SILENT_GRACE)
 
     assert_raises(Interrupt) { Stryker::Isolation::ForkPerRun.new("/cache", "/project", launch).start(config) }
     refute(Dir.exist?(launch.folder))

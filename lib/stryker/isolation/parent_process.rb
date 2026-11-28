@@ -21,10 +21,11 @@ module Stryker
       GONE = "The fork parent ended before it took a run.\n%<errors>s"
       private_constant(:READY, :SLOW, :GONE)
 
-      def initialize(child, pipes, folder)
+      def initialize(child, pipes, folder, grace = GRACE_SECONDS)
         @child = child
-        @commands, @results = pipes
+        @pipes = pipes
         @folder = folder
+        @grace = grace
       end
 
       def await_ready(seconds = LOAD_SECONDS)
@@ -35,14 +36,14 @@ module Stryker
       end
 
       def give(run)
-        @commands.write("#{run.to_json}\n")
+        @pipes.first.write("#{run.to_json}\n")
         nil
       rescue Errno::EPIPE
         raise(Error, format(GONE, errors: OutputFiles.new(@folder).tail("parent")).chomp)
       end
 
       def receive
-        line = @results.gets
+        line = @pipes.last.gets
         JSON.parse(line) if line
       end
 
@@ -50,8 +51,8 @@ module Stryker
         # Once its runs' pipe closes, the parent ends every child it still
         # runs, and then itself. A parent still running after its grace is
         # killed with its group.
-        [@commands, @results].each(&:close)
-        @child.end_within(GRACE_SECONDS)
+        @pipes.each(&:close)
+        @child.end_within(@grace)
         # What the project's code started in the parent's group while it
         # loaded.
         @child.kill_rest
@@ -59,7 +60,7 @@ module Stryker
       end
 
       private def load_error(seconds)
-        return Error.new(format(SLOW, seconds:)) unless @results.wait_readable(Float(seconds))
+        return Error.new(format(SLOW, seconds:)) unless @pipes.last.wait_readable(Float(seconds))
 
         said = receive
         return if said == READY
