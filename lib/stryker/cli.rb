@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative("cli/failures")
 require_relative("cli/information")
 require_relative("cli/mutation_testing")
 require_relative("cli/run")
@@ -14,12 +15,13 @@ module Stryker
 
     def initialize(stdout: $stdout, stderr: $stderr, env: ENV.to_h, root: Dir.pwd, pipeline: MutationTesting.new(root))
       streams = Streams.new(stdout, stderr)
+      @failures = Failures.new(stderr)
       @information = Information.new(streams)
       @run = RunCommand.new(run: Run.new(pipeline:, streams:, env:, root:), streams:)
     end
 
     def call(argv)
-      dispatch(*argv)
+      @failures.guard { dispatch(*argv) }
     end
 
     private def dispatch(command = nil, *rest)

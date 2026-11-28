@@ -18,6 +18,7 @@ module Stryker
   # # => 2
   # ```
   class CLI
+    @failures: Failures
     @information: Information
     @run: RunCommand
 
@@ -43,7 +44,9 @@ module Stryker
     # Runs the words of a command line, without the program's name, and
     # returns the exit status: 0 when it did what was asked, and 2 for a
     # command line that names no command or an unknown one. `run` returns the
-    # statuses that Stryker::CLI::RunCommand lists.
+    # statuses that Stryker::CLI::RunCommand lists. Any exception that ends
+    # a command, other than a signal, is a bug that ends it with status 2, as
+    # Stryker::CLI::Failures describes.
     #
     # - `argv`: Array of String, the words after `stryker`.
     #

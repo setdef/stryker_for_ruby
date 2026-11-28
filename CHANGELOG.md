@@ -31,7 +31,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `stryker run` refuses a flag value whose bytes aren't valid UTF-8, as a shell in a UTF-8 locale can pass, with an error that gives the flag and the exit status 2, where it printed a stack trace. `stryker run` keeps such a `--mutate` pattern, because a file's name can hold any bytes.
 - `stryker` and `stryker help` refuse a command word or help topic whose bytes aren't valid UTF-8 with the line of an unknown command, which shows the bytes as escapes, and the exit status 2, where they printed a stack trace.
 - When a reporter fails, the reporters after it still receive the run's results and the end of the run, where they received nothing. The error of the first reporter that failed still ends `stryker run`.
-- A crash that ends `stryker run` exits with status 2 and the bug report, whatever the class of the exception, where an exception that isn't a `StandardError`, such as a `ScriptError`, a `NoMemoryError`, a `SystemStackError`, a `SecurityError`, or a `SystemExit`, printed a stack trace and exited with status 1, the status for a score below `thresholds.break`. A signal still exits with 128 plus its number.
+- A crash that ends `stryker`, `stryker help`, or `stryker run` exits with status 2 and the bug report, whatever the class of the exception, where an exception that isn't a `StandardError`, such as a `ScriptError`, a `NoMemoryError`, a `SystemStackError`, a `SecurityError`, or a `SystemExit`, printed a stack trace and exited with status 1, the status for a score below `thresholds.break`. A signal still exits with 128 plus its number.
 
 ## [0.2.0] - 2026-11-28
 

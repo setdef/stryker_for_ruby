@@ -2,7 +2,6 @@
 
 require_relative("../config_error")
 require_relative("color")
-require_relative("failures")
 require_relative("verdict")
 
 module Stryker
@@ -16,7 +15,7 @@ module Stryker
       end
 
       def call(options:, file:, no_color:)
-        Failures.new(@streams.stderr).guard { execute(options, file, no_color) }
+        execute(options, file, no_color)
       end
 
       private def execute(options, file, no_color)

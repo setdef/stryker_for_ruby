@@ -1,13 +1,12 @@
 module Stryker
   class CLI
     # One run of `stryker run`: configures, hands the config to the
-    # pipeline, and turns the way the run ends into an exit status.
+    # pipeline, and turns its score into an exit status.
     #
     # The exit status is 0 when the run finished and its score is at or
-    # above `thresholds.break` or no break is set, 1 when the score is
-    # below `thresholds.break`, 2 for a configuration error, a
-    # Stryker::UnsupportedError, or an unexpected error, and 128 plus the
-    # signal's number when a signal ended it.
+    # above `thresholds.break` or no break is set, and 1 when the score is
+    # below `thresholds.break`. Whatever else ends the run it raises, for
+    # Stryker::CLI::Failures to turn into a status.
     class Run
       @pipeline: _Pipeline
       @streams: Streams
@@ -25,7 +24,7 @@ module Stryker
       # - `root`: String, the project's root.
       def initialize: (pipeline: _Pipeline, streams: Streams, env: Hash[String, String], root: String) -> void
 
-      # Runs and returns the exit status.
+      # Runs and returns the exit status, or raises what ended the run.
       #
       # - `options`: Hash, the options from the flags, as Configure takes them.
       # - `file`: String or nil, the configuration file that the user named.
