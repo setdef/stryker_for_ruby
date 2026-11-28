@@ -131,15 +131,14 @@ class FreshWatchesTest < Minitest::Test
   # seconds. It stands in for the child, the results file, and the clock.
   class Timeline
     Done = Struct.new(:exitstatus, :termsig)
+    private_constant(:Done)
+
+    attr_reader :now
 
     def initialize(test_at:, ends_at:)
       @test_at = test_at
       @ends_at = ends_at
       @now = 0.0
-    end
-
-    def now
-      @now
     end
 
     def started?
@@ -157,7 +156,7 @@ class FreshWatchesTest < Minitest::Test
 
     def end_within(seconds)
       wait(seconds)
-      !ended?
+      @running = !ended?
     end
 
     def status
