@@ -34,6 +34,13 @@ class EndToEndNoTestsTest < Minitest::Test
     assert_nothing_reported(outcome)
   end
 
+  def test_a_run_with_allow_empty_writes_one_line_to_standard_error_that_says_no_mutant_was_tested
+    outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty")
+
+    assert_equal(0, outcome.status)
+    assert_one_line_that_says_no_mutant_was_tested(outcome)
+  end
+
   def test_a_run_with_allow_empty_has_no_score_for_the_break_threshold_to_fail
     outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--thresholds.break", "80")
 
@@ -53,6 +60,12 @@ class EndToEndNoTestsTest < Minitest::Test
 
     assert_match(/no test.*minitest\.testFiles.*allowEmpty/m, outcome.err)
     refute_match(/bug|Report it/, outcome.err)
+  end
+
+  private def assert_one_line_that_says_no_mutant_was_tested(outcome)
+    return unless FORKS
+
+    assert_match(/\AThe dry run found no test, so, as allowEmpty is true, .*no report was written\.\n\z/, outcome.err)
   end
 
   private def assert_nothing_reported(outcome)

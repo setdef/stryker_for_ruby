@@ -38,6 +38,10 @@ module Stryker
     # What starts the name of the cache's directory. Private.
     CACHE: String
 
+    # What a run writes to the warnings stream when its dry run found no test
+    # and `allow_empty` is true. Private.
+    NOTHING_TESTED: String
+
     @root: String
 
     @isolations: ^(String cache) -> [_DryRunIsolation, _Isolation]
@@ -56,14 +60,16 @@ module Stryker
     # - `reporters`: Array of Stryker::_Reporter, which receive every event.
     # - `warnings`: Stryker::_Warnings, where a stage writes a warning, such
     #   as the instrumentation's warning about a site that a mutator can't
-    #   read. By default, `$stderr`.
+    #   read, and the line that says a run tested no mutant. By default,
+    #   `$stderr`.
     def initialize: (String root, ^(String cache) -> [_DryRunIsolation, _Isolation] isolations, Array[_Reporter] reporters, ?warnings: _Warnings) -> void
 
     # Runs mutation testing as `config` says, and returns the mutation score
     # of every mutant, as Stryker::Metrics gives it, or nil when no mutant
     # was valid, or when the dry run found no test and
     # `Stryker::Config#allow_empty` is true: such a run tests no mutant and
-    # hands the reporters no `Stryker::Events::RunCompleted`. Raises what a stage raises, such as
+    # hands the reporters no `Stryker::Events::RunCompleted`. It writes one
+    # line to `warnings` that says so. Raises what a stage raises, such as
     # Stryker::UnsupportedError for an ERB template, for a file that the
     # `json` reporter can't name, and
     # `Stryker::Isolation::DryRunError` for a dry run that failed, after it
@@ -81,7 +87,7 @@ module Stryker
     # Finds the mutants of the files that `config` selects, tests them, hands
     # every reporter `Stryker::Events::RunCompleted`, and returns the result
     # of every mutant, or `Stryker::Pipeline::Trial::NOTHING_TESTED`, with no
-    # event, when the dry run found no test.
+    # event and one line to `warnings`, when the dry run found no test.
     def completed: (Config config) -> Array[MutantResult]
 
     # Does nothing when `error` is nil. Otherwise hands every reporter

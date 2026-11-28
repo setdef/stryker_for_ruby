@@ -115,7 +115,7 @@ The dry run found no test, so no mutant can be tested. A minitest.testFiles patt
 
 #### Output
 
-Help, the version, and the report of a run go to standard output. Errors go to standard error, and so does the overview that `stryker` writes when it has no words, and so does the [`progress`](#the-progress-reporter) reporter's text, so `stryker run > report.txt` holds the report and nothing else. The output of the project's tests goes to files in a temporary folder, and to neither stream.
+Help, the version, and the report of a run go to standard output. Errors go to standard error. So do the overview that `stryker` writes when it has no words, the [`progress`](#the-progress-reporter) reporter's text, and the line that a run writes when its dry run found no test and [`allowEmpty`](#allowempty) is `true`, so `stryker run > report.txt` holds the report and nothing else. The output of the project's tests goes to files in a temporary folder, and to neither stream.
 
 Output has no color when its stream isn't a terminal, when the `NO_COLOR` environment variable has a value, when `TERM` is `dumb`, and with `--no-color`. Each stream is judged on its own: with standard output sent to a file and standard error on a terminal, the report has no color and the `progress` text has. A report that goes to a file has no color.
 
@@ -364,7 +364,13 @@ A boolean. The default is `false`.
 
 With `false`, a run whose dry run finds no test stops with an error before any mutant runs, and exits with status 2 ([Exit statuses](#exit-statuses) gives the message). The test runner lists no test when no file that [`minitest.testFiles`](#minitesttestfiles) selects defines one: a pattern that matches no test file is the likeliest cause, and an empty list is another. A test that the dry run skips counts as a test, so a project whose tests are all skipped doesn't stop.
 
-With `true`, the run ends after the dry run, as StrykerJS's does, with status 0. It tests no mutant and reports no mutant result: not one with the status `NoCoverage`, and not one with the status `Ignored` or `CompileError`. It has no mutation score, so `thresholds.break` has nothing to judge, and no reporter writes its report: `clear-text` writes nothing, `progress` draws nothing, and `json` writes no file and leaves an earlier report as it was. A project with no test has no result to report, and an empty report would say nothing that the exit status doesn't. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of passing it.
+With `true`, the run ends after the dry run, as StrykerJS's does, with status 0. It tests no mutant and reports no mutant result: not one with the status `NoCoverage`, and not one with the status `Ignored` or `CompileError`. It has no mutation score, so `thresholds.break` has nothing to judge, and no reporter writes its report: `clear-text` writes nothing, `progress` draws nothing, and `json` writes no file and leaves an earlier report as it was. A project with no test has no result to report, and an empty report would say nothing that the exit status doesn't. The run writes one line to standard error, whichever reporters it has, so that a silent exit with status 0 doesn't look like a tested project:
+
+```text
+The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report was written.
+```
+
+StrykerJS logs `No tests were found` and then `Done in` and the elapsed time. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of passing it.
 
 The same option in a configuration file and as a flag:
 
@@ -404,7 +410,7 @@ The patterns follow the same rules as those of [`mutate`](#mutate), with these d
 
 - A pattern that starts with `!` leaves nothing out. The `!` is an ordinary character in a file name, so the pattern matches only a file whose name starts with `!`.
 - A pattern that matches a folder makes the project process fail to load it. The run stops with status 2, and the error says the project's tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
-- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and it stops with an error unless [`allowEmpty`](#allowempty) is `true`. With `allowEmpty` true, the run ends after the dry run with status 0 and no report.
+- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and it stops with an error unless [`allowEmpty`](#allowempty) is `true`. With `allowEmpty` true, the run ends after the dry run with status 0, writes a line to standard error that says so, and writes no report.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
 - A pattern whose bytes aren't valid UTF-8 is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8. A `mutate` pattern with such bytes is accepted, because `mutate` stays in the command, which reads files whatever their names.
 

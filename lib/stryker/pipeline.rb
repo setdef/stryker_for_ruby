@@ -15,7 +15,9 @@ require_relative "runtime/cache"
 module Stryker
   class Pipeline
     CACHE = "stryker-cache-"
-    private_constant(:CACHE)
+    NOTHING_TESTED = "The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report " \
+      "was written."
+    private_constant(:CACHE, :NOTHING_TESTED)
 
     def initialize(root, isolations, reporters, warnings: $stderr)
       @root = root
@@ -33,7 +35,11 @@ module Stryker
 
     private def completed(config)
       results = run_stages(config)
-      @broadcast.call(Events::RunCompleted.new(results:)) unless results.equal?(Trial::NOTHING_TESTED)
+      if results.equal?(Trial::NOTHING_TESTED)
+        @warnings.puts(NOTHING_TESTED)
+      else
+        @broadcast.call(Events::RunCompleted.new(results:))
+      end
       results
     end
 

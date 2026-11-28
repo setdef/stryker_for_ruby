@@ -2,6 +2,7 @@
 
 require_relative("../test_helper")
 require "fileutils"
+require "stringio"
 require "stryker/config"
 require "stryker/mutant_result"
 require "stryker/pipeline"
@@ -49,8 +50,8 @@ module PipelineRun
     Stryker::DryRunResult.new(results: [], buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0)
   end
 
-  def run_pipeline(isolations, options: {}, **)
-    Stryker::Pipeline.new(@root, isolations, @reporters, **).call(config(**options))
+  def run_pipeline(isolations, options: {}, warnings: StringIO.new)
+    Stryker::Pipeline.new(@root, isolations, @reporters, warnings:).call(config(**options))
   end
 
   # Stands in for an isolation adapter: records each call in `log`. Its dry

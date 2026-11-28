@@ -3,6 +3,7 @@
 require_relative("../support/pipeline_run")
 require_relative("../support/sample_values")
 require_relative("../test_helper")
+require "stringio"
 require "stryker/config_error"
 require "stryker/pipeline"
 
@@ -117,6 +118,23 @@ class PipelineTest < Minitest::Test
 
   def test_such_a_run_has_no_score_for_thresholds_break_to_judge
     assert_nil(run_pipeline(Isolations.new(found: found_no_test), options: { allow_empty: true }))
+  end
+
+  def test_such_a_run_writes_one_line_to_the_warnings_stream_that_says_why_it_tested_no_mutant
+    warnings = StringIO.new
+    run_pipeline(Isolations.new(found: found_no_test), options: { allow_empty: true }, warnings:)
+
+    assert_equal(
+      "The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report was written.\n",
+      warnings.string
+    )
+  end
+
+  def test_a_run_that_tested_its_mutants_writes_nothing_to_the_warnings_stream
+    warnings = StringIO.new
+    run_pipeline(Isolations.new(found:), options: { allow_empty: true }, warnings:)
+
+    assert_empty(warnings.string)
   end
 
   def test_a_dry_run_that_found_a_test_goes_on_whatever_allow_empty_holds
