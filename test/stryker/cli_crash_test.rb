@@ -75,7 +75,7 @@ class CLICrashTest < Minitest::Test
   end
 
   def test_a_message_that_cannot_be_written_leaves_the_status_alone
-    err = Failing.new([Errno::EPIPE])
+    err = Failing.new([NoMemoryError])
 
     assert_equal([130, ""], [crash(Interrupt, err), err.string])
   end

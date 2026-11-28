@@ -14,7 +14,8 @@ module Stryker
     class Failures
       SIGNALLED = 128
       SIGPIPE = 13
-      private_constant(:SIGNALLED, :SIGPIPE)
+      CLOSED = SIGPIPE + SIGNALLED
+      private_constant(:SIGNALLED, :SIGPIPE, :CLOSED)
 
       def initialize(stderr)
         @stderr = stderr
@@ -27,13 +28,21 @@ module Stryker
       end
 
       private def failed(error)
+        reported(error)
+      rescue OutputClosed
+        # A reader that has gone from standard error ends the command as one
+        # that has gone from standard output does, whoever wrote. SIGPIPE's
+        # number is written out because Windows has no SIGPIPE to ask for.
+        CLOSED
+      end
+
+      private def reported(error)
         case error
         when ConfigError, SourceError, UnsupportedError, Isolation::DryRunError, Isolation::TestsLoadError
           report(error.to_s)
         when SignalException then stopped(error)
         when SystemExit then error.status
-        # The number is written out because Windows has no SIGPIPE to ask for it.
-        when OutputClosed then SIGPIPE + SIGNALLED
+        when OutputClosed then CLOSED
         else bug(error)
         end
       end
@@ -57,7 +66,10 @@ module Stryker
       end
 
       private def write(message)
-        Pipeline::Raised.by { @stderr.puts(message) }
+        unwritten = Pipeline::Raised.by { @stderr.puts(message) }
+        raise(unwritten) if unwritten.is_a?(OutputClosed)
+
+        unwritten
       end
     end
   end

@@ -16,7 +16,7 @@ module Stryker
 
     def initialize(stdout: $stdout, stderr: $stderr, env: ENV.to_h, root: Dir.pwd, pipeline: MutationTesting.new(root))
       @streams = Streams.new(Output.new(stdout), Output.new(stderr))
-      @failures = Failures.new(stderr)
+      @failures = Failures.new(@streams.stderr)
       @information = Information.new(@streams)
       run = Run.new(pipeline:, streams: @streams, env:, root:)
       @run = RunCommand.new(run:, streams: @streams, information: @information)

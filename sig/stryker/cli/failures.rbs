@@ -6,7 +6,7 @@ module Stryker
     # signal, an output whose reader has gone, and any other exception, which
     # is a bug in Stryker (for Ruby).
     class Failures
-      @stderr: IO | StringIO
+      @stderr: Output
 
       # The number that a status adds to a signal's number when the signal
       # ends the command, as a shell reports it. Private.
@@ -15,10 +15,14 @@ module Stryker
       # The number of `SIGPIPE`, which Windows has no signal for. Private.
       SIGPIPE: Integer
 
+      # The status for an output whose reader has gone: `SIGNALLED` plus
+      # `SIGPIPE`. Private.
+      CLOSED: Integer
+
       # Builds the guard.
       #
-      # - `stderr`: where the messages go.
-      def initialize: (IO | StringIO stderr) -> void
+      # - `stderr`: the Stryker::CLI::Output that the messages go to.
+      def initialize: (Output stderr) -> void
 
       # Returns the block's value, or 2 after writing the message of a
       # Stryker::ConfigError, a Stryker::SourceError, a
@@ -29,7 +33,9 @@ module Stryker
       # A Stryker::CLI::OutputClosed, which a write to a standard output or a
       # standard error whose reader has gone raises, ends the block with 141,
       # which is 128 plus `SIGPIPE`'s 13, and writes nothing: no message, and
-      # no bug report.
+      # no bug report. A message that a closed standard error refuses, the
+      # bug report and the stop of a signal included, ends the block with 141
+      # too, so a closed standard error gives 141 whoever wrote to it.
       #
       # A `SystemExit` is an explicit exit, not a crash: it ends the block
       # with its own status and writes nothing.
@@ -37,14 +43,17 @@ module Stryker
       # Any other exception that Ruby defines ends the block with 2 and the
       # bug report: a `StandardError`, a `ScriptError`, a `NoMemoryError`, a
       # `SystemStackError`, or a `SecurityError`. A stream that can't take a
-      # message never changes the status.
+      # message for any other reason never changes the status.
       def guard: () { () -> Integer } -> Integer
 
       private
 
-      # Writes the message for an exception that isn't a failure of the
-      # project's or the user's, and returns 2.
+      # Returns the status for the exception, or 141 when the standard error
+      # that its message goes to has no reader any more.
       def failed: (Exception error) -> Integer
+
+      # Writes the message for the exception, and returns the status.
+      def reported: (Exception error) -> Integer
 
       # Writes that the signal stopped the run, and returns 128 plus its number.
       def stopped: (SignalException signal) -> Integer
@@ -57,7 +66,8 @@ module Stryker
       def report: (String message, ?Integer status) -> Integer
 
       # Writes the message to standard error, and returns the exception that
-      # stopped it, or nil.
+      # stopped it, or nil. Raises Stryker::CLI::OutputClosed when the reader
+      # of standard error has gone.
       def write: (_ToS message) -> Exception?
     end
   end

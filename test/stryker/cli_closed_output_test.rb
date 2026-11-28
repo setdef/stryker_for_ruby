@@ -74,6 +74,22 @@ class CLIClosedOutputTest < Minitest::Test
     assert_equal([141, ""], [written("run", pipeline: Writing.new, stdout:, stderr: Closed.new), stdout.string])
   end
 
+  def test_a_bug_report_written_to_a_closed_standard_error_ends_as_sigpipe_ends_a_program
+    pipeline = RecordingPipeline.new(raises: RuntimeError.new("boom"))
+
+    assert_equal(141, written("run", pipeline:, stderr: Closed.new))
+  end
+
+  def test_an_error_message_written_to_a_closed_standard_error_ends_as_sigpipe_ends_a_program
+    pipeline = RecordingPipeline.new(raises: Stryker::ConfigError.new("bad"))
+
+    assert_equal(141, written("run", pipeline:, stderr: Closed.new))
+  end
+
+  def test_the_stop_of_a_signal_written_to_a_closed_standard_error_ends_as_sigpipe_ends_a_program
+    assert_equal(141, written("run", pipeline: RecordingPipeline.new(raises: Interrupt), stderr: Closed.new))
+  end
+
   def test_a_broken_pipe_that_the_run_raises_is_a_bug
     outcome = stryker("run", pipeline: RecordingPipeline.new(raises: Errno::EPIPE))
 
