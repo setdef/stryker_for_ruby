@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "cleanup"
 require_relative "fresh_watch"
 
 module Stryker
@@ -45,8 +46,9 @@ module Stryker
       end
 
       def stop
-        @watches.each(&:stop).clear
-        nil
+        Cleanup.run(*@watches.map { |watch| -> { watch.stop } })
+      ensure
+        @watches.clear
       end
 
       private def pause

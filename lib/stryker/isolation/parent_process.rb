@@ -4,6 +4,7 @@ require "fileutils"
 require "io/wait"
 require "json"
 require_relative "../test_runners/minitest_runner"
+require_relative "cleanup"
 require_relative "error"
 require_relative "not_ready"
 require_relative "output_files"
@@ -40,7 +41,7 @@ module Stryker
         @pipes.commands.write("#{run.to_json}\n")
         nil
       rescue Errno::EPIPE
-        raise(Error, format(GONE, errors: OutputFiles.new(@folder).tail("parent")).chomp)
+        raise(Error, format(GONE, errors: parent_errors).chomp)
       end
 
       def receive
@@ -49,20 +50,13 @@ module Stryker
       end
 
       def stop
-        end_child
-      ensure
-        FileUtils.remove_entry(@folder, true)
-      end
-
-      private def end_child
         # Once its runs' pipe closes, the parent ends every child it still
         # runs, and then itself. A parent still running after its grace is
-        # killed with its group.
-        @pipes.close
-        @child.end_within(@grace)
-        # What the project's code started in the parent's group while it
-        # loaded.
-        @child.kill_rest
+        # killed with its group, and what the project's code started in the
+        # group while it loaded dies with it.
+        Cleanup.run(-> { @pipes.close }, -> { @child.end_within(@grace) }, -> { @child.kill_rest })
+      ensure
+        FileUtils.remove_entry(@folder, true)
       end
 
       private def load_error(seconds)
@@ -71,7 +65,11 @@ module Stryker
         said = receive
         return if said == READY
 
-        NotReady.new(said, OutputFiles.new(@folder).tail("parent")).error
+        NotReady.new(said, parent_errors).error
+      end
+
+      private def parent_errors
+        OutputFiles.new(@folder).tail("parent")
       end
     end
   end

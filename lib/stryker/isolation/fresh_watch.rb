@@ -45,6 +45,7 @@ module Stryker
       def stop
         @child.stop unless @ended
         @ended = true
+      ensure
         @fresh.remove
       end
 

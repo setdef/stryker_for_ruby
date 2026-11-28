@@ -98,6 +98,14 @@ class FreshWatchTest < Minitest::Test
     assert_equal([%i[end_within status kill_rest], false], [child.calls, Dir.exist?(folder)])
   end
 
+  def test_a_stop_whose_process_fails_to_end_still_deletes_the_folder
+    child = Child.new(@folder)
+    child.define_singleton_method(:stop) { raise(ThreadError) }
+
+    assert_raises(ThreadError) { Stryker::Isolation::FreshWatch.new(@fresh, child, Stryker::Isolation::Timer.new(30_000)).stop }
+    refute(Dir.exist?(@folder))
+  end
+
   def test_a_stop_after_a_finish_that_landed_stops_nothing_again
     watch.tap(&:finish).stop
 

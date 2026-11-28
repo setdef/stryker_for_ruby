@@ -90,14 +90,15 @@ module Stryker
       # project's code started in the parent while it loaded. When that
       # raises, as a signal during the grace does, the parent is ended and
       # the folder deleted all the same, and the error reaches the caller
-      # unchanged.
+      # unchanged. When closing a pipe raises, the parent is ended and its
+      # group killed all the same, and the first error reaches the caller
+      # once they have.
       def stop: () -> void
 
       private
 
-      # Closes the runs' pipe, and ends the parent and what it left in its
-      # group, as `stop` says.
-      def end_child: () -> void
+      # The end of the parent's standard error, which says why it ended.
+      def parent_errors: () -> String
 
       # Waits at most `seconds` for the parent's first line, and returns nil
       # when the line says the parent is ready. Otherwise it returns the

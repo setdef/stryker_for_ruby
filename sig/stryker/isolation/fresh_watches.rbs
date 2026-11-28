@@ -57,7 +57,10 @@ module Stryker
       def pause: () -> nil
 
       # Kills every process still running, waits until each ended, deletes
-      # their folders, and empties the set.
+      # their folders, and empties the set. A watch that raises as it stops
+      # leaves every other watch stopped, and the first error reaches the
+      # caller once all have stopped. A signal ends the stop at once, and
+      # leaves the set empty all the same.
       def stop: () -> nil
     end
   end

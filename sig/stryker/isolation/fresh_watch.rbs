@@ -63,7 +63,9 @@ module Stryker
       # Kills the process and its group while it runs, or what an ended
       # process left running in its group, waits until it ended, and deletes
       # the run's folder. A watch that has ended, whether `finish` or `stop`
-      # ended it, leaves its process alone, and so does a second `stop`.
+      # ended it, leaves its process alone, and so does a second `stop`. The
+      # folder is deleted when ending the process raises, and the error
+      # reaches the caller unchanged.
       def stop: () -> void
 
       private

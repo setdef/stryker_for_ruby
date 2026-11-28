@@ -1,0 +1,25 @@
+module Stryker
+  module Isolation
+    # Ends what a run holds, one step after another, so that a step that
+    # raises never leaves a later step undone. The first error reaches the
+    # caller once every step has run. A signal is no error of a step: it
+    # ends the cleanup at once, as a second Ctrl-C ends the cleanup of a run.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::Cleanup.run(-> { pipe.close }, -> { Process.kill(:KILL, pid) })
+    # ```
+    module Cleanup
+      # Calls each step in order, even after one raised a `StandardError`,
+      # and then raises the first such error. Returns nil when no step
+      # raised.
+      #
+      # - `steps`: the steps to call, each a lambda.
+      def self.run: (*^() -> void steps) -> nil
+
+      # Calls `step`, and returns the `StandardError` it raised, or nil.
+      def self.failure: (^() -> void step) -> Exception?
+    end
+  end
+end
