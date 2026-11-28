@@ -9,9 +9,13 @@ module Stryker
         @error = error
       end
 
+      def summary
+        "Stryker (for Ruby) stopped because of a bug: #{@error.class}"
+      end
+
       def to_s
         <<~TEXT.chomp
-          Stryker (for Ruby) stopped because of a bug: #{@error.class}: #{@error.message}
+          #{summary}: #{@error.message}
           #{Array(@error.backtrace).join("\n")}
           Report it on the forum at #{Help::FORUM}
           Include the command you ran, what it printed, your Ruby version,

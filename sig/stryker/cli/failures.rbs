@@ -1,12 +1,10 @@
 module Stryker
   class CLI
-    # Turns the ways a run can fail into an exit status and a message on
+    # Turns the ways a command can fail into an exit status and a message on
     # standard error: a configuration error, a file that doesn't parse, an
-    # unsupported case, a dry run that failed, tests that failed to load, a signal, and an unexpected
-    # error.
+    # unsupported case, a dry run that failed, tests that failed to load, a
+    # signal, and any other exception, which is a bug in Stryker (for Ruby).
     class Failures
-      include Rescued
-
       @stderr: IO | StringIO
 
       # Builds the guard.
@@ -18,17 +16,34 @@ module Stryker
       # Stryker::ConfigError, a Stryker::SourceError, a
       # Stryker::UnsupportedError, a Stryker::Isolation::DryRunError, or a
       # Stryker::Isolation::TestsLoadError, which are the project's or the
-      # user's to fix, 128 plus the signal's number after a signal, or 2
-      # after an unexpected error's report.
+      # user's to fix, or 128 plus the signal's number after a signal.
+      #
+      # Any other exception, whatever its class, ends the block with 2 and
+      # the bug report: a `StandardError`, a `ScriptError`, a
+      # `NoMemoryError`, a `SystemStackError`, a `SecurityError`, or a
+      # `SystemExit`. A stream that can't take a message never changes the
+      # status.
       def guard: () { () -> Integer } -> Integer
 
       private
 
+      # Writes the message for an exception that isn't a failure of the
+      # project's or the user's, and returns 2.
+      def failed: (Exception error) -> Integer
+
       # Writes that the signal stopped the run, and returns 128 plus its number.
       def stopped: (SignalException signal) -> Integer
 
+      # Writes the bug report, or its first line when the report can't be
+      # written, and returns 2.
+      def bug: (Exception error) -> Integer
+
       # Writes the message and returns the status.
       def report: (String message, ?Integer status) -> Integer
+
+      # Writes the message to standard error, and returns the exception that
+      # stopped it, or nil.
+      def write: (_ToS message) -> Exception?
     end
   end
 end

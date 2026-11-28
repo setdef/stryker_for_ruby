@@ -1,14 +1,19 @@
 module Stryker
   class CLI
-    # The text for an unexpected error: its class and message, its
-    # backtrace, and where to report it and what to include.
+    # The text for an unexpected error, which is any exception that ends a
+    # run and isn't a signal: its class and message, its backtrace, and where
+    # to report it and what to include.
     class BugReport
-      @error: StandardError
+      @error: Exception
 
       # Builds the report.
       #
       # - `error`: the unexpected error.
-      def initialize: (StandardError error) -> void
+      def initialize: (Exception error) -> void
+
+      # Returns the first line of the text: that Stryker (for Ruby)
+      # stopped because of a bug, and the error's class.
+      def summary: () -> String
 
       # Returns the text, with no newline at its end.
       def to_s: () -> String
