@@ -15,15 +15,16 @@ class FreshWatchTest < Minitest::Test
   private_constant(:Status)
 
   # A handle over a process that ends at once, which fails where a test says:
-  # `end_within` raises `waiting`, or `status` raises `reading`. It notes the
+  # `end_within` raises `waiting`, `status` raises `reading`, or `kill_rest` raises `killing`. It notes the
   # calls it gets, and whether the folder stood at each stop.
   class Child
     attr_reader :calls, :folder_stood_at_stop
 
-    def initialize(folder, waiting: nil, reading: nil)
+    def initialize(folder, waiting: nil, reading: nil, killing: nil)
       @folder = folder
       @waiting = waiting
       @reading = reading
+      @killing = killing
       @calls = []
       @running = false
     end
@@ -44,6 +45,8 @@ class FreshWatchTest < Minitest::Test
 
     def kill_rest
       @calls << :kill_rest
+      @folder_stood_at_stop = Dir.exist?(@folder)
+      raise(@killing) if @killing
     end
 
     def stop
@@ -72,9 +75,14 @@ class FreshWatchTest < Minitest::Test
     assert_raises(ThreadError) { watch(reading: ThreadError).finish }
 
     assert_equal(
-      [%i[end_within status stop], true, false],
+      [%i[end_within status kill_rest], true, false],
       [@child.calls, @child.folder_stood_at_stop, Dir.exist?(@folder)]
     )
+  end
+
+  def test_a_process_that_was_reaped_has_its_group_killed_once_when_the_kill_raises
+    assert_raises(ThreadError) { watch(killing: ThreadError).finish }
+    assert_equal([%i[end_within status kill_rest], false], [@child.calls, Dir.exist?(@folder)])
   end
 
   def test_a_signal_while_a_finish_waits_for_the_process_ends_the_process_and_deletes_the_folder

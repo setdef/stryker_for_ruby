@@ -56,8 +56,8 @@ module Stryker
       # Waits for the process for what is left of its time, kills it if it
       # still runs, reaps it, kills what it left running in its group, and
       # lands the run. When that fails before the run lands, or a signal
-      # ends it, the process is ended and the run's folder deleted, and the
-      # error reaches the caller unchanged.
+      # ends it, the process is ended, and its group killed once, and the run's
+      # folder deleted, and the error reaches the caller unchanged.
       def finish: () -> nil
 
       # Kills the process and its group while it runs, or what an ended
@@ -72,6 +72,16 @@ module Stryker
 
       # Waits for the process, as `finish` says, and returns how it ended.
       def ended: () -> Ending
+
+      # Counts the process as ended, because `end_within` has reaped it, and
+      # returns how it ended, as `finish` says.
+      def reaped: (bool timed_out) -> Ending
+
+      # Reads the status of the process that has been reaped, and then kills
+      # what it left running in its group, whether or not the status could be
+      # read. The group is killed once: the watch counts the process as
+      # ended from its reaping on.
+      def reaped_status: () -> Process::Status
     end
   end
 end

@@ -50,16 +50,28 @@ module Stryker
       end
 
       private def ended
-        timed_out = @child.end_within(@timer.left)
-        status = @child.status
-        # What its tests started dies with it.
-        @child.kill_rest
-        @ended = true
-        Ending.of(status, timed_out:, duration_ms: @timer.elapsed_ms)
+        # @type var ending: Ending?
+        ending = nil
+        ending = reaped(@child.end_within(@timer.left))
       ensure
-        # Whatever raised, or whichever signal came, before the process was
-        # ended and reaped: nobody else holds the process or its folder.
-        stop unless @ended
+        # Whatever raised, or whichever signal came, before the run landed:
+        # nobody else holds the process or its folder.
+        stop unless ending
+      end
+
+      private def reaped(timed_out)
+        # A stop from here on must not kill the group again, whose ID may
+        # belong to another process by now.
+        @ended = true
+        Ending.of(reaped_status, timed_out:, duration_ms: @timer.elapsed_ms)
+      end
+
+      private def reaped_status
+        @child.status
+      ensure
+        # What its tests started dies with it, whether or not the status
+        # could be read.
+        @child.kill_rest
       end
     end
   end
