@@ -34,11 +34,22 @@ module Stryker
       # The conversion of a kind that holds a value as it was given.
       AS_GIVEN: ^(Object? value) -> Object?
 
+      # The conversion of a list of strings that reads each string's bytes as
+      # UTF-8, whatever encoding the string has. A command line's words are
+      # in the binary encoding under the C locale, and JSON writes a binary
+      # string only when it is ASCII. The check of such an option has already
+      # refused bytes that aren't UTF-8.
+      AS_UTF8: ^(Object? value) -> Object?
+
       # The names of the options whose value is a list of file patterns, which
       # the checks of patterns read: `mutate` and `minitest.testFiles`. Only
       # in `mutate` does a leading `!` leave files out; in `minitest.testFiles`
       # it is an ordinary character, and the checks read it as one.
       PATTERN_LISTS: Array[String]
+
+      # The names of the options whose strings cross to a project process in
+      # a JSON word, so they must be UTF-8: `minitest.testFiles`.
+      PROCESS_OPTIONS: Array[String]
 
       # The form of a percentage for `concurrency`: 0 to 100, with a percent
       # sign.
@@ -49,8 +60,9 @@ module Stryker
       KINDS: Hash[String, Kind]
 
       # Returns the type of an array of Strings. `what` names the strings
-      # in a message: `file patterns`.
-      def self.list_of: (String what) -> Kind
+      # in a message: `file patterns`. The value is converted with
+      # `conversion`, which holds it as given when it is left out.
+      def self.list_of: (String what, ?^(Object? value) -> Object? conversion) -> Kind
 
       # Returns `value` as an Array of Strings. The check has already made
       # sure that it is one, and the conversion tells Steep the type.

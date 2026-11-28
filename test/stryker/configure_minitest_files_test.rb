@@ -84,6 +84,26 @@ class ConfigureMinitestFilesTest < Minitest::Test
     )
   end
 
+  def test_a_pattern_that_is_not_valid_utf8_is_an_error_that_names_it_before_any_process_could_get_it
+    message = refusal({}, options: { "minitest.testFiles": ["test/\xFF_test.rb"] })
+
+    assert_equal(
+      %("--minitest.test-files" on the command line has the pattern "test/\\xFF_test.rb", which isn't valid UTF-8, ) +
+        "and the options of a test runner cross to a project process as JSON.",
+      message
+    )
+  end
+
+  def test_a_pattern_whose_bytes_are_utf8_is_accepted_whatever_encoding_the_command_line_gave_it
+    name = "test/t\u00e9st_test.rb"
+    config = configure({}, options: { "minitest.testFiles": [name.b] })
+
+    assert_equal(
+      [[name], [Encoding::UTF_8], %({"files":["#{name}"]})],
+      [config.minitest_test_files, config.minitest_test_files.map(&:encoding), config.test_runner_recipe.words.last]
+    )
+  end
+
   def test_the_test_runner_builds_with_the_files_when_they_are_given_and_with_nothing_otherwise
     given = configure({ "stryker.config.json": '{ "minitest": { "testFiles": ["test/**/*_test.rb"] } }' })
 
