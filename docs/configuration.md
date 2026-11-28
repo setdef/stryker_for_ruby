@@ -138,7 +138,6 @@ Before it does anything else, `stryker run` checks every option in the file and 
 - **A name in `mutator.excludedMutations` that no mutator has** is an error that lists the valid names ([`mutator.excludedMutations`](#mutatorexcludedmutations)).
 - **A pattern in `mutate` or `minitest.testFiles` that resolves outside the project's root** is an error ([`mutate`](#mutate), [`minitest.testFiles`](#minitesttestfiles)).
 - **A pattern in `mutate` or `minitest.testFiles` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
-- **A pattern in `minitest.testFiles` whose bytes aren't valid UTF-8** is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8.
 - **A value whose bytes aren't valid UTF-8** is an error that gives the option and the value, for every option except `mutate`, such as `--test-runner` with the byte `\xFF`. Only a flag can hold such a value, because [a configuration file's bytes must be valid UTF-8](#the-configuration-file).
 
 The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter that you name exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).

@@ -50,7 +50,9 @@ class CLIFlagBytesTest < Minitest::Test
   def test_a_test_file_pattern_that_is_not_utf8_is_refused_with_the_line_of_that_option
     status, err = run_with("--minitest.test-files", "test/\xFF_test.rb")
 
-    assert_equal([2, true], [status, err.include?("which isn't valid UTF-8, and the options of a test runner cross")])
+    line = %("--minitest.test-files" on the command line has the value "test/\\xFF_test.rb", which isn't valid UTF-8.\n)
+
+    assert_equal([2, line], [status, err])
   end
 
   def test_a_mutate_pattern_that_is_not_utf8_is_kept_as_the_bytes_it_was_given

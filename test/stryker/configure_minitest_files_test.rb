@@ -88,8 +88,7 @@ class ConfigureMinitestFilesTest < Minitest::Test
     message = refusal({}, options: { "minitest.testFiles": ["test/\xFF_test.rb"] })
 
     assert_equal(
-      %("--minitest.test-files" on the command line has the pattern "test/\\xFF_test.rb", which isn't valid UTF-8, ) +
-        "and the options of a test runner cross to a project process as JSON.",
+      %("--minitest.test-files" on the command line has the value "test/\\xFF_test.rb", which isn't valid UTF-8.),
       message
     )
   end

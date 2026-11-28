@@ -4,11 +4,11 @@ module Stryker
       # Checks that no value of an option holds bytes that aren't valid UTF-8,
       # whatever encoding the string has: a command line in a UTF-8 locale can
       # hold such bytes, and the other places a value goes to read text as
-      # UTF-8. It applies to every option except those in `EXEMPT`, and to a
-      # list's items one at a time. It runs after `WrongType`, so a value of
-      # the wrong type has that line, and after `NotUtf8InProcessOptions`,
-      # whose line for `minitest.testFiles` says more. The line names the
-      # value.
+      # UTF-8, such as the JSON that carries the options of a test runner to
+      # a project process. It applies to every option except those in
+      # `EXEMPT`, and to a list's items one at a time. It runs after
+      # `WrongType`, so a value of the wrong type has that line. The line
+      # names the value.
       class NotUtf8Values
         # The names of the options whose values may hold any bytes: `mutate`,
         # whose patterns select files, and a file name on Linux may hold any
