@@ -35,6 +35,9 @@ module Stryker
       # Whether the run's first test has started.
       @testing: bool
 
+      # Gives the time now, in seconds.
+      @clock: ^() -> Float
+
       # The monotonic clock's time now, in seconds.
       def self.now: () -> Float
 
@@ -44,7 +47,10 @@ module Stryker
       #   with its first test.
       # - `start_seconds`: Integer, the limit for starting. By default,
       #   `START_SECONDS`.
-      def initialize: (Integer milliseconds, ?Integer start_seconds) -> void
+      # - `clock`: a callable that gives the time now, in seconds. By default,
+      #   the monotonic clock, `Timer.now`. A test passes its own, to control
+      #   time.
+      def initialize: (Integer milliseconds, ?Integer start_seconds, ?clock: ^() -> Float) -> void
 
       # Starts the run's time limit, from now. Only the first call counts, so
       # the limit covers every test of the run.

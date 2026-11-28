@@ -126,18 +126,69 @@ class FreshWatchesTest < Minitest::Test
     assert_equal([1, 1], watches.map(&:checks))
   end
 
-  def test_a_time_limit_starts_with_the_first_test_the_results_file_shows
-    Dir.mktmpdir do |folder|
-      results = File.join(folder, "results")
-      # The limit is shorter than the wait before the first test, as a fresh
-      # process's start can be (#85), and far longer than the test, so the
-      # process ends in time on a loaded machine too, where a process that
-      # had 300 ms to spare once took longer to end.
-      script = "sleep 1.2; File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep 0.2; exit!(0)"
-      pid, = scripted(script)
+  # Time that only moves when a wait moves it, and a process on it that
+  # writes its first test's line at +test_at+ and ends at +ends_at+, in
+  # seconds. It stands in for the child, the results file, and the clock.
+  class Timeline
+    Done = Struct.new(:exitstatus, :termsig)
 
-      assert_equal([false], timed_out(results, pid, 1000))
+    def initialize(test_at:, ends_at:)
+      @test_at = test_at
+      @ends_at = ends_at
+      @now = 0.0
     end
+
+    def now
+      @now
+    end
+
+    def started?
+      @now >= @test_at
+    end
+
+    def ended?
+      @now >= @ends_at
+    end
+
+    def wait(seconds)
+      @now = [@now + seconds, @ends_at].min
+      nil
+    end
+
+    def end_within(seconds)
+      wait(seconds)
+      !ended?
+    end
+
+    def status
+      Done.new(0, nil)
+    end
+
+    def kill_rest
+      nil
+    end
+
+    def land(ending)
+      @timed_out = ending.timed_out
+      nil
+    end
+
+    def timed_out?
+      @timed_out
+    end
+  end
+  private_constant(:Timeline)
+
+  def test_a_time_limit_starts_with_the_first_test_the_results_file_shows
+    # The limit is shorter than the wait before the first test, as a fresh
+    # process's start can be (#85), and longer than the test.
+    timeline = Timeline.new(test_at: 5.0, ends_at: 5.2)
+    timer = Stryker::Isolation::Timer.new(1000, clock: timeline.method(:now))
+    set = Stryker::Isolation::FreshWatches.new
+    set.add(Stryker::Isolation::FreshWatch.new(timeline, timeline, timer))
+    set.finish until set.empty?
+
+    refute_predicate(timeline, :timed_out?)
   end
 
   def test_a_process_past_its_time_after_its_first_test_is_timed_out
