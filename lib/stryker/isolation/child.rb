@@ -18,7 +18,8 @@ module Stryker
       def end_within(seconds)
         @waiter.join(seconds)
         running = @waiter.alive?
-        kill if running
+        # Killed and reaped, so the process has ended when this returns.
+        stop if running
         running
       end
 

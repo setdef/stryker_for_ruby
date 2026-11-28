@@ -25,4 +25,13 @@ class ChildTest < Minitest::Test
   ensure
     reader&.close
   end
+
+  def test_a_process_still_running_at_the_end_of_its_wait_has_ended_when_the_wait_returns
+    pid, reader = scripted("sleep")
+    child = Stryker::Isolation::Child.new(pid)
+
+    assert_equal([true, true], [child.end_within(0), child.ended?])
+  ensure
+    reader&.close
+  end
 end

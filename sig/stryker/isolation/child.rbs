@@ -31,6 +31,7 @@ module Stryker
 
       # Waits at most `seconds` for the process to end, kills it and its
       # group when it is still running then, and returns whether it was.
+      # The process has ended and been reaped when this returns.
       #
       # - `seconds`: Integer or Float, how long to wait.
       def end_within: (Integer | Float seconds) -> bool
