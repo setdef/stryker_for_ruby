@@ -8,7 +8,9 @@ module Stryker
     #
     # ```ruby
     # watches = Stryker::Isolation::FreshWatches.new
-    # watches.add(launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, "minitest"))
+    # fresh = Stryker::Isolation::FreshRun.judged(run, Stryker::Isolation::FreshFolder.made) { |result| puts(result.status) }
+    # watches.add(fresh)
+    # fresh.launch(launch, Stryker::TestRunners::Recipe.new("minitest"))
     # watches.finish
     # ```
     class FreshWatches
@@ -19,13 +21,13 @@ module Stryker
       POLL_SECONDS: Float
 
       # The processes still running.
-      @watches: Array[FreshWatch]
+      @watches: Array[FreshRun]
 
       # Builds an empty set.
       def initialize: () -> void
 
       # Adds `watch`.
-      def add: (FreshWatch watch) -> nil
+      def add: (FreshRun watch) -> nil
 
       # How many processes the set waits on.
       def size: () -> Integer
@@ -34,11 +36,10 @@ module Stryker
       def empty?: () -> bool
 
       # Calls the block for each of `runs`, while fewer than `window`
-      # watches are in the set, and finishes the watches, as `finish` does,
-      # until every run has started and every watch has finished. The block
-      # starts the run and adds its watch to the set, so that `stop` ends the
-      # process and deletes the folder of a run whose start a signal ends,
-      # once the block has put them in the set.
+      # runs are in the set, and finishes the runs, as `finish` does,
+      # until every run has started and every run has finished. The block
+      # adds the run to the set and starts it, so that `stop` ends whatever
+      # exists of a run whose start a signal or an error ends.
       #
       # - `runs`: Array, the runs, in the order they start.
       # - `window`: Integer, the most watches in the set at once.

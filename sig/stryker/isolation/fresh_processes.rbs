@@ -93,16 +93,15 @@ module Stryker
       # that `FreshRun.new` makes for it and `landing`.
       def land: (DryRun dry_run, ^(Messages, Ending) -> void landing) -> void
 
-      # Runs the fresh run that the block gives for each of `runs`, as
-      # `run_all` says. Raises `Stryker::Isolation::Error` before `start`.
-      def fly: [R] (Array[R] runs) { (R run) -> FreshRun } -> void
+      # Runs the fresh run that the block gives for each of `runs` and its
+      # folder, as `run_all` says. Raises `Stryker::Isolation::Error` before
+      # `start`.
+      def fly: [R] (Array[R] runs) { (R run, FreshFolder folder) -> FreshRun } -> void
 
-      # What starts the process of the fresh run that `fresh` gives for a
-      # run, with the test runner that `recipe` describes, and adds its watch
-      # to the set of the adapter. A signal that arrives while it makes the
-      # run's folder and starts its process waits until the set holds the
-      # watch.
-      def launcher: [R] (TestRunners::Recipe recipe, ^(R run) -> FreshRun fresh) -> ^(R run) -> void
+      # Makes the folder of `run`, and the fresh run that `fresh` gives for
+      # it, and adds the fresh run to the set of the adapter before a signal
+      # that arrives meanwhile can raise, so that `stop` deletes the folder.
+      def held: [R] (R run, ^(R run, FreshFolder folder) -> FreshRun fresh) -> FreshRun
     end
   end
 end

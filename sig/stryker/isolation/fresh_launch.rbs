@@ -11,7 +11,8 @@ module Stryker
     #
     # ```ruby
     # launch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root)
-    # watch = launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, Stryker::TestRunners::Recipe.new("minitest"))
+    # launch.call(Stryker::Isolation::FreshFolder.made, run, Stryker::TestRunners::Recipe.new("minitest"))
+    # # => a Stryker::Isolation::FreshRun::Spawned
     # ```
     class FreshLaunch
       # The cache's directory.
@@ -30,23 +31,16 @@ module Stryker
       # - `process`: `Process`, or a stand-in in a test.
       def initialize: (String directory, String root, ?singleton(::Process) process) -> void
 
-      # Starts the process of `fresh`, with the mutant that its run needs
-      # active, and returns the watch over it, with the run's time limit
-      # starting now. When the launch fails, an interrupt included, the
-      # process it started is ended, the run's folder is deleted after it, and
-      # the error reaches the caller unchanged. A system that refuses to start
-      # the process leaves nothing to end.
+      # Writes `run` into `folder`, starts the run's process with the
+      # mutant that the run needs active, and returns the stage of the run
+      # that holds the process by its ID. A system that refuses to start the
+      # process raises, and leaves nothing to end.
       #
-      # - `fresh`: Stryker::Isolation::FreshRun, the run.
+      # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+      # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the
       #   test runner.
-      def call: (FreshRun fresh, TestRunners::Recipe recipe) -> FreshWatch
-
-      private
-
-      # Spawns the process of `fresh` with the test runner of `recipe`, and
-      # returns its process ID.
-      def spawn: (FreshRun fresh, TestRunners::Recipe recipe) -> Integer
+      def call: (FreshFolder folder, forked run, TestRunners::Recipe recipe) -> FreshRun::Spawned
     end
   end
 end

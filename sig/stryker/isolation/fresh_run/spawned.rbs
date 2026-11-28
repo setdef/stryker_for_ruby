@@ -1,0 +1,40 @@
+module Stryker
+  module Isolation
+    class FreshRun
+      # A fresh run whose process has started, known only by its ID.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # spawned = Stryker::Isolation::FreshRun::Spawned.new(folder, pid)
+      # spawned.hold(5000)
+      # # => a Stryker::Isolation::FreshRun::Running
+      # ```
+      class Spawned < Stage
+        # The run's folder.
+        @folder: FreshFolder
+
+        # The process's ID.
+        @pid: Integer
+
+        # `Process`, or a stand-in in a test.
+        @process: singleton(::Process)
+
+        # The run whose process `pid` writes into `folder`.
+        #
+        # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+        # - `pid`: Integer, the process's ID.
+        # - `process`: `Process`, or a stand-in in a test.
+        def initialize: (FreshFolder folder, Integer pid, ?singleton(::Process) process) -> void
+
+        # Starts waiting for the process, with a time limit of `timeout_ms`
+        # once its first test starts, and returns the stage that holds it.
+        def hold: (Integer timeout_ms) -> Stage
+
+        # Kills the process and its group, reaps it, and then deletes the
+        # folder, even when ending the process raises.
+        def stop: () -> void
+      end
+    end
+  end
+end

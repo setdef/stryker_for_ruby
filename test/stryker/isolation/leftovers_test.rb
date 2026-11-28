@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require_relative("../../support/isolation_stand_ins")
-require "stryker/isolation/fresh_watch"
+require "stryker/isolation/fresh_run"
+require "stryker/isolation/messages"
 require "stryker/isolation/watch"
 
 # What the orchestrator and the fork parent do with a process that has ended:
@@ -29,21 +30,22 @@ class LeftoversTest < Minitest::Test
   end
   private_constant(:EndedProcess)
 
-  # What a run's folder is to a fresh process: it keeps the ending it lands
-  # with.
-  class Fresh
-    attr_reader :ending
+  # What a run's folder is to a fresh process, when the process wrote
+  # nothing.
+  class Folder
+    def messages
+      Stryker::Isolation::Messages.new([])
+    end
 
-    def land(ending)
-      @ending = ending
-      nil
+    def errors
+      ""
     end
 
     def remove
       nil
     end
   end
-  private_constant(:Fresh)
+  private_constant(:Folder)
 
   def kills
     return [[:kill, :KILL, -FakeProcess::PID]] if Stryker::Isolation::ProcessGroup::SYSTEM.groups?
@@ -81,20 +83,21 @@ class LeftoversTest < Minitest::Test
     assert_equal([[:detach, FakeProcess::PID], *kills], process.calls)
   end
 
-  def test_stopping_a_fresh_watch_whose_process_has_ended_ends_what_it_left_running_in_its_group
+  def test_stopping_a_fresh_run_whose_process_has_ended_ends_what_it_left_running_in_its_group
     process = EndedProcess.new
     child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
-    Stryker::Isolation::FreshWatch.new(Fresh.new, child, Stryker::Isolation::Timer.new(30_000)).stop
+    running_fresh(Folder.new, child, Stryker::Isolation::Timer.new(30_000)).stop
 
     assert_equal([[:detach, FakeProcess::PID], *kills], process.calls)
   end
 
-  def test_a_fresh_watch_ends_what_its_ended_process_left_in_its_group
+  def test_a_fresh_run_ends_what_its_ended_process_left_in_its_group
     process = EndedProcess.new
     child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
-    fresh = Fresh.new
-    Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(30_000)).finish
+    endings = []
+    fresh = running_fresh(Folder.new, child, Stryker::Isolation::Timer.new(30_000)) { |_, ending| endings << ending }
+    fresh.finish
 
-    assert_equal([0, [[:detach, FakeProcess::PID], *kills]], [fresh.ending.exit_status, process.calls])
+    assert_equal([[0], [[:detach, FakeProcess::PID], *kills]], [endings.map(&:exit_status), process.calls])
   end
 end

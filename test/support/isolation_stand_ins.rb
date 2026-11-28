@@ -2,6 +2,7 @@
 
 require_relative("../test_helper")
 require "rbconfig"
+require "stryker/isolation/fresh_run"
 require "stryker/isolation/process_group"
 require "stryker/mutant"
 require "stryker/mutant_run"
@@ -91,6 +92,34 @@ module IsolationStandIns
     end
   end
 
+  # A launch that starts nothing and hands the run the process +child+ and
+  # the time limit +timer+, as if it had started the process: where each
+  # test of a fresh run whose process runs starts from.
+  class HeldLaunch
+    # The stage of a run whose process the launch "started".
+    class Held < Stryker::Isolation::FreshRun::Stage
+      def initialize(folder, child, timer)
+        super()
+        @folder = folder
+        @child = child
+        @timer = timer
+      end
+
+      def hold(_timeout_ms)
+        Stryker::Isolation::FreshRun::Running.new(@folder, @child, @timer)
+      end
+    end
+
+    def initialize(child, timer)
+      @child = child
+      @timer = timer
+    end
+
+    def call(folder, _run, _recipe)
+      Held.new(folder, @child, @timer)
+    end
+  end
+
   # The processes that one test started, which end when the test ends,
   # however it ends: a stand-in that waits for the code under test to end it
   # would otherwise stay running when an assertion fails first.
@@ -153,6 +182,16 @@ module IsolationStandIns
     pid = start_process(RbConfig.ruby, "-e", "$stdout.binmode; #{script}", out: writer)
     writer.close
     [pid, reader]
+  end
+
+  # A fresh run of mutant 7's static run, in +folder+, whose process is
+  # +child+, with the time limit +timer+, and the landing that the block
+  # gives.
+  def running_fresh(folder, child, timer, &landing)
+    landing ||= -> (_messages, _ending) {}
+    Stryker::Isolation::FreshRun.new(sample_run(7, static: true), folder, &landing).tap do |fresh|
+      fresh.launch(HeldLaunch.new(child, timer), nil)
+    end
   end
 
   def sample_test(name = "test_value")

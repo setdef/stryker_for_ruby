@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 require_relative("../../support/isolation_stand_ins")
-require "stryker/isolation/fresh_watch"
+require "stryker/isolation/fresh_folder"
+require "stryker/isolation/fresh_run"
 require "stryker/isolation/fresh_watches"
 require "stryker/isolation/messages"
 
@@ -55,26 +56,6 @@ class FreshWatchesTest < Minitest::Test
     end
   end
   private_constant(:Watch)
-
-  # What a run's folder is to a fresh process: a results file whose first
-  # line says whether a test started, and a list that it adds whether the run
-  # timed out to when it lands.
-  class Fresh
-    def initialize(path, landed)
-      @path = path
-      @landed = landed
-    end
-
-    def started?
-      File.exist?(@path) && Stryker::Isolation::Message.started?(File.read(@path))
-    end
-
-    def land(ending)
-      @landed << ending.timed_out
-      nil
-    end
-  end
-  private_constant(:Fresh)
 
   def finished(*watches)
     set = Stryker::Isolation::FreshWatches.new
@@ -149,7 +130,7 @@ class FreshWatchesTest < Minitest::Test
 
   # Time that only moves when a wait moves it, and a process on it that
   # writes its first test's line at +test_at+ and ends at +ends_at+, in
-  # seconds. It stands in for the child, the results file, and the clock.
+  # seconds. It stands in for the child, the run's folder, and the clock.
   class Timeline
     Done = Struct.new(:exitstatus, :termsig)
     private_constant(:Done)
@@ -188,13 +169,16 @@ class FreshWatchesTest < Minitest::Test
       nil
     end
 
-    def land(ending)
-      @timed_out = ending.timed_out
-      nil
+    def messages
+      Stryker::Isolation::Messages.new([])
     end
 
-    def timed_out?
-      @timed_out
+    def errors
+      ""
+    end
+
+    def remove
+      nil
     end
   end
   private_constant(:Timeline)
@@ -205,28 +189,30 @@ class FreshWatchesTest < Minitest::Test
     timeline = Timeline.new(test_at: 5.0, ends_at: 5.2)
     timer = Stryker::Isolation::Timer.new(1000, clock: timeline.method(:now))
     set = Stryker::Isolation::FreshWatches.new
-    set.add(Stryker::Isolation::FreshWatch.new(timeline, timeline, timer))
+    landed = []
+    set.add(running_fresh(timeline, timeline, timer) { |_, ending| landed << ending.timed_out })
     set.finish until set.empty?
 
-    refute_predicate(timeline, :timed_out?)
+    assert_equal([false], landed)
   end
 
   def test_a_process_past_its_time_after_its_first_test_is_timed_out
-    Dir.mktmpdir do |folder|
-      results = File.join(folder, "results")
-      pid, = scripted("File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep")
+    # The run's landing deletes the folder.
+    folder = Dir.mktmpdir
+    results = File.join(folder, "results")
+    pid, = scripted("File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep")
 
-      assert_equal([true], timed_out(results, pid, 300))
-    end
+    assert_equal([[true], false], [timed_out(folder, pid, 300), File.exist?(folder)])
   end
 
-  # Watches the process +pid+, whose results file is +results+, with a time
-  # limit of +milliseconds+ until it lands, and gives whether it timed out.
-  private def timed_out(results, pid, milliseconds)
+  # Watches the process +pid+, whose folder is +folder+, with a time limit of
+  # +milliseconds+ until it lands, and gives whether it timed out.
+  private def timed_out(folder, pid, milliseconds)
     landed = []
     timer = Stryker::Isolation::Timer.new(milliseconds)
     set = Stryker::Isolation::FreshWatches.new
-    set.add(Stryker::Isolation::FreshWatch.new(Fresh.new(results, landed), Stryker::Isolation::Child.new(pid), timer))
+    fresh = Stryker::Isolation::FreshFolder.new(folder)
+    set.add(running_fresh(fresh, Stryker::Isolation::Child.new(pid), timer) { |_, ending| landed << ending.timed_out })
     set.finish until set.empty?
     landed
   end

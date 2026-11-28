@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "cleanup"
-require_relative "fresh_watch"
+require_relative "fresh_run"
 
 module Stryker
   module Isolation

@@ -1,0 +1,52 @@
+module Stryker
+  module Isolation
+    class FreshRun
+      # A fresh run whose process has ended and been reaped, and whose
+      # folder still holds what the process wrote.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # reaped = Stryker::Isolation::FreshRun::Reaped.new(folder, child, timer, false)
+      # reaped.land(-> (messages, ending) { puts(ending.exit_status) })
+      # # prints 0
+      # ```
+      class Reaped < Stage
+        # The run's folder.
+        @folder: FreshFolder
+
+        # The reaped process.
+        @child: Child
+
+        # The run's time limit, which gives the run's duration.
+        @timer: Timer
+
+        # Whether the process ran out of time.
+        @timed_out: bool
+
+        # The run whose reaped process `child` wrote into `folder`.
+        #
+        # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+        # - `child`: Stryker::Isolation::Child, the reaped process.
+        # - `timer`: Stryker::Isolation::Timer, the run's time limit.
+        # - `timed_out`: bool, whether the process ran out of time.
+        def initialize: (FreshFolder folder, Child child, Timer timer, bool timed_out) -> void
+
+        # Reads how the process ended, kills what it left running in its
+        # group, hands its messages and its ending, with the last lines of its
+        # standard error, to `landing`, and deletes the folder, however that
+        # ends. The group is killed even when the status can't be read.
+        def land: (^(Messages messages, Ending ending) -> void landing) -> nil
+
+        # Deletes the folder, and kills nothing: the process has been reaped.
+        def stop: () -> void
+
+        private
+
+        # The reaped process's status, after which what it left in its group
+        # is killed, whether or not the status could be read.
+        def status: () -> Process::Status
+      end
+    end
+  end
+end

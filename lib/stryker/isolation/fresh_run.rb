@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
-require "fileutils"
-require "tmpdir"
-require_relative "message"
-require_relative "messages"
-require_relative "output_files"
+require_relative "deferred"
+require_relative "fresh_run/made"
+require_relative "fresh_run/spawned"
+require_relative "fresh_run/stage"
 require_relative "verdict"
 
 module Stryker
@@ -12,56 +11,60 @@ module Stryker
     class FreshRun
       attr_reader :run
 
-      def self.judged(run)
-        new(run) { |messages, ending| yield(Verdict.new(run, messages, ending).result) }
+      def self.judged(run, folder)
+        new(run, folder) { |messages, ending| yield(Verdict.new(run, messages, ending).result) }
       end
 
-      def initialize(run, &landing)
+      def initialize(run, folder, &landing)
         @run = run
         @landing = landing
-        @folder = Dir.mktmpdir("stryker-run-")
-        @outputs = OutputFiles.new(@folder)
+        @stage = Made.new(folder)
       end
 
-      def paths
-        input = File.join(@folder, "run")
-        # Binary, because a text-mode write on Windows turns each LF into
-        # CRLF.
-        File.binwrite(input, @run.to_json)
-        [input, results_path]
+      def launch(launch, recipe)
+        hand_over { @stage.spawn(launch, @run, recipe) }
+        hand_over { @stage.hold(@run.timeout_ms) }
       end
 
-      def output_options
-        out, err = @outputs.paths("process")
-        { in: File::NULL, out:, err: }
+      def check
+        @stage.check
       end
 
-      def started?
-        # The first line the process writes is its first test's start, so
-        # that line is all this reads.
-        first = File.open(results_path, "rb", &:gets) if File.exist?(results_path)
-        first ? Message.started?(first) : false
+      def testing?
+        @stage.testing?
       end
 
-      def land(ending)
-        @landing.call(Messages.parse(results_text), ending.with(errors: @outputs.tail("process")))
+      def done?
+        @stage.done?
+      end
+
+      def wait(seconds)
+        @stage.wait(seconds)
+      end
+
+      def left
+        @stage.left
+      end
+
+      def finish
+        # Reaped before it lands, so that a stop while it lands leaves alone
+        # the process, whose ID may belong to another process by then.
+        @stage = @stage.reap
+        @stage.land(@landing)
+      end
+
+      def stop
+        @stage.stop
+        @stage = Stage.new
         nil
-      ensure
-        remove
       end
 
-      def remove
-        FileUtils.remove_entry(@folder, true)
-      end
-
-      private def results_path
-        File.join(@folder, "results")
-      end
-
-      private def results_text
-        results = results_path
-        # A process that ended before it opened the file wrote nothing.
-        File.exist?(results) ? File.read(results, mode: "rb", encoding: Encoding::UTF_8) : ""
+      private def hand_over
+        # The run holds what the step made before the mask ends, so a signal
+        # that arrives during the step raises once the run holds it, and stop
+        # ends it.
+        Deferred.signals { @stage = yield }
+        nil
       end
 
       # @dynamic run

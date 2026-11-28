@@ -1,0 +1,73 @@
+module Stryker
+  module Isolation
+    class FreshRun
+      # A stage of a fresh run, and the stage of a run with nothing left.
+      # Each stage answers the events it can take; any other event raises
+      # `Stryker::Isolation::Error`, a fault of **Stryker (for Ruby)**, and
+      # `stop` here does nothing.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # Stryker::Isolation::FreshRun::Stage.new.stop
+      # # => nil
+      # Stryker::Isolation::FreshRun::Stage.new.left
+      # # raises Stryker::Isolation::Error
+      # ```
+      class Stage
+        # The text of the error for an event that the stage can't take.
+        UNEXPECTED: String
+
+        # Starts the run's process with `launch`, and returns the next stage.
+        #
+        # - `launch`: Stryker::Isolation::FreshLaunch, what starts it.
+        # - `run`: the run, a Stryker::MutantRun or the dry run.
+        # - `recipe`: Stryker::TestRunners::Recipe, the test runner's recipe.
+        def spawn: (FreshLaunch launch, forked run, TestRunners::Recipe recipe) -> Stage
+
+        # Holds the process that the run started, with a time limit of
+        # `timeout_ms` once its first test starts, and returns the next
+        # stage.
+        #
+        # - `timeout_ms`: Integer, the run's time limit in milliseconds.
+        def hold: (Integer timeout_ms) -> Stage
+
+        # Starts the time limit once the results file shows a test started.
+        def check: () -> nil
+
+        # Whether the run's time limit has started.
+        def testing?: () -> bool
+
+        # Whether the process has ended or its time is up.
+        def done?: () -> bool
+
+        # Waits at most `seconds` for the process to end.
+        #
+        # - `seconds`: Float, the longest wait.
+        def wait: (Float seconds) -> nil
+
+        # The seconds left before the time is up, or 0.
+        def left: () -> Float
+
+        # Ends the process within what is left of its time, reaps it, and
+        # returns the next stage.
+        def reap: () -> Stage
+
+        # Hands the process's messages and how it ended to `landing`, and
+        # deletes the run's folder.
+        #
+        # - `landing`: what judges the run.
+        def land: (^(Messages messages, Ending ending) -> void landing) -> nil
+
+        # Ends what exists of the run in this stage.
+        def stop: () -> void
+
+        private
+
+        # Raises `Stryker::Isolation::Error` for `event`, which the stage
+        # can't take.
+        def unexpected: (String event) -> bot
+      end
+    end
+  end
+end

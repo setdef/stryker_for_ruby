@@ -66,57 +66,87 @@ class LaunchTest < Minitest::Test
   end
 
   # Launches a fresh process of mutant 7's static run with the stand-in, and
-  # returns what it was asked to spawn with, the run's file, and the watch.
+  # returns what it was asked to spawn with, the run's file, and the run.
   def fresh_spawned
-    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
-    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(fresh, RECIPE)
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true), Stryker::Isolation::FreshFolder.made) { nil }
+    fresh.launch(Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process), RECIPE)
     environment, argv, options = spawned
-    [environment, argv[-2], options, watch]
+    [environment, argv[-2], options, fresh]
   end
 
   def test_a_fresh_process_starts_with_its_mutant_active_and_its_run_in_a_file
-    environment, run_file, _, watch = fresh_spawned
+    environment, run_file, _, fresh = fresh_spawned
 
     assert_equal({ Stryker::Isolation::Command::ACTIVE_MUTANT => "7" }, environment)
     assert_equal(sample_run(7, static: true), Stryker::MutantRun.from_json(File.read(run_file)))
   ensure
-    watch&.stop
+    fresh&.stop
   end
 
   def test_a_fresh_process_runs_in_the_project_with_its_output_in_the_runs_folder
-    _, run_file, options, watch = fresh_spawned
+    _, run_file, options, fresh = fresh_spawned
 
     assert_equal(
       [File::NULL, "/project", File.dirname(run_file)],
       [options[:in], options[:chdir], File.dirname(options[:err])]
     )
   ensure
-    watch&.stop
+    fresh&.stop
+  end
+
+  # A handle over a process that exited with status 1 before it wrote
+  # anything.
+  class Exited
+    Status = Struct.new(:termsig, :exitstatus)
+    private_constant(:Status)
+
+    def initialize
+      @running = false
+    end
+
+    def end_within(_seconds)
+      @running
+    end
+
+    def status
+      Status.new(nil, 1)
+    end
+
+    def kill_rest
+      nil
+    end
+  end
+  private_constant(:Exited)
+
+  # The messages and the ending that a run in +folder+ lands with, once its
+  # process has exited.
+  def landed(folder)
+    results = []
+    fresh = running_fresh(folder, Exited.new, Stryker::Isolation::Timer.new(30_000)) { |*landing| results << landing }
+    fresh.finish
+    results.first
   end
 
   def test_a_fresh_run_whose_process_wrote_nothing_has_no_messages_and_leaves_no_folder
-    results = []
-    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { |result| results << result }
-    folder = File.dirname(fresh.paths.first)
-    ending = Stryker::Isolation::Ending.new(exit_status: 1, signal: nil, timed_out: false, duration_ms: 1.0, errors: "")
-    fresh.land(ending)
-    result, = results
+    folder = Stryker::Isolation::FreshFolder.made
+    path = File.dirname(folder.paths(sample_run(7, static: true)).first)
+    messages, ending = landed(folder)
 
-    assert_equal(["RuntimeError", 0, false], [result.status, result.tests_completed, File.exist?(folder)])
+    assert_equal([0, false, 1, false], [messages.results.size, messages.ended?, ending.exit_status, File.exist?(path)])
   end
 
   def test_a_fresh_run_has_started_a_test_once_its_results_begin_with_a_whole_start
-    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
-    results = fresh.paths.last
-    started = [fresh.started?]
+    folder = Stryker::Isolation::FreshFolder.made
+    results = folder.paths(sample_run(7, static: true)).last
+    started = [folder.started?]
     File.binwrite(results, '{"started":')
-    started << fresh.started?
+    started << folder.started?
     File.binwrite(results, %({"started":{}}\n{"finished":))
-    started << fresh.started?
+    started << folder.started?
 
     assert_equal([false, false, true], started)
   ensure
-    fresh&.remove
+    folder&.remove
   end
 
   def test_the_fresh_adapter_needs_starting_first_and_stops_without_a_start

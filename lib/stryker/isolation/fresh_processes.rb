@@ -4,6 +4,7 @@ require_relative "deferred"
 require_relative "dry_run"
 require_relative "dry_run_verdict"
 require_relative "error"
+require_relative "fresh_folder"
 require_relative "fresh_launch"
 require_relative "fresh_run"
 require_relative "fresh_watches"
@@ -27,7 +28,7 @@ module Stryker
       end
 
       def run_all(runs, &)
-        fly(runs) { |run| FreshRun.judged(run, &) }
+        fly(runs) { |run, folder| FreshRun.judged(run, folder, &) }
       end
 
       def dry_run(config)
@@ -40,22 +41,22 @@ module Stryker
       end
 
       private def land(dry_run, landing)
-        # The run's folder is made where the set holds what it makes.
-        fly([dry_run]) { |run| FreshRun.new(run, &landing) }
+        fly([dry_run]) { |run, folder| FreshRun.new(run, folder, &landing) }
       end
 
       private def fly(runs, &fresh)
         config = @config or raise(Error, UNSTARTED)
-        launching = launcher(config.test_runner_recipe, fresh)
-        StopOnRaise.around(self) { @running.run(runs, config.concurrency, &launching) }
+        recipe = config.test_runner_recipe
+        StopOnRaise.around(self) do
+          @running.run(runs, config.concurrency) { |run| held(run, fresh).launch(@launch, recipe) }
+        end
       end
 
-      private def launcher(recipe, fresh)
-        # What the launch makes and starts, a run's folder and its process,
-        # is in the set before a signal arrives, so that stop ends it. The
-        # step only makes and starts, so a signal waits briefly, never for a
-        # run.
-        -> (run) { Deferred.signals { @running.add(@launch.call(fresh.call(run), recipe)) } }
+      private def held(run, fresh)
+        # The set holds the run before the mask ends, so a signal that arrives
+        # while the run's folder is made raises once the set holds the run,
+        # and stop deletes the folder.
+        Deferred.signals { fresh.call(run, FreshFolder.made).tap { |made| @running.add(made) } }
       end
     end
   end

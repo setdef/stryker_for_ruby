@@ -1,0 +1,62 @@
+module Stryker
+  module Isolation
+    class FreshRun
+      # A fresh run whose process runs, with its waiter and its time limit.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # running = Stryker::Isolation::FreshRun::Running.new(folder, Stryker::Isolation::Child.new(pid), Stryker::Isolation::Timer.new(5000))
+      # running.wait(running.left) until running.done?
+      # running.reap
+      # # => a Stryker::Isolation::FreshRun::Reaped
+      # ```
+      class Running < Stage
+        # The run's folder.
+        @folder: FreshFolder
+
+        # The process and its waiter.
+        @child: Child
+
+        # The run's time limit.
+        @timer: Timer
+
+        # The run whose process `child` writes into `folder`, with its time
+        # limit `timer`.
+        #
+        # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+        # - `child`: Stryker::Isolation::Child, the process.
+        # - `timer`: Stryker::Isolation::Timer, the time limit.
+        def initialize: (FreshFolder folder, Child child, Timer timer) -> void
+
+        # Starts the run's time limit once the results file shows that its
+        # first test started.
+        def check: () -> nil
+
+        # Whether the run's time limit has started.
+        def testing?: () -> bool
+
+        # Whether the process has ended or its time is up.
+        def done?: () -> bool
+
+        # Waits at most `seconds` for the process to end, and kills nothing.
+        def wait: (Float seconds) -> nil
+
+        # The seconds left before the time is up, or 0.
+        def left: () -> Float
+
+        # Waits for the process for what is left of its time, kills it and
+        # its group if it still runs then, and returns the stage of the
+        # reaped process, which says whether it ran out of time. When the
+        # wait raises, the process has ended and the error reaches the
+        # caller.
+        def reap: () -> Stage
+
+        # Kills the process and its group while it runs, or what an ended
+        # process left running in its group, waits until it has ended, and
+        # then deletes the folder, even when ending the process raises.
+        def stop: () -> void
+      end
+    end
+  end
+end

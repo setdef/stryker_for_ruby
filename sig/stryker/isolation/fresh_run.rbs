@@ -1,21 +1,28 @@
 module Stryker
   module Isolation
-    # One run in a fresh process, as the orchestrator keeps it: the run, and
-    # a temporary folder of the run's own, made with `Dir.mktmpdir`, which holds the file that
-    # holds the process's run, the file the process writes its messages to,
-    # and the files of its standard output and standard error. No name that
-    # the project chose becomes part of a path. When it is told to land, it
-    # hands the process's messages and how the process ended to the block it
-    # was built with, which judges the run, as a `Stryker::Isolation::Flight`
-    # does for a forked child.
+    # One run in a fresh process, as the orchestrator holds it, from the
+    # moment its folder exists until it has landed: the one owner of the run's
+    # folder, its process, and its time limit. Each stage of the run holds
+    # what exists of it then:
+    #
+    # | Stage | What exists | What `stop` does |
+    # | - | - | - |
+    # | `Made` | The folder | Deletes it |
+    # | `Spawned` | The folder and the process, by its ID | Kills the process and its group, reaps it, and deletes the folder |
+    # | `Running` | The folder, the process and its waiter, and the time limit | Kills the process and its group while it runs, or what it left in its group, reaps it, and deletes the folder |
+    # | `Reaped` | The folder | Deletes it |
+    #
+    # A stopped run has nothing left, and a second `stop` does nothing. When
+    # it lands, it hands the process's messages and how the process ended to
+    # the block it was built with, which judges the run, as a
+    # `Stryker::Isolation::Flight` does for a forked child.
     #
     # ## Examples
     #
     # ```ruby
-    # fresh = Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }
-    # fresh.paths
-    # # => ["<folder>/run", "<folder>/results"]
-    # fresh.land(ending)
+    # fresh = Stryker::Isolation::FreshRun.judged(run, Stryker::Isolation::FreshFolder.made) { |result| puts(result.status) }
+    # fresh.launch(Stryker::Isolation::FreshLaunch.new(cache_directory, project_root), Stryker::TestRunners::Recipe.new("minitest"))
+    # fresh.finish
     # # prints Killed
     # ```
     class FreshRun
@@ -25,58 +32,77 @@ module Stryker
       # What judges the run from its process's messages and ending.
       @landing: ^(Messages messages, Ending ending) -> void
 
-      # The run's folder.
-      @folder: String
+      # What exists of the run now.
+      @stage: Stage
 
-      # The files of the process's standard output and standard error.
-      @outputs: OutputFiles
-
-      # The fresh run of the mutant run `run`, which yields the run's result, as `Stryker::Isolation::Verdict` gives it,
-      # when it lands.
+      # The fresh run of the mutant run `run` in `folder`, which yields the
+      # run's result, as `Stryker::Isolation::Verdict` gives it, when it
+      # lands.
       #
       # - `run`: Stryker::MutantRun, the run.
-      def self.judged: (MutantRun run) { (MutantResult result) -> void } -> FreshRun
+      # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+      def self.judged: (MutantRun run, FreshFolder folder) { (MutantResult result) -> void } -> FreshRun
 
-      # Makes the run's folder.
+      # Holds the run, whose folder is `folder` and whose process hasn't
+      # started.
       #
       # - `run`: the run, a Stryker::MutantRun or the dry run.
+      # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
       # - the block: what judges the run, given the process's messages and
       #   how the process ended, when the run lands.
-      def initialize: (forked run) { (Messages messages, Ending ending) -> void } -> void
+      def initialize: (forked run, FreshFolder folder) { (Messages messages, Ending ending) -> void } -> void
 
-      # Writes the run's file, as JSON in binary mode, and returns its path
-      # and the path of the results' file, for the process's arguments.
-      def paths: () -> [String, String]
-
-      # The options of `Process.spawn` for the process's standard streams:
-      # standard input on the null device, and standard output and standard
-      # error on files in the run's folder.
-      def output_options: () -> Hash[Symbol, String]
-
-      # Whether the process has started a test: the results' file begins
-      # with a whole line for a test that started. False before the process
-      # opened the file.
-      def started?: () -> bool
-
-      # Hands the messages in the results' file, and `ending` with the last
-      # lines of the process's standard error, to the block the run was
-      # built with, and deletes the run's folder, even when the block
-      # raises. A process that ended before it opened the results' file has
-      # no messages.
+      # Starts the run's process with `launch`, with the mutant that the run
+      # needs active and the test runner that `recipe` describes, and holds
+      # it, with the run's time limit starting now. A signal that arrives
+      # while the process starts raises once the run holds the process, so
+      # `stop` ends it. When the launch raises, the run holds what the launch
+      # made, and `stop` ends it.
       #
-      # - `ending`: Stryker::Isolation::Ending, how the process ended.
-      def land: (Ending ending) -> nil
+      # - `launch`: Stryker::Isolation::FreshLaunch, what starts the process.
+      # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the
+      #   test runner.
+      def launch: (FreshLaunch launch, TestRunners::Recipe recipe) -> nil
 
-      # Deletes the run's folder, if it is still there.
-      def remove: () -> void
+      # Starts the run's time limit once its results file shows that its
+      # first test started. Before then, the process has the limit for
+      # starting, `Stryker::Isolation::Timer::START_SECONDS`.
+      def check: () -> nil
+
+      # Whether the run's time limit has started.
+      def testing?: () -> bool
+
+      # Whether the process has ended or its time is up, so that `finish`
+      # returns at once.
+      def done?: () -> bool
+
+      # Waits at most `seconds` for the process to end.
+      #
+      # - `seconds`: Float, the longest wait.
+      def wait: (Float seconds) -> nil
+
+      # The seconds left before the time is up, or 0.
+      def left: () -> Float
+
+      # Waits for the process for what is left of its time, kills it if it
+      # still runs, reaps it, kills what it left running in its group, and
+      # lands the run, which deletes its folder. When the process can't be
+      # reaped, as when a signal arrives in the wait, the process is ended
+      # and the error reaches the caller, and `stop` deletes the folder. Once
+      # the process has been reaped, its folder is deleted however the
+      # landing ends, and `stop` kills nothing of it.
+      def finish: () -> nil
+
+      # Ends whatever exists of the run, as its stage says, and leaves nothing
+      # for a second `stop`. When ending the process raises, the folder is
+      # still deleted, and the error reaches the caller.
+      def stop: () -> nil
 
       private
 
-      # The path of the results' file.
-      def results_path: () -> String
-
-      # What the process wrote to the results' file.
-      def results_text: () -> String
+      # Makes the run's stage what the block gives, before a signal that
+      # arrives during the block can raise.
+      def hand_over: () { () -> Stage } -> nil
     end
   end
 end

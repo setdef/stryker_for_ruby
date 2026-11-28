@@ -8,10 +8,10 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # watch = Stryker::Isolation::Deferred.signals do
-    #   Stryker::Isolation::Custody.new(fresh).around do |custody|
+    # parent = Stryker::Isolation::Deferred.signals do
+    #   Stryker::Isolation::Custody.new(site).around do |custody|
     #     child = custody.child(Process.spawn("sleep", "1"))
-    #     Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(5000))
+    #     Stryker::Isolation::ParentProcess.new(child, pipes, site.folder)
     #   end
     # end
     # ```
@@ -39,7 +39,7 @@ module Stryker
       # Builds the custody of a launch that has started nothing.
       #
       # - `made`: what the launch made, which answers `remove` by deleting it:
-      #   a `Stryker::Isolation::FreshRun`, say.
+      #   a `Stryker::Isolation::LaunchSite`, say.
       # - `process`: `Process`, or a stand-in in a test.
       def initialize: (_Made made, ?singleton(::Process) process) -> void
 

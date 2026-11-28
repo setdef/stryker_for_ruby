@@ -7,8 +7,9 @@ require "stryker/isolation"
 require "stryker/test_runners/recipe"
 require "tmpdir"
 
-# What the launch of a fresh process leaves behind when something fails, with
-# a stand-in for Process, on every system.
+# What the launch of a fresh process leaves behind when something fails, once
+# the run is stopped, as the set of runs stops it, with a stand-in for
+# Process, on every system.
 class FreshLaunchTest < Minitest::Test
   include IsolationStandIns
 
@@ -58,23 +59,19 @@ class FreshLaunchTest < Minitest::Test
     FileUtils.remove_entry(@temporary)
   end
 
-  # Makes the run, and launches its process with `process`, with the run's
-  # folder made inside `@temporary`, and raises what the launch raises. A
-  # launch that signals is made while signals are deferred, as its callers
-  # make it, and returns the watch the launch made by the time the signal
-  # raises.
-  def launched_with(process, expected, deferred: false)
+  # Makes the run, with its folder inside `@temporary`, launches its process
+  # with `process`, checks that the launch raises `expected`, and stops the
+  # run.
+  def launched_with(process, expected)
     folder = Dir.method(:mktmpdir)
     in_temporary = -> (prefix) { folder.call(prefix, @temporary) }
-    Dir.stub(:mktmpdir, in_temporary) do
-      fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
-      launch = Stryker::Isolation::FreshLaunch.new("/cache", @temporary, process)
-
-      watch = nil
-      launching = -> { watch = launch.call(fresh, Stryker::TestRunners::Recipe.new("minitest")) }
-      assert_raises(expected) { deferred ? Stryker::Isolation::Deferred.signals { launching.call } : launching.call }
-      watch
+    fresh = Dir.stub(:mktmpdir, in_temporary) do
+      Stryker::Isolation::FreshRun.judged(sample_run(7, static: true), Stryker::Isolation::FreshFolder.made) { nil }
     end
+    launch = Stryker::Isolation::FreshLaunch.new("/cache", @temporary, process)
+
+    assert_raises(expected) { fresh.launch(launch, Stryker::TestRunners::Recipe.new("minitest")) }
+    fresh.stop
   end
 
   def run_folder
@@ -95,9 +92,9 @@ class FreshLaunchTest < Minitest::Test
     assert_raises(Errno::ECHILD) { Process.wait(process.pid) }
   end
 
-  def test_an_interrupt_as_the_process_starts_waits_for_a_watch_that_ends_the_process_before_it_deletes_the_folder
+  def test_an_interrupt_as_the_process_starts_waits_for_the_run_to_hold_it_and_stop_ends_it_before_it_deletes_the_folder
     process = StartedThenFailing.new(self, -> { run_folder }, interrupted: true)
-    launched_with(process, Interrupt, deferred: true).stop
+    launched_with(process, Interrupt)
 
     assert_equal([true, []], [process.folder_stood_at_kill, Dir.children(@temporary)])
     assert_raises(Errno::ECHILD) { Process.wait(process.pid) }

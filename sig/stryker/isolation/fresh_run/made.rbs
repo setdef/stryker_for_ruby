@@ -1,0 +1,32 @@
+module Stryker
+  module Isolation
+    class FreshRun
+      # A fresh run whose folder exists and whose process hasn't started.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # made = Stryker::Isolation::FreshRun::Made.new(Stryker::Isolation::FreshFolder.made)
+      # made.spawn(launch, run, Stryker::TestRunners::Recipe.new("minitest"))
+      # # => a Stryker::Isolation::FreshRun::Spawned
+      # ```
+      class Made < Stage
+        # The run's folder.
+        @folder: FreshFolder
+
+        # The run whose folder is `folder`.
+        #
+        # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
+        def initialize: (FreshFolder folder) -> void
+
+        # Starts the run's process with `launch`, as
+        # `Stryker::Isolation::FreshLaunch#call` does, and returns the stage
+        # that holds it.
+        def spawn: (FreshLaunch launch, forked run, TestRunners::Recipe recipe) -> Stage
+
+        # Deletes the folder.
+        def stop: () -> void
+      end
+    end
+  end
+end

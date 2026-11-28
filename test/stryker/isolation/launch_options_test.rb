@@ -41,11 +41,11 @@ class LaunchOptionsTest < Minitest::Test
   end
 
   def test_a_fresh_process_gets_the_options_as_one_word_of_json_after_the_runners_name
-    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
-    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(fresh, RECIPE)
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true), Stryker::Isolation::FreshFolder.made) { nil }
+    fresh.launch(Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process), RECIPE)
 
     assert_equal(["fresh", "/cache", "minitest", WORD], words_from("fresh"))
   ensure
-    watch&.stop
+    fresh&.stop
   end
 end
