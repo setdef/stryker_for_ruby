@@ -49,8 +49,8 @@ class ProjectSideTest < Minitest::Test
     assert_kind_of(Stryker::Isolation::RunReport, forked_run.calls.dig(0, 0))
   end
 
-  # macOS refuses the child's setpgid now and then when the parent's ran at
-  # the same moment, though the child leads its group by then.
+  # macOS refuses the child's setpgid when the parent's ran at the same
+  # moment, though the child leads its group by then (see #115).
   def test_a_forked_child_that_leads_its_group_when_its_setpgid_is_refused_runs_its_run
     process = FakeProcess.new(setpgid_error: Errno::EPERM)
     forked_run = Calls.new

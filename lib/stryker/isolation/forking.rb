@@ -36,8 +36,8 @@ module Stryker
         # start, and whichever runs first wins.
         @process.setpgid(0, 0)
       rescue Errno::EPERM
-        # macOS now and then refuses the child's call when the parent's ran
-        # at the same moment, though the child leads its group by then.
+        # macOS refuses the child's call when the parent's ran at the same
+        # moment, though the child leads its group by then (see #115).
         raise unless @process.getpgrp == @process.pid
       end
 
