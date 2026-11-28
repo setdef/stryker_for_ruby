@@ -80,8 +80,11 @@ module Stryker
         def hanging_runs: () -> Array[MutantRun]
 
         # The run of `SampleSuite::CHANGER`, which changes the process's
-        # state, and then a run of each of `SampleSuite::CHECKS`.
-        def state_runs: () -> Array[MutantRun]
+        # state.
+        def changing_run: () -> MutantRun
+
+        # A run of each of `SampleSuite::CHECKS`, which read the state.
+        def checking_runs: () -> Array[MutantRun]
 
         # Removes both folders.
         def remove: () -> void
