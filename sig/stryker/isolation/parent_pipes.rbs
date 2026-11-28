@@ -1,0 +1,33 @@
+module Stryker
+  module Isolation
+    # The two pipes that the orchestrator holds to the parent that forks,
+    # each named for what it carries.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # pipes = Stryker::Isolation::ParentPipes.new(commands: runs.writer, results: lines.reader)
+    # pipes.commands.write("{}\n")
+    # pipes.close
+    # ```
+    class ParentPipes < Data
+      # The write end of the pipe that carries the parent's runs.
+      attr_reader commands: IO
+
+      # The read end of the pipe that carries the parent's lines.
+      attr_reader results: IO
+
+      # Closes both ends the orchestrator holds.
+      def close: () -> nil
+
+      # Builds the value.
+      #
+      # - `commands`: IO, the write end of the pipe that carries the parent's
+      #   runs.
+      # - `results`: IO, the read end of the pipe that carries the parent's
+      #   lines.
+      def self.new: (commands: IO, results: IO) -> instance
+                  | (IO commands, IO results) -> instance
+    end
+  end
+end

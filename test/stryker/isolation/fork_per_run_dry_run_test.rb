@@ -43,7 +43,8 @@ class ForkPerRunDryRunTest < Minitest::Test
       results, output = IO.pipe
       pid = @test.start_process(RbConfig.ruby, "-e", PARENT, in: input, out: output)
       [input, output].each(&:close)
-      Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], Dir.mktmpdir)
+      pipes = Stryker::Isolation::ParentPipes.new(commands:, results:)
+      Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), pipes, Dir.mktmpdir)
     end
   end
   private_constant(:Launch)

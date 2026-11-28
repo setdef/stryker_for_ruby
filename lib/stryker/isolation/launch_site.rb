@@ -4,6 +4,7 @@ require "fileutils"
 require "tmpdir"
 require_relative "launch_pipe"
 require_relative "output_files"
+require_relative "parent_pipes"
 require_relative "parent_process"
 
 module Stryker
@@ -31,7 +32,7 @@ module Stryker
         started = false
         child = yield(self)
         started = true
-        ParentProcess.new(child, [@runs.writer, @results.reader], @folder)
+        ParentProcess.new(child, ParentPipes.new(commands: @runs.writer, results: @results.reader), @folder)
       ensure
         [@runs.reader, @results.writer].each(&:close)
         release unless started

@@ -68,7 +68,7 @@ class ForkPerRunTest < Minitest::Test
       results, output = IO.pipe
       @pid = @test.start_process(RbConfig.ruby, "-e", PARENT, @argument, in: input, out: output)
       [input, output].each(&:close)
-      parent = held([commands, results])
+      parent = held(Stryker::Isolation::ParentPipes.new(commands:, results:))
       parent.define_singleton_method(:await_ready) { |*| raise(Interrupt) } if @interrupted
       signal if @signaled
       parent

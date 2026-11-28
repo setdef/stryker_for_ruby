@@ -22,7 +22,8 @@ class ForkPerRunEndedParentTest < Minitest::Test
       output.puts(JSON.generate({ ready: true }))
       output.close
       child = Stryker::Isolation::Child.new(IsolationStandIns::FakeProcess::PID, IsolationStandIns::FakeProcess.new)
-      Stryker::Isolation::ParentProcess.new(child, [commands, results], Dir.mktmpdir)
+      pipes = Stryker::Isolation::ParentPipes.new(commands:, results:)
+      Stryker::Isolation::ParentProcess.new(child, pipes, Dir.mktmpdir)
     end
   end
   private_constant(:EndedLaunch)

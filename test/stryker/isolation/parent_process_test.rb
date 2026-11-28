@@ -21,7 +21,7 @@ class ParentProcessTest < Minitest::Test
     results, output = IO.pipe
     [input, output].each(&:close)
     child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
-    Stryker::Isolation::ParentProcess.new(child, [commands, results], folder)
+    Stryker::Isolation::ParentProcess.new(child, Stryker::Isolation::ParentPipes.new(commands:, results:), folder)
   end
 
   # Stops a parent whose process has ended, and returns what it asked of
@@ -42,7 +42,8 @@ class ParentProcessTest < Minitest::Test
     File.binwrite(Stryker::Isolation::OutputFiles.new(folder).paths("parent").last, errors) if errors
     pid, results = scripted("puts(#{JSON.generate(said).inspect})")
     _, commands = IO.pipe
-    parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), [commands, results], folder)
+    pipes = Stryker::Isolation::ParentPipes.new(commands:, results:)
+    parent = Stryker::Isolation::ParentProcess.new(Stryker::Isolation::Child.new(pid), pipes, folder)
     assert_raises(Stryker::Isolation::Error, Stryker::Isolation::TestsLoadError) { parent.await_ready }
   ensure
     FileUtils.rm_rf(folder) if folder
@@ -57,6 +58,34 @@ class ParentProcessTest < Minitest::Test
     assert_raises(Stryker::Isolation::Error) { parent.give(sample_run) }
   ensure
     parent&.stop
+  end
+
+  # Stands in for the parent's process, and records how long it was given to
+  # end.
+  class GraceRecordingChild
+    attr_reader :grace
+
+    def end_within(seconds)
+      @grace = seconds
+    end
+
+    def kill_rest
+      nil
+    end
+  end
+  private_constant(:GraceRecordingChild)
+
+  # The seconds that stopping a parent gave its process to end, for a parent
+  # built with +grace+.
+  def grace_given(*grace)
+    input, commands = IO.pipe
+    results, output = IO.pipe
+    [input, output].each(&:close)
+    child = GraceRecordingChild.new
+    folder = Dir.mktmpdir("stryker-fork-")
+    pipes = Stryker::Isolation::ParentPipes.new(commands:, results:)
+    Stryker::Isolation::ParentProcess.new(child, pipes, folder, *grace).stop
+    child.grace
   end
 
   def kills
@@ -115,5 +144,13 @@ class ParentProcessTest < Minitest::Test
     refute_path_exists(folder)
   ensure
     FileUtils.remove_entry(folder, true) if folder
+  end
+
+  def test_stopping_the_parent_gives_its_process_the_grace_the_parent_was_given
+    assert_equal(3, grace_given(3))
+  end
+
+  def test_stopping_the_parent_gives_its_process_the_default_grace_when_the_parent_was_given_none
+    assert_equal(Stryker::Isolation::ParentProcess::GRACE_SECONDS, grace_given)
   end
 end
