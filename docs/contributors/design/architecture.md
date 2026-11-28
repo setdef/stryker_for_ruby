@@ -211,6 +211,12 @@ A run publishes domain events, each also a `Data.define` value ([`Stryker::Event
 
 Stages never call a reporter directly, so adding a reporter changes no stage. A reporter that raises doesn't keep the others from hearing the event: each hears it before the first error leaves. The error that leaves the pipeline is always the run's own: a reporter that raises as it hears `RunAborted` loses to the error that aborted the run. A reporter that raised on `RunCompleted` makes the pipeline publish `RunAborted` after it, so a reporter that heard both ends what it shows once.
 
+### File names that aren't valid UTF-8
+
+A file's name on Linux can hold any bytes, and `mutate` accepts a pattern of such bytes ([`mutate`](../../configuration.md#mutate)). `Pathname`, `String#split`, and a regexp match raise `ArgumentError` for a UTF-8 string whose bytes aren't valid UTF-8, and joining a binary string and a UTF-8 string that each have a letter outside ASCII raises `Encoding::CompatibilityError`. So a path is bytes wherever the code joins, splits, or matches one, and `Stryker::FileName` tags the result: UTF-8 when the bytes are valid UTF-8, binary when they aren't. A name that is valid is the string it always was, so it still finds its key in a `Hash`.
+
+Text for a reader never holds such a name as it is: `FileName.shown` spells each byte that isn't valid UTF-8 as `\xE9`, which the `clear-text` reporter writes and a shell's `$'...'` reads back. The JSON report is the one place that can't hold the name, because its file names are JSON strings. The report has no spelling for such a name, so `Pipeline::SelectedFiles` refuses such a file when `json` is among the reporters, before any stage reads a file, and the `json` reporter refuses a test file with such a name when the dry run lists it. Each raises `UnsupportedError`, so the run exits with status 2.
+
 ## Where each responsibility lives
 
 | Responsibility | Lives in |

@@ -23,4 +23,20 @@ class FileNameTest < Minitest::Test
 
     assert_equal(Encoding::UTF_8, bytes.encoding)
   end
+
+  def test_a_name_is_utf8_when_its_bytes_are_valid_whatever_their_tag
+    names = ["lib/café.rb", "lib/café.rb".b, "lib/caf\xE9.rb", "lib/caf\xE9.rb".b]
+
+    assert_equal([true, true, false, false], names.map { |bytes| Stryker::FileName.utf8?(bytes) })
+  end
+
+  def test_a_name_is_shown_with_each_byte_that_is_not_utf8_spelled_as_an_escape
+    shown = [Stryker::FileName.shown("lib/caf\xE9\xFF.rb"), Stryker::FileName.shown("lib/caf\xE9\xFF.rb".b)]
+
+    assert_equal([%(lib/caf\\xE9\\xFF.rb)] * 2, shown)
+  end
+
+  def test_a_name_that_is_valid_utf8_is_shown_as_it_is
+    assert_equal("lib/café.rb", Stryker::FileName.shown("lib/café.rb".b))
+  end
 end

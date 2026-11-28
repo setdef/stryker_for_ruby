@@ -24,7 +24,7 @@ module Stryker
       private def where
         start = @mutant.location.start
         [
-          @ink.paint(:cyan, @mutant.path),
+          @ink.paint(:cyan, @mutant.display_path),
           @ink.paint(:yellow, start.line.to_s),
           @ink.paint(:yellow, start.column.to_s),
         ].join(":")

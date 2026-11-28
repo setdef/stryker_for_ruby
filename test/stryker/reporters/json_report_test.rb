@@ -4,6 +4,7 @@ require_relative("../../support/report_building")
 require "fileutils"
 require "stryker/reporters/json_report"
 require "stryker/testing/reporter_contract"
+require "stryker/unsupported_error"
 
 # Checks the JSON reporter against the contract of the port, and what the
 # reporter adds: a report that validates against the schema, in the file that
@@ -48,6 +49,37 @@ class JsonReportTest < Minitest::Test
 
       assert_valid_report(written(root, [Stryker::Events::RunCompleted.new(results: [])]))
     end
+  end
+
+  # The event of a dry run whose tests are in `files`, one test for each.
+  def dry_run_in(*files)
+    base = Sample.dry_run_completed.result
+    results = base.results.each_with_index.map do |result, index|
+      result.with(test: result.test.with(file: files[index]))
+    end
+    Stryker::Events::DryRunCompleted.new(result: base.with(results:))
+  end
+
+  # A test file's name can hold bytes that aren't valid UTF-8, and a JSON text
+  # holds only Unicode, so the run stops as soon as the dry run lists such a
+  # file, before any mutant runs.
+  def test_refuses_a_test_file_whose_name_is_not_utf8_when_the_dry_run_lists_it
+    event = dry_run_in("test/a_test.rb", "test/caf\xE9_test.rb".b)
+    error = Sample.create do |root|
+      assert_raises(Stryker::UnsupportedError) { reporter_under_test(Sample.config, root).call(event) }
+    end
+
+    assert_equal(
+      %(The json reporter can't write the test file "test/caf\\xE9_test.rb", because JSON holds only UTF-8 text ) +
+        "and the file's name isn't. Rename the file, or take json out of reporters.",
+      error.message
+    )
+  end
+
+  def test_takes_a_test_file_whose_name_is_valid_utf8_and_a_test_with_no_file
+    heard = Sample.create { |root| reporter_under_test(Sample.config, root).call(dry_run_in("test/café_test.rb", nil)) }
+
+    assert_equal(%w[test/café_test.rb], heard.filter_map(&:file))
   end
 
   def ids(document, *path)

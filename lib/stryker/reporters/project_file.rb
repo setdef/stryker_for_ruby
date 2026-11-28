@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../file_name"
 require_relative "../source_text"
 
 module Stryker
@@ -8,8 +9,16 @@ module Stryker
       attr_reader :name
 
       def initialize(root, name)
-        @path = File.expand_path(name, root)
+        # As bytes, because a name that isn't valid UTF-8 and a root with a
+        # letter outside ASCII make File.expand_path raise otherwise. A root
+        # that is empty or relative is the working directory, which has a
+        # tag of its own, so the root is made absolute first.
+        @path = File.expand_path(name.b, File.expand_path(root).b)
         @name = name
+      end
+
+      def display_name
+        FileName.shown(@name)
       end
 
       def language

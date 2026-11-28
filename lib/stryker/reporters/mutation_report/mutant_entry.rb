@@ -15,8 +15,8 @@ module Stryker
           @file = file
         end
 
-        def path
-          @file.name
+        def display_path
+          @file.display_name
         end
 
         def status

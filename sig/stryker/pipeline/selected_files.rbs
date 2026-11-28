@@ -1,0 +1,47 @@
+module Stryker
+  class Pipeline
+    # The files that a run mutates: the files that `mutate` selects, as
+    # Stryker::SourceFiles finds them, less a file that no reporter of the run
+    # can name. The `json` reporter writes each file's path as a key of a JSON
+    # object, and a JSON text holds only Unicode, so it can't write the path
+    # of a file whose name isn't valid UTF-8. The report has no spelling for
+    # such a name, so a run with the `json` reporter refuses such a file before
+    # the stages that read files begin.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Pipeline::SelectedFiles.new(Dir.pwd, config).to_a
+    # # => ["lib/cart.rb"]
+    # ```
+    class SelectedFiles
+      # The message of the error. Private.
+      NOT_UTF8: String
+
+      @root: String
+
+      @patterns: Array[String]
+
+      @json: bool
+
+      # Builds the selection.
+      #
+      # - `root`: String, the project's root.
+      # - `config`: Stryker::Config, whose `mutate` holds the patterns and
+      #   whose `reporters` say whether the run has the `json` reporter.
+      def initialize: (String root, Config config) -> void
+
+      # The path from the root of each file selected, as
+      # Stryker::SourceFiles gives them. Raises Stryker::UnsupportedError for
+      # the first path whose bytes aren't valid UTF-8, when the run has the
+      # `json` reporter.
+      def to_a: () -> Array[String]
+
+      private
+
+      # Raises Stryker::UnsupportedError for the first of `paths` whose bytes
+      # aren't valid UTF-8.
+      def refuse: (Array[String] paths) -> void
+    end
+  end
+end

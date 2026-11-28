@@ -28,6 +28,11 @@ module Stryker
       # The file's path as it was given.
       attr_reader name: String
 
+      # The name to put in a line of text: the file's name with each byte
+      # that isn't valid UTF-8 spelled as `\xE9`, which Stryker::FileName
+      # says.
+      def display_name: () -> String
+
       # Builds the file.
       #
       # - `root`: String, the project's root.

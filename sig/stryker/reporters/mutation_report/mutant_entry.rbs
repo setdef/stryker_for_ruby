@@ -18,8 +18,9 @@ module Stryker
         # - `file`: Stryker::Reporters::ProjectFile, the file the mutant changes.
         def initialize: (MutantResult result, ProjectFile file) -> void
 
-        # The path of the file the mutant changes.
-        def path: () -> String
+        # The path of the file the mutant changes, to put in a line of text:
+        # each byte that isn't valid UTF-8 is spelled as `\xE9`.
+        def display_path: () -> String
 
         # The result's status.
         def status: () -> String

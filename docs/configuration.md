@@ -179,6 +179,12 @@ An empty list selects no file.
 
 The bytes of a pattern may be any bytes, because a file's name on Linux may hold any bytes: a pattern with the bytes of a file's name selects that file, so `mutate` accepts bytes that aren't valid UTF-8. Only a flag can give such a pattern. In a shell that reads `$'...'`, `stryker run --mutate $'lib/caf\xE9.rb'` selects the file named `caf` followed by the byte `E9`, which is `café.rb` in ISO-8859-1.
 
+A file whose name isn't valid UTF-8 is mutated like any other file. The `clear-text` reporter writes each byte of its name that isn't valid UTF-8 as an escape, so that name appears as `lib/caf\xE9.rb`. The `json` reporter can't write such a name, because a JSON text holds only Unicode. A run that has `json` in [`reporters`](#reporters) and selects such a file stops before it reads any file to mutate, with status 2 and one line that gives the name:
+
+```text
+The json reporter can't write the file "lib/caf\xE9.rb", because JSON holds only UTF-8 text and the file's name isn't. Leave the file out of mutate, or take json out of reporters.
+```
+
 **Stryker (for Ruby)** mutates Ruby files only. The default patterns select the ERB templates in `lib` and `app`, files whose names end in `.erb`. A run with the default leaves them out, and writes one warning to standard error that says how many:
 
 ```text
@@ -223,7 +229,7 @@ Set the option to the reporters you want, as in `stryker run --reporters clear-t
 
 #### The `clear-text` reporter
 
-Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. The summary has four parts:
+Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. A file name that isn't valid UTF-8 appears with each such byte as an escape, such as `caf\xE9_test.rb`. The summary has four parts:
 
 1. The tree of the tests that the dry run found, under `All tests`. Each test file is under the folders that some test files share, and a folder that holds one folder or one file is on one line with it, as in `All tests/discount_test.rb` or `a/b`. Each test is under its file, in the order of the dry run, with what it did to the mutants: a green `✓` and `killed 2` for a test that killed two mutants, a blue `~` and `covered 3` for a test that reached three mutants and killed none, and a red `✘` and `covered 0` for a test that reached none. A test that has a location in the dry run's result shows it after its name, as `[line 3]`, and the `minitest` test runner gives none. A test with no file is under `All tests` and in no file. A run whose dry run found no test has no tree.
 
@@ -266,6 +272,12 @@ A run that stops before it ends, because of an error or a signal, ends the line 
 #### The `json` reporter
 
 Writes the run's report to `reports/mutation/mutation.json` in the project's root, once, when the run ends. It creates the folders, and replaces the report of an earlier run. A run that stops before it ends leaves the file as it was. When a file that has a mutant, or a test file, no longer exists at the end of the run, the reporter stops with that error and writes no report.
+
+The report's file names are JSON strings, which hold only Unicode, so the reporter stops the run when a name isn't valid UTF-8. For a file that [`mutate`](#mutate) selects, the run stops before it reads any file to mutate. For a test file, the run stops when the dry run lists the file, before any mutant runs, with status 2 and one line that gives the name:
+
+```text
+The json reporter can't write the test file "test/caf\xE9_test.rb", because JSON holds only UTF-8 text and the file's name isn't. Rename the file, or take json out of reporters.
+```
 
 The report is one line of JSON in the [mutation testing report schema](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) (schema version `1.0`) that the Stryker tools share, so any viewer of that schema reads it. `files` holds each file that has a mutant, by its path from the project's root, with its language, `ruby`, its source, and its mutants. `testFiles` holds each test file by its path, with its source and its tests: each test's `id`, `name`, and `location`. A test with no file goes under the empty name, with no source. A field with no value is left out of a mutant or a test.
 

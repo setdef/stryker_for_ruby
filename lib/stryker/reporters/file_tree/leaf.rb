@@ -1,11 +1,14 @@
 # frozen_string_literal: true
 
+require_relative "../../file_name"
+
 module Stryker
   module Reporters
     class FileTree
       class Leaf < Data.define(:file, :names)
         def self.of(file)
           names = file.path.split(%r{[/\\]}).reject(&:empty?)
+          names.map! { |name| FileName.shown(name) }
           new(file, names.empty? ? [""] : names)
         end
 

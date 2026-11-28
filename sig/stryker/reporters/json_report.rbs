@@ -26,11 +26,29 @@ module Stryker
       # The path of the report, relative to the project's root.
       FILE_NAME: String
 
+      # The message of the error for a test file that the report can't name.
+      # Private.
+      NOT_UTF8: String
+
       # Builds a reporter that writes under `root`.
       #
       # - `config`: Stryker::Config, the options of the run.
       # - `root`: String, the project's root.
       def initialize: (config: Config, root: String) -> void
+
+      # Receives one event. Raises Stryker::UnsupportedError for the event of
+      # the dry run when a test's file has a name that isn't valid UTF-8,
+      # because a JSON text holds only Unicode. Otherwise it does what
+      # `WholeRun#call` does.
+      #
+      # - `event`: Stryker::event, the event the run published.
+      def call: (event event) -> void
+
+      private
+
+      # Raises Stryker::UnsupportedError for the first of `results` whose
+      # test's file has a name that isn't valid UTF-8.
+      def refuse_unreportable: (Array[TestResult] results) -> void
     end
   end
 end

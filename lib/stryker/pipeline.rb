@@ -8,9 +8,9 @@ require_relative "metrics"
 require_relative "pipeline/broadcast"
 require_relative "pipeline/isolations"
 require_relative "pipeline/raised"
+require_relative "pipeline/selected_files"
 require_relative "pipeline/trial"
 require_relative "runtime/cache"
-require_relative "source_files"
 
 module Stryker
   class Pipeline
@@ -52,7 +52,7 @@ module Stryker
     end
 
     private def instrument(config)
-      Instrumentation.new(@root, config, warnings: @warnings).call(SourceFiles.new(@root, config.mutate).to_a)
+      Instrumentation.new(@root, config, warnings: @warnings).call(SelectedFiles.new(@root, config).to_a)
     end
 
     private def tested(config, cache, instrumented)

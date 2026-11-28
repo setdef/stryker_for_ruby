@@ -62,7 +62,8 @@ module Stryker
     # Runs mutation testing as `config` says, and returns the mutation score
     # of every mutant, as Stryker::Metrics gives it, or nil when no mutant
     # was valid. Raises what a stage raises, such as
-    # Stryker::UnsupportedError for an ERB template and
+    # Stryker::UnsupportedError for an ERB template, for a file that the
+    # `json` reporter can't name, and
     # `Stryker::Isolation::DryRunError` for a dry run that failed, after it
     # has stopped every process and deleted the cache.
     #
@@ -87,6 +88,8 @@ module Stryker
 
     # Finds the mutants of the files that `config` selects, and instruments
     # them, with the warnings going to the stream the pipeline was given.
+    # Raises Stryker::UnsupportedError first for a file that a reporter can't
+    # name, as Stryker::Pipeline::SelectedFiles says.
     def instrument: (Config config) -> Instrumentation::Result
 
     # Writes the cache, and tests the mutants with the adapters for it.

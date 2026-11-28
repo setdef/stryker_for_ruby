@@ -21,5 +21,21 @@ module Stryker
     #
     # - `bytes`: String, the bytes of a file's name, in any encoding.
     def self.of: (String bytes) -> String
+
+    # The name as text to read, with each byte that isn't valid UTF-8 spelled
+    # as `\xE9`, the escape of a Ruby string and of a shell's `$'...'`. A name
+    # that is valid UTF-8 is the same text.
+    #
+    # - `bytes`: String, the bytes of a file's name, in any encoding.
+    def self.shown: (String bytes) -> String
+
+    # The escape of each byte of `invalid`, such as `\xE9`. Private.
+    def self.escaped: (String invalid) -> String
+
+    # Whether the bytes are valid UTF-8, which is whether a JSON text can
+    # hold the name.
+    #
+    # - `bytes`: String, the bytes of a file's name, in any encoding.
+    def self.utf8?: (String bytes) -> bool
   end
 end
