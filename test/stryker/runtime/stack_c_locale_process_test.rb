@@ -7,7 +7,10 @@ require "tmpdir"
 # tags the path of a frame US-ASCII on some systems, though the paths that the
 # check looks for are UTF-8, as the cache's index gives them. The test names a
 # file with a letter outside ASCII, which is the case when a project's folder
-# holds a user's name.
+# holds a user's name. The program tags its pattern as the file system tags a
+# path, because Dir.glob tags a path with the pattern's encoding, and a program
+# given with -e has the encoding of the locale's code page on Windows, which
+# the C locale doesn't change.
 class StackCLocaleProcessTest < Minitest::Test
   include RuntimeProcess
 
@@ -17,7 +20,8 @@ class StackCLocaleProcessTest < Minitest::Test
     Dir.mktmpdir do |folder|
       file = File.join(File.realpath(folder), "café.rb")
       File.write(file, "Thread.current[:found] = Stryker::Runtime::Stack.loading?(Thread.current[:paths])\n")
-      program = "require 'stryker/runtime'\nfile = Dir.glob(#{File.join(folder, '*.rb').inspect}).first\n" \
+      program = "require 'stryker/runtime'\npattern = #{File.join(folder, '*.rb').inspect}\n" \
+        "file = Dir.glob(pattern.dup.force_encoding(Encoding.find('filesystem'))).first\n" \
         "Thread.current[:paths] = Set[Stryker::Runtime::PathKey.of(File.realpath(file))]\n" \
         "load(file)\np Thread.current[:found]"
 
