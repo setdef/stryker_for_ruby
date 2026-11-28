@@ -3,11 +3,17 @@
 require_relative("test_helper")
 require "etc"
 require "rbconfig"
+require_relative("support/load_chains")
 
 # Checks that SimpleCov starts before any file from lib loads, whichever test
 # file the test task loads first. The task loads the files in a random order,
 # and a lib file loaded before SimpleCov starts counts as uncovered, which
 # fails the coverage gate on some runs only.
+#
+# A file whose first statement is require_relative of another test file starts
+# the same way that file does: it runs that file first, in the same fresh
+# process, and SimpleCov is running by the time that file ends. So one probe of
+# the file at the end of each such chain judges every file on the chain.
 class LoadOrderTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   # Coverage.peek_result lists only the files loaded after SimpleCov started.
@@ -20,11 +26,17 @@ class LoadOrderTest < Minitest::Test
   private_constant(:ROOT, :PROBE)
 
   def test_every_test_file_starts_simplecov_before_lib_loads
-    # The test task leaves out the sample projects in test/fixtures.
-    paths = Dir.glob("test/**/*.rb", base: ROOT) - Dir.glob("test/fixtures/**/*", base: ROOT)
-    late = probe_all(paths).filter_map { |path, success| path unless success }
+    anchors = LoadChains.new(paths_to_probe).anchors
+    probed = probe_all(anchors.values.uniq)
+    late = anchors.filter_map { |path, anchor| path.delete_prefix("#{ROOT}/") if probed[anchor].eql?(false) }
 
     assert_empty(late, "These files load a lib file before SimpleCov starts.")
+  end
+
+  # The test task leaves out the sample projects in test/fixtures.
+  private def paths_to_probe
+    paths = Dir.glob("test/**/*.rb", base: ROOT) - Dir.glob("test/fixtures/**/*", base: ROOT)
+    paths.map { |path| File.join(ROOT, path) }
   end
 
   # Runs one probe process per path, at most one per processor at a time, and
@@ -42,7 +54,7 @@ class LoadOrderTest < Minitest::Test
   end
 
   private def start_probe(path)
-    command = [RbConfig.ruby, "-Ilib:test", "-e", PROBE, File.join(ROOT, path)]
+    command = [RbConfig.ruby, "-Ilib:test", "-e", PROBE, path]
     Process.spawn(*command, chdir: ROOT, in: File::NULL, out: File::NULL, err: File::NULL)
   end
 
