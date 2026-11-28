@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "deferred"
 require_relative "dry_run"
 require_relative "dry_run_verdict"
 require_relative "error"
@@ -31,15 +32,16 @@ module Stryker
 
       def dry_run(config)
         dry_run = DryRun.within(config.dry_run_timeout_minutes)
-        DryRunVerdict.awaited(dry_run) { |landing| land(FreshRun.new(dry_run, &landing)) }
+        DryRunVerdict.awaited(dry_run) { |landing| land(dry_run, landing) }
       end
 
       def stop
         @running.stop
       end
 
-      private def land(fresh)
-        fly([fresh.run]) { fresh }
+      private def land(dry_run, landing)
+        # The run's folder is made where the set holds what it makes.
+        fly([dry_run]) { |run| FreshRun.new(run, &landing) }
       end
 
       private def fly(runs, &fresh)
@@ -49,7 +51,11 @@ module Stryker
       end
 
       private def launcher(recipe, fresh)
-        -> (run) { @launch.call(fresh.call(run), recipe) }
+        # What the launch makes and starts, a run's folder and its process,
+        # is in the set before a signal arrives, so that stop ends it. The
+        # step only makes and starts, so a signal waits briefly, never for a
+        # run.
+        -> (run) { Deferred.signals { @running.add(@launch.call(fresh.call(run), recipe)) } }
       end
     end
   end

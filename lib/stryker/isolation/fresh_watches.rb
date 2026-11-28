@@ -28,7 +28,7 @@ module Stryker
       def run(runs, window)
         waiting = runs.dup
         until waiting.empty? && empty?
-          add(yield(waiting.shift)) while size < window && waiting.any?
+          yield(waiting.shift) while size < window && waiting.any?
           finish
         end
       end

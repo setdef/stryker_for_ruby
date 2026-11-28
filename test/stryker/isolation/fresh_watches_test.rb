@@ -109,7 +109,7 @@ class FreshWatchesTest < Minitest::Test
     running = []
     set.run(%i[one two three], 2) do |name|
       running << set.size
-      Watch.new(name, ended: true).finished_into(names)
+      set.add(Watch.new(name, ended: true).finished_into(names))
     end
 
     assert_equal([%i[one two three], [0, 1, 0], 0], [names, running, set.size])

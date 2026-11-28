@@ -1,0 +1,25 @@
+module Stryker
+  module Isolation
+    # The one place that defers signals, such as Ctrl-C, for a short step
+    # that must end whole: a step that hands a process, or the folder it
+    # writes into, from the code that made it to the code that will end it.
+    #
+    # `Thread.handle_interrupt` with `:never` makes the thread deaf to
+    # signals until its block ends, so the step must never wait for a
+    # process, a run, or anything else that takes long. A wait inside it
+    # would make a run ignore Ctrl-C.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # Stryker::Isolation::Deferred.signals { watches.add(launch.call(run)) }
+    # ```
+    module Deferred
+      # Runs the block, and returns what it returns. A signal that arrives
+      # while the block runs waits until the block has ended, and then
+      # raises before this returns. An exception that the block raises
+      # reaches the caller unchanged.
+      def self.signals: [T] () { () -> T } -> T
+    end
+  end
+end
