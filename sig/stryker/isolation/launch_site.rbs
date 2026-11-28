@@ -3,13 +3,14 @@ module Stryker
     # What the launch of the fork parent makes before it spawns the parent:
     # a temporary folder for the parent's output and two pipes, one that
     # carries the runs to the parent and one that carries its results back.
-    # When the launch raises, it closes the pipes and deletes the folder.
+    # When the launch raises, or a signal ends it, it ends the parent's
+    # process, closes the pipes and deletes the folder.
     #
     # ## Examples
     #
     # ```ruby
     # site = Stryker::Isolation::LaunchSite.new
-    # site.launch { Stryker::Isolation::Child.new(Process.spawn(*argv, site.redirects)) }
+    # site.launch { |_, custody| custody.child(Process.spawn(*argv, site.redirects)) }
     # ```
     class LaunchSite
       # The temporary folder for the parent's output, made by `Dir.mktmpdir`.
@@ -36,17 +37,20 @@ module Stryker
       # descriptor.
       def redirects: () -> Hash[Symbol | IO, IO | String]
 
-      # Yields the site, and returns the parent that the orchestrator keeps:
-      # the process the block returns, with the orchestrator's ends of the
-      # pipes and the folder. Closes the parent's ends of the pipes. When the
-      # block raises, closes the orchestrator's ends too, deletes the folder,
-      # and lets the error reach the caller.
-      def launch: () { (LaunchSite site) -> Child } -> ParentProcess
-
-      private
+      # Yields the site and a custody over the parent's process, and returns
+      # the parent that the orchestrator keeps: the process the block returns,
+      # with the orchestrator's ends of the pipes and the folder. Closes the
+      # parent's ends of the pipes. A signal that arrives while the block runs
+      # waits until it ends. When the block raises, or a signal waits, the
+      # custody ends the process it holds, and then the site closes the
+      # orchestrator's ends too and deletes the folder, and the error reaches
+      # the caller unchanged.
+      #
+      # - `process`: `Process`, or a stand-in in a test.
+      def launch: (?singleton(::Process) process) { (LaunchSite site, Custody custody) -> Child } -> ParentProcess
 
       # Closes the orchestrator's ends of the pipes and deletes the folder.
-      def release: () -> void
+      def remove: () -> void
     end
   end
 end

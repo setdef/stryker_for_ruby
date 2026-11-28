@@ -2,6 +2,7 @@
 
 require "fileutils"
 require "tmpdir"
+require_relative "custody"
 require_relative "launch_pipe"
 require_relative "output_files"
 require_relative "parent_pipes"
@@ -27,18 +28,16 @@ module Stryker
         { :in => @runs.reader, :out => out, :err => err, results => results }
       end
 
-      def launch
-        # @type var started: bool
-        started = false
-        child = yield(self)
-        started = true
-        ParentProcess.new(child, ParentPipes.new(commands: @runs.writer, results: @results.reader), @folder)
+      def launch(process = Process)
+        Custody.new(self, process).around do |custody|
+          child = yield(self, custody)
+          ParentProcess.new(child, ParentPipes.new(commands: @runs.writer, results: @results.reader), @folder)
+        end
       ensure
         [@runs.reader, @results.writer].each(&:close)
-        release unless started
       end
 
-      private def release
+      def remove
         [@runs.writer, @results.reader].each(&:close)
         FileUtils.remove_entry(@folder, true)
       end

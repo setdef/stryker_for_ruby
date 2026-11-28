@@ -16,7 +16,7 @@ module Stryker
       end
 
       def call(recipe)
-        LaunchSite.new.launch { |site| Child.new(spawn(recipe, site), @process) }
+        LaunchSite.new.launch(@process) { |site, custody| custody.child(spawn(recipe, site)) }
       end
 
       private def spawn(recipe, site)
