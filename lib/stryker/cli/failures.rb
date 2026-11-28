@@ -40,16 +40,18 @@ module Stryker
         case error
         when ConfigError, SourceError, UnsupportedError, Isolation::DryRunError, Isolation::TestsLoadError
           report(error.to_s)
-        when SignalException then stopped(error)
+        when SignalException then stopped(error.signo)
         when SystemExit then error.status
         when OutputClosed then CLOSED
         else bug(error)
         end
       end
 
-      private def stopped(signal)
-        signo = signal.signo
-        report("Stopped by #{Signal.signame(signo)}.", signo + SIGNALLED)
+      private def stopped(signo)
+        # A signal stopped the run, so its status says so, though the line
+        # that says it has nowhere to go.
+        Pipeline::Raised.by { write("Stopped by #{Signal.signame(signo)}.") }
+        signo + SIGNALLED
       end
 
       private def bug(error)

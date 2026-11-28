@@ -86,8 +86,12 @@ class CLIClosedOutputTest < Minitest::Test
     assert_equal(141, written("run", pipeline:, stderr: Closed.new))
   end
 
-  def test_the_stop_of_a_signal_written_to_a_closed_standard_error_ends_as_sigpipe_ends_a_program
-    assert_equal(141, written("run", pipeline: RecordingPipeline.new(raises: Interrupt), stderr: Closed.new))
+  def test_a_signal_that_stops_a_run_gives_its_status_though_standard_error_is_closed
+    { Interrupt => 130, SignalException.new("TERM") => 143 }.each do |signal, status|
+      pipeline = RecordingPipeline.new(raises: signal)
+
+      assert_equal(status, written("run", pipeline:, stderr: Closed.new), signal.inspect)
+    end
   end
 
   def test_a_broken_pipe_that_the_run_raises_is_a_bug

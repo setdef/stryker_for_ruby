@@ -33,9 +33,10 @@ module Stryker
       # A Stryker::CLI::OutputClosed, which a write to a standard output or a
       # standard error whose reader has gone raises, ends the block with 141,
       # which is 128 plus `SIGPIPE`'s 13, and writes nothing: no message, and
-      # no bug report. A message that a closed standard error refuses, the
-      # bug report and the stop of a signal included, ends the block with 141
-      # too, so a closed standard error gives 141 whoever wrote to it.
+      # no bug report. An error message or the bug report that a closed
+      # standard error refuses ends the block with 141 too. The line that
+      # says a signal stopped the block is the exception: the block ends with
+      # 128 plus the signal's number whether or not it is written.
       #
       # A `SystemExit` is an explicit exit, not a crash: it ends the block
       # with its own status and writes nothing.
@@ -55,8 +56,9 @@ module Stryker
       # Writes the message for the exception, and returns the status.
       def reported: (Exception error) -> Integer
 
-      # Writes that the signal stopped the run, and returns 128 plus its number.
-      def stopped: (SignalException signal) -> Integer
+      # Writes that the signal with the number stopped the run, and returns 128
+      # plus the number, whether or not standard error takes the line.
+      def stopped: (Integer signo) -> Integer
 
       # Writes the bug report, or its first line when the report can't be
       # written, and returns 2.
