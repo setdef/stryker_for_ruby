@@ -108,4 +108,39 @@ class BuildCopFastTest < Minitest::Test
     assert_equal(:stuck, step.action)
     assert_says(step, "run 102", "no job that failed")
   end
+
+  # The cop never says these two, since a step that does nothing has no use
+  # for its reason once the full run has one; they are for a person who reads
+  # BuildCopFast's own answer.
+  def test_it_says_when_no_commit_has_a_green_run
+    step = fast_step([fast_run("c", 2, "failure")])
+
+    assert_equal([:none, "no commit has a green run of Fast on trunk"], [step.action, step.reason])
+  end
+
+  def test_it_says_when_every_red_run_is_settled
+    reverts = [[commit("e"), commit("c")]]
+    step = fast_step([fast_run("b", 1, "success"), fast_run("c", 2, "failure")], reverts)
+
+    assert_equal([:none, "no red run of Fast on trunk since #{commit('b')} is unsettled"], [step.action, step.reason])
+  end
+
+  # Both runs wait, and the full run's reason is the one the cop gives.
+  def test_the_step_of_the_full_run_comes_before_one_of_fast_that_only_waits
+    waiting = fast_run("b", 2, nil)
+    full = [*red_batch("a"), bisect_run("c", 3, nil)]
+    step = cop(*full, fast: [fast_run("a", 1, "success"), waiting, fast_failed_again("c", 3)])
+
+    assert_equal(:wait, step.action)
+    refute_includes(step.reason, "of Fast")
+  end
+
+  private def fast_step(runs, reverts = [])
+    serve(fast: runs) do
+      api = GitHubAPI.new(repository: "setdef/stryker_for_ruby", token: "secret", api: FakeGitHub::API, pause: 0)
+      commits = COMMITS.reverse
+      history = CommitRuns.new(api.runs("fast.yml", since: "2026-11-20", **FAST_QUERY), api)
+      BuildCopFast.new(history).call(commits, TrunkReverts.new(commits, reverts))
+    end
+  end
 end

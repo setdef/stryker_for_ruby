@@ -81,4 +81,12 @@ class BuildCopRunsTest < Minitest::Test
 
     assert_equal(:wait, step.action)
   end
+
+  # A run that is going has no conclusion yet; one that carries the last
+  # attempt's is not red either, since the cop reads it again once it ends.
+  def test_a_run_that_has_not_completed_is_not_red_whatever_conclusion_it_carries
+    step = cop(ci_run("a", 1, "success"), ci_run("f", 2, "failure", status: "in_progress"))
+
+    assert_equal([:none, true], [step.action, step.reason.include?("no run on trunk since")])
+  end
 end

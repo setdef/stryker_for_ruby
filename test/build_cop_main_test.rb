@@ -31,6 +31,16 @@ class BuildCopMainTest < Minitest::Test
     assert_match(/\Aaction=none\n.*settled/m, out.string)
   end
 
+  # A blank line is no commit: it would count in the middle of the batch that is
+  # bisected.
+  def test_a_blank_line_in_the_file_of_commits_is_no_commit
+    out = StringIO.new
+    commits = COMMITS.reverse.insert(3, "").join("\n")
+    serve(*red_batch("a")) { run_main({}, out:, commits:) }
+
+    assert_includes(out.string, "action=bisect\ncommit=#{commit('c')}\n")
+  end
+
   # No route answers 404 to every request.
   def test_ends_the_run_with_the_message_of_a_failure_of_the_api
     assert_match(/\AGitHub's API answered 404/, failing_main({}))
@@ -47,11 +57,11 @@ class BuildCopMainTest < Minitest::Test
     err
   end
 
-  private def run_main(extra, out: StringIO.new, reverts: "")
+  private def run_main(extra, out: StringIO.new, reverts: "", commits: COMMITS.reverse.join("\n"))
     env = { GITHUB_REPOSITORY: "setdef/stryker_for_ruby", GH_TOKEN: "secret", GITHUB_API_URL: FakeGitHub::API }
     Dir.mktmpdir do |dir|
       path = File.join(dir, "commits.txt")
-      File.write(path, "#{COMMITS.reverse.join("\n")}\n\n")
+      File.write(path, "#{commits}\n\n")
       reverts_path = File.join(dir, "reverts.txt")
       File.write(reverts_path, reverts)
       BuildCop.main(path, reverts_path, env: env.merge(extra).transform_keys(&:to_s), out:, now: NOW)
