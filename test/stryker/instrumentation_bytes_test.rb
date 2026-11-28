@@ -23,7 +23,7 @@ class InstrumentationBytesTest < Minitest::Test
   def test_a_file_is_found_by_its_absolute_path_as_bytes_whatever_the_letters_of_the_root
     result = instrumented("/rööt", [BROKEN])
 
-    assert_equal(["/rööt/".b + BROKEN], result.sources.keys.map(&:b))
+    assert_equal(["#{File.absolute_path('/rööt')}/".b + BROKEN], result.sources.keys.map(&:b))
   end
 
   def test_each_mutant_of_such_a_file_names_it_by_the_bytes_of_its_path_from_the_root

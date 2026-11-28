@@ -31,7 +31,7 @@ class ProjectFileBytesTest < Minitest::Test
     reader = -> (path) { (read << path) && +"x = 1\n" }
     File.stub(:binread, reader) { Stryker::Reporters::ProjectFile.new("/rööt", BROKEN).source }
 
-    assert_equal(["/rööt/".b + BROKEN], read.map(&:b))
+    assert_equal(["#{File.absolute_path('/rööt')}/".b + BROKEN], read.map(&:b))
   end
 
   def test_the_name_keeps_its_bytes_and_is_shown_with_an_escape
