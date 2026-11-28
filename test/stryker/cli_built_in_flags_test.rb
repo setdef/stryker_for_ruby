@@ -4,7 +4,7 @@ require_relative("../support/cli_project")
 
 # Checks that `stryker run` has no flag that OptionParser adds on its own and
 # the documentation doesn't list: a word that names one is an unknown flag, and
-# `--help` and `--version` take no value.
+# `-h`, `--help`, and `--version` take no value.
 class CLIBuiltInFlagsTest < Minitest::Test
   include CLIProject
 
@@ -28,8 +28,8 @@ class CLIBuiltInFlagsTest < Minitest::Test
     end
   end
 
-  def test_a_value_given_to_version_is_refused_as_one_given_to_help_is
-    %w[--version --help].each do |flag|
+  def test_a_value_given_to_version_or_to_either_spelling_of_help_is_refused
+    %w[--version --help -h].each do |flag|
       outcome = stryker("run", "#{flag}=1")
 
       assert_equal(
