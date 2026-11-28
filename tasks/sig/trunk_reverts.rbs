@@ -8,7 +8,5 @@ class TrunkReverts
 
   private
 
-  def newest: (Array[Array[String]] reverts) -> Integer
-
-  def position: (String commit) -> Integer
+  def newest: (Array[Array[String]] reverts) -> Integer?
 end

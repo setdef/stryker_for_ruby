@@ -8,13 +8,16 @@
 class TrunkReverts
   # +commits+ are trunk's, newest first, and +pairs+ are pairs of a commit and
   # the commit it reverts. A revert that a later commit reverted brings its
-  # commit back, so it is no revert. Raises ArgumentError for a reverting
-  # commit that is not among +commits+.
+  # commit back, so it is no revert. A reverting commit that is not among
+  # +commits+ is older than all of them, since +commits+ are trunk's newest, and
+  # reverts a commit older still, so it counts for nothing.
   def initialize(commits, pairs)
     @commits = commits
     undone = pairs.map(&:last)
     live = pairs.reject { |pair| undone.include?(pair.first) }
-    @newest = live.group_by(&:last).transform_values { |reverts| newest(reverts) }
+    @newest = live.group_by(&:last)
+      .transform_values { |reverts| newest(reverts) }
+      .compact
   end
 
   # Whether a commit that a red run covers, from the run's commit at +index+
@@ -25,11 +28,7 @@ class TrunkReverts
   end
 
   private def newest(reverts)
-    reverts.map { |pair| position(pair.first) }
+    reverts.filter_map { |pair| @commits.index(pair.first) }
       .min
-  end
-
-  private def position(commit)
-    @commits.index(commit) || raise(ArgumentError, "#{commit} reverts a commit but is not among trunk's commits")
   end
 end

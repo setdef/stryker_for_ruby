@@ -63,9 +63,28 @@ class BuildCopSettledTest < Minitest::Test
     assert_equal(:none, cop(*red_at_e, reverts:).action)
   end
 
-  # The revert is not among the commits the cop was given: loud, not a guess.
-  def test_a_revert_the_cop_was_not_given_is_an_error
-    assert_raises(ArgumentError) { cop(*red_at_e, reverts: [["9" * 40, commit("d")]]) }
+  # The cop reads only trunk's newest commits, but the reverts it is given may
+  # reach further back (git log --max-count counts the commits that match its
+  # --grep, not those it walks). A revert older than every commit read can only
+  # revert one older still, so it settles nothing here.
+  def test_a_revert_older_than_every_commit_read_settles_nothing
+    step = cop(*red_at_e, reverts: [["9" * 40, "8" * 40]])
+
+    assert_equal([:bisect, commit("c")], [step.action, step.commit])
+  end
+
+  # Even when it reverts a commit that is among those read.
+  def test_a_revert_older_than_every_commit_read_of_a_commit_read_settles_nothing
+    step = cop(*red_at_e, reverts: [["9" * 40, commit("d")]])
+
+    assert_equal([:bisect, commit("c")], [step.action, step.commit])
+  end
+
+  # The same revert does not hide one that settles the red run.
+  def test_a_revert_older_than_every_commit_read_leaves_the_others_to_settle
+    reverts = [[commit("f"), commit("d")], ["9" * 40, "8" * 40]]
+
+    assert_equal(:none, cop(*red_at_e, reverts:).action)
   end
 
   def test_a_red_run_older_than_a_newer_green_one_is_settled
