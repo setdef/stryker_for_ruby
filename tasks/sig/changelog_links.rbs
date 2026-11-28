@@ -1,0 +1,22 @@
+class ChangelogLinks
+  LINK: Regexp
+  UNRELEASED: Regexp
+
+  @lines: Array[String]
+
+  def initialize: (Array[String] lines) -> void
+
+  def record: (String version, String newest) -> Array[String]
+
+  private
+
+  def labelled?: (String version) -> bool
+
+  def position: (String version) -> Integer
+
+  def older?: (String? label, String version) -> bool
+
+  def labels: () -> Array[String]
+
+  def label: (String line) -> String?
+end

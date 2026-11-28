@@ -32,6 +32,12 @@ class Changelog
 
   private
 
+  def with_section: (String version, Date date, Array[Entry] listed, Array[Entry] moved) -> Array[String]
+
+  def newest_release: (Array[String] lines, String recorded) -> String
+
+  def links_start: (Array[String] lines) -> Integer?
+
   def around_unreleased: () -> [Array[String], Array[String]]
 
   def dated_section: (String version, Date date, Array[Entry] listed, last: bool) -> Array[String]

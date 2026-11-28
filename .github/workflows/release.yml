@@ -15,8 +15,9 @@
 # makes no release commit before the tag. Afterward, the last job writes one
 # commit to trunk as it stands: it dates the release's section of
 # CHANGELOG.md, files under it the entries the tagged commit held, leaves
-# newer entries unreleased, and raises lib/stryker/version.rb to the release's
-# version.
+# newer entries unreleased, gives the release its link reference at the foot of
+# CHANGELOG.md and points [Unreleased] at the comparison with it, and raises
+# lib/stryker/version.rb to the release's version.
 #
 # Dry run. A run with no tag, or on a branch, builds and assembles everything
 # and publishes nothing: the gem, SHA256SUMS, and notes are kept as the run's

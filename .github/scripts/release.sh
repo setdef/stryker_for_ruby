@@ -16,8 +16,9 @@
 #            and RELEASE_NOTES, making the tag when it doesn't exist and
 #            using it when it points at COMMIT. Ends the run when TAG points
 #            anywhere else. Needs TAG, COMMIT, and VERSION.
-#   record   writes the release into trunk's CHANGELOG.md and version file, as
-#            one commit pushed to trunk. Needs VERSION and COMMIT.
+#   record   writes the release into trunk's CHANGELOG.md, with its link
+#            references, and version file, as one commit pushed to trunk.
+#            Needs VERSION and COMMIT.
 #
 # The steps' decisions are made by tasks/release_command.rb, which this script
 # loads from RELEASE_TASKS (the tasks folder of the checkout the workflow runs

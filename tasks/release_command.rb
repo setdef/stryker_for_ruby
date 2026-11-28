@@ -21,7 +21,8 @@ require_relative "release_commit"
 #   assets DIR VERSION      checks that DIR holds the gem of VERSION, and writes
 #                           SHA256SUMS beside it
 #   record VERSION SHA      writes the release of VERSION from SHA into
-#                           CHANGELOG.md and the version file
+#                           CHANGELOG.md, with its link references, and the
+#                           version file
 #
 # It reads GITHUB_REPOSITORY, GITHUB_API_URL, and GH_TOKEN for +commit+. A step
 # GitHub's API or the repository refuses ends the run with the reason, as an

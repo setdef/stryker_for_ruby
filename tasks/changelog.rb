@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "date"
+require_relative "changelog_links"
 
 # CHANGELOG.md, in Keep a Changelog's format, as the release workflow reads and
 # rewrites it (.github/workflows/release.yml).
@@ -15,7 +16,8 @@ require "date"
 #
 # Entries are the changelog's unit. [Unreleased] is read as entries and written
 # back from them, grouped under their ### headings, so prose inside it is not
-# kept. Dated sections are copied as they are.
+# kept. Dated sections are copied as they are. The link references at the foot
+# are kept right for each release recorded (ChangelogLinks).
 #
 # This class reads and rewrites the text alone; Release reads it from the
 # commits and tags it names.
@@ -87,12 +89,30 @@ class Changelog
   # unchanged when a section for +version+ is there already, so recording a
   # release twice records it once.
   def record(version, date, listed, moved)
-    return self if dated_heading(version)
+    lines = dated_heading(version) ? @lines : with_section(version, date, listed, moved)
+    linked = ChangelogLinks.new(lines).record(version, newest_release(lines, version))
+    (linked == @lines) ? self : Changelog.new(linked.join)
+  end
 
+  # The lines of this changelog with a section for the release.
+  private def with_section(version, date, listed, moved)
     head, rest = around_unreleased
-    at = older_section(rest, version) || rest.size
+    at = older_section(rest, version) || links_start(rest) || rest.size
     dated = dated_section(version, date, listed, last: at == rest.size)
-    Changelog.new([*head, *pending(moved), *rest.take(at), *dated, *rest.drop(at)].join)
+    [*head, *pending(moved), *rest.take(at), *dated, *rest.drop(at)]
+  end
+
+  # The newest of +recorded+ and the versions that +lines+ has a dated section
+  # for.
+  private def newest_release(lines, recorded)
+    versions = [recorded, *lines.filter_map { |line| line.match(DATED)&.[](:version) }]
+    parsed = versions.map { |version| Gem::Version.new(version) }
+    parsed.max.to_s
+  end
+
+  # The index in +lines+ of the first link reference.
+  private def links_start(lines)
+    lines.index { |line| line.match?(ChangelogLinks::LINK) }
   end
 
   # The lines up to [Unreleased]'s heading, and the lines after its section.
@@ -121,9 +141,10 @@ class Changelog
     @lines.index { |line| line.match(DATED)&.[](:version) == version }
   end
 
-  # The lines after +heading+, up to the next section's heading.
+  # The lines after +heading+, up to the next section's heading or the link
+  # references.
   private def section(heading)
-    @lines.drop(heading + 1).take_while { |line| !line.start_with?("## ") }
+    @lines.drop(heading + 1).take_while { |line| !line.start_with?("## ") && !line.match?(ChangelogLinks::LINK) }
   end
 
   # The index in +lines+ of the first dated section older than +version+.
