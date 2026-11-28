@@ -130,11 +130,13 @@ class FreshWatchesTest < Minitest::Test
     Dir.mktmpdir do |folder|
       results = File.join(folder, "results")
       # The limit is shorter than the wait before the first test, as a fresh
-      # process's start can be (#85).
-      script = "sleep 0.6; File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep 0.2; exit!(0)"
+      # process's start can be (#85), and far longer than the test, so the
+      # process ends in time on a loaded machine too, where a process that
+      # had 300 ms to spare once took longer to end.
+      script = "sleep 1.2; File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep 0.2; exit!(0)"
       pid, = scripted(script)
 
-      assert_equal([false], timed_out(results, pid, 500))
+      assert_equal([false], timed_out(results, pid, 1000))
     end
   end
 
