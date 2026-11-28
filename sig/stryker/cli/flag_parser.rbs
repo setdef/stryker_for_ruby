@@ -6,8 +6,10 @@ module Stryker
     # a word that names one is an unknown flag. Stryker::CLI::RunCommand
     # answers `--help` and `--version` before the parser reads the words.
     class FlagParser < OptionParser
-      # The names of the flags that the parser has of its own. Private.
-      BUILT_IN: Array[String]
+      # The names of the OptionParser built-ins that the parser keeps, `help`
+      # and `version`, so that `--help=VALUE` and `--version=VALUE` are refused
+      # as flags that take no value. Private.
+      BUILT_INS_THAT_TAKE_NO_VALUE: Array[String]
 
       # Adds `--help` and `--version`, as flags that take no value.
       def add_officious: () -> void
