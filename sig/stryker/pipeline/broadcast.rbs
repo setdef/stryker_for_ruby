@@ -3,8 +3,9 @@ module Stryker
     # Hands each event to every reporter, in the order of the `reporters`
     # option, so that no stage calls a reporter and adding a reporter
     # changes no stage. It is a reporter itself. A reporter that raises
-    # stops the run: the error reaches the caller, and the reporters after
-    # it don't receive the event.
+    # stops the run, but not before every other reporter has received the
+    # event: the error of the first reporter that raised reaches the caller
+    # once the last reporter has returned or raised.
     class Broadcast
       @reporters: Array[_Reporter]
 
@@ -13,7 +14,9 @@ module Stryker
       # - `reporters`: Array of Stryker::_Reporter.
       def initialize: (Array[_Reporter] reporters) -> void
 
-      # Hands `event` to every reporter, in order.
+      # Hands `event` to every reporter, in order, and raises the first error
+      # that a reporter raised, after the last reporter has received the
+      # event.
       #
       # - `event`: Stryker::event, the event the run published.
       def call: (event event) -> nil

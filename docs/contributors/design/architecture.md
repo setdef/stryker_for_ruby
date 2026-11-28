@@ -209,7 +209,7 @@ A run publishes domain events, each also a `Data.define` value ([`Stryker::Event
 | `Events::RunCompleted` | the last result is collected |
 | `Events::RunAborted` | a stage raises or a signal ends the run, after both adapters stop and before the error leaves the pipeline |
 
-Stages never call a reporter directly, so adding a reporter changes no stage.
+Stages never call a reporter directly, so adding a reporter changes no stage. A reporter that raises doesn't keep the others from hearing the event: each hears it before the first error leaves.
 
 ## Where each responsibility lives
 

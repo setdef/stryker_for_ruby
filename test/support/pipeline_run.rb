@@ -134,4 +134,19 @@ module PipelineRun
       @events << event
     end
   end
+
+  # A reporter that records each event as `Reporter` does, and then raises
+  # `error` as it hears an event of the class `on`.
+  class FailingReporter < Reporter
+    def initialize(error, on: Object)
+      super()
+      @error = error
+      @on = on
+    end
+
+    def call(event)
+      super
+      raise(@error) if event.is_a?(@on)
+    end
+  end
 end

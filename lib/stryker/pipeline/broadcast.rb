@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative("raised")
+
 module Stryker
   class Pipeline
     class Broadcast
@@ -8,7 +10,9 @@ module Stryker
       end
 
       def call(event)
-        @reporters.each { |reporter| reporter.call(event) }
+        errors = @reporters.filter_map { |reporter| Raised.by { reporter.call(event) } }
+        raise(errors.first) if errors.any?
+
         nil
       end
     end

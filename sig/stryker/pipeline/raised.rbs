@@ -1,0 +1,18 @@
+module Stryker
+  class Pipeline
+    # Catches what a block raises, so that the pipeline can go on before it
+    # raises the error itself: every reporter hears an event before the first
+    # error that a reporter raised leaves, and the reporters hear that a run
+    # aborted before the error that aborted it leaves.
+    module Raised
+      # Runs the block and returns the error that it raised, or nil when it
+      # raised none. The error is any exception that Ruby defines as a
+      # direct subclass of `Exception`, such as `StandardError`,
+      # `ScriptError`, `NoMemoryError`, and `SignalException`, and so any
+      # exception that a program raises, except the one that no program can
+      # rescue. It never rescues a class of its own that inherits from
+      # `Exception` directly.
+      def self.by: () { () -> void } -> Exception?
+    end
+  end
+end
