@@ -36,10 +36,12 @@ class PipelineSelectedFilesTest < Minitest::Test
     )
   end
 
-  def test_the_json_reporter_spells_a_newline_and_a_backslash_in_the_name_as_shown
-    error = assert_raises(Stryker::UnsupportedError) { selected(%w[json], "lib/caf\xE9\n\\x.rb".b) }
+  # A single quote is spelled as a backslash is, and is a letter of a file name
+  # on every system, where Windows takes a backslash for a separator.
+  def test_the_json_reporter_spells_a_newline_and_a_single_quote_in_the_name_as_shown
+    error = assert_raises(Stryker::UnsupportedError) { selected(%w[json], "lib/caf\xE9\n'x.rb".b) }
 
-    assert_includes(error.message, %(the file "lib/caf\\xE9\\x0A\\\\x.rb", because))
+    assert_includes(error.message, %(the file "lib/caf\\xE9\\x0A\\'x.rb", because))
   end
 
   def test_the_json_reporter_takes_files_whose_names_are_valid_utf8
