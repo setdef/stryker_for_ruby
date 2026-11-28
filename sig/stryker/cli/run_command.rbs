@@ -8,17 +8,21 @@ module Stryker
 
       @streams: Streams
       @run: Run
+      @information: Information
       @flags: Flags
 
       # Builds the command.
       #
       # - `run`: the Stryker::CLI::Run that does the run.
       # - `streams`: the Stryker::CLI::Streams the command writes to.
-      def initialize: (run: Run, streams: Streams) -> void
+      # - `information`: the Stryker::CLI::Information that writes the version.
+      def initialize: (run: Run, streams: Streams, information: Information) -> void
 
       # Runs `stryker run` with the words after `run` and returns the exit
       # status. With `-h` or `--help` among them, it writes the help to
-      # standard output and runs nothing. A flag that doesn't exist, that
+      # standard output and runs nothing, and with `--version` among them
+      # and no `-h` or `--help`, it writes the version to standard output and
+      # runs nothing. A flag that doesn't exist, that
       # lacks its value, or that is given a value it doesn't take, and a
       # second configuration file, are errors with status 2.
       #
@@ -27,6 +31,14 @@ module Stryker
       def call: (Array[String] words) -> Integer
 
       private
+
+      # Parses the words and runs mutation testing with them, and returns the
+      # exit status.
+      def run: (Array[String] words) -> Integer
+
+      # Writes the help or the version when the words ask for one, and returns
+      # 0, or returns nil when they ask for neither.
+      def information: (Array[String] words) -> Integer?
 
       # Writes the help of `run`.
       def help: () -> Integer

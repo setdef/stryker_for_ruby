@@ -12,21 +12,32 @@ module Stryker
     class RunCommand
       include Rescued
 
-      def initialize(run:, streams:)
+      def initialize(run:, streams:, information:)
         @streams = streams
         @run = run
+        @information = information
         @flags = Flags.new
       end
 
       def call(words)
-        return help if words.intersect?(%w[-h --help])
+        information(words) || run(words)
+      rescue OptionParser::ParseError
+        usage_error(Complaint.new(@flags, rescued).to_s)
+      end
 
+      private def run(words)
         files = @flags.parse(words)
         return usage_error("Give at most one configuration file.") if files.size > 1
 
         @run.call(options: @flags.options, file: files.first, no_color: @flags.no_color)
-      rescue OptionParser::ParseError
-        usage_error(Complaint.new(@flags, rescued).to_s)
+      end
+
+      private def information(words)
+        return help if words.intersect?(%w[-h --help])
+
+        # OptionParser's own --version aborts, which would end the command
+        # with the status of an abort and no version.
+        @information.version if words.include?("--version")
       end
 
       private def help

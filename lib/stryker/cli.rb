@@ -18,7 +18,8 @@ module Stryker
       @streams = Streams.new(Output.new(stdout), Output.new(stderr))
       @failures = Failures.new(stderr)
       @information = Information.new(@streams)
-      @run = RunCommand.new(run: Run.new(pipeline:, streams: @streams, env:, root:), streams: @streams)
+      run = Run.new(pipeline:, streams: @streams, env:, root:)
+      @run = RunCommand.new(run:, streams: @streams, information: @information)
     end
 
     def call(argv)

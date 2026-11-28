@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - When a reporter fails, the reporters after it still receive the run's results and the end of the run, where they received nothing. The error of the first reporter that failed still ends `stryker run`.
 - A crash that ends `stryker`, `stryker help`, or `stryker run` exits with status 2 and the bug report, whatever the class of the exception, where an exception that isn't a `StandardError`, such as a `ScriptError`, a `NoMemoryError`, a `SystemStackError`, a `SecurityError`, or a `SystemExit`, printed a stack trace and exited with status 1, the status for a score below `thresholds.break`. A signal still exits with 128 plus its number.
 - `stryker`, `stryker help`, and `stryker run` exit with status 141, which is 128 plus the number of `SIGPIPE`, and write nothing more, when standard output or standard error closes before they finish, as when you pipe them to a command that ends first. They wrote a stack trace or the bug report, or exited with status 0 though the output was lost. A run that was mutating ends every process that it started and deletes its temporary files first, as it does after a signal.
+- `stryker run --version` writes the version to standard output and exits with status 0, as `stryker --version` does, where it wrote `stryker: version unknown` to standard error and exited with status 1, the status for a score below `thresholds.break`.
 
 ## [0.2.0] - 2026-11-28
 

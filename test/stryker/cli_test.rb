@@ -12,6 +12,18 @@ class CLITest < Minitest::Test
     assert_equal([0, "#{Stryker::VERSION}\n", ""], [status, out, err])
   end
 
+  def test_version_after_run_prints_the_version_and_exits_with_status_zero
+    status, out, err = run_cli("run", "--version")
+
+    assert_equal([0, "#{Stryker::VERSION}\n", ""], [status, out, err])
+  end
+
+  def test_version_after_run_runs_nothing_whatever_else_the_words_say
+    status, out, err = run_cli("run", "--thresholds.break", "80", "--version", "stryker.config.json")
+
+    assert_equal([0, "#{Stryker::VERSION}\n", ""], [status, out, err])
+  end
+
   def test_help_in_each_spelling_prints_the_overview_to_standard_output
     [%w[help], %w[-h], %w[--help]].each do |argv|
       status, out, err = run_cli(*argv)
