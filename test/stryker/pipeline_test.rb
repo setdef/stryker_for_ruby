@@ -102,13 +102,21 @@ class PipelineTest < Minitest::Test
     assert_instance_of(Stryker::ConfigError, events.first.error)
   end
 
-  def test_a_dry_run_that_found_no_test_goes_on_when_allow_empty_is_true_with_every_mutant_no_coverage
+  def test_a_dry_run_that_found_no_test_ends_the_run_with_no_mutant_tested_when_allow_empty_is_true
     isolations = Isolations.new(found: found_no_test)
     run_pipeline(isolations, options: { allow_empty: true })
-    completed = @reporters.first.events.last.results
 
-    assert_equal(%w[NoCoverage] * 3, completed.map(&:status))
-    assert_includes(isolations.calls, "runtime run_all")
+    assert_equal(["runtime start", "static start", "runtime dry_run", "runtime stop", "static stop"], isolations.calls)
+  end
+
+  def test_such_a_run_tells_the_reporters_only_of_the_dry_run
+    run_pipeline(Isolations.new(found: found_no_test), options: { allow_empty: true })
+
+    assert_equal([Stryker::Events::DryRunCompleted], @reporters.first.events.map(&:class))
+  end
+
+  def test_such_a_run_has_no_score_for_thresholds_break_to_judge
+    assert_nil(run_pipeline(Isolations.new(found: found_no_test), options: { allow_empty: true }))
   end
 
   def test_a_dry_run_that_found_a_test_goes_on_whatever_allow_empty_holds

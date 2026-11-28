@@ -10,10 +10,17 @@ module Stryker
     #
     # A trial whose dry run finds no test raises `Stryker::ConfigError`
     # before it publishes anything, unless `Stryker::Config#allow_empty` is
-    # true.
+    # true. Then it publishes `Stryker::Events::DryRunCompleted` and nothing
+    # more, as StrykerJS does, and returns `NOTHING_TESTED`.
     class Trial
       # The message of the error when the dry run finds no test. Private.
       NO_TEST: String
+
+      # What `call` returns when the dry run found no test and `allow_empty`
+      # is true: no result, as StrykerJS returns none. The same frozen array
+      # every time, so that a caller can tell it from the results of a run
+      # that has no mutant.
+      NOTHING_TESTED: Array[MutantResult]
 
       @config: Config
 
@@ -29,7 +36,8 @@ module Stryker
       def initialize: (Config config, Broadcast broadcast) -> void
 
       # Tests the mutants of `instrumented` with the started `isolations`,
-      # and returns every mutant's result, in the order of the mutants' IDs.
+      # and returns every mutant's result, in the order of the mutants' IDs,
+      # or `NOTHING_TESTED` when the dry run found no test.
       #
       # - `isolations`: Stryker::Pipeline::Isolations, both adapters,
       #   started.

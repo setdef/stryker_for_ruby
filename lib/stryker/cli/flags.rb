@@ -20,7 +20,7 @@ module Stryker
         Flag.new("dryRunTimeoutMinutes", "MINUTES", :number, "Minutes that the dry run may take"),
         Flag.new("mutator.excludedMutations", "NAMES", :list, "Mutators to turn off: their mutants show as Ignored"),
         Flag.new("incremental", nil, :switch, "Unused: a run reuses no earlier results yet"),
-        Flag.new("allowEmpty", nil, :switch, "Go on when the dry run finds no test: every mutant is NoCoverage"),
+        Flag.new("allowEmpty", nil, :switch, "End with status 0 when the dry run finds no test: no mutant is tested"),
         Flag.new("minitest.testFiles", "PATTERNS", :list, "Test files that the minitest test runner loads, as globs"),
       ].freeze
       private_constant(:FLAGS)

@@ -27,11 +27,17 @@ class EndToEndNoTestsTest < Minitest::Test
     assert_message(outcome)
   end
 
-  def test_a_run_with_allow_empty_goes_on_with_every_mutant_no_coverage
-    outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--reporters", "json")
+  def test_a_run_with_allow_empty_tests_no_mutant_and_writes_no_report
+    outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--reporters", "clear-text,json")
 
     assert_equal(0, outcome.status)
-    assert_every_mutant_uncovered(outcome)
+    assert_nothing_reported(outcome)
+  end
+
+  def test_a_run_with_allow_empty_has_no_score_for_the_break_threshold_to_fail
+    outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--thresholds.break", "80")
+
+    assert_equal(0, outcome.status)
   end
 
   private def assert_stopped(outcome)
@@ -49,11 +55,10 @@ class EndToEndNoTestsTest < Minitest::Test
     refute_match(/bug|Report it/, outcome.err)
   end
 
-  private def assert_every_mutant_uncovered(outcome)
+  private def assert_nothing_reported(outcome)
     return unless FORKS
 
-    statuses = outcome.report["files"].values.flat_map { |file| file["mutants"].map { |mutant| mutant["status"] } }
-
-    assert_equal(["NoCoverage"], statuses.uniq)
+    assert_empty(outcome.out)
+    assert_nil(outcome.report)
   end
 end

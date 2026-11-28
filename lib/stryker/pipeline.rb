@@ -33,7 +33,7 @@ module Stryker
 
     private def completed(config)
       results = run_stages(config)
-      @broadcast.call(Events::RunCompleted.new(results:))
+      @broadcast.call(Events::RunCompleted.new(results:)) unless results.equal?(Trial::NOTHING_TESTED)
       results
     end
 

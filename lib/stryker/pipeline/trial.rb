@@ -9,8 +9,10 @@ module Stryker
   class Pipeline
     class Trial
       NO_TEST = "The dry run found no test, so no mutant can be tested. A minitest.testFiles pattern that " \
-        "matches no test file is the likeliest cause: check the patterns. To run anyway, with every mutant " \
-        "NoCoverage, set allowEmpty to true."
+        "matches no test file is the likeliest cause: check the patterns. To accept that, and end the run with " \
+        "status 0, no mutant tested, and no report, set allowEmpty to true."
+      NOTHING_TESTED = Array(nil).freeze
+      public_constant(:NOTHING_TESTED)
       private_constant(:NO_TEST)
 
       def initialize(config, broadcast)
@@ -20,7 +22,10 @@ module Stryker
       end
 
       def call(isolations, instrumented)
-        ready = instrumented.planned(Plan.new(dry_run(isolations), @config))
+        found = dry_run(isolations)
+        return NOTHING_TESTED if found.results.empty?
+
+        ready = instrumented.planned(Plan.new(found, @config))
         @broadcast.call(ready)
         tested(isolations, ready)
       end

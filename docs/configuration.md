@@ -90,7 +90,7 @@ The flag --test-runner needs a value. Run "stryker help run" for the flags.
 
 | Status | When |
 | - | - |
-| 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, `stryker run --version`, and `stryker run -h` also exit with 0 when they have written their text. |
+| 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score, or the dry run found no test and [`allowEmpty`](#allowempty) is `true`. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, `stryker run --version`, and `stryker run -h` also exit with 0 when they have written their text. |
 | 1 | The run finished, and its score is below `thresholds.break`. |
 | 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that a `mutate` pattern of yours selects, a file that `mutate` selects and that doesn't parse, tests that failed to load, a dry run that failed or found no test, a run on Windows, or an error in **Stryker (for Ruby)** itself. Every exception of a class that Ruby defines for a program to rescue (`StandardError`, `ScriptError`, `NoMemoryError`, `SecurityError`, or `SystemStackError`) that ends a command is such an error, whichever command it ends. An exception of a class that a library or the project defines directly under `Exception` isn't: Ruby writes its trace and exits with status 1. A signal, a closed output, and an exit (`SystemExit`) aren't errors either: an exit ends the command with its own status and writes nothing. An error in **Stryker (for Ruby)** writes its backtrace and the address of the forum to report it on. |
 | 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. It ends every process that the run started and deletes its temporary files before it exits. A second signal stops that cleanup and leaves the temporary files. |
@@ -110,7 +110,7 @@ A dry run fails, and no mutant runs, when a test fails with no mutant active, wh
 A dry run that finds no test stops the run too, before any mutant runs, unless [`allowEmpty`](#allowempty) is `true`. It exits with status 2 and writes no bug report, because the tests, or the patterns that select them, are yours to fix:
 
 ```text
-The dry run found no test, so no mutant can be tested. A minitest.testFiles pattern that matches no test file is the likeliest cause: check the patterns. To run anyway, with every mutant NoCoverage, set allowEmpty to true.
+The dry run found no test, so no mutant can be tested. A minitest.testFiles pattern that matches no test file is the likeliest cause: check the patterns. To accept that, and end the run with status 0, no mutant tested, and no report, set allowEmpty to true.
 ```
 
 #### Output
@@ -239,7 +239,7 @@ Set the option to the reporters you want, as in `stryker run --reporters clear-t
 
 Writes a summary of the run to standard output, once, when the run ends. It follows the text of StrykerJS's `clear-text` reporter, without emojis. A run that stops before it ends writes nothing. A file name that isn't valid UTF-8 appears with each such byte as an escape, such as `caf\xE9_test.rb`. The summary has four parts:
 
-1. The tree of the tests that the dry run found, under `All tests`. Each test file is under the folders that some test files share, and a folder that holds one folder or one file is on one line with it, as in `All tests/discount_test.rb` or `a/b`. Each test is under its file, in the order of the dry run, with what it did to the mutants: a green `✓` and `killed 2` for a test that killed two mutants, a blue `~` and `covered 3` for a test that reached three mutants and killed none, and a red `✘` and `covered 0` for a test that reached none. A test that has a location in the dry run's result shows it after its name, as `[line 3]`, and the `minitest` test runner gives none. A test with no file is under `All tests` and in no file. A run whose dry run found no test has no tree.
+1. The tree of the tests that the dry run found, under `All tests`. Each test file is under the folders that some test files share, and a folder that holds one folder or one file is on one line with it, as in `All tests/discount_test.rb` or `a/b`. Each test is under its file, in the order of the dry run, with what it did to the mutants: a green `✓` and `killed 2` for a test that killed two mutants, a blue `~` and `covered 3` for a test that reached three mutants and killed none, and a red `✘` and `covered 0` for a test that reached none. A test that has a location in the dry run's result shows it after its name, as `[line 3]`, and the `minitest` test runner gives none. A test with no file is under `All tests` and in no file. A run whose dry run found no test writes no summary: it stops with an error, or with `allowEmpty` true it ends with no report.
 
    ```text
    All tests/discount_test.rb
@@ -364,7 +364,7 @@ A boolean. The default is `false`.
 
 With `false`, a run whose dry run finds no test stops with an error before any mutant runs, and exits with status 2 ([Exit statuses](#exit-statuses) gives the message). The test runner lists no test when no file that [`minitest.testFiles`](#minitesttestfiles) selects defines one: a pattern that matches no test file is the likeliest cause, and an empty list is another. A test that the dry run skips counts as a test, so a project whose tests are all skipped doesn't stop.
 
-With `true`, the run goes on. No test reaches a mutant, so every mutant has the status `NoCoverage`, no mutant runs, and the `clear-text` report has no tree of tests. The mutation score is 0, or `n/a` when the run has no mutant that counts toward it, so a `thresholds.break` above 0 ends such a run with status 1. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of reporting every mutant as `NoCoverage`.
+With `true`, the run ends after the dry run, as StrykerJS's does, with status 0. It tests no mutant and reports no mutant result: not one with the status `NoCoverage`, and not one with the status `Ignored` or `CompileError`. It has no mutation score, so `thresholds.break` has nothing to judge, and no reporter writes its report: `clear-text` writes nothing, `progress` draws nothing, and `json` writes no file and leaves an earlier report as it was. A project with no test has no result to report, and an empty report would say nothing that the exit status doesn't. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of passing it.
 
 The same option in a configuration file and as a flag:
 
@@ -404,7 +404,7 @@ The patterns follow the same rules as those of [`mutate`](#mutate), with these d
 
 - A pattern that starts with `!` leaves nothing out. The `!` is an ordinary character in a file name, so the pattern matches only a file whose name starts with `!`.
 - A pattern that matches a folder makes the project process fail to load it. The run stops with status 2, and the error says the project's tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
-- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and it stops with an error unless [`allowEmpty`](#allowempty) is `true`. With `allowEmpty` true, every mutant has the status `NoCoverage`.
+- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and it stops with an error unless [`allowEmpty`](#allowempty) is `true`. With `allowEmpty` true, the run ends after the dry run with status 0 and no report.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
 - A pattern whose bytes aren't valid UTF-8 is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8. A `mutate` pattern with such bytes is accepted, because `mutate` stays in the command, which reads files whatever their names.
 

@@ -115,9 +115,9 @@ module Stryker
     # By default, false.
     attr_reader incremental: bool
 
-    # Whether a run goes on when its dry run finds no test, with every mutant
-    # `NoCoverage`. When false, such a run stops with an error before any
-    # mutant runs. By default, false.
+    # Whether a run whose dry run finds no test ends there, with no mutant
+    # tested and no report, instead of stopping with an error. By default,
+    # false.
     attr_reader allow_empty: bool
 
     # The glob patterns, relative to the project's root, of the test files
@@ -174,8 +174,8 @@ module Stryker
     # - `excluded_mutations`: Array of String, the mutators whose mutants are
     #   ignored.
     # - `incremental`: bool, whether to store and reuse results.
-    # - `allow_empty`: bool, whether a run goes on when its dry run finds no
-    #   test.
+    # - `allow_empty`: bool, whether a run whose dry run finds no test ends
+    #   there instead of stopping with an error.
     # - `minitest_test_files`: Array of String or nil, the patterns of the
     #   Minitest test runner's test files.
     # - `given`: Array of Symbol, the fields that a file or a flag gave.

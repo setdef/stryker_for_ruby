@@ -1,7 +1,9 @@
 module Stryker
   module Events
     # Published when the last result is collected. It holds every mutant's
-    # result: the mutants that ran and the mutants that didn't.
+    # result: the mutants that ran and the mutants that didn't. A run whose
+    # dry run found no test, with `allow_empty` true, tests no mutant and
+    # publishes no `RunCompleted`.
     #
     # ## Examples
     #
