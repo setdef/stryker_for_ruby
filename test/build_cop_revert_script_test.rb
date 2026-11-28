@@ -35,7 +35,7 @@ class BuildCopRevertScriptTest < Minitest::Test
     before = origin_head
     out = cop(bad, "revert")
 
-    assert_match(/BUILD_COP_REVERT is not true/, out)
+    assert_match(/::warning::.*BUILD_COP_REVERT is not true/, out)
     assert_equal(before, origin_head)
   end
 
@@ -69,7 +69,7 @@ class BuildCopRevertScriptTest < Minitest::Test
       bad = pushed_commit(subject, "s#{index}.txt")
       before = origin_head
 
-      assert_match(/a person's to revert/, cop(bad, "revert", BUILD_COP_REVERT: "true"), subject)
+      assert_match(/::warning::.*a person's to revert/, cop(bad, "revert", BUILD_COP_REVERT: "true"), subject)
       assert_equal(before, origin_head, subject)
     end
   end

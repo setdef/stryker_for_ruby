@@ -36,11 +36,11 @@ class BuildCopInputScriptTest < Minitest::Test
   # The clone may be behind the origin, as the cop's checkout is by the time
   # the run starts.
   def test_it_reads_trunk_from_the_origin
-    tip = pushed_commit("feat: newer")
+    tip = pushed_commit("revert: newer\n\nThis reverts commit #{'a' * 40}.")
     git(@work, "reset", "--quiet", "--hard", "HEAD~1")
     cop(tip, "wait")
 
-    assert_equal(tip, commits_seen.lines.first.chomp)
+    assert_equal([tip, "#{tip} #{'a' * 40}\n"], [commits_seen.lines.first.chomp, reverts_seen])
   end
 
   # Commits that say nothing of reverts, so that the script's search of their
