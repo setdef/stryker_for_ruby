@@ -19,7 +19,9 @@ module Stryker
     # out the sites that no mutator makes a mutant of. A mutator that can't
     # read a site raises `Stryker::Mutators::Unreadable`, and
     # `Stryker::Mutators::Search` writes a warning with the file and the line
-    # to standard error, makes no mutant of the site, and goes on.
+    # to the policy's `warnings` stream, which is standard error by default,
+    # makes no mutant of the site, and goes on. A name in a disable comment
+    # that no mutator has gets a warning there too.
     #
     # ## Examples
     #
@@ -55,7 +57,8 @@ module Stryker
       # - `policy`: Stryker::Mutators::Policy, which mutators are fallbacks
       #   and which are excluded. By default, the fallbacks of
       #   `Stryker::Mutators::FALLBACKS` and no exclusions. The walk adds the
-      #   file's disable comments to it.
+      #   file's disable comments to it. The walk writes its warnings to the
+      #   policy's `warnings`.
       def initialize: (file: String, result: Prism::ParseResult, ?mutators: Array[_Mutator], ?first_id: Integer, ?policy: Policy) -> void
 
       # The file's live mutants, in the order above, which get a switch.

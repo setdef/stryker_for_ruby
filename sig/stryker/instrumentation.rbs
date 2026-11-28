@@ -53,7 +53,10 @@ module Stryker
     #   most parse workers that run at once.
     # - `mutators`: Array of Stryker::_Mutator, the mutators in the order of
     #   the catalog, `Stryker::Mutators::ALL` by default.
-    def initialize: (String root, Config config, ?Array[_Mutator] mutators) -> void
+    # - `warnings`: Stryker::_Warnings, where a warning about a file goes: a
+    #   site that a mutator can't read, and a name in a disable comment that
+    #   no mutator has. By default, `$stderr`.
+    def initialize: (String root, Config config, ?Array[_Mutator] mutators, ?warnings: _Warnings) -> void
 
     # Finds the mutants of the files at `paths`, and instruments each file.
     # Raises Stryker::UnsupportedError, before it reads any file, when a

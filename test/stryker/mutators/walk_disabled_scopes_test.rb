@@ -2,6 +2,7 @@
 
 require_relative("../../support/disabled_walk")
 require_relative("../../test_helper")
+require "stringio"
 
 # Checks the names, the restore comment, and the grammar of a disable comment.
 class WalkDisabledScopesTest < Minitest::Test
@@ -65,18 +66,25 @@ class WalkDisabledScopesTest < Minitest::Test
     end
   end
 
-  def test_next_line_with_a_space_names_one_unknown_mutator_so_the_mutants_stay_live
-    source = "# Stryker disable next line Nines\nx = 1\n"
-    _, err = capture_io { assert_equal(["1"], live(source)) }
+  # What a walk of the source writes to the stream it is given, with the live mutants.
+  def warned(source)
+    warnings = StringIO.new
+    mutants = walk(source, nines, policy: Stryker::Mutators::Policy.new(warnings:)).mutants
 
+    [mutants.map { |mutant| source.byteslice(mutant.start_offset, 1) }, warnings.string]
+  end
+
+  def test_next_line_with_a_space_names_one_unknown_mutator_so_the_mutants_stay_live
+    live, err = warned("# Stryker disable next line Nines\nx = 1\n")
+
+    assert_equal(["1"], live)
     assert_match(%r{\Alib/a.rb:1: warning: .*"next line Nines"}, err)
   end
 
   def test_a_name_that_no_mutator_has_writes_a_warning_with_the_file_and_the_line_and_the_rest_applies
-    source = "x = a\n# Stryker disable next-line Nope, Nines\ny = 1\n"
-    out, err = capture_io { assert_empty(live(source)) }
+    live, err = warned("x = a\n# Stryker disable next-line Nope, Nines\ny = 1\n")
 
-    assert_empty(out)
+    assert_empty(live)
     assert_equal(1, err.lines.size)
     assert_match(
       %r{\Alib/a.rb:2: warning: Stryker \(for Ruby\) has no mutator named "Nope", .*valid names are Nines\.},
@@ -85,8 +93,16 @@ class WalkDisabledScopesTest < Minitest::Test
   end
 
   def test_names_that_every_mutator_has_write_no_warning
-    _, err = capture_io { live("# Stryker disable next-line nines, ALL\nx = 1\n") }
+    _, err = warned("# Stryker disable next-line nines, ALL\nx = 1\n")
 
     assert_empty(err)
+  end
+
+  def test_a_walk_given_no_stream_writes_the_warning_to_standard_error_and_a_given_stream_none
+    source = "# Stryker disable next-line Nope\nx = 1\n"
+    out, err = capture_io { live(source) }
+    _, given = capture_io { warned(source) }
+
+    assert_equal([["", true], ""], [[out, err.start_with?("lib/a.rb:1: warning:")], given])
   end
 end

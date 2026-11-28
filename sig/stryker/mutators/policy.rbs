@@ -2,7 +2,9 @@ module Stryker
   module Mutators
     # What a walk does with the mutators of a run and the file it walks:
     # which of them are fallback mutators, which are excluded, and what the
-    # file's disable comments say. A mutator's mutant is still made when it
+    # file's disable comments say, and where it writes a warning about a site
+    # that a mutator can't read or a name in a comment that no mutator has.
+    # A mutator's mutant is still made when it
     # is excluded or a comment covers it, and it is `Ignored`, with
     # StrykerJS's text as its reason for an exclusion and the comment's
     # reason for a comment, as
@@ -29,6 +31,10 @@ module Stryker
       @fallbacks: Array[_Mutator]
       @excluded: Array[String]
       @directives: Directives
+      @warnings: _Warnings
+
+      # Where the walk writes a warning.
+      attr_reader warnings: _Warnings
 
       # Builds the policy.
       #
@@ -39,7 +45,9 @@ module Stryker
       #   matched exactly, with their letter case. Empty by default.
       # - `directives`: what the disable comments of the file say. By
       #   default, directives that say nothing.
-      def initialize: (?fallbacks: Array[_Mutator], ?excluded: Array[String], ?directives: Directives) -> void
+      # - `warnings`: Stryker::_Warnings, where the walk writes a warning. By
+      #   default, `$stderr`.
+      def initialize: (?fallbacks: Array[_Mutator], ?excluded: Array[String], ?directives: Directives, ?warnings: _Warnings) -> void
 
       # The same policy, with the disable comments of one file.
       #

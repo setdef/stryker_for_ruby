@@ -10,9 +10,10 @@ module Stryker
         "nothing off in this comment. The valid names are %<valid>s."
       private_constant(:UNKNOWN)
 
-      def initialize(file:, result:, names:)
+      def initialize(file:, result:, names:, warnings: $stderr)
         code = CodeLines.new(result)
         @names = names
+        @warnings = warnings
         @comments = result.comments.filter_map { |comment| DisableComment.read(comment, code) }
         @comments.each { |comment| report(comment, "#{file}:#{comment.line}") }
       end
@@ -27,7 +28,7 @@ module Stryker
 
       private def report(comment, where)
         comment.unknown(@names.map(&:downcase)).each do |name|
-          warn(format(UNKNOWN, where:, name: name.inspect, valid: @names.join(", ")))
+          @warnings.puts(format(UNKNOWN, where:, name: name.inspect, valid: @names.join(", ")))
         end
       end
     end

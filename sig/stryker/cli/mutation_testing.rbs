@@ -67,6 +67,9 @@ module Stryker
       # `testRunner` names no test runner that the gem has.
       def prepare: (Config config) -> void
 
+      # The pipeline for this run, which writes its warnings to `warnings`.
+      def pipeline: (Array[_Reporter] reporters, _Warnings warnings) -> Pipeline
+
       # The adapters that read the cache at `cache`, for the run's root.
       def isolations: (String cache) -> [Isolation::ForkPerRun, Isolation::FreshProcesses]
     end

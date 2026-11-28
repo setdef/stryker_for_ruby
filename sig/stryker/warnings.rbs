@@ -1,0 +1,10 @@
+module Stryker
+  # Where a stage writes a warning: any object with `puts`, such as
+  # `$stderr`, an `IO`, or a `StringIO`. The command gives each stage its
+  # standard error, so a stage never writes to a stream that it picked
+  # itself, and a test reads what a stage wrote.
+  interface _Warnings
+    # Writes `line`, and the line break after it.
+    def puts: (String line) -> void
+  end
+end

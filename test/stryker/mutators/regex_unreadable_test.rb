@@ -2,6 +2,7 @@
 
 require_relative("../../test_helper")
 require "prism"
+require "stringio"
 require "stryker/mutators/regex"
 require "stryker/mutators/walk"
 require_relative("../../support/mutator_case")
@@ -18,13 +19,12 @@ class RegexUnreadableTest < Minitest::Test
     Stryker::Mutators::Regex
   end
 
-  # The walk's mutants and what it wrote to standard error.
+  # The walk's mutants and what it wrote to the stream it was given.
   def walk(source)
-    mutants = nil
-    _out, err = capture_io do
-      mutants = Stryker::Mutators::Walk.new(file: "lib/a.rb", result: Prism.parse(source), mutators: [mutator]).mutants
-    end
-    [mutants, err]
+    warnings = StringIO.new
+    policy = Stryker::Mutators::Policy.new(warnings:)
+    walk = Stryker::Mutators::Walk.new(file: "lib/a.rb", result: Prism.parse(source), mutators: [mutator], policy:)
+    [walk.mutants, warnings.string]
   end
 
   def test_refuses_a_pattern_that_regexp_parser_cannot_read
@@ -41,6 +41,19 @@ class RegexUnreadableTest < Minitest::Test
 
     assert_empty(mutants)
     assert_equal(["2"], err.lines.map { |line| line[WARNING, 1] })
+  end
+
+  def test_a_walk_given_no_stream_writes_its_warning_to_standard_error
+    result = Prism.parse("Regexp.new(\"(\")\n")
+    out, err = capture_io { Stryker::Mutators::Walk.new(file: "lib/a.rb", result:, mutators: [mutator]).mutants }
+
+    assert_equal(["", ["1"]], [out, err.lines.map { |line| line[WARNING, 1] }])
+  end
+
+  def test_a_walk_given_a_stream_writes_nothing_to_standard_error
+    _out, err = capture_io { walk("Regexp.new(\"(\")\n") }
+
+    assert_empty(err)
   end
 
   def test_a_warning_shows_an_invalid_byte_of_the_pattern_as_an_escape

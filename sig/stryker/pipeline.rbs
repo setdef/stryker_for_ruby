@@ -35,6 +35,8 @@ module Stryker
 
     @isolations: ^(String cache) -> [_DryRunIsolation, _Isolation]
 
+    @warnings: _Warnings
+
     @broadcast: Broadcast
 
     # Builds the pipeline.
@@ -45,7 +47,10 @@ module Stryker
     #   neither started: the one that runs the dry run and the runtime
     #   mutants' runs, and the one that runs the static mutants' runs.
     # - `reporters`: Array of Stryker::_Reporter, which receive every event.
-    def initialize: (String root, ^(String cache) -> [_DryRunIsolation, _Isolation] isolations, Array[_Reporter] reporters) -> void
+    # - `warnings`: Stryker::_Warnings, where a stage writes a warning, such
+    #   as the instrumentation's warning about a site that a mutator can't
+    #   read. By default, `$stderr`.
+    def initialize: (String root, ^(String cache) -> [_DryRunIsolation, _Isolation] isolations, Array[_Reporter] reporters, ?warnings: _Warnings) -> void
 
     # Runs mutation testing as `config` says, and returns the mutation score
     # of every mutant, as Stryker::Metrics gives it, or nil when no mutant
@@ -58,6 +63,10 @@ module Stryker
     def call: (Config config) -> Float?
 
     private
+
+    # Finds the mutants of the files that `config` selects, and instruments
+    # them, with the warnings going to the stream the pipeline was given.
+    def instrument: (Config config) -> Instrumentation::Result
 
     # Writes the cache, and tests the mutants with the adapters for it.
     def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Array[MutantResult]

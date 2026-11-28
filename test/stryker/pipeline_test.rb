@@ -3,6 +3,7 @@
 require_relative("../support/sample_values")
 require_relative("../test_helper")
 require "fileutils"
+require "stringio"
 require "stryker/config"
 require "stryker/pipeline"
 require "tmpdir"
@@ -131,8 +132,19 @@ class PipelineTest < Minitest::Test
     )
   end
 
-  def run_pipeline(isolations)
-    Stryker::Pipeline.new(@root, isolations, @reporters).call(config)
+  def run_pipeline(isolations, **)
+    Stryker::Pipeline.new(@root, isolations, @reporters, **).call(config)
+  end
+
+  def test_a_warning_about_a_file_goes_to_the_stream_the_pipeline_was_given
+    File.write(File.join(@root, "lib/cart.rb"), "# Stryker disable next-line Nope\n#{SOURCE}")
+    warnings = StringIO.new
+    _out, err = capture_io { run_pipeline(Isolations.new(found:), warnings:) }
+
+    assert_equal(
+      ["", 'lib/cart.rb:1: warning: Stryker (for Ruby) has no mutator named "Nope"'],
+      [err, warnings.string[/\A.*"Nope"/]]
+    )
   end
 
   def test_the_score_counts_every_mutant

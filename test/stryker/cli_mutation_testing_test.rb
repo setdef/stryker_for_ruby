@@ -26,6 +26,13 @@ class CLIMutationTestingTest < Minitest::Test
     end
   end
 
+  def test_the_pipeline_gets_standard_error_for_the_warnings_of_its_stages
+    stderr = StringIO.new
+    run_with(reporters: [], stderr:)
+
+    assert_same(stderr, Pipeline.warnings)
+  end
+
   def test_the_pipeline_runs_in_the_project_and_its_score_is_the_runs
     assert_equal([75.0, "/project"], [run_with(reporters: []), Pipeline.built.first])
   end

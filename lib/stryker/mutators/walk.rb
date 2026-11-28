@@ -11,8 +11,9 @@ module Stryker
   module Mutators
     class Walk
       def initialize(file:, result:, mutators: ALL, first_id: 1, policy: Policy.new)
-        @search = Search.new(result, file, mutators)
-        @policy = policy.reading(Directives.new(file:, result:, names: mutators.map(&:name)))
+        warnings = policy.warnings
+        @search = Search.new(result, file, mutators, warnings)
+        @policy = policy.reading(Directives.new(file:, result:, names: mutators.map(&:name), warnings:))
         @roster = Roster.new(file:, source: result.source.source, first_id:)
       end
 

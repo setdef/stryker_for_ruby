@@ -8,12 +8,13 @@ require_relative "unreadable"
 module Stryker
   module Mutators
     class Search
-      def initialize(result, file, mutators)
+      def initialize(result, file, mutators, warnings)
         raise(ArgumentError, "#{file} doesn't parse, so it has no sites") unless result.success?
 
         @tree = result.value
         @file = file
         @mutators = mutators
+        @warnings = warnings
       end
 
       def candidates
@@ -30,7 +31,7 @@ module Stryker
       private def candidates_at(mutator, node, ancestors)
         Candidate.at(mutator, node, ancestors)
       rescue Unreadable
-        warn("#{@file}:#{node.location.start_line}: warning: #{$ERROR_INFO}")
+        @warnings.puts("#{@file}:#{node.location.start_line}: warning: #{$ERROR_INFO}")
         []
       end
     end

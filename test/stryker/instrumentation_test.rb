@@ -3,6 +3,7 @@
 require_relative("../support/fake_mutator")
 require_relative("../test_helper")
 require "fileutils"
+require "stringio"
 require "stryker/config"
 require "stryker/edit"
 require "stryker/instrumentation"
@@ -42,9 +43,17 @@ class InstrumentationTest < Minitest::Test
     File.binwrite(path, source)
   end
 
-  def instrumented(paths = %w[lib/cart.rb lib/flag.rb], mutators: OPERATORS, **)
+  def instrumented(paths = %w[lib/cart.rb lib/flag.rb], mutators: OPERATORS, warnings: StringIO.new, **)
     config = Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency: 1, **)
-    Stryker::Instrumentation.new(@root, config, mutators).call(paths)
+    Stryker::Instrumentation.new(@root, config, mutators, warnings:).call(paths)
+  end
+
+  def test_a_warning_about_a_file_goes_to_the_stream_it_was_given
+    write("lib/odd.rb", "# Stryker disable next-line Nope\nx = 1\nRegexp.new(\"(\")\n")
+    warnings = StringIO.new
+    _out, err = capture_io { instrumented(%w[lib/odd.rb], mutators: [Stryker::Mutators::Regex], warnings:) }
+
+    assert_equal(["", %w[lib/odd.rb:1 lib/odd.rb:3]], [err, warnings.string.lines.map { |line| line[/\A[^:]+:\d+/] }])
   end
 
   def test_each_mutant_has_an_id_of_its_own_across_the_files_and_names_its_file_from_the_root

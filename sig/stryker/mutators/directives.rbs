@@ -3,8 +3,8 @@ module Stryker
     # The disable comments of a file, read as
     # [The disable comment](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/mutators.md#the-disable-comment)
     # specifies, and what they say about each candidate. A name that no
-    # mutator has makes the run write a warning to standard error, with the
-    # file and the line of the comment, and the rest of the comment still
+    # mutator has makes the run write a warning to the stream it is given, with
+    # the file and the line of the comment, and the rest of the comment still
     # applies.
     #
     # ## Examples
@@ -20,13 +20,16 @@ module Stryker
 
       @names: Array[String]
       @comments: Array[DisableComment]
+      @warnings: _Warnings
 
       # Reads the comments.
       #
       # - `file`: String, the file's path, which a warning gives.
       # - `result`: Prism::ParseResult, the file parsed.
       # - `names`: Array of String, the names of the mutators in the run.
-      def initialize: (file: String, result: Prism::ParseResult, names: Array[String]) -> void
+      # - `warnings`: Stryker::_Warnings, where a warning goes. By default,
+      #   `$stderr`.
+      def initialize: (file: String, result: Prism::ParseResult, names: Array[String], ?warnings: _Warnings) -> void
 
       # The reason that the comments give for `candidate`'s mutant to be
       # `Ignored`, or nil when the mutant is live. The latest comment that

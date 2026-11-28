@@ -14,10 +14,10 @@ module Stryker
       'Leave templates out with a pattern such as "!**/*.erb".'
     private_constant(:TEMPLATE, :TEMPLATES)
 
-    def initialize(root, config, mutators = Mutators::ALL)
+    def initialize(root, config, mutators = Mutators::ALL, warnings: $stderr)
       @root = root
       @concurrency = config.concurrency
-      @policy = Mutators::Policy.new(excluded: config.excluded_mutations)
+      @policy = Mutators::Policy.new(excluded: config.excluded_mutations, warnings:)
       @mutators = mutators
     end
 

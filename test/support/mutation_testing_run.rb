@@ -14,11 +14,12 @@ module MutationTestingRun
   # gives a score.
   class Pipeline
     class << self
-      attr_reader :built, :config
+      attr_reader :built, :config, :warnings
     end
 
-    def initialize(root, isolations, reporters)
+    def initialize(root, isolations, reporters, warnings:)
       self.class.instance_variable_set(:@built, [root, isolations, reporters])
+      self.class.instance_variable_set(:@warnings, warnings)
     end
 
     def call(config)

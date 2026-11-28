@@ -15,17 +15,22 @@ module Stryker
     CACHE = "stryker-cache-"
     private_constant(:CACHE)
 
-    def initialize(root, isolations, reporters)
+    def initialize(root, isolations, reporters, warnings: $stderr)
       @root = root
+      @warnings = warnings
       @isolations = isolations
       @broadcast = Broadcast.new(reporters)
     end
 
     def call(config)
-      instrumented = Instrumentation.new(@root, config).call(SourceFiles.new(@root, config.mutate).to_a)
+      instrumented = instrument(config)
       results = Dir.mktmpdir(CACHE) { |cache| tested(config, cache, instrumented) }
       @broadcast.call(Events::RunCompleted.new(results:))
       Metrics.count(results.map(&:status)).mutation_score
+    end
+
+    private def instrument(config)
+      Instrumentation.new(@root, config, warnings: @warnings).call(SourceFiles.new(@root, config.mutate).to_a)
     end
 
     private def tested(config, cache, instrumented)
