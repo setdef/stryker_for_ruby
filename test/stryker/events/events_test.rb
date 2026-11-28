@@ -29,6 +29,12 @@ class EventsTest < Minitest::Test
     assert_equal(results, Stryker::Events::RunCompleted.new(results:).results)
   end
 
+  def test_a_run_aborted_holds_the_error_that_stopped_the_run
+    error = RuntimeError.new("boom")
+
+    assert_same(error, Stryker::Events::RunAborted.new(error:).error)
+  end
+
   def test_events_with_equal_members_are_equal
     event = Stryker::Events::MutantTested.new(mutant_result)
 

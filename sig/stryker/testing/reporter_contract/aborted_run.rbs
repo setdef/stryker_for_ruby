@@ -1,0 +1,22 @@
+module Stryker
+  module Testing
+    module ReporterContract
+      # The events of a run that stopped after its first result: the dry run,
+      # the plan, one result of
+      # `Stryker::Testing::ReporterContract::SampleRun`, and
+      # `Stryker::Events::RunAborted`.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # Stryker::Testing::ReporterContract::AbortedRun.events.map(&:class)
+      # # => [Stryker::Events::DryRunCompleted, Stryker::Events::PlanReady,
+      # #     Stryker::Events::MutantTested, Stryker::Events::RunAborted]
+      # ```
+      module AbortedRun
+        # The events, in the order the run publishes them.
+        def self.events: () -> Array[event]
+      end
+    end
+  end
+end

@@ -17,7 +17,10 @@ module Stryker
   # ends: when it returns, when a stage raises, and when a signal such as
   # INT or TERM raises `SignalException` in it, it stops both adapters,
   # which end every process they started, and deletes the cache before the
-  # exception leaves. A second signal during that cleanup ends it.
+  # exception leaves. A second signal during that cleanup ends it. Once the
+  # cleanup is done, and before the exception leaves, it hands every reporter
+  # `Stryker::Events::RunAborted`, so a reporter can end what it has drawn
+  # before the command writes the error.
   #
   # ## Examples
   #
@@ -63,6 +66,16 @@ module Stryker
     def call: (Config config) -> Float?
 
     private
+
+    # Finds the mutants of the files that `config` selects, tests them, and
+    # returns the result of every mutant. Hands every reporter
+    # `Stryker::Events::RunAborted`, and raises again, when a stage raises or
+    # a signal ends the run.
+    def run_stages: (Config config) -> Array[MutantResult]
+
+    # Hands every reporter `Stryker::Events::RunAborted` with `error`, and
+    # raises `error` again.
+    def aborted: (Exception error) -> bot
 
     # Finds the mutants of the files that `config` selects, and instruments
     # them, with the warnings going to the stream the pipeline was given.

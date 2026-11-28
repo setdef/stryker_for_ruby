@@ -9,8 +9,9 @@ module Stryker
     # Each test builds a `Stryker::Testing::ReporterContract::SampleProject`, gives the
     # adapter the events of a run, and checks that the adapter takes them
     # without raising and leaves the project's source and test files as they
-    # were. The runs are a complete run, a run that found no mutants, and a
-    # run with a result of every status.
+    # were. The runs are a complete run, a run that stopped before its last
+    # result, a run that found no mutants, and a run with a result of every
+    # status.
     #
     # ## Examples
     #
@@ -27,6 +28,11 @@ module Stryker
       # Checks that the adapter takes every event of a complete run, and
       # changes no file of the project.
       def test_hears_every_event_of_a_run_and_changes_no_file_of_the_project: () -> void
+
+      # Checks that the adapter takes the events of a run that stopped before
+      # its last result, ending with `Stryker::Events::RunAborted`, and changes
+      # no file of the project.
+      def test_hears_a_run_that_stopped_before_its_last_result: () -> void
 
       # Checks that the adapter takes the events of a run with no mutants, and
       # changes no file of the project.

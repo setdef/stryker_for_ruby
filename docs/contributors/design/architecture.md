@@ -65,7 +65,7 @@ flowchart TB
     direction TB
     PIPE["Pipeline: parse, instrument, load, plan"]
     VAL["Values: Config, Mutant, Location, Test, TestResult, DryRunResult, MutantRun, MutantResult"]
-    EVT["Events: DryRunCompleted, PlanReady, MutantTested, RunCompleted"]
+    EVT["Events: DryRunCompleted, PlanReady, MutantTested, RunCompleted, RunAborted"]
     subgraph ports["Ports: RBS interfaces only"]
       TR["_TestRunner"]
       ISO["_Isolation"]
@@ -102,7 +102,7 @@ Ruby has no interface keyword, so the ports exist only as RBS interfaces in `sig
 
 ```rbs
 module Stryker
-  type event = Events::DryRunCompleted | Events::PlanReady | Events::MutantTested | Events::RunCompleted
+  type event = Events::DryRunCompleted | Events::PlanReady | Events::MutantTested | Events::RunCompleted | Events::RunAborted
 
   # Lists and runs the project's tests in one framework.
   interface _TestRunner
@@ -207,6 +207,7 @@ A run publishes domain events, each also a `Data.define` value ([`Stryker::Event
 | `Events::PlanReady` | every mutant has a status or a run |
 | `Events::MutantTested` | a result is collected |
 | `Events::RunCompleted` | the last result is collected |
+| `Events::RunAborted` | a stage raises or a signal ends the run, after both adapters stop and before the error leaves the pipeline |
 
 Stages never call a reporter directly, so adding a reporter changes no stage.
 

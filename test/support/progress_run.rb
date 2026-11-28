@@ -68,6 +68,10 @@ module ProgressRun
     Stryker::Events::RunCompleted.new(results: [])
   end
 
+  def self.aborted
+    Stryker::Events::RunAborted.new(error: RuntimeError.new("boom"))
+  end
+
   # What a test of the reporter does: builds it on a stand-in stream with the
   # clock above, and plays events to it.
   module Hearing

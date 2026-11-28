@@ -1,0 +1,32 @@
+module Stryker
+  module Events
+    # Published when a run stops before its last result is collected: a stage
+    # raised, or a signal such as INT or TERM ended the run. It comes after
+    # the pipeline has stopped both isolation adapters and deleted its cache,
+    # and before the exception leaves the pipeline, so a reporter that has
+    # drawn part of a line can end it before the command writes the error.
+    # A run that completes publishes `Stryker::Events::RunCompleted` and
+    # never this event.
+    #
+    # ## Examples
+    #
+    # A reporter that ends its line when the run stops:
+    #
+    # ```ruby
+    # event = Stryker::Events::RunAborted.new(error: Interrupt.new)
+    # event.error.class
+    # # => Interrupt
+    # ```
+    class RunAborted < Data
+      # What stopped the run: the exception that the stage raised, or the
+      # SignalException that ended it.
+      attr_reader error: Exception
+
+      # Builds the event.
+      #
+      # - `error`: Exception, what stopped the run.
+      def self.new: (error: Exception) -> instance
+                  | (Exception error) -> instance
+    end
+  end
+end

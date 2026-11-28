@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
+require "English"
 require "tmpdir"
+require_relative "events/run_aborted"
 require_relative "events/run_completed"
 require_relative "instrumentation"
 require_relative "metrics"
@@ -23,10 +25,21 @@ module Stryker
     end
 
     def call(config)
-      instrumented = instrument(config)
-      results = Dir.mktmpdir(CACHE) { |cache| tested(config, cache, instrumented) }
+      results = run_stages(config)
       @broadcast.call(Events::RunCompleted.new(results:))
       Metrics.count(results.map(&:status)).mutation_score
+    end
+
+    private def run_stages(config)
+      instrumented = instrument(config)
+      Dir.mktmpdir(CACHE) { |cache| tested(config, cache, instrumented) }
+    rescue StandardError, SignalException
+      aborted(_ = $ERROR_INFO)
+    end
+
+    private def aborted(error)
+      @broadcast.call(Events::RunAborted.new(error:))
+      raise(error)
     end
 
     private def instrument(config)

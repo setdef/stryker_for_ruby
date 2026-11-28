@@ -1,6 +1,6 @@
 module Stryker
   # One of the domain events of a run, which a reporter receives.
-  type event = Events::DryRunCompleted | Events::PlanReady | Events::MutantTested | Events::RunCompleted
+  type event = Events::DryRunCompleted | Events::PlanReady | Events::MutantTested | Events::RunCompleted | Events::RunAborted
 
   # The port where **Stryker (for Ruby)** meets whatever shows or stores the
   # results of a run: it receives each domain event, in the order the run

@@ -59,6 +59,29 @@ class ProgressTest < Minitest::Test
     assert_equal("\e[K\n", @io.string[-4..])
   end
 
+  def test_ends_the_line_when_the_run_is_aborted_so_that_the_error_starts_on_a_line_of_its_own
+    build(terminal: true)
+    start
+    hear(ProgressRun.aborted)
+
+    assert_equal("\e[K\n", @io.string[-4..])
+  end
+
+  def test_ends_no_line_when_the_run_is_aborted_before_it_drew_one
+    build(terminal: true)
+    hear(ProgressRun.dry_run, ProgressRun.aborted)
+
+    assert_empty(@io.string)
+  end
+
+  def test_an_aborted_run_adds_no_line_to_a_log
+    build(terminal: false)
+    start
+    hear(ProgressRun.aborted)
+
+    assert_empty(@io.string)
+  end
+
   def test_shows_nothing_for_a_run_that_has_no_mutant_to_test
     build(terminal: true)
     hear(ProgressRun.dry_run, ProgressRun.plan([]), ProgressRun.completed)

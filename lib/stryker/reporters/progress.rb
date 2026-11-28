@@ -34,7 +34,7 @@ module Stryker
         when Events::DryRunCompleted then timed(event)
         when Events::PlanReady then planned(event)
         when Events::MutantTested then tested(event)
-        when Events::RunCompleted then @display.finish
+        when Events::RunCompleted, Events::RunAborted then @display.finish
         end
       end
 

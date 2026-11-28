@@ -260,7 +260,7 @@ The time is rough, in whole minutes rounded down: `<1m` below a minute, `~5m`, a
 
 On a terminal, the bar is 50 characters wide, or as wide as the rest of the line leaves room for in the width that the terminal gives, and it has no width on a terminal too narrow for the rest of the line. The filled part of the bar is green, a count of survivors above zero is red, and a count of timeouts above zero is yellow. The reporter paints nothing when standard error isn't a terminal, when the environment sets `NO_COLOR`, when `TERM` is `dumb`, and with `--no-color`, and it still animates on a terminal in those cases.
 
-A run that stops before it ends leaves the last line drawn, and the message that stops it follows on the same line.
+A run that stops before it ends, because of an error or a signal, ends the line too, so the message that stops it starts on a line of its own.
 
 #### The `json` reporter
 

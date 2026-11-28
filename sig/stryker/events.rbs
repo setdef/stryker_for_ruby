@@ -4,7 +4,8 @@ module Stryker
   # a reporter and adding a reporter changes no stage. A reporter that needs
   # every result, such as the JSON reporter, builds its output when it
   # receives `Stryker::Events::RunCompleted`, and one that shows progress
-  # acts on each `Stryker::Events::MutantTested`.
+  # acts on each `Stryker::Events::MutantTested` and ends its line on
+  # `Stryker::Events::RunCompleted` or `Stryker::Events::RunAborted`.
   # [The architecture](https://github.com/setdef/stryker_for_ruby/blob/trunk/docs/contributors/design/architecture.md#values-and-events)
   # says when each is published.
   #

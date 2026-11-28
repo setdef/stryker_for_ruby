@@ -73,13 +73,14 @@ class PipelineTest < Minitest::Test
     refute(Dir.exist?(isolations.cache))
   end
 
-  def test_an_interrupted_run_never_completes
+  def test_an_interrupted_run_never_completes_and_ends_with_the_interrupt
     assert_raises(Interrupt) { run_pipeline(Isolations.new(found:, raises: Interrupt)) }
     events = Stryker::Events
 
     assert_equal(
-      [events::DryRunCompleted, events::PlanReady, events::MutantTested],
+      [events::DryRunCompleted, events::PlanReady, events::MutantTested, events::RunAborted],
       @reporters.first.events.map(&:class)
     )
+    assert_instance_of(Interrupt, @reporters.first.events.last.error)
   end
 end

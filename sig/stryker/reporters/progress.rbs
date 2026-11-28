@@ -13,7 +13,9 @@ module Stryker
     # isn't part of the work. It weighs a mutant by the time of the tests that
     # run against it in the dry run, and adds the dry run's overhead to a mutant
     # that runs in a fresh process. It shows nothing for a run with no mutant
-    # to test.
+    # to test. On a terminal, it ends the line it drew when the run completes
+    # and when the run aborts, so that an error written after an abort starts
+    # on a line of its own.
     #
     # It writes to the stream it is given, which is standard error in a run, and
     # never to standard output. It reads time from the clock it is given, so it
@@ -62,8 +64,8 @@ module Stryker
       def initialize: (display: ProgressAnimation | ProgressLog, clock: ^() -> Float) -> void
 
       # Receives one event: the dry run's times, the plan's mutants, a result
-      # that moves the progress on, or the end of the run. It does nothing for
-      # any other event.
+      # that moves the progress on, or the end of the run, whether it completes
+      # or aborts. It does nothing for any other event.
       #
       # - `event`: Stryker::event, the event the run published.
       def call: (event event) -> void
