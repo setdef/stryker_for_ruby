@@ -31,8 +31,9 @@ module Stryker
       # first such frame. With no paths, it is false. A frame that has no
       # path, such as one of an `eval`, never matches.
       #
-      # Each check costs 1.5 to 2.3 µs at 23 frames, a test body's usual
-      # depth, and 17.5 to 28.8 µs at 303 frames.
+      # Each check costs 2.3 to 3.7 µs at 25 frames, a test body's usual
+      # depth, and 22 to 37 µs at 305 frames. The C locale costs up to 15%
+      # more than a UTF-8 locale.
       #
       # - `paths`: Set of String, the files' paths as
       #   `Stryker::Runtime::PathKey.of_file` gives them, called with the same

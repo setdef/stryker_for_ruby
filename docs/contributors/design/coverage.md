@@ -75,13 +75,15 @@ After each such load, the next hit of each mutant on each thread is checked agai
 
 A mutant that a file's load reaches twice is checked once, so the second hit lands in the test's bucket as well as the first in the static bucket. The plan gives a mutant with a static hit a static run whatever its tests' buckets hold, so the result is the same.
 
-One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3.14, 3.4.13, and 4.0.10 with YJIT off or on, measured as in [What a hit costs](#what-a-hit-costs):
+One check costs this much, with `absolute_path` tested first, on Linux and on Ruby 3.3.14, 3.4.13, and 4.0.10 with YJIT off or on, under a UTF-8 locale and under the C locale. Each figure is the median of 15 rounds, and the range runs from the cheapest to the dearest of those combinations, on a machine that other work shared:
 
 | Frames on the stack | One check |
 | - | - |
-| 23 | 1.5 to 2.3 µs |
-| 103 | 6.0 to 9.8 µs |
-| 303 | 17.5 to 28.8 µs |
+| 25 | 2.3 to 3.7 µs |
+| 105 | 8.0 to 13.0 µs |
+| 305 | 22 to 37 µs |
+
+Under the C locale Ruby tags each frame's path US-ASCII or binary, and the check leaves a path of only ASCII bytes as it is, because a `Hash` finds the key of such a path whatever its tag. Only a path with a byte beyond ASCII is copied and tagged UTF-8. Telling whether a path is ASCII costs the C locale up to 15% more than the UTF-8 locale, for the same Ruby and depth.
 
 A test body has 18 to 25 frames under Minitest, RSpec, and Rails.
 
