@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The JSON report lists a mutant that no test can run with, with the status `Ignored` and a `statusReason` that says why. That covers a mutant of a mutator that `mutator.excludedMutations` lists, with the reason `Ignored because of excluded mutation "StringLiteral"`, a mutant that a disable comment covers, a mutant whose site can't hold a switch, as inside `BEGIN { }`, and one whose text has no form on one line. An `Ignored` mutant is in no mutation score, and it never removes another mutant that gives the same code.
 - A comment in a `.rb` file turns mutators off for one line or for the rest of the file, with StrykerJS's grammar: `# Stryker disable next-line EqualityOperator: why`, `# Stryker disable all`, and `# Stryker restore all`. Each mutant that a comment covers has the status `Ignored`, and its `statusReason` is the reason after the colon, or `Ignored using a comment`. A mutator name that no mutator has writes a warning with the file and the line to standard error, and the rest of the comment still applies.
 - The `Regex` mutator changes the pattern of a regexp literal and of the string given as the first argument of `Regexp.new`. It removes an anchor, turns `^` and `$` into `\A` and `\z`, negates a character class, a shorthand class such as `\d`, a Unicode property, and a lookaround, and removes a quantifier. Each mutant has a `description` in the JSON report, such as `Anchor "^" was removed at offset 0.`. A pattern with interpolation gets no mutant, and neither does a pattern that **Stryker (for Ruby)** can't read, which writes a warning with the file and the line to standard error. `mutator.excludedMutations` accepts `Regex`.
-
 - The option `minitest.testFiles`, a list of globs relative to the project's root, chooses the test files that the `minitest` test runner loads, with the flag `--minitest.test-files`. It defaults to `test/**/test_*.rb` and `test/**/*_test.rb`, and a value replaces the default. A project that keeps tests outside `test/`, such as in `plugins/*/test`, no longer has `NoCoverage` for the mutants that those tests kill.
 
 ### Changed
@@ -26,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `stryker --version` and `stryker help` start about three times as fast, because they no longer load the parser that only `stryker run` uses.
 - **Stryker (for Ruby)** prints the address of [the forum](https://forum.setdef.com/c/stryker-for-ruby) for reports, in place of GitHub Issues, in `stryker help` and in the message after an error in its code. The error message lists what to include in a report: the command you ran, what it printed, your Ruby version, your operating system, and the backtrace. The gem's `bug_tracker_uri` is the forum's address too.
 - On Windows, `stryker run` stops after its checks with an error that says a run on Windows isn't built yet.
+
+## [0.2.0] - 2026-11-28
+
+### Changed
+
 - `thresholds.high` and `thresholds.low` take only whole numbers from 0 to 100, as the JSON report's schema requires. A fraction such as `82.5` is now an error that says so, where the configuration took it and the report then failed its schema. `thresholds.break` still takes any number from 0 to 100.
 
 ### Fixed
