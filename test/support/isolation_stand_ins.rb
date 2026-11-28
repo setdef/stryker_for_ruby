@@ -20,10 +20,11 @@ module IsolationStandIns
 
     attr_reader :calls
 
-    def initialize(kill_error: nil, setpgid_error: nil)
+    def initialize(kill_error: nil, setpgid_error: nil, pgrp: nil)
       @calls = []
       @kill_error = kill_error
       @setpgid_error = setpgid_error
+      @pgrp = pgrp
     end
 
     # Takes the child's block, and never runs it.
@@ -40,6 +41,17 @@ module IsolationStandIns
     def setpgid(*arguments)
       @calls << [:setpgid, *arguments]
       raise(@setpgid_error) if @setpgid_error
+    end
+
+    # The process ID of the process that asks, as a forked child sees it.
+    def pid
+      PID
+    end
+
+    # The process group of the process that asks: its own, unless +pgrp+
+    # said otherwise.
+    def getpgrp
+      @pgrp || PID
     end
 
     def kill(*arguments)

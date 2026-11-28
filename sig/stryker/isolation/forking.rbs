@@ -52,6 +52,10 @@ module Stryker
 
       private
 
+      # Makes the child the leader of a process group of its own. A refusal
+      # from the system is no error when the child leads its group anyway.
+      def lead_group: () -> void
+
       # Makes the child `pid` the leader of a process group of its own, and
       # returns `pid`. It changes nothing when the child has ended already.
       def grouped: (Integer pid) -> Integer

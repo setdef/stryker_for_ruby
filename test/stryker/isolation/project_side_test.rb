@@ -49,6 +49,22 @@ class ProjectSideTest < Minitest::Test
     assert_equal([[:writer]], forked_run.calls)
   end
 
+  # macOS refuses the child's setpgid now and then when the parent's ran at
+  # the same moment, though the child leads its group by then.
+  def test_a_forked_child_that_leads_its_group_when_its_setpgid_is_refused_runs_its_run
+    process = FakeProcess.new(setpgid_error: Errno::EPERM)
+    forked_run = Calls.new
+    Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), forked_run, :writer)
+
+    assert_equal([[:writer]], forked_run.calls)
+  end
+
+  def test_a_forked_child_outside_its_own_group_when_its_setpgid_is_refused_raises
+    process = FakeProcess.new(setpgid_error: Errno::EPERM, pgrp: 1)
+
+    assert_raises(Errno::EPERM) { Stryker::Isolation::Forking.new(Calls.new, process).child(sample_run(7), Calls.new, :writer) }
+  end
+
   def test_forking_gives_the_end_of_each_childs_standard_error
     Dir.mktmpdir do |folder|
       File.binwrite(File.join(folder, "7.err"), "[BUG] crash\n")

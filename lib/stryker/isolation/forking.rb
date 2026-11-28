@@ -16,16 +16,24 @@ module Stryker
       end
 
       def child(run, work, writer)
-        # A group of its own, so that killing the group ends whatever the
-        # run's tests started too. The parent does the same for the child, in
-        # start, and whichever runs first wins.
-        @process.setpgid(0, 0)
+        lead_group
         @streams.call(run.output_name)
         work.call(writer)
       end
 
       def errors(run)
         @streams.tail(run.output_name)
+      end
+
+      private def lead_group
+        # A group of its own, so that killing the group ends whatever the
+        # run's tests started too. The parent does the same for the child, in
+        # start, and whichever runs first wins.
+        @process.setpgid(0, 0)
+      rescue Errno::EPERM
+        # macOS now and then refuses the child's call when the parent's ran
+        # at the same moment, though the child leads its group by then.
+        raise unless @process.getpgrp == @process.pid
       end
 
       private def grouped(pid)
