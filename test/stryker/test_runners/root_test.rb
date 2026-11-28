@@ -53,6 +53,16 @@ class RootTest < Minitest::Test
     assert_equal("test/caf\xE9_test.rb".b, relative("/rööt", "/rööt", file))
   end
 
+  # A name that is valid UTF-8 stays the string it always was, so that it
+  # finds its place in a Hash or a Set, even though the root and the file each
+  # have a letter outside ASCII.
+  def test_a_path_that_is_valid_utf8_is_relative_as_utf8_and_matches_a_utf8_set_member
+    file = "#{File.expand_path('/rööt')}/test/café_test.rb"
+    shown = relative("/rööt", "/rööt", file)
+
+    assert_equal([Encoding::UTF_8, true], [shown.encoding, Set["test/café_test.rb"].include?(shown)])
+  end
+
   # The path of +file+ from the root at +path+, when the root's real path
   # is +real+, as when a folder along +path+ is a symbolic link.
   def relative(path, real, file)

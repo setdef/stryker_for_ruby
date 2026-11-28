@@ -31,4 +31,14 @@ class InstrumentationBytesTest < Minitest::Test
 
     assert_equal(Set[BROKEN], result.mutants.to_set { |mutant| mutant.file.b })
   end
+
+  # A name that is valid UTF-8 stays the string it always was, so the key that
+  # finds it is an ordinary UTF-8 string, whatever the letters of the root.
+  def test_a_file_whose_name_is_valid_utf8_is_found_by_a_utf8_absolute_path_under_a_root_with_a_letter_outside_ascii
+    sources = instrumented("/rööt", ["lib/café.rb"]).sources
+    absolute = File.absolute_path("lib/café.rb", "/rööt")
+
+    assert_equal([[absolute], [Encoding::UTF_8]], [sources.keys, sources.keys.map(&:encoding)])
+    assert_includes(sources, absolute)
+  end
 end
