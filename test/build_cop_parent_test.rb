@@ -16,6 +16,10 @@ class BuildCopParentTest < Minitest::Test
     assert_equal([:bisect, commit("e")], [step.action, step.commit])
   end
 
+  def test_the_reason_for_running_the_parent_names_the_run_the_job_and_the_parent
+    assert_says(cop(*parent_batch), commit("f"), commit("e"), "run 4", FAILED)
+  end
+
   def test_waits_for_the_run_of_the_parent_that_it_started
     step = cop(*parent_batch(bisect_run("e", 5, nil)))
 
@@ -55,7 +59,7 @@ class BuildCopParentTest < Minitest::Test
 
     step = cop(*parent_batch(untold))
 
-    assert_equal([:rerun, 5], [step.action, step.run])
+    assert_equal([:rerun, commit("e"), 5], [step.action, step.commit, step.run])
   end
 
   def test_the_run_of_the_parent_that_does_not_tell_on_its_second_attempt_is_a_persons

@@ -32,6 +32,11 @@ module BuildCopCase
   FAST_QUERY = { branch: "trunk", event: "push" }.freeze
   private_constant(:FAST_GATE, :FAST_FAILED, :FAST_QUERY)
 
+  # Asserts that the reason of +step+ says each of +facts+.
+  def assert_says(step, *facts)
+    facts.each { |fact| assert_includes(step.reason, fact) }
+  end
+
   # The commit that +name+ stands for.
   def commit(name)
     name * 40

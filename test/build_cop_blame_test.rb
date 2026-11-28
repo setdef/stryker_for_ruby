@@ -15,6 +15,12 @@ class BuildCopBlameTest < Minitest::Test
     assert_equal([:rerun, commit("d"), 4], [step.action, step.commit, step.run])
   end
 
+  def test_the_reason_for_running_the_jobs_again_names_the_run_the_commit_and_the_jobs
+    step = cop(*red_batch("a"), bisect_run("c", 3, "success"), bisect_run("d", 4, "failure"))
+
+    assert_says(step, "run 4 of #{commit('d')}", FAILED, "its parent passed")
+  end
+
   # A batch of one commit after the green one blames it at once, once its run
   # has failed twice.
   def test_a_red_run_right_after_a_green_one_needs_no_bisecting

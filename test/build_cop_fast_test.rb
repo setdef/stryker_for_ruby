@@ -17,6 +17,21 @@ class BuildCopFastTest < Minitest::Test
     assert_includes(step.reason, FAST_FAILED)
   end
 
+  # F, the newest commit, is the one whose run is red.
+  def test_the_newest_commits_red_run_is_judged
+    step = cop(fast: [fast_run("e", 1, "success"), fast_run("f", 2, "failure")])
+
+    assert_equal([:rerun, commit("f"), 102], [step.action, step.commit, step.run])
+  end
+
+  # B has a green run and an older red one: the red run is not after the green.
+  def test_a_red_run_of_the_commit_that_has_a_green_run_is_not_judged
+    red = fast_run("b", 2, "failure", event: "workflow_dispatch")
+    step = cop(fast: [fast_run("b", 1, "success"), red, fast_run("c", 3, "failure")])
+
+    assert_equal([:rerun, commit("c")], [step.action, step.commit])
+  end
+
   def test_jobs_that_fail_again_blame_the_commit_when_its_parent_passed
     step = cop(fast: [fast_run("b", 1, "success"), fast_failed_again("c", 2)])
 
@@ -90,6 +105,7 @@ class BuildCopFastTest < Minitest::Test
     canceled = fast_run("c", 2, "failure", jobs: [job(FAST_FAILED, "cancelled")])
     step = cop(fast: [fast_run("b", 1, "success"), canceled])
 
-    assert_equal([:stuck, true], [step.action, step.reason.include?("run 102")])
+    assert_equal(:stuck, step.action)
+    assert_says(step, "run 102", "no job that failed")
   end
 end

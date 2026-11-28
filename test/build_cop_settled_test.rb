@@ -41,6 +41,14 @@ class BuildCopSettledTest < Minitest::Test
     assert_equal([:bisect, commit("c")], [step.action, step.commit])
   end
 
+  # E reverts D, but E's own run is the red one: a revert that is the red run's
+  # own commit is not a newer one.
+  def test_a_revert_that_is_the_red_runs_own_commit_does_not_settle_it
+    step = cop(*red_at_e, reverts: [[commit("e"), commit("d")]])
+
+    assert_equal([:bisect, commit("c")], [step.action, step.commit])
+  end
+
   # A is the commit the run before the batch passed.
   def test_a_revert_of_a_commit_before_the_batch_does_not_settle_the_red_run
     step = cop(*red_at_e, reverts: [[commit("f"), commit("a")]])
