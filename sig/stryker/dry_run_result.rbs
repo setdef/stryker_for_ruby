@@ -68,6 +68,10 @@ module Stryker
     def self.new: (results: Array[TestResult], buckets: Hash[String, Array[Integer]], static_bucket: Array[Integer], files_loaded_in_tests: Array[String], duration_ms: Float) -> instance
                 | (Array[TestResult] results, Hash[String, Array[Integer]] buckets, Array[Integer] static_bucket, Array[String] files_loaded_in_tests, Float duration_ms) -> instance
 
+    # Whether the dry run found no test: its `results` is empty. A skipped
+    # test is a result, so a dry run of only skipped tests found tests.
+    def no_test?: () -> bool
+
     # The names of the members that cross JSON as their bytes and their
     # encoding's name: `files_loaded_in_tests`. The keys of `buckets` are
     # test IDs, which are names, so they don't.

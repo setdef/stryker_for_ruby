@@ -38,10 +38,6 @@ module Stryker
     # What starts the name of the cache's directory. Private.
     CACHE: String
 
-    # What a run writes to the warnings stream when its dry run found no test
-    # and `allow_empty` is true. Private.
-    NOTHING_TESTED: String
-
     @root: String
 
     @isolations: ^(String cache) -> [_DryRunIsolation, _Isolation]
@@ -81,13 +77,13 @@ module Stryker
     private
 
     # Finds the mutants of the files that `config` selects, tests them, and
-    # returns the result of every mutant.
-    def run_stages: (Config config) -> Array[MutantResult]
+    # returns what the trial came to.
+    def run_stages: (Config config) -> Outcome::t
 
     # Finds the mutants of the files that `config` selects, tests them, hands
     # every reporter `Stryker::Events::RunCompleted`, and returns the result
-    # of every mutant, or `Stryker::Pipeline::Trial::NOTHING_TESTED`, with no
-    # event and one line to `warnings`, when the dry run found no test.
+    # of every mutant, or an empty array, with no event and one line to
+    # `warnings`, when the dry run found no test.
     def completed: (Config config) -> Array[MutantResult]
 
     # Does nothing when `error` is nil. Otherwise hands every reporter
@@ -102,6 +98,6 @@ module Stryker
     def instrument: (Config config) -> Instrumentation::Result
 
     # Writes the cache, and tests the mutants with the adapters for it.
-    def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Array[MutantResult]
+    def tested: (Config config, String cache, Instrumentation::Result instrumented) -> Outcome::t
   end
 end

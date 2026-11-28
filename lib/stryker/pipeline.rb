@@ -2,11 +2,11 @@
 
 require "tmpdir"
 require_relative "events/run_aborted"
-require_relative "events/run_completed"
 require_relative "instrumentation"
 require_relative "metrics"
 require_relative "pipeline/broadcast"
 require_relative "pipeline/isolations"
+require_relative "pipeline/outcome"
 require_relative "pipeline/raised"
 require_relative "pipeline/selected_files"
 require_relative "pipeline/trial"
@@ -15,9 +15,7 @@ require_relative "runtime/cache"
 module Stryker
   class Pipeline
     CACHE = "stryker-cache-"
-    NOTHING_TESTED = "The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report " \
-      "was written."
-    private_constant(:CACHE, :NOTHING_TESTED)
+    private_constant(:CACHE)
 
     def initialize(root, isolations, reporters, warnings: $stderr)
       @root = root
@@ -34,13 +32,9 @@ module Stryker
     end
 
     private def completed(config)
-      results = run_stages(config)
-      if results.equal?(Trial::NOTHING_TESTED)
-        @warnings.puts(NOTHING_TESTED)
-      else
-        @broadcast.call(Events::RunCompleted.new(results:))
-      end
-      results
+      outcome = run_stages(config)
+      outcome.announce(@broadcast, @warnings)
+      outcome.results
     end
 
     private def run_stages(config)

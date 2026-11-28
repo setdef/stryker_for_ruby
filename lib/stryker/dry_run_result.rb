@@ -19,6 +19,10 @@ module Stryker
       values.map { |value| TestResult.from_h(value) }
     end
 
+    def no_test?
+      results.empty?
+    end
+
     # @dynamic results, buckets, static_bucket, files_loaded_in_tests, duration_ms
   end
 end

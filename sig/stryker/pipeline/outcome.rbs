@@ -1,0 +1,75 @@
+module Stryker
+  class Pipeline
+    # What a trial came to, and how the run ends with it: a trial that went on
+    # from its dry run to its mutants tested them, whether it had a mutant or
+    # not, and a trial that stopped at a dry run that found no test, which
+    # `allow_empty` allowed, tested none.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # outcome = Stryker::Pipeline::Outcome.tested([])
+    # outcome.announce(broadcast, $stderr)
+    # # hands every reporter Stryker::Events::RunCompleted, with no result
+    # Stryker::Pipeline::Outcome.untested.announce(broadcast, $stderr)
+    # # writes one line to standard error and tells no reporter
+    # ```
+    module Outcome
+      # Either outcome.
+      type t = Tested | singleton(Untested)
+
+      # The outcome of a trial that went on from its dry run to its mutants.
+      class Tested
+        @results: Array[MutantResult]
+
+        # Builds the outcome.
+        #
+        # - `results`: Array of Stryker::MutantResult, the result of every
+        #   mutant, in the order of the mutants' IDs. Empty when the run has no
+        #   mutant.
+        def initialize: (Array[MutantResult] results) -> void
+
+        # The result of every mutant, in the order of the mutants' IDs.
+        attr_reader results: Array[MutantResult]
+
+        # Ends the run as one that tested its mutants: hands every reporter
+        # `Stryker::Events::RunCompleted` with the results, and writes
+        # nothing to `warnings`.
+        #
+        # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
+        #   to every reporter.
+        # - `warnings`: Stryker::_Warnings, where a run writes a warning.
+        def announce: (Broadcast broadcast, _Warnings warnings) -> void
+      end
+
+      # The outcome of a trial that stopped at its dry run, which found no
+      # test and was allowed to.
+      module Untested
+        # The line `announce` writes. Private.
+        LINE: String
+
+        # The results of an outcome that tested nothing: none, as StrykerJS
+        # returns none. A new empty array each time.
+        def self.results: () -> Array[MutantResult]
+
+        # Ends the run as one that tested no mutant: writes one line to
+        # `warnings` that says why, and tells no reporter, as StrykerJS
+        # reports no mutant result.
+        #
+        # - `broadcast`: Stryker::Pipeline::Broadcast, which hands each event
+        #   to every reporter.
+        # - `warnings`: Stryker::_Warnings, where a run writes a warning.
+        def self.announce: (Broadcast broadcast, _Warnings warnings) -> void
+      end
+
+      # The outcome of a trial that went on from its dry run to its mutants.
+      #
+      # - `results`: Array of Stryker::MutantResult, the result of every
+      #   mutant, in the order of the mutants' IDs.
+      def self.tested: (Array[MutantResult] results) -> Tested
+
+      # The outcome of a trial that stopped at its dry run.
+      def self.untested: () -> singleton(Untested)
+    end
+  end
+end

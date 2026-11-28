@@ -47,6 +47,26 @@ class DryRunResultTest < Minitest::Test
     assert_equal(result, Stryker::DryRunResult.from_json(result.to_json))
   end
 
+  def test_a_dry_run_with_a_result_found_a_test_and_one_with_none_found_none
+    none = Stryker::DryRunResult.new(
+      results: [], buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0
+    )
+
+    assert_equal([false, true], [dry_run_result.no_test?, none.no_test?])
+  end
+
+  def test_a_dry_run_of_only_skipped_tests_found_tests
+    skipped = Stryker::DryRunResult.new(
+      results: [test_result(status: "skipped", failure_message: nil)],
+      buckets: {},
+      static_bucket: [],
+      files_loaded_in_tests: [],
+      duration_ms: 0.0
+    )
+
+    refute_predicate(skipped, :no_test?)
+  end
+
   def test_a_missing_list_of_results_is_refused
     object = { buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0 }.transform_keys(&:to_s)
 
