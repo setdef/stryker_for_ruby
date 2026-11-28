@@ -32,8 +32,10 @@ module Stryker
 
       # Starts the process of `fresh`, with the mutant that its run needs
       # active, and returns the watch over it, with the run's time limit
-      # starting now. When the system refuses to start the process, the run's
-      # folder is deleted, and the error reaches the caller unchanged.
+      # starting now. When the launch fails, an interrupt included, the
+      # process it started is ended, the run's folder is deleted after it, and
+      # the error reaches the caller unchanged. A system that refuses to start
+      # the process leaves nothing to end.
       #
       # - `fresh`: Stryker::Isolation::FreshRun, the run.
       # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the

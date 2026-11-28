@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "child"
 require_relative "command"
+require_relative "custody"
 require_relative "fresh_watch"
 require_relative "process_group"
 require_relative "timer"
@@ -16,15 +16,10 @@ module Stryker
       end
 
       def call(fresh, recipe)
-        # @type var started: bool
-        started = false
-        child = Child.new(spawn(fresh, recipe), @process)
-        started = true
-        FreshWatch.new(fresh, child, Timer.new(fresh.run.timeout_ms))
-      ensure
-        # A spawn that raised started no process to judge the run, so nothing
-        # else will remove its folder.
-        fresh.remove unless started
+        Custody.new(fresh, @process).around do |custody|
+          child = custody.child(spawn(fresh, recipe))
+          FreshWatch.new(fresh, child, Timer.new(fresh.run.timeout_ms))
+        end
       end
 
       private def spawn(fresh, recipe)

@@ -1,0 +1,58 @@
+module Stryker
+  module Isolation
+    # What a launch has started, from the moment its process starts until a
+    # watch holds it. When the launch fails in that time, or a signal ends
+    # it, the custody ends the process, and then deletes the run's folder,
+    # which the process writes into.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # watch = Stryker::Isolation::Custody.new(fresh).around do |custody|
+    #   child = custody.child(Process.spawn("sleep", "1"))
+    #   Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(5000))
+    # end
+    # ```
+    class Custody
+      # The run whose folder the custody deletes when the launch fails.
+      @fresh: FreshRun
+
+      # `Process`, or a stand-in in a test.
+      @process: singleton(::Process)
+
+      # The ID of the process that the launch started, once it has.
+      @pid: Integer?
+
+      # The handle over that process, once the launch made one.
+      @child: Child?
+
+      # Builds the custody of a launch that has started nothing.
+      #
+      # - `fresh`: Stryker::Isolation::FreshRun, the run.
+      # - `process`: `Process`, or a stand-in in a test.
+      def initialize: (FreshRun fresh, ?singleton(::Process) process) -> void
+
+      # Yields the custody, and returns what the block returns. A signal
+      # that arrives while the block runs waits until it ends. When the
+      # block raises, or a signal waits, the process the custody holds is
+      # ended and the run's folder deleted, and the error reaches the caller
+      # unchanged.
+      def around: [T] () { (Custody custody) -> T } -> T
+
+      # Holds the process whose ID is `pid`, and returns the handle over it.
+      #
+      # - `pid`: Integer, the ID of the process that the launch started.
+      def child: (Integer pid) -> Child
+
+      private
+
+      # Ends the process the custody holds, if any, and then deletes the
+      # run's folder.
+      def abandon: () -> void
+
+      # Ends the process the custody holds: through its handle once it has
+      # one, and by its ID before.
+      def end_process: () -> void
+    end
+  end
+end
