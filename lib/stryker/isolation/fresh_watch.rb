@@ -11,6 +11,7 @@ module Stryker
         @fresh = fresh
         @child = child
         @timer = timer
+        @ended = false
       end
 
       def check
@@ -38,16 +39,26 @@ module Stryker
       end
 
       def finish
+        @fresh.land(ended)
+      end
+
+      def stop
+        @child.stop unless @ended
+        @ended = true
+        @fresh.remove
+      end
+
+      private def ended
         timed_out = @child.end_within(@timer.left)
         status = @child.status
         # What its tests started dies with it.
         @child.kill_rest
-        @fresh.land(Ending.of(status, timed_out:, duration_ms: @timer.elapsed_ms))
-      end
-
-      def stop
-        @child.stop
-        @fresh.remove
+        @ended = true
+        Ending.of(status, timed_out:, duration_ms: @timer.elapsed_ms)
+      ensure
+        # Whatever raised, or whichever signal came, before the process was
+        # ended and reaped: nobody else holds the process or its folder.
+        stop unless @ended
       end
     end
   end

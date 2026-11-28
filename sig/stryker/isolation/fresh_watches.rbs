@@ -43,10 +43,11 @@ module Stryker
 
       # Starts the time limit of each run whose first test has started, then
       # finishes each process that has ended or run out of time, which lands
-      # its run, and drops it from the set. With none of them, it first waits
-      # on the process whose time ends first, until that process ends or its
-      # time does, or for at most `POLL_SECONDS` while any run hasn't
-      # started a test, and may finish none.
+      # its run, and drops it from the set once it has landed, so that a
+      # signal while it finishes finds it there, and `stop` ends it. With none
+      # of them, it first waits on the process whose time ends first, until
+      # that process ends or its time does, or for at most `POLL_SECONDS` while
+      # any run hasn't started a test, and may finish none.
       def finish: () -> void
 
       # Waits, as `finish` says, for the process whose time ends first.

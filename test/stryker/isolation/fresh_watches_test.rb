@@ -119,6 +119,27 @@ class FreshWatchesTest < Minitest::Test
     assert_equal([[], 0], finished)
   end
 
+  def test_a_watch_is_in_the_set_while_it_finishes_and_out_of_it_after
+    set = Stryker::Isolation::FreshWatches.new
+    sizes = []
+    watch = Watch.new(:done, ended: true)
+    watch.define_singleton_method(:finish) { sizes << set.size }
+    set.add(watch)
+    set.finish
+
+    assert_equal([[1], 0], [sizes, set.size])
+  end
+
+  def test_a_watch_whose_finish_raises_is_still_in_the_set_for_stop_to_reach
+    set = Stryker::Isolation::FreshWatches.new
+    watch = Watch.new(:done, ended: true)
+    watch.define_singleton_method(:finish) { raise(ThreadError) }
+    set.add(watch)
+
+    assert_raises(ThreadError) { set.finish }
+    assert_equal(1, set.size)
+  end
+
   def test_every_process_is_checked_for_its_first_test
     watches = [Watch.new(:one, ended: true), Watch.new(:two)]
     finished(*watches)

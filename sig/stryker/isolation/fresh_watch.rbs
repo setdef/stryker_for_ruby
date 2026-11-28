@@ -23,6 +23,9 @@ module Stryker
       # The run's time limit.
       @timer: Timer
 
+      # Whether the process has ended and been reaped, or has been stopped.
+      @ended: bool
+
       # Starts watching.
       #
       # - `fresh`: Stryker::Isolation::FreshRun, the run.
@@ -52,13 +55,21 @@ module Stryker
 
       # Waits for the process for what is left of its time, kills it if it
       # still runs, reaps it, kills what it left running in its group, and
-      # lands the run.
+      # lands the run. When that fails before the run lands, or a signal
+      # ends it, the process is ended and the run's folder deleted, and the
+      # error reaches the caller unchanged.
       def finish: () -> nil
 
       # Kills the process and its group while it runs, or what an ended
       # process left running in its group, waits until it ended, and deletes
-      # the run's folder.
+      # the run's folder. A watch that has ended, whether `finish` or `stop`
+      # ended it, leaves its process alone, and so does a second `stop`.
       def stop: () -> void
+
+      private
+
+      # Waits for the process, as `finish` says, and returns how it ended.
+      def ended: () -> Ending
     end
   end
 end

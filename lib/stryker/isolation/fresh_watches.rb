@@ -36,9 +36,11 @@ module Stryker
       def finish
         @watches.each(&:check)
         pause if @watches.none?(&:done?)
+        # A watch leaves the set once it has finished, so that a signal before
+        # then finds it there, and stop ends it.
         @watches.select(&:done?).each do |watch|
-          @watches.delete(watch)
           watch.finish
+          @watches.delete(watch)
         end
       end
 
