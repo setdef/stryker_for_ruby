@@ -34,13 +34,17 @@ class CLIFlagBytesTest < Minitest::Test
     assert_equal([2, expected], run_with("--concurrency", BAD))
   end
 
-  def test_the_short_and_the_equals_spellings_are_refused_too
-    spellings = [["-c", BAD], ["--concurrency=#{BAD}"]]
+  def test_the_equals_spelling_of_a_text_flag_is_refused_with_the_same_line
+    line = %("--test-runner" on the command line has the value "x\\xFF", which isn't valid UTF-8.\n)
 
-    assert_equal(
-      [[2, true], [2, true]],
-      spellings.map { |argv| run_with(*argv).then { |status, err| [status, err.include?(%("--concurrency"))] } }
-    )
+    assert_equal([2, line], run_with("--test-runner=#{BAD}"))
+  end
+
+  def test_the_short_spelling_of_a_number_flag_is_a_value_of_the_wrong_type
+    expected = %("--concurrency" on the command line takes a whole number of 1 or more, ) +
+      %(or a percentage of the processors such as "50%", but its value is "x\\xFF".\n)
+
+    assert_equal([2, expected], run_with("-c", BAD))
   end
 
   def test_a_test_file_pattern_that_is_not_utf8_is_refused_with_the_line_of_that_option
@@ -55,10 +59,16 @@ class CLIFlagBytesTest < Minitest::Test
     assert_equal([0, "", ["lib/\xFF.rb".b, "lib/b.rb"]], [outcome.status, outcome.err, outcome.pipeline.config.mutate])
   end
 
-  def test_a_flag_name_that_is_not_utf8_is_an_unknown_flag
-    status, err = run_with("--no\xFF")
+  def test_the_short_spelling_of_the_mutate_flag_keeps_the_bytes_it_was_given_too
+    outcome = stryker("run", "-m", "lib/\xFF.rb")
 
-    assert_equal([2, true], [status, err.start_with?("Unknown flag --no")])
+    assert_equal([0, ["lib/\xFF.rb".b]], [outcome.status, outcome.pipeline.config.mutate])
+  end
+
+  def test_a_flag_name_that_is_not_utf8_is_an_unknown_flag_that_the_line_gives_by_its_bytes
+    line = "Unknown flag --no\xFF. Run \"stryker help run\" for the flags.\n".b
+
+    assert_equal([2, line], run_with("--no\xFF").then { |status, err| [status, err.b] })
   end
 
   def test_a_configuration_file_name_that_is_not_utf8_is_read_by_its_bytes
