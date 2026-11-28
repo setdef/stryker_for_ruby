@@ -28,6 +28,9 @@ AllCops:
   Exclude:
     - "tmp/**/*"
     - "vendor/**/*"
+    # Gems that a bundle install puts in the workspace, such as the ones in
+    # gemfiles/vendor/bundle. "vendor/**/*" matches only the top-level folder.
+    - "**/vendor/bundle/**/*"
 
 Markdown:
   # Lint only code blocks tagged ruby. With autodetection on, rubocop-md
