@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../support/isolation_stand_ins")
+require "delegate"
 require "stryker/isolation/child"
 
 # How the orchestrator, or the fork parent, holds a process it started:
@@ -31,6 +32,41 @@ class ChildTest < Minitest::Test
     child = Stryker::Isolation::Child.new(pid)
 
     assert_equal([true, true], [child.end_within(0), child.ended?])
+  ensure
+    reader&.close
+  end
+
+  # A process whose waiter a signal interrupts in its first wait, as one
+  # does that Ctrl-C reaches while it waits: the waiter raises Interrupt
+  # once, and then waits as the real one does.
+  class InterruptedProcess
+    class Waiter < SimpleDelegator
+      def join(*)
+        ::Kernel.raise(Interrupt) unless @interrupted
+
+        super
+      ensure
+        @interrupted = true
+      end
+    end
+    private_constant(:Waiter)
+
+    def detach(pid)
+      Waiter.new(Process.detach(pid))
+    end
+
+    def kill(*)
+      Process.kill(*)
+    end
+  end
+  private_constant(:InterruptedProcess)
+
+  def test_a_signal_during_the_wait_ends_the_process_before_it_reaches_the_caller
+    pid, reader = scripted("sleep")
+    child = Stryker::Isolation::Child.new(pid, InterruptedProcess.new)
+
+    assert_raises(Interrupt) { child.end_within(60) }
+    assert_predicate(child, :ended?)
   ensure
     reader&.close
   end

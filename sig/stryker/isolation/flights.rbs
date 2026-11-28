@@ -46,7 +46,9 @@ module Stryker
 
       # Stops the parent, as `Stryker::Isolation::ParentProcess#stop` does,
       # then kills the group of each child that the parent said it forked
-      # and never said ended, and empties the set.
+      # and never said ended, and empties the set. It kills those groups
+      # and empties the set when stopping the parent raises, too, and the
+      # error reaches the caller unchanged.
       def stop: () -> nil
 
       private

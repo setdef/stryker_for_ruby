@@ -31,7 +31,9 @@ module Stryker
 
       # Waits at most `seconds` for the process to end, kills it and its
       # group when it is still running then, and returns whether it was.
-      # The process has ended and been reaped when this returns.
+      # The process has ended and been reaped when this returns, and when it
+      # raises, as a signal during the wait makes it: the process is stopped
+      # then, and the error reaches the caller unchanged.
       #
       # - `seconds`: Integer or Float, how long to wait.
       def end_within: (Integer | Float seconds) -> bool
@@ -57,6 +59,10 @@ module Stryker
       def stop: () -> nil
 
       private
+
+      # Waits for the process, as `end_within` says, and returns whether it
+      # was still running when the time was up.
+      def await: (Integer | Float seconds) -> bool
 
       # Kills the process and its group, as
       # `Stryker::Isolation::ProcessGroup.kill` does.

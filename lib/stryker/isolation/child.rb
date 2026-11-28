@@ -16,11 +16,14 @@ module Stryker
       end
 
       def end_within(seconds)
-        @waiter.join(seconds)
-        running = @waiter.alive?
-        # Killed and reaped, so the process has ended when this returns.
-        stop if running
+        # @type var returned: bool
+        returned = false
+        running = await(seconds)
+        returned = true
         running
+      ensure
+        # A signal during the wait ends the process too.
+        stop unless returned
       end
 
       def ended?
@@ -47,6 +50,14 @@ module Stryker
         @waiter.alive? ? kill : kill_rest
         @waiter.join
         nil
+      end
+
+      private def await(seconds)
+        @waiter.join(seconds)
+        running = @waiter.alive?
+        # Killed and reaped, so the process has ended when this returns.
+        stop if running
+        running
       end
 
       private def kill

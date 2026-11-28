@@ -49,6 +49,12 @@ module Stryker
       end
 
       def stop
+        end_child
+      ensure
+        FileUtils.remove_entry(@folder, true)
+      end
+
+      private def end_child
         # Once its runs' pipe closes, the parent ends every child it still
         # runs, and then itself. A parent still running after its grace is
         # killed with its group.
@@ -57,7 +63,6 @@ module Stryker
         # What the project's code started in the parent's group while it
         # loaded.
         @child.kill_rest
-        FileUtils.remove_entry(@folder, true)
       end
 
       private def load_error(seconds)

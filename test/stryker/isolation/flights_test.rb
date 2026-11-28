@@ -74,4 +74,24 @@ class FlightsTest < Minitest::Test
   ensure
     reader&.close
   end
+
+  # A parent whose stop raises, as a signal during its wait does.
+  class FailingStop < DyingParent
+    def stop
+      super
+      raise(Interrupt)
+    end
+  end
+  private_constant(:FailingStop)
+
+  def test_stopping_ends_the_children_it_said_it_forked_even_when_stopping_the_parent_raises
+    pid, reader = scripted("sleep")
+    flights = Stryker::Isolation::Flights.new(FailingStop.new(pid), 1)
+    assert_raises(Stryker::Isolation::Error) { flights.run([Stryker::Isolation::Flight.new(sample_run(7)) { nil }]) }
+    assert_raises(Interrupt) { flights.stop }
+
+    assert(Process.detach(pid).join(20), "The child still runs.")
+  ensure
+    reader&.close
+  end
 end

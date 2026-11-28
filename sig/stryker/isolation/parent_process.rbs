@@ -87,10 +87,17 @@ module Stryker
       # runs and then itself. It gives the parent `GRACE_SECONDS` to end,
       # kills it and its group if it still runs then, kills what is left in
       # its group, and deletes the folder. Killing the group ends what the
-      # project's code started in the parent while it loaded.
+      # project's code started in the parent while it loaded. When that
+      # raises, as a signal during the grace does, the parent is ended and
+      # the folder deleted all the same, and the error reaches the caller
+      # unchanged.
       def stop: () -> void
 
       private
+
+      # Closes the runs' pipe, and ends the parent and what it left in its
+      # group, as `stop` says.
+      def end_child: () -> void
 
       # Waits at most `seconds` for the parent's first line, and returns nil
       # when the line says the parent is ready. Otherwise it returns the

@@ -27,9 +27,11 @@ module Stryker
 
       def stop
         @parent.stop
-        # A child whose parent was stuck, which the parent couldn't end.
-        @flights.each_value(&:kill).clear
         nil
+      ensure
+        # A child whose parent was stuck, which the parent couldn't end, and
+        # every child when stopping the parent raised.
+        @flights.each_value(&:kill).clear
       end
 
       private def dispatch(flight)
