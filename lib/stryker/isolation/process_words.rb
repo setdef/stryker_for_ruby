@@ -13,13 +13,15 @@ module Stryker
       end
 
       def initialize(words)
-        @mode, @directory, name, options, *@details = words
-        @recipe = TestRunners::Recipe.from_words(name, options)
+        @mode, @directory, *rest = words
+        @recipe_words = rest.shift(2)
+        @details = rest
       end
 
       def build(modes, root)
         mode = modes[@mode] or raise(ArgumentError, "No project process has the mode #{@mode.inspect}.")
-        mode.build(@recipe.build(TestRunners::BY_NAME, root), @details)
+        runner = TestRunners::Recipe.build_from_words(TestRunners::BY_NAME, root, @recipe_words)
+        mode.build(runner, @details)
       end
 
       # @dynamic directory

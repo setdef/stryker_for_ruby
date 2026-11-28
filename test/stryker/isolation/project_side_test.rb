@@ -71,6 +71,11 @@ class ProjectSideTest < Minitest::Test
     assert_equal(%w[started finished ended], kinds(writer.string))
   end
 
+  def refusal(argv)
+    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(argv, Loader.new) }
+      .message
+  end
+
   def test_the_entry_point_empties_argv_installs_the_loader_and_runs_its_mode
     argv = %w[fresh /cache minitest {} 0.run 0.results]
     loader = Loader.new
@@ -85,6 +90,20 @@ class ProjectSideTest < Minitest::Test
   def test_the_entry_point_refuses_a_mode_or_a_test_runner_it_does_not_know
     assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[pool /cache minitest {}], Loader.new) }
     assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[fresh /cache rspec {}], Loader.new) }
+  end
+
+  def test_the_entry_point_checks_the_mode_and_the_test_runner_before_it_reads_the_options
+    assert_equal('No project process has the mode "pool".', refusal(%w[pool /cache minitest {garbled]))
+    assert_equal('No test runner is named "rspec".', refusal(%w[fresh /cache rspec {garbled]))
+  end
+
+  def test_the_entry_point_refuses_options_that_are_no_json_object_and_names_them
+    assert_equal(
+      %(The test runner's options, "{garbled", aren't a JSON object.),
+      refusal(%w[fresh /cache minitest {garbled])
+    )
+    assert_equal(%(The test runner's options, "[1]", aren't a JSON object.), refusal(%w[fresh /cache minitest [1]]))
+    assert_equal("The test runner's options, nil, aren't a JSON object.", refusal(%w[fresh /cache minitest]))
   end
 
   def test_the_modes_build_from_their_arguments

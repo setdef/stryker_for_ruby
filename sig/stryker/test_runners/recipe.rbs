@@ -27,11 +27,32 @@ module Stryker
       attr_reader options: Hash[Symbol, Array[String]]
 
       # Reads a recipe from the two words that `words` gives. Raises
-      # `JSON::ParserError` when `options` isn't JSON, which includes nil.
+      # ArgumentError, with the word in the message, when `options` isn't a
+      # JSON object, which includes nil.
       #
       # - `name`: String, the adapter's name.
       # - `options`: String, a JSON object of the adapter's keywords.
       def self.from_words: (String? name, String? options) -> Recipe
+
+      # Builds the adapter in `root`, from the two words that `words` gives.
+      # Raises ArgumentError for a name that `runners` lacks, before it reads
+      # the options, and for options that aren't a JSON object. The message
+      # names the name or the options.
+      #
+      # - `runners`: Hash, the adapters by name.
+      # - `root`: String, the project's root.
+      # - `words`: Array of String, the name and the options.
+      def self.build_from_words: (Hash[String, singleton(MinitestRunner)] runners, String root, Array[String] words) -> MinitestRunner
+
+      # Returns the adapter that `runners` holds under `name`. Raises
+      # ArgumentError, naming it, when there is none.
+      #
+      # - `runners`: Hash, the adapters by name.
+      # - `name`: String, the adapter's name.
+      def self.runner: (Hash[String, singleton(MinitestRunner)] runners, String? name) -> singleton(MinitestRunner)
+
+      # Reads the keywords from the word that holds them, a JSON object.
+      def self.keywords: (String? word) -> Hash[Symbol, Array[String]]
 
       # Builds the recipe.
       #

@@ -22,15 +22,15 @@ module Stryker
       # The name of the mode.
       @mode: String?
 
-      # How to build the test runner.
-      @recipe: TestRunners::Recipe
+      # The two words of the test runner's recipe, as the orchestrator wrote
+      # them: the name, and the options as JSON.
+      @recipe_words: Array[String]
 
       # The words that the mode needs.
       @details: Array[String]
 
       # Takes every word out of `argv`, so none is left for the project's
-      # code to read, and reads them. Raises `JSON::ParserError` when the
-      # test runner's options aren't JSON.
+      # code to read, and keeps them. It reads none of them: `build` does.
       #
       # - `argv`: Array of String, `ARGV` in a project process.
       def self.take: (Array[String] argv) -> ProcessWords
@@ -42,7 +42,9 @@ module Stryker
 
       # Builds the mode, with the test runner built in `root` from the
       # recipe, and the mode's own words. Raises ArgumentError for a mode
-      # that `modes` lacks, and for a test runner that no adapter has.
+      # that `modes` lacks, for a test runner that no adapter has, and for
+      # options that aren't a JSON object, checking in that order, so the
+      # options of a recipe that can't be built aren't read.
       #
       # - `modes`: Hash, the modes by name.
       # - `root`: String, the project's root.
