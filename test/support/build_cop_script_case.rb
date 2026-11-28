@@ -78,6 +78,12 @@ module BuildCopScriptCase
     File.exist?(path) ? File.read(path) : ""
   end
 
+  # How long each sleep that the script asked for was to last, in seconds.
+  def sleeps
+    path = File.join(@dir, "sleep.log")
+    File.exist?(path) ? File.readlines(path, chomp: true) : []
+  end
+
   def origin_branches
     git(@dir, "--git-dir", @origin, "branch", "--list", "bisect/*")
   end

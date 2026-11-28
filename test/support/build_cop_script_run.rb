@@ -34,19 +34,31 @@ module BuildCopScriptRun
   SH
   private_constant(:FAKE_GH)
 
-  TOKEN_URL = "https://x-access-token:app-token@github.example/setdef/stryker_for_ruby"
-  private_constant(:TOKEN_URL)
+  # What a run on GitHub has, which the script falls back on when the
+  # environment names none.
+  GITHUB = "https://github.com"
+  REPOSITORY = "setdef/stryker_for_ruby"
+  private_constant(:GITHUB, :REPOSITORY)
 
-  # Puts the fake gh first on the PATH of the script's runs.
+  # sleep without the wait, which writes down how long it was asked for.
+  FAKE_SLEEP = <<~SH
+    #!/bin/sh
+    echo "$@" >>"DIR/sleep.log"
+  SH
+  private_constant(:FAKE_SLEEP)
+
+  # Puts the fake gh and the fake sleep first on the PATH of the script's runs.
   def install_fake_gh
     FileUtils.mkdir_p(File.join(@dir, "bin"))
     File.write(File.join(@dir, "bin", "gh"), FAKE_GH.gsub("DIR", @dir), perm: 0o755)
+    File.write(File.join(@dir, "bin", "sleep"), FAKE_SLEEP.gsub("DIR", @dir), perm: 0o755)
   end
 
   private def run_task(source, env)
     File.write(File.join(@work, "tasks", "build_cop.rb"), source)
     path = [File.join(@dir, "bin"), ENV.fetch("PATH", nil)].join(File::PATH_SEPARATOR)
-    Open3.capture2e(variables(GIT_ENV, pushes_by_token, { PATH: path }, env), "bash", SCRIPT, chdir: @work)
+    environment = variables(GIT_ENV, app_token, { PATH: path }, env)
+    Open3.capture2e(environment.merge(pushes_by_token(environment)), "bash", SCRIPT, chdir: @work)
   end
 
   # The task's reason is the repository that the script gave it, and it keeps
@@ -65,19 +77,22 @@ module BuildCopScriptRun
     RUBY
   end
 
+  # The server, repository and token that the script pushes with.
+  private def app_token
+    { GITHUB_SERVER_URL: "https://github.example", GITHUB_REPOSITORY: REPOSITORY, BUILD_COP_PUSH_TOKEN: "app-token" }
+  end
+
   # The run's own credentials may not push a workflow file, so a push to the
   # remote the clone knows as origin goes nowhere, and only the App's token, in
-  # the URL the script builds, reaches the origin.
-  private def pushes_by_token
-    settings = [["url.#{@origin}.insteadOf", TOKEN_URL], ["remote.origin.pushurl", File.join(@dir, "nowhere.git")]]
+  # the URL that the script builds from +environment+, reaches the origin.
+  private def pushes_by_token(environment)
+    server = environment["GITHUB_SERVER_URL"] || GITHUB
+    repository = environment["GITHUB_REPOSITORY"] || REPOSITORY
+    url = "https://x-access-token:#{environment['BUILD_COP_PUSH_TOKEN']}@#{server.delete_prefix('https://')}/#{repository}"
+    settings = [["url.#{@origin}.insteadOf", url], ["remote.origin.pushurl", File.join(@dir, "nowhere.git")]]
     config = settings.each_with_index.flat_map do |(key, value), index|
       [["GIT_CONFIG_KEY_#{index}", key], ["GIT_CONFIG_VALUE_#{index}", value]]
     end
-    {
-      GITHUB_SERVER_URL: "https://github.example",
-      GITHUB_REPOSITORY: "setdef/stryker_for_ruby",
-      BUILD_COP_PUSH_TOKEN: "app-token",
-      GIT_CONFIG_COUNT: settings.size.to_s,
-    }.merge(config.to_h)
+    variables({ GIT_CONFIG_COUNT: settings.size.to_s }, config.to_h)
   end
 end
