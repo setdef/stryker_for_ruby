@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "child"
-require_relative "deferred"
 require_relative "process_group"
 
 module Stryker
@@ -17,10 +16,10 @@ module Stryker
       def around
         # @type var returned: bool
         returned = false
-        # A signal waits until the block has ended, and then raises before
-        # the block's value returns, so the ensure clause ends the process
+        # The caller defers signals, which raise once the block has ended and
+        # before its value returns, so the ensure clause ends the process
         # however the launch fails.
-        held = Deferred.signals { yield(self) }
+        held = yield(self)
         returned = true
         held
       ensure

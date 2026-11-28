@@ -8,9 +8,11 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # watch = Stryker::Isolation::Custody.new(fresh).around do |custody|
-    #   child = custody.child(Process.spawn("sleep", "1"))
-    #   Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(5000))
+    # watch = Stryker::Isolation::Deferred.signals do
+    #   Stryker::Isolation::Custody.new(fresh).around do |custody|
+    #     child = custody.child(Process.spawn("sleep", "1"))
+    #     Stryker::Isolation::FreshWatch.new(fresh, child, Stryker::Isolation::Timer.new(5000))
+    #   end
     # end
     # ```
     class Custody
@@ -41,11 +43,12 @@ module Stryker
       # - `process`: `Process`, or a stand-in in a test.
       def initialize: (_Made made, ?singleton(::Process) process) -> void
 
-      # Yields the custody, and returns what the block returns. A signal
-      # that arrives while the block runs waits until it ends. When the
-      # block raises, or a signal waits, the process the custody holds is
-      # ended and what the launch made removed, and the error reaches the
-      # caller unchanged.
+      # Yields the custody, and returns what the block returns. Call it
+      # inside `Stryker::Isolation::Deferred.signals`: the custody defers no
+      # signal itself, so a signal that arrives in the block reaches it at
+      # once, and only the caller's deferral makes the launch whole. When the
+      # block raises, the process the custody holds is ended and what the
+      # launch made removed, and the error reaches the caller unchanged.
       def around: [T] () { (Custody custody) -> T } -> T
 
       # Holds the process whose ID is `pid`, and returns the handle over it.

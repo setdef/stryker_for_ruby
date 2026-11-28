@@ -70,8 +70,10 @@ class ParentLaunchTest < Minitest::Test
       @pid
     end
 
-    def detach(_pid)
-      raise(ThreadError)
+    def detach(pid)
+      raise(ThreadError) unless @interrupted
+
+      Process.detach(pid)
     end
 
     def kill(*)
@@ -85,13 +87,18 @@ class ParentLaunchTest < Minitest::Test
   private_constant(:StartedThenFailing)
 
   # Launches the parent with `process`, which raises `expected`, with its
-  # folder made inside `@temporary`.
-  def launched_with(process, expected)
+  # folder made inside `@temporary`. A launch that signals is made while
+  # signals are deferred, as its callers make it, and returns the parent the
+  # launch made by the time the signal raises.
+  def launched_with(process, expected, deferred: false)
     folder = Dir.method(:mktmpdir)
     in_temporary = -> (prefix) { folder.call(prefix, @temporary) }
     Dir.stub(:mktmpdir, in_temporary) do
       launch = Stryker::Isolation::ParentLaunch.new("/cache", @temporary, process)
-      assert_raises(expected) { launch.call(Stryker::TestRunners::Recipe.new("minitest")) }
+      parent = nil
+      launching = -> { parent = launch.call(Stryker::TestRunners::Recipe.new("minitest")) }
+      assert_raises(expected) { deferred ? Stryker::Isolation::Deferred.signals { launching.call } : launching.call }
+      parent
     end
   end
 
@@ -110,9 +117,9 @@ class ParentLaunchTest < Minitest::Test
     assert_equal([[], true], [Dir.children(@temporary), ended?(process.pid)])
   end
 
-  def test_an_interrupt_as_the_process_starts_ends_the_process_and_deletes_the_folder
+  def test_an_interrupt_as_the_process_starts_waits_for_a_parent_that_ends_the_process_and_deletes_the_folder
     process = StartedThenFailing.new(self, interrupted: true)
-    launched_with(process, Interrupt)
+    launched_with(process, Interrupt, deferred: true).stop
 
     assert_equal([[], true], [Dir.children(@temporary), ended?(process.pid)])
   end
