@@ -2,7 +2,7 @@
 .claude/
 tmp/
 coverage/
-vendor/bundle/
+**/vendor/bundle/
 .bundle/
 *.gem
 *.rbc
