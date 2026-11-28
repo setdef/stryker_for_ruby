@@ -187,7 +187,7 @@ An empty list selects no file.
 
 The bytes of a pattern may be any bytes, because a file's name on Linux may hold any bytes: a pattern with the bytes of a file's name selects that file, so `mutate` accepts bytes that aren't valid UTF-8. Only a flag can give such a pattern. In a shell that reads `$'...'`, `stryker run --mutate $'lib/caf\xE9.rb'` selects the file named `caf` followed by the byte `E9`, which is `café.rb` in ISO-8859-1.
 
-A file whose name isn't valid UTF-8 is mutated like any other file. The `clear-text` reporter writes each byte of its name that isn't valid UTF-8 as an escape, so that name appears as `lib/caf\xE9.rb`. The `json` reporter can't write such a name, because a JSON text holds only Unicode. A run that has `json` in [`reporters`](#reporters) and selects such a file stops before it reads any file to mutate, with status 2 and one line that gives the name:
+A file whose name isn't valid UTF-8 is mutated like any other file. The `clear-text` reporter writes each byte of its name that isn't valid UTF-8 as an escape, so that name appears as `lib/caf\xE9.rb`. It writes a backslash as two, and each byte of a control character, such as a newline or a tab, as an escape too, in every file name, so that a shell's `$'...'` reads a name back as the file's name and no two names appear the same. The `json` reporter can't write such a name, because a JSON text holds only Unicode. A run that has `json` in [`reporters`](#reporters) and selects such a file stops before it reads any file to mutate, with status 2 and one line that gives the name:
 
 ```text
 The json reporter can't write the file "lib/caf\xE9.rb", because JSON holds only UTF-8 text and the file's name isn't. Leave the file out of mutate, or take json out of reporters.

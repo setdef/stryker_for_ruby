@@ -8,14 +8,22 @@ module Stryker
     end
 
     def self.shown(bytes)
-      # Each byte that isn't UTF-8 as \xE9, so that the name is text that a
-      # terminal and a line of output hold, and that a shell's $'...' reads
-      # back as the name.
-      bytes.dup.force_encoding(Encoding::UTF_8).scrub { |invalid| escaped(invalid) }
+      # Each byte that isn't UTF-8 or that belongs to a control character as
+      # \xE9, and a backslash as two, so that the name is text that a terminal
+      # and a line of output hold, and that a shell's $'...' reads back as the
+      # same bytes. No two names show the same.
+      bytes.dup.force_encoding(Encoding::UTF_8).chars.sum("") { |char| spelled(char) }
     end
 
-    def self.escaped(invalid)
-      invalid.bytes.sum("") { |byte| format("\\x%02X", byte) }
+    def self.spelled(char)
+      return escaped(char) unless char.valid_encoding? && !char.match?(/[[:cntrl:]]/)
+
+      (char == "\\") ? "\\\\" : char
+    end
+    private_class_method(:spelled)
+
+    def self.escaped(bytes)
+      bytes.bytes.sum("") { |byte| format("\\x%02X", byte) }
     end
     private_class_method(:escaped)
 
