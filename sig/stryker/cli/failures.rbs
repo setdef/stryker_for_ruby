@@ -31,11 +31,13 @@ module Stryker
       # which is 128 plus `SIGPIPE`'s 13, and writes nothing: no message, and
       # no bug report.
       #
-      # Any other exception, whatever its class, ends the block with 2 and
-      # the bug report: a `StandardError`, a `ScriptError`, a
-      # `NoMemoryError`, a `SystemStackError`, a `SecurityError`, or a
-      # `SystemExit`. A stream that can't take a message never changes the
-      # status.
+      # A `SystemExit` is an explicit exit, not a crash: it ends the block
+      # with its own status and writes nothing.
+      #
+      # Any other exception that Ruby defines ends the block with 2 and the
+      # bug report: a `StandardError`, a `ScriptError`, a `NoMemoryError`, a
+      # `SystemStackError`, or a `SecurityError`. A stream that can't take a
+      # message never changes the status.
       def guard: () { () -> Integer } -> Integer
 
       private

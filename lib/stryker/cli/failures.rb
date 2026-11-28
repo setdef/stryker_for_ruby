@@ -31,6 +31,7 @@ module Stryker
         when ConfigError, SourceError, UnsupportedError, Isolation::DryRunError, Isolation::TestsLoadError
           report(error.to_s)
         when SignalException then stopped(error)
+        when SystemExit then error.status
         # The number is written out because Windows has no SIGPIPE to ask for it.
         when OutputClosed then SIGPIPE + SIGNALLED
         else bug(error)

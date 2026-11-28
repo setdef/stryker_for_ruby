@@ -36,7 +36,6 @@ class CLICrashTest < Minitest::Test
     NoMemoryError,
     SystemStackError,
     SecurityError,
-    SystemExit,
   ].freeze
   private_constant(:CRASHES)
 
@@ -50,8 +49,16 @@ class CLICrashTest < Minitest::Test
     end
   end
 
-  def test_an_exit_with_status_zero_from_a_run_is_a_bug
-    assert_equal(2, stryker("run", pipeline: RecordingPipeline.new(raises: SystemExit.new(0))).status)
+  def test_an_exit_ends_the_command_with_its_own_status_and_writes_no_bug_report
+    [0, 1, 3, 255].each do |status|
+      outcome = stryker("run", pipeline: RecordingPipeline.new(raises: SystemExit.new(status)))
+
+      assert_equal([status, ""], [outcome.status, outcome.err], "exit #{status}")
+    end
+  end
+
+  def test_an_exit_with_no_status_ends_the_command_with_status_zero
+    assert_equal(0, stryker("run", pipeline: RecordingPipeline.new(raises: SystemExit)).status)
   end
 
   def test_a_bug_report_that_cannot_be_written_in_full_is_written_in_short
