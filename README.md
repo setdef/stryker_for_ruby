@@ -13,7 +13,7 @@ A coverage report shows which lines your tests ran, but not whether a test would
 
 Each surviving mutant shows you something to do: write a test, make a test stricter, or remove code that nothing needs. The [mutation score](https://stryker-mutator.io/docs/mutation-testing-elements/mutant-states-and-metrics/) is the percentage of mutants that your tests killed.
 
-**Stryker (for Ruby)** uses the mutator names, mutant statuses, scores, and [JSON report format](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) of the other Stryker tools: [StrykerJS](https://github.com/stryker-mutator/stryker-js) for JavaScript and TypeScript, [Stryker.NET](https://github.com/stryker-mutator/stryker-net) for C#, and [Stryker4s](https://github.com/stryker-mutator/stryker4s) for Scala. Its options have the names of StrykerJS's options, and StrykerJS's defaults apart from `mutate` and `testRunner`. [mutant](https://github.com/mbj/mutant) is another mutation testing tool for Ruby.
+**Stryker (for Ruby)** uses the mutator names, mutant statuses, scores, and [JSON report format](https://github.com/stryker-mutator/mutation-testing-elements/tree/master/packages/report-schema) of the other Stryker tools: [StrykerJS](https://github.com/stryker-mutator/stryker-js) for JavaScript and TypeScript, [Stryker.NET](https://github.com/stryker-mutator/stryker-net) for C#, and [Stryker4s](https://github.com/stryker-mutator/stryker4s) for Scala. Its options have the names of StrykerJS's options, and StrykerJS's defaults apart from `mutate` and `testRunner`. `minitest.testFiles` is the one option that StrykerJS doesn't have. [mutant](https://github.com/mbj/mutant) is another mutation testing tool for Ruby.
 
 ## A first run
 

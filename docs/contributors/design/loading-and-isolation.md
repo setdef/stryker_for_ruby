@@ -198,14 +198,14 @@ Every mutant run happens in a process that has run no test before it, and that p
 
 ### The entry point
 
-The orchestrator starts every project process with an array of arguments, never a string that a shell would parse: the running Ruby, `-r` with the path of `stryker/isolation/project_process.rb`, `-e Stryker::Isolation::ProjectProcess.main`, `--`, and then the arguments for the process itself: its mode, the cache's directory, the name of the test runner from the `testRunner` option, and what the mode needs:
+The orchestrator starts every project process with an array of arguments, never a string that a shell would parse: the running Ruby, `-r` with the path of `stryker/isolation/project_process.rb`, `-e Stryker::Isolation::ProjectProcess.main`, `--`, and then the arguments for the process itself: its mode, the cache's directory, the test runner's recipe, and what the mode needs. The recipe is two words: the runner's name, from the `testRunner` option, and a JSON object of the keywords for its constructor, such as `{"files":[...]}` from `minitest.testFiles`, or `{}`:
 
 | Mode | What it needs | Standard input | Standard output and standard error |
 | - | - | - | - |
 | `fork-parent` | The number of the file descriptor of its pipe for results, and the folder for its children's output | A pipe that carries its runs | Files in a temporary folder of the parent's |
 | `fresh` | The path of the file that holds its run, and the path of the file for its results | The null device | Files in the run's temporary folder |
 
-Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set for a fresh process's mutant run, and unset for the parent that forks and for a fresh process's dry run, whatever the orchestrator's environment holds.
+Ruby's options end at `--`, so the rest reach `ARGV`. `main` takes every argument out of `ARGV` before any of the project's code loads, because `minitest/autorun` parses `ARGV` as Minitest's options. Requiring the entry point starts the runtime first, so the mutant whose ID `STRYKER_ACTIVE_MUTANT` holds is active before anything else loads. `main` then calls `Stryker::Runtime::Loader.install` with the cache's directory, builds the test runner adapter for the project in the current folder with the recipe's keywords, and runs the mode. The orchestrator starts each process in the project's root, with `STRYKER_ACTIVE_MUTANT` set for a fresh process's mutant run, and unset for the parent that forks and for a fresh process's dry run, whatever the orchestrator's environment holds.
 
 A project process ends with `exit!`, whatever its mode, once its work is done or has raised. `exit` would run every `at_exit` block, the project's included: `minitest/autorun`'s, and SimpleCov's, which writes its results into the project.
 
