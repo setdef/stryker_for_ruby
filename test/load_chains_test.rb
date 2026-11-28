@@ -42,4 +42,18 @@ class LoadChainsTest < Minitest::Test
 
     assert_equal({ zz_a_test: :zz_a_test, zz_b_test: :test_helper, test_helper: :test_helper }, chains)
   end
+
+  def test_every_file_on_a_cycle_of_first_requires_is_probed_itself
+    chains = anchors(
+      cycle_a: "require_relative(\"cycle_b\")\n",
+      cycle_b: "require_relative(\"cycle_a\")\n",
+      leads_in: "require_relative(\"cycle_a\")\n"
+    )
+
+    assert_equal({ cycle_a: :cycle_a, cycle_b: :cycle_b, leads_in: :cycle_a }, chains)
+  end
+
+  def test_a_file_that_requires_itself_first_is_probed_itself
+    assert_equal({ itself: :itself }, anchors(itself: "require_relative(\"itself\")\n"))
+  end
 end

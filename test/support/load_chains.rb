@@ -7,7 +7,8 @@ require "prism"
 # of the chain. A file whose first statement is require_relative of another
 # file in the set starts the same way that file does: the other file runs
 # first, in the same fresh process. A file with a BEGIN block starts with the
-# block, so it ends its own chain.
+# block, so it ends its own chain, and so does a file on a cycle of first
+# requires.
 class LoadChains
   def initialize(paths)
     @paths = paths
@@ -20,7 +21,11 @@ class LoadChains
 
   private def anchor(path, seen)
     target = first_required(path)
-    return path unless @paths.include?(target) && !seen.include?(target)
+    return path unless @paths.include?(target)
+    # A cycle. The process enters it at the file the chain meets again, and
+    # each file on it runs its body after the others', so each enters it
+    # differently and needs its own probe.
+    return target if seen.include?(target)
 
     anchor(target, seen + [target])
   end
