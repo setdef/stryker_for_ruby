@@ -50,12 +50,14 @@ module BuildCopScriptRun
   end
 
   # The task's reason is the repository that the script gave it, and it keeps
-  # the file of reverts that the script gave it in reverts.seen.
+  # the files of commits and reverts that the script gave it in commits.seen
+  # and reverts.seen.
   private def task_saying(commit, action)
     fields = { action:, commit:, run: 1 }.map { |name, value| "#{name}=#{value}" }
     <<~RUBY
       class BuildCop
-        def self.main(_path, reverts)
+        def self.main(commits, reverts)
+          File.write(#{File.join(@dir, 'commits.seen').inspect}, File.read(commits))
           File.write(#{File.join(@dir, 'reverts.seen').inspect}, File.read(reverts))
           puts(#{fields.inspect}, "reason=\#{ENV['GITHUB_REPOSITORY']}")
         end

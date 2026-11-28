@@ -68,6 +68,11 @@ module BuildCopScriptCase
     File.read(File.join(@dir, "reverts.seen"))
   end
 
+  # The file of commits that the script gave the task.
+  def commits_seen
+    File.read(File.join(@dir, "commits.seen"))
+  end
+
   def gh_log
     path = File.join(@dir, "gh.log")
     File.exist?(path) ? File.read(path) : ""
@@ -75,6 +80,15 @@ module BuildCopScriptCase
 
   def origin_branches
     git(@dir, "--git-dir", @origin, "branch", "--list", "bisect/*")
+  end
+
+  # Runs the script as +cop+ does, with the Ruby in +source+ as the task, and
+  # returns its output once it failed.
+  def failing_cop_with_task(source, env = {})
+    out, status = run_task(source, env)
+
+    refute_predicate(status, :success?, out)
+    out
   end
 
   private def run_script(commit, action, env)
