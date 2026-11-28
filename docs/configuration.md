@@ -73,6 +73,8 @@ Each flag writes its value as text, and the command turns the text into the type
 
 Text that isn't of the type, such as `--timeout-ms soon`, is an error like a wrong type in the file, and its line gives the flag.
 
+Text whose bytes aren't valid UTF-8, as a shell in a UTF-8 locale can pass, is an error too, and its line gives the flag. The exception is `--mutate`, whose patterns keep their bytes ([`mutate`](#mutate)).
+
 A flag that doesn't exist is an error that suggests the nearest flag, and so is a flag that lacks its value:
 
 ```text
@@ -135,6 +137,7 @@ Before it does anything else, `stryker run` checks every option in the file and 
 - **A pattern in `mutate` or `minitest.testFiles` that resolves outside the project's root** is an error ([`mutate`](#mutate), [`minitest.testFiles`](#minitesttestfiles)).
 - **A pattern in `mutate` or `minitest.testFiles` with a NUL byte** is an error, because no file name holds one. In JSON, a NUL byte is the escape `\u0000`.
 - **A pattern in `minitest.testFiles` whose bytes aren't valid UTF-8** is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8.
+- **A value whose bytes aren't valid UTF-8** is an error that gives the option and the value, for every option except `mutate`, such as `--test-runner` with the byte `\xFF`. Only a flag can hold such a value, because [a configuration file's bytes must be valid UTF-8](#the-configuration-file).
 
 The checks read the type of `testRunner` and `reporters`. Once they pass, and before it reads any file to mutate, the run checks that a test runner and each reporter that you name exist ([`testRunner`](#testrunner), [`reporters`](#reporters)).
 
@@ -172,6 +175,8 @@ A pattern that resolves outside the project's root is an error, such as `../shar
 The patterns apply in order, as StrykerJS applies them: a pattern adds the files it matches, and a pattern that starts with `!` takes away, from the files that the patterns before it added, those it matches. So `["lib/**/*.rb", "!lib/generated/**/*.rb", "lib/generated/schema.rb"]` mutates `lib/generated/schema.rb` and no other file in `lib/generated`. A folder is never selected, whatever its name.
 
 An empty list selects no file.
+
+The bytes of a pattern may be any bytes, because a file's name on Linux may hold any bytes: a pattern with the bytes of a file's name selects that file, so `mutate` accepts bytes that aren't valid UTF-8. Only a flag can give such a pattern. In a shell that reads `$'...'`, `stryker run --mutate $'lib/caf\xE9.rb'` selects the file named `caf` followed by the byte `E9`, which is `café.rb` in ISO-8859-1.
 
 **Stryker (for Ruby)** mutates Ruby files only. The default patterns select the ERB templates in `lib` and `app`, files whose names end in `.erb`. A run with the default leaves them out, and writes one warning to standard error that says how many:
 
@@ -360,7 +365,7 @@ The patterns follow the same rules as those of [`mutate`](#mutate), with these d
 - A pattern that matches a folder makes the project process fail to load it. The run stops with status 2, and the error says the project's tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
 - A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and every mutant has the status `NoCoverage`.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
-- A pattern whose bytes aren't valid UTF-8 is an error, which it isn't for `mutate`.
+- A pattern whose bytes aren't valid UTF-8 is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8. A `mutate` pattern with such bytes is accepted, because `mutate` stays in the command, which reads files whatever their names.
 
 The test runner loads `test/test_helper.rb` first when the project has one, whatever `testFiles` holds. Then it loads each file that a pattern matches once, in the order of the files' paths, even when two patterns match the same file. Every project process loads these files, so a pattern that matches files that aren't tests loads them in each process.
 

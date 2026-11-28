@@ -40,7 +40,10 @@ module Stryker
       def parse(words)
         @options.clear
         @no_color = false
-        @parser.parse(words)
+        # OptionParser matches each word with a regular expression, which raises
+        # on a word that isn't valid in its encoding. As bytes the word matches
+        # like any other, and the checks of Configure judge its value.
+        @parser.parse(words.map { |word| word.valid_encoding? ? word : word.b })
       end
 
       def help

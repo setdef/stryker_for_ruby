@@ -1,0 +1,28 @@
+module Stryker
+  class Configure
+    module Checks
+      # Checks that no value of an option holds bytes that aren't valid UTF-8,
+      # whatever encoding the string has: a command line in a UTF-8 locale can
+      # hold such bytes, and the other places a value goes to read text as
+      # UTF-8. It applies to every option except those in `EXEMPT`, and to a
+      # list's items one at a time. It runs after `WrongType`, so a value of
+      # the wrong type has that line, and after `NotUtf8InProcessOptions`,
+      # whose line for `minitest.testFiles` says more. The line names the
+      # value.
+      class NotUtf8Values
+        # The names of the options whose values may hold any bytes: `mutate`,
+        # whose patterns select files, and a file name on Linux may hold any
+        # bytes.
+        EXEMPT: Array[String]
+
+        @setting: Setting
+
+        # Builds the check.
+        def initialize: (Setting setting) -> void
+
+        # Returns one line for each value that isn't valid UTF-8, or none.
+        def to_a: () -> Array[String]
+      end
+    end
+  end
+end

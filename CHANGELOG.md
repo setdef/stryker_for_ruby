@@ -26,6 +26,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Stryker (for Ruby)** prints the address of [the forum](https://forum.setdef.com/c/stryker-for-ruby) for reports, in place of GitHub Issues, in `stryker help` and in the message after an error in its code. The error message lists what to include in a report: the command you ran, what it printed, your Ruby version, your operating system, and the backtrace. The gem's `bug_tracker_uri` is the forum's address too.
 - On Windows, `stryker run` stops after its checks with an error that says a run on Windows isn't built yet.
 
+### Fixed
+
+- `stryker run` refuses a flag value whose bytes aren't valid UTF-8, as a shell in a UTF-8 locale can pass, with an error that gives the flag and the exit status 2, where it printed a stack trace. `stryker run` keeps such a `--mutate` pattern, because a file's name can hold any bytes.
+
 ## [0.2.0] - 2026-11-28
 
 ### Changed
