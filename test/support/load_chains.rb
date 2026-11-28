@@ -12,6 +12,7 @@ require "prism"
 class LoadChains
   def initialize(paths)
     @paths = paths
+    @by_real_path = paths.to_h { |path| [File.realpath(path), path] }
   end
 
   # Each path, with the file at the end of the chain that starts at it.
@@ -21,7 +22,7 @@ class LoadChains
 
   private def anchor(path, seen)
     target = first_required(path)
-    return path unless @paths.include?(target)
+    return path unless target
     # A cycle. The process enters it at the file the chain meets again, and
     # each file on it runs its body after the others', so each enters it
     # differently and needs its own probe.
@@ -47,6 +48,11 @@ class LoadChains
   private def loaded(argument, path)
     return unless argument.is_a?(Prism::StringNode)
 
-    File.expand_path("#{argument.unescaped.delete_suffix('.rb')}.rb", File.dirname(path))
+    # Ruby resolves require_relative against the real path of the file that
+    # calls it, whichever symbolic link the file was loaded through.
+    required = File.expand_path("#{argument.unescaped.delete_suffix('.rb')}.rb", File.dirname(File.realpath(path)))
+    @by_real_path[File.realpath(required)]
+  rescue Errno::ENOENT
+    nil
   end
 end

@@ -25,6 +25,7 @@ class LoadChainsTest < Minitest::Test
 
   def write(name, source)
     path = File.join(@folder, "#{name}.rb")
+    FileUtils.mkdir_p(File.dirname(path))
     File.write(path, source)
     path
   end
@@ -55,5 +56,47 @@ class LoadChainsTest < Minitest::Test
 
   def test_a_file_that_requires_itself_first_is_probed_itself
     assert_equal({ itself: :itself }, anchors(itself: "require_relative(\"itself\")\n"))
+  end
+
+  def test_a_chain_of_first_requires_ends_at_the_last_file_of_the_chain
+    chains = anchors(
+      first: "require_relative(\"second\")\n",
+      second: "require_relative(\"third\")\nputs(:second)\n",
+      third: "require \"simplecov\"\n"
+    )
+
+    assert_equal({ first: :third, second: :third, third: :third }, chains)
+  end
+
+  def test_a_file_that_starts_with_something_else_is_probed_itself
+    chains = anchors(other: "puts(:first)\nrequire_relative(\"second\")\n", second: "")
+
+    assert_equal({ other: :other, second: :second }, chains)
+  end
+
+  def test_a_require_relative_with_the_extension_names_the_same_file
+    assert_equal({ with: :target, target: :target }, anchors(with: "require_relative(\"target.rb\")\n", target: ""))
+  end
+
+  def test_a_require_relative_of_a_file_outside_the_set_leaves_the_file_probed_itself
+    assert_equal({ lonely: :lonely }, anchors(lonely: "require_relative(\"missing\")\n"))
+  end
+
+  def test_a_require_relative_resolves_against_the_real_path_of_a_file_behind_a_symbolic_link
+    target = write("real/target", "")
+    real = write("real/file", "require_relative(\"target\")\n")
+    link = File.join(@folder, "links", "file.rb")
+    FileUtils.mkdir_p(File.dirname(link))
+    File.symlink(real, link)
+
+    assert_equal({ link => target, target => target }, LoadChains.new([link, target]).anchors)
+  end
+
+  def test_a_require_relative_of_a_symbolic_link_names_the_file_it_points_to
+    kept = write("kept/target", "")
+    file = write("links/file", "require_relative(\"target\")\n")
+    File.symlink(kept, File.join(@folder, "links", "target.rb"))
+
+    assert_equal({ file => kept, kept => kept }, LoadChains.new([file, kept]).anchors)
   end
 end
