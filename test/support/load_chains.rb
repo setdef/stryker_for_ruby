@@ -6,7 +6,8 @@ require "prism"
 # Which file a file's first statement starts by loading, followed to the end
 # of the chain. A file whose first statement is require_relative of another
 # file in the set starts the same way that file does: the other file runs
-# first, in the same fresh process.
+# first, in the same fresh process. A file with a BEGIN block starts with the
+# block, so it ends its own chain.
 class LoadChains
   def initialize(paths)
     @paths = paths
@@ -25,7 +26,12 @@ class LoadChains
   end
 
   private def first_required(path)
-    case Prism.parse_file(path).value.statements.body.first
+    program = Prism.parse_file(path).value
+    # A BEGIN block runs before every other statement, so the file's first
+    # statement is not the first thing it does.
+    return if program.breadth_first_search { |node| node.is_a?(Prism::PreExecutionNode) }
+
+    case program.statements.body.first
     in Prism::CallNode[name: :require_relative, receiver: nil, arguments: Prism::ArgumentsNode[arguments: [argument]]]
       loaded(argument, path)
     else
