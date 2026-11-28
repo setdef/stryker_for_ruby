@@ -12,6 +12,16 @@ require_relative("require_graph")
 # from a gem or the standard library is never missing. A mention such as
 # `Stryker::Config::OPTIONS` is judged by the longest part of it that a file
 # defines.
+#
+# The check reads the source and runs none of it, so it has two blind spots.
+# It misses a constant written inside a nesting without its full name: in
+# `module Stryker`, `Config` isn't taken for `Stryker::Config`, matches no
+# defined name, and passes though the test file fails when it runs alone.
+# Write `Stryker::Config` in full. It also follows only a `require` or
+# `require_relative` whose argument is a literal string, so a file loaded by
+# `Dir.glob`, an interpolated string, or a variable goes unseen, and the
+# check reports the constants that file defines as missing though the test
+# file runs. Write each `require` with a literal string.
 class RequiredConstants
   # The load path is where `require "stryker/cli"` looks for a file.
   def initialize(project_files, load_path)

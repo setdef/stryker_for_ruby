@@ -8,6 +8,11 @@ require_relative("test_helper")
 # that leans on a constant another test file loaded fails when it runs
 # alone, or when the order puts it first. Running each file in a process of its
 # own would show that too, at the cost of a process for each of the test files.
+#
+# The check can't see a constant written without its full name inside a
+# nesting, such as `Config` in `module Stryker`, or a file loaded by a
+# `require` whose argument isn't a literal string. See RequiredConstants for
+# what to write instead.
 class ConstantsLoadedTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   private_constant(:ROOT)
