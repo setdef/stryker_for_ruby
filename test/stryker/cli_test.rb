@@ -47,6 +47,20 @@ class CLITest < Minitest::Test
     assert_includes(err, %(Did you mean "help"?))
   end
 
+  def test_a_command_that_is_not_utf8_is_unknown_and_shows_its_bytes_as_text
+    status, out, err = run_cli("x\xFF")
+
+    assert_equal([2, ""], [status, out])
+    assert_equal(%(Unknown command "x\\xFF". Run "stryker help" for the commands.\n), err)
+  end
+
+  def test_a_help_topic_that_is_not_utf8_is_unknown_like_any_other_topic
+    status, out, err = run_cli("help", "x\xFF")
+
+    assert_equal([2, ""], [status, out])
+    assert_equal(%(Unknown command "x\\xFF". Run "stryker help" for the commands.\n), err)
+  end
+
   private def run_cli(*argv)
     out = StringIO.new
     err = StringIO.new

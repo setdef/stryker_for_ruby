@@ -14,6 +14,16 @@ module Stryker
 
       # Returns the sentence.
       def to_s: () -> String
+
+      private
+
+      # The suggestion of the nearest command, or none for a word whose bytes
+      # aren't valid UTF-8.
+      def hint: () -> String
+
+      # The word as text: the bytes of a word that isn't valid UTF-8 show as
+      # escapes.
+      def shown: () -> String
     end
   end
 end

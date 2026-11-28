@@ -29,6 +29,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - `stryker run` refuses a flag value whose bytes aren't valid UTF-8, as a shell in a UTF-8 locale can pass, with an error that gives the flag and the exit status 2, where it printed a stack trace. `stryker run` keeps such a `--mutate` pattern, because a file's name can hold any bytes.
+- `stryker` and `stryker help` refuse a command word or help topic whose bytes aren't valid UTF-8 with the line of an unknown command, which shows the bytes as escapes, and the exit status 2, where they printed a stack trace.
 
 ## [0.2.0] - 2026-11-28
 

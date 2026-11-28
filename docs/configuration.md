@@ -47,6 +47,8 @@ There is no `-v`, because other tools use it for both "verbose" and "version". A
 Unknown command "hlep". Did you mean "help"? Run "stryker help" for the commands.
 ```
 
+A word whose bytes aren't valid UTF-8, as a shell in a UTF-8 locale can pass, is an unknown command too, whether it follows `stryker` or `stryker help`. Its line shows the bytes as escapes, such as `Unknown command "x\xFF".`, and suggests no command.
+
 `stryker run` reads the file and the flags and runs every check. With no problem, it finds the files that [`mutate`](#mutate) selects, makes their mutants, runs every test once with no mutant active, and then runs the tests against each mutant, each run in a process of its own, up to [`concurrency`](#concurrency) at once. Each reporter in the [`reporters`](#reporters) list writes the results when the last mutant's run ends.
 
 On Windows, where Ruby has no `fork`, the command stops after the checks, writes this to standard error, and exits with status 2:
