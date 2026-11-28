@@ -5,15 +5,17 @@ require_relative("../test_helper")
 
 # Runs `stryker run` as a user runs it, on a project whose `minitest.testFiles`
 # matches no file, so that its dry run finds no test. Where the system has no
-# fork, the run stops earlier, and the tests check only the status.
+# fork, the run stops earlier, with status two whatever the flags, and the tests
+# check only the status.
 class EndToEndNoTestsTest < Minitest::Test
   include SampleProjects
 
   parallelize_me!
 
   FORKS = Process.respond_to?(:fork)
+  ALLOW_EMPTY_STATUS = FORKS ? 0 : 2
   NO_FILE = %w[--minitest.test-files no_such_folder/*_test.rb].freeze
-  private_constant(:FORKS, :NO_FILE)
+  private_constant(:ALLOW_EMPTY_STATUS, :FORKS, :NO_FILE)
 
   def test_a_run_whose_dry_run_finds_no_test_stops_with_status_two_and_writes_no_report
     outcome = run_in_copy("sample_project", *NO_FILE, "--reporters", "json")
@@ -30,21 +32,21 @@ class EndToEndNoTestsTest < Minitest::Test
   def test_a_run_with_allow_empty_tests_no_mutant_and_writes_no_report
     outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--reporters", "clear-text,json")
 
-    assert_equal(0, outcome.status)
+    assert_equal(ALLOW_EMPTY_STATUS, outcome.status)
     assert_nothing_reported(outcome)
   end
 
   def test_a_run_with_allow_empty_writes_one_line_to_standard_error_that_says_no_mutant_was_tested
     outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty")
 
-    assert_equal(0, outcome.status)
+    assert_equal(ALLOW_EMPTY_STATUS, outcome.status)
     assert_one_line_that_says_no_mutant_was_tested(outcome)
   end
 
   def test_a_run_with_allow_empty_has_no_score_for_the_break_threshold_to_fail
     outcome = run_in_copy("sample_project", *NO_FILE, "--allow-empty", "--thresholds.break", "80")
 
-    assert_equal(0, outcome.status)
+    assert_equal(ALLOW_EMPTY_STATUS, outcome.status)
   end
 
   private def assert_stopped(outcome)
