@@ -1,8 +1,10 @@
 module Stryker
   module Isolation
-    # The fresh processes that `Stryker::Isolation::FreshProcesses` waits on.
-    # A fresh process has no pipe to the orchestrator, so the set learns
-    # that one ended from its waiter, which `Process.detach` starts.
+    # The fresh runs that `Stryker::Isolation::FreshProcesses` runs at once,
+    # and the one wait for all of them: `IO.select` on the pipe of each
+    # process's standard output, which ends when the process does, with a
+    # timeout at the soonest look that a run needs, its deadline or a short
+    # poll.
     #
     # ## Examples
     #
@@ -11,28 +13,27 @@ module Stryker
     # fresh = Stryker::Isolation::FreshRun.judged(run, Stryker::Isolation::FreshFolder.made) { |result| puts(result.status) }
     # watches.add(fresh)
     # fresh.launch(launch, Stryker::TestRunners::Recipe.new("minitest"))
-    # watches.finish
+    # watches.finish until watches.empty?
     # ```
     class FreshWatches
-      # The longest wait, in seconds, while a process hasn't started a test:
-      # a process writes the start of its first test only to its results
-      # file, so the set looks there this often, and a run's time limit starts
-      # at most this much after its first test does.
-      POLL_SECONDS: Float
+      # `IO`, whose `select` waits, or a stand-in in a test.
+      @io: singleton(IO)
 
-      # The processes still running.
+      # The runs whose processes the set waits on.
       @watches: Array[FreshRun]
 
       # Builds an empty set.
-      def initialize: () -> void
+      #
+      # - `io`: `IO`, or a stand-in in a test.
+      def initialize: (?singleton(IO) io) -> void
 
       # Adds `watch`.
       def add: (FreshRun watch) -> nil
 
-      # How many processes the set waits on.
+      # How many runs the set holds.
       def size: () -> Integer
 
-      # Whether the set waits on no process.
+      # Whether the set holds no run.
       def empty?: () -> bool
 
       # Calls the block for each of `runs`, while fewer than `window`
@@ -42,27 +43,31 @@ module Stryker
       # exists of a run whose start a signal or an error ends.
       #
       # - `runs`: Array, the runs, in the order they start.
-      # - `window`: Integer, the most watches in the set at once.
+      # - `window`: Integer, the most runs in the set at once.
       def run: [R] (Array[R] runs, Integer window) { (R run) -> void } -> void
 
-      # Starts the time limit of each run whose first test has started, then
-      # finishes each process that has ended or run out of time, which lands
-      # its run, and drops it from the set once it has landed, so that a
-      # signal while it finishes finds it there, and `stop` ends it. With none
-      # of them, it first waits on the process whose time ends first, until
-      # that process ends or its time does, or for at most `POLL_SECONDS` while
-      # any run hasn't started a test, and may finish none.
+      # Waits until a process writes to its pipe or ends, or the soonest run
+      # needs a look, then has each run take what happened, and finishes each
+      # run whose process has been reaped or has run out of time, which lands
+      # it, and drops it from the set once it has landed, so that a signal
+      # while it finishes finds it there, and `stop` ends it. May finish none.
+      # An empty set waits for nothing.
       def finish: () -> void
 
-      # Waits, as `finish` says, for the process whose time ends first.
-      def pause: () -> nil
-
       # Kills every process still running, waits until each ended, deletes
-      # their folders, and empties the set. A watch that raises as it stops
-      # leaves every other watch stopped, and the first error reaches the
+      # their folders, and empties the set. A run that raises as it stops
+      # leaves every other run stopped, and the first error reaches the
       # caller once all have stopped. A signal ends the stop at once, and
       # leaves the set empty all the same.
       def stop: () -> nil
+
+      private
+
+      # Finishes `watch`, and then drops it from the set.
+      def land: (FreshRun watch) -> void
+
+      # Waits, as `finish` says, and returns the pipes that are readable.
+      def wait: () -> Array[IO]
     end
   end
 end

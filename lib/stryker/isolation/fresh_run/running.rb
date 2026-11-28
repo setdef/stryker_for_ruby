@@ -7,14 +7,59 @@ module Stryker
   module Isolation
     class FreshRun
       class Running < Stage
-        def initialize(folder, child, timer)
+        POLL_SECONDS = 0.1
+        ENDING_SECONDS = 0.01
+        public_constant(:ENDING_SECONDS, :POLL_SECONDS)
+
+        def initialize(folder, child, output, timer)
           super()
           @folder = folder
           @child = child
+          @output = output
           @timer = timer
         end
 
-        def check
+        def output
+          @output.io
+        end
+
+        def take(ready)
+          @child.reap unless @output.open?
+          # The pipe ends when the process does, unless the process handed its
+          # standard output on, or moved it. The system can take a moment more
+          # to let an ending process be reaped.
+          @output.take(ready) { @child.reap(ENDING_SECONDS) }
+          first_test
+        end
+
+        def wake_in
+          left = @timer.left
+          polled? ? [left, POLL_SECONDS].min : left
+        end
+
+        def done?
+          @child.reaped? || @timer.left.zero?
+        end
+
+        def reap
+          # Timed out only if the process itself still ran at its deadline.
+          timed_out = @child.running?
+          @child.end_now
+          # What the process wrote before it ended is in the pipe by now. A
+          # process that its tests started can hold the pipe open, so this
+          # takes what is there and waits for no more.
+          @output.finish
+          Reaped.new(@folder, @child, @timer, timed_out)
+        end
+
+        def stop
+          @child.stop
+        ensure
+          @output.close
+          @folder.remove
+        end
+
+        private def first_test
           # A fresh process writes its messages to a file, so the start of its
           # first test, which starts the run's time limit, shows only there.
           timer = @timer
@@ -22,30 +67,10 @@ module Stryker
           nil
         end
 
-        def testing?
-          @timer.testing?
-        end
-
-        def done?
-          @child.ended? || left.zero?
-        end
-
-        def wait(seconds)
-          @child.wait(seconds)
-        end
-
-        def left
-          @timer.left
-        end
-
-        def reap
-          Reaped.new(@folder, @child, @timer, @child.end_within(left))
-        end
-
-        def stop
-          @child.stop
-        ensure
-          @folder.remove
+        private def polled?
+          # Only the results file shows a test's start, and a process whose
+          # pipe ended without its process can end at any moment after.
+          !@timer.testing? || !(@output.open? || @child.reaped?)
         end
       end
     end

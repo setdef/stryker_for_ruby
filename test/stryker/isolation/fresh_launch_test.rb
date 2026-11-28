@@ -13,30 +13,23 @@ require "tmpdir"
 class FreshLaunchTest < Minitest::Test
   include IsolationStandIns
 
-  # Starts a process that waits, in place of the project's, and then fails the
-  # way a test says: `detach` raises `error`, or, with `interrupted`, an
-  # Interrupt arrives for the launching thread as `spawn` returns. It notes
-  # whether the run's folder still stood when the process was killed.
-  class StartedThenFailing
-    attr_reader :pid, :folder_stood_at_kill
+  # Starts a process that waits, in place of the project's, with an
+  # Interrupt for the launching thread as `spawn` returns, as Ctrl-C makes
+  # one. It notes whether the run's folder still stood when the process was
+  # killed, and the pipe it was given as standard output.
+  class Interrupted
+    attr_reader :pid, :folder_stood_at_kill, :out
 
-    def initialize(test, folder, error: nil, interrupted: false)
+    def initialize(test, folder)
       @test = test
       @folder = folder
-      @error = error
-      @interrupted = interrupted
     end
 
-    def spawn(*)
+    def spawn(*, options)
+      @out = options[:out]
       @pid = @test.start_process(RbConfig.ruby, "-e", "sleep")
-      Thread.current.raise(Interrupt) if @interrupted
+      Thread.current.raise(Interrupt)
       @pid
-    end
-
-    def detach(_pid)
-      raise(@error) if @error
-
-      Process.detach(@pid)
     end
 
     def kill(*)
@@ -44,11 +37,11 @@ class FreshLaunchTest < Minitest::Test
       Process.kill(*)
     end
 
-    def wait(pid)
-      Process.wait(pid)
+    def wait2(*)
+      Process.wait2(*)
     end
   end
-  private_constant(:StartedThenFailing)
+  private_constant(:Interrupted)
 
   def setup
     super
@@ -78,25 +71,53 @@ class FreshLaunchTest < Minitest::Test
     File.join(@temporary, Dir.children(@temporary).first)
   end
 
+  # Starts a process that waits, in place of the project's, and notes its
+  # ID.
+  class Waiting
+    attr_reader :pid
+
+    def initialize(test)
+      @test = test
+    end
+
+    def spawn(*)
+      @pid = @test.start_process(RbConfig.ruby, "-e", "sleep")
+    end
+
+    def kill(*)
+      Process.kill(*)
+    end
+
+    def wait2(*)
+      Process.wait2(*)
+    end
+  end
+  private_constant(:Waiting)
+
+  # A thread made while signals are deferred keeps them deferred, and
+  # Ruby waits for its threads as it exits, so a waiter made in the launch
+  # would keep the program running past a second Ctrl-C (#130).
+  def test_no_thread_waits_on_a_launched_process
+    process = Waiting.new(self)
+    fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true), Stryker::Isolation::FreshFolder.made) { nil }
+    fresh.launch(Stryker::Isolation::FreshLaunch.new("/cache", @temporary, process), Stryker::TestRunners::Recipe.new("minitest"))
+
+    assert_empty(Thread.list.grep(Process::Waiter).select { |waiter| waiter.pid == process.pid })
+  ensure
+    fresh&.stop
+  end
+
   def test_a_launch_that_fails_leaves_no_folder
     launched_with(IsolationStandIns::RefusingProcess.new, Errno::ENOENT)
 
     assert_empty(Dir.children(@temporary))
   end
 
-  def test_a_launch_that_fails_after_the_process_started_ends_the_process_before_it_deletes_the_folder
-    process = StartedThenFailing.new(self, -> { run_folder }, error: ThreadError)
-    launched_with(process, ThreadError)
-
-    assert_equal([true, []], [process.folder_stood_at_kill, Dir.children(@temporary)])
-    assert_raises(Errno::ECHILD) { Process.wait(process.pid) }
-  end
-
   def test_an_interrupt_as_the_process_starts_waits_for_the_run_to_hold_it_and_stop_ends_it_before_it_deletes_the_folder
-    process = StartedThenFailing.new(self, -> { run_folder }, interrupted: true)
+    process = Interrupted.new(self, -> { run_folder })
     launched_with(process, Interrupt)
 
-    assert_equal([true, []], [process.folder_stood_at_kill, Dir.children(@temporary)])
+    assert_equal([true, true, []], [process.folder_stood_at_kill, process.out.closed?, Dir.children(@temporary)])
     assert_raises(Errno::ECHILD) { Process.wait(process.pid) }
   end
 end

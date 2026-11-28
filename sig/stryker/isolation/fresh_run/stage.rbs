@@ -11,7 +11,7 @@ module Stryker
       # ```ruby
       # Stryker::Isolation::FreshRun::Stage.new.stop
       # # => nil
-      # Stryker::Isolation::FreshRun::Stage.new.left
+      # Stryker::Isolation::FreshRun::Stage.new.wake_in
       # # raises Stryker::Isolation::Error
       # ```
       class Stage
@@ -25,32 +25,22 @@ module Stryker
         # - `recipe`: Stryker::TestRunners::Recipe, the test runner's recipe.
         def spawn: (FreshLaunch launch, forked run, TestRunners::Recipe recipe) -> Stage
 
-        # Holds the process that the run started, with a time limit of
-        # `timeout_ms` once its first test starts, and returns the next
-        # stage.
+        # The read end of the process's standard output while it is open.
+        def output: () -> IO?
+
+        # Takes the run's events, as `Stryker::Isolation::FreshRun#take` says.
         #
-        # - `timeout_ms`: Integer, the run's time limit in milliseconds.
-        def hold: (Integer timeout_ms) -> Stage
+        # - `ready`: Array of IO, the pipes that `IO.select` found readable.
+        def take: (Array[IO] ready) -> nil
 
-        # Starts the time limit once the results file shows a test started.
-        def check: () -> nil
+        # The seconds until the run needs another look.
+        def wake_in: () -> Float
 
-        # Whether the run's time limit has started.
-        def testing?: () -> bool
-
-        # Whether the process has ended or its time is up.
+        # Whether the process has been reaped, or its time is up.
         def done?: () -> bool
 
-        # Waits at most `seconds` for the process to end.
-        #
-        # - `seconds`: Float, the longest wait.
-        def wait: (Float seconds) -> nil
-
-        # The seconds left before the time is up, or 0.
-        def left: () -> Float
-
-        # Ends the process within what is left of its time, reaps it, and
-        # returns the next stage.
+        # Ends the process if it still runs, reaps it, and returns the next
+        # stage.
         def reap: () -> Stage
 
         # Hands the process's messages and how it ended to `landing`, and

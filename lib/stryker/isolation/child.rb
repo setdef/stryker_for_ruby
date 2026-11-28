@@ -30,11 +30,6 @@ module Stryker
         !@waiter.alive?
       end
 
-      def wait(seconds)
-        @waiter.join(seconds)
-        nil
-      end
-
       def kill_rest
         ProcessGroup.kill_rest(@pid, @process)
       end

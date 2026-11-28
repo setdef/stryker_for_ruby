@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "child_process"
 require_relative "command"
-require_relative "fresh_run/spawned"
+require_relative "fresh_run/running"
+require_relative "output_pipe"
 require_relative "process_group"
+require_relative "timer"
 
 module Stryker
   module Isolation
@@ -14,13 +17,16 @@ module Stryker
       end
 
       def call(folder, run, recipe)
-        input, results = folder.paths(run)
-        argv = Command.for("fresh", @directory, *recipe.words, input, results)
-        options = { chdir: @root, **folder.output_options, **ProcessGroup::SYSTEM.spawn_options }
+        argv = Command.for("fresh", @directory, *recipe.words, *folder.paths(run))
+        pid, output = OutputPipe.opened(folder.output_path) { |out| spawn(run, argv, folder.output_options(out)) }
+        FreshRun::Running.new(folder, ChildProcess.new(pid, @process), output, Timer.new(run.timeout_ms))
+      end
+
+      private def spawn(run, argv, streams)
         # The mutant is active before the process starts, so its switch takes
         # the mutated branch while its file loads.
-        pid = @process.spawn(Command.environment(run.mutant_id), *argv, options)
-        FreshRun::Spawned.new(folder, pid, @process)
+        options = { chdir: @root, **streams, **ProcessGroup::SYSTEM.spawn_options }
+        @process.spawn(Command.environment(run.mutant_id), *argv, options)
       end
     end
   end

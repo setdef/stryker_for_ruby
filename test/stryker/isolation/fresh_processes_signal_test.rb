@@ -27,16 +27,12 @@ class FreshProcessesSignalTest < Minitest::Test
       @pid = @test.start_process(RbConfig.ruby, "-e", "sleep")
     end
 
-    def detach(pid)
-      Process.detach(pid)
-    end
-
     def kill(*)
       Process.kill(*)
     end
 
-    def wait(pid)
-      Process.wait(pid)
+    def wait2(*)
+      Process.wait2(*)
     end
   end
   private_constant(:WaitingProcess)

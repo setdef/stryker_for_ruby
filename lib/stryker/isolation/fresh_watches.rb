@@ -1,15 +1,12 @@
 # frozen_string_literal: true
 
 require_relative "cleanup"
-require_relative "fresh_run"
 
 module Stryker
   module Isolation
     class FreshWatches
-      POLL_SECONDS = 0.1
-      public_constant(:POLL_SECONDS)
-
-      def initialize
+      def initialize(io = IO)
+        @io = io
         @watches = []
       end
 
@@ -35,14 +32,9 @@ module Stryker
       end
 
       def finish
-        @watches.each(&:check)
-        pause if @watches.none?(&:done?)
-        # A watch leaves the set once it has finished, so that a signal before
-        # then finds it there, and stop ends it.
-        @watches.select(&:done?).each do |watch|
-          watch.finish
-          @watches.delete(watch)
-        end
+        ready = wait
+        @watches.each { |watch| watch.take(ready) }
+        @watches.select(&:done?).each { |watch| land(watch) }
       end
 
       def stop
@@ -51,15 +43,18 @@ module Stryker
         @watches.clear
       end
 
-      private def pause
-        # The run whose time ends first is waited for, until it ends or its
-        # time does. While a run has started no test, the wait is short, so
-        # the start of its first test, which only its results file shows,
-        # starts its limit soon after it happens.
-        soonest = @watches.min_by(&:left) or return
-        seconds = soonest.left
-        seconds = [seconds, POLL_SECONDS].min unless @watches.all?(&:testing?)
-        soonest.wait(seconds)
+      private def land(watch)
+        # A run leaves the set once it has finished, so that a signal before
+        # then finds it there, and stop ends it.
+        watch.finish
+        @watches.delete(watch)
+      end
+
+      private def wait
+        # One wait for every run: until a process writes to its pipe or ends,
+        # or the soonest run needs a look.
+        seconds = @watches.map(&:wake_in).min or return []
+        @io.select(@watches.filter_map(&:output), nil, nil, seconds)&.first || []
       end
     end
   end

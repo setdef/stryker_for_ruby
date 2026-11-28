@@ -8,8 +8,7 @@ module Stryker
     # | Stage | What exists | What `stop` does |
     # | - | - | - |
     # | `Made` | The folder | Deletes it |
-    # | `Spawned` | The folder and the process, by its ID | Kills the process and its group, reaps it, and deletes the folder |
-    # | `Running` | The folder, the process and its waiter, and the time limit | Kills the process and its group while it runs, or what it left in its group, reaps it, and deletes the folder |
+    # | `Running` | The folder, the process, the pipe of its standard output, and the time limit | Kills the process and its group while it runs, or what it left in its group, reaps it, closes the pipe, and deletes the folder |
     # | `Reaped` | The folder | Deletes it |
     #
     # A stopped run has nothing left, and a second `stop` does nothing. When
@@ -56,41 +55,46 @@ module Stryker
       # needs active and the test runner that `recipe` describes, and holds
       # it, with the run's time limit starting now. A signal that arrives
       # while the process starts raises once the run holds the process, so
-      # `stop` ends it. When the launch raises, the run holds what the launch
-      # made, and `stop` ends it.
+      # `stop` ends it. When the launch raises, the run holds its folder
+      # alone, and `stop` deletes it.
       #
       # - `launch`: Stryker::Isolation::FreshLaunch, what starts the process.
       # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the
       #   test runner.
       def launch: (FreshLaunch launch, TestRunners::Recipe recipe) -> nil
 
-      # Starts the run's time limit once its results file shows that its
-      # first test started. Before then, the process has the limit for
-      # starting, `Stryker::Isolation::Timer::START_SECONDS`.
-      def check: () -> nil
+      # The read end of the process's standard output, for `IO.select`, until
+      # the pipe has ended, and nil from then on.
+      def output: () -> IO?
 
-      # Whether the run's time limit has started.
-      def testing?: () -> bool
+      # Takes what the run's events are now: copies what the process wrote to
+      # its standard output, if `ready` holds the pipe; starts the run's time
+      # limit once the results file shows that its first test started; and
+      # reaps the process once its pipe has ended, if it has ended too.
+      # Before the first test, the process has the limit for starting,
+      # `Stryker::Isolation::Timer::START_SECONDS`.
+      #
+      # - `ready`: Array of IO, the pipes that `IO.select` found readable.
+      def take: (Array[IO] ready) -> nil
 
-      # Whether the process has ended or its time is up, so that `finish`
-      # returns at once.
+      # The seconds until the run needs another look whatever its pipe does:
+      # what is left of its time, or at most
+      # `Stryker::Isolation::FreshRun::Running::POLL_SECONDS` while it has
+      # started no test, or while its pipe has ended and its process hasn't.
+      def wake_in: () -> Float
+
+      # Whether the process has been reaped, or its time is up, so that
+      # `finish` waits for no more than a killed process to end.
       def done?: () -> bool
 
-      # Waits at most `seconds` for the process to end.
-      #
-      # - `seconds`: Float, the longest wait.
-      def wait: (Float seconds) -> nil
-
-      # The seconds left before the time is up, or 0.
-      def left: () -> Float
-
-      # Waits for the process for what is left of its time, kills it if it
-      # still runs, reaps it, kills what it left running in its group, and
-      # lands the run, which deletes its folder. When the process can't be
-      # reaped, as when a signal arrives in the wait, the process is ended
-      # and the error reaches the caller, and `stop` deletes the folder. Once
-      # the process has been reaped, its folder is deleted however the
-      # landing ends, and `stop` kills nothing of it.
+      # Kills the process and its group if it still runs, reaps it, takes
+      # what is left in its pipe, kills what it left running in its group,
+      # and lands the run, which deletes its folder. The run timed out only
+      # if its process still ran at its deadline. When a signal arrives
+      # before the process has been reaped, the error reaches the caller,
+      # and `stop` ends the process and deletes the folder. Once the process
+      # has been reaped, its folder is deleted however the landing ends, and
+      # `stop` kills nothing of it.
       def finish: () -> nil
 
       # Ends whatever exists of the run, as its stage says, and leaves nothing

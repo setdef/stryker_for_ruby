@@ -43,12 +43,12 @@ module Stryker
       #
       # - `milliseconds`: Integer, the run's time limit, which starts
       #   with its first test.
-      # - `start_seconds`: Integer, the limit for starting. By default,
+      # - `start_seconds`: Integer or Float, the limit for starting. By default,
       #   `START_SECONDS`.
       # - `clock`: a callable that gives the time now, in seconds. By default,
       #   the monotonic clock, `Timer.now`. A test passes its own, to control
       #   time.
-      def initialize: (Integer milliseconds, ?Integer start_seconds, ?clock: ^() -> Float) -> void
+      def initialize: (Integer milliseconds, ?(Integer | Float) start_seconds, ?clock: ^() -> Float) -> void
 
       # Starts the run's time limit, from now. Only the first call counts, so
       # the limit covers every test of the run.

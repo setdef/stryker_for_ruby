@@ -16,21 +16,21 @@ module Stryker
         @folder: FreshFolder
 
         # The reaped process.
-        @child: Child
+        @child: ChildProcess
 
         # The run's time limit, which gives the run's duration.
         @timer: Timer
 
-        # Whether the process ran out of time.
+        # Whether the process still ran at its deadline.
         @timed_out: bool
 
         # The run whose reaped process `child` wrote into `folder`.
         #
         # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
-        # - `child`: Stryker::Isolation::Child, the reaped process.
+        # - `child`: Stryker::Isolation::ChildProcess, the reaped process.
         # - `timer`: Stryker::Isolation::Timer, the run's time limit.
-        # - `timed_out`: bool, whether the process ran out of time.
-        def initialize: (FreshFolder folder, Child child, Timer timer, bool timed_out) -> void
+        # - `timed_out`: bool, whether the process still ran at its deadline.
+        def initialize: (FreshFolder folder, ChildProcess child, Timer timer, bool timed_out) -> void
 
         # Reads how the process ended, kills what it left running in its
         # group, hands its messages and its ending, with the last lines of its

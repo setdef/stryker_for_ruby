@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative("../../support/isolation_stand_ins")
+require "stryker/isolation/child_process"
 require "stryker/isolation/fresh_run"
 require "stryker/isolation/messages"
 require "stryker/isolation/watch"
@@ -84,20 +85,22 @@ class LeftoversTest < Minitest::Test
   end
 
   def test_stopping_a_fresh_run_whose_process_has_ended_ends_what_it_left_running_in_its_group
-    process = EndedProcess.new
-    child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
+    process = FakeProcess.new
+    child = Stryker::Isolation::ChildProcess.new(FakeProcess::PID, process)
     running_fresh(Folder.new, child, Stryker::Isolation::Timer.new(30_000)).stop
 
-    assert_equal([[:detach, FakeProcess::PID], *kills], process.calls)
+    assert_equal([[:wait2, FakeProcess::PID, Process::WNOHANG], *kills], process.calls)
   end
 
   def test_a_fresh_run_ends_what_its_ended_process_left_in_its_group
-    process = EndedProcess.new
-    child = Stryker::Isolation::Child.new(FakeProcess::PID, process)
+    process = FakeProcess.new
+    child = Stryker::Isolation::ChildProcess.new(FakeProcess::PID, process)
     endings = []
     fresh = running_fresh(Folder.new, child, Stryker::Isolation::Timer.new(30_000)) { |_, ending| endings << ending }
     fresh.finish
 
-    assert_equal([[0], [[:detach, FakeProcess::PID], *kills]], [endings.map(&:exit_status), process.calls])
+    reaping = [:wait2, FakeProcess::PID, Process::WNOHANG]
+
+    assert_equal([[0], [reaping, *kills]], [endings.map(&:exit_status), process.calls])
   end
 end

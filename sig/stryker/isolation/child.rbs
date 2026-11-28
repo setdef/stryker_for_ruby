@@ -41,11 +41,6 @@ module Stryker
       # Whether the process has ended and been reaped.
       def ended?: () -> bool
 
-      # Waits at most `seconds` for the process to end, and kills nothing.
-      #
-      # - `seconds`: Integer or Float, the longest wait.
-      def wait: (Integer | Float seconds) -> nil
-
       # Kills what the process left running in its group, once it has
       # ended, as `Stryker::Isolation::ProcessGroup.kill_rest` does.
       def kill_rest: () -> nil

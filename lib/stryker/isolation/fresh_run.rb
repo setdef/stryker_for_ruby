@@ -2,7 +2,6 @@
 
 require_relative "deferred"
 require_relative "fresh_run/made"
-require_relative "fresh_run/spawned"
 require_relative "fresh_run/stage"
 require_relative "verdict"
 
@@ -23,27 +22,22 @@ module Stryker
 
       def launch(launch, recipe)
         hand_over { @stage.spawn(launch, @run, recipe) }
-        hand_over { @stage.hold(@run.timeout_ms) }
       end
 
-      def check
-        @stage.check
+      def output
+        @stage.output
       end
 
-      def testing?
-        @stage.testing?
+      def take(ready)
+        @stage.take(ready)
+      end
+
+      def wake_in
+        @stage.wake_in
       end
 
       def done?
         @stage.done?
-      end
-
-      def wait(seconds)
-        @stage.wait(seconds)
-      end
-
-      def left
-        @stage.left
       end
 
       def finish

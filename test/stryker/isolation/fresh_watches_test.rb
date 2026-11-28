@@ -1,48 +1,44 @@
 # frozen_string_literal: true
 
 require_relative("../../support/isolation_stand_ins")
+require "stryker/isolation/child_process"
 require "stryker/isolation/fresh_folder"
 require "stryker/isolation/fresh_run"
+require "stryker/isolation/fresh_run/running"
 require "stryker/isolation/fresh_watches"
 require "stryker/isolation/messages"
+require "stryker/isolation/output_pipe"
+require "stryker/isolation/timer"
 
-# Which fresh processes the set finishes: each that has ended or run out of
-# time, after a wait for the one whose time ends first, which is short while
-# any run hasn't started a test. The first tests use stand-ins for the
-# watches; the last uses a real process.
+# Which fresh runs the set finishes: each whose process has been reaped or
+# has run out of time, after one wait for every run, until a pipe is ready or
+# the soonest run needs a look. The first tests use stand-ins for the runs and
+# for `IO.select`; the last use the real wait.
 class FreshWatchesTest < Minitest::Test
   include IsolationStandIns
 
-  # A watch that ends after a wait when +ends+ says so, and notes how long
-  # each wait was and whether it was checked for a test's start.
+  # A run that is done when +done+ says so, or after a wait when +ends+
+  # says so, that needs a look within +wake_in+ seconds, and whose pipe is
+  # +output+. It notes what each take found ready.
   class Watch
-    attr_reader :name, :left, :waits, :checks
+    attr_reader :name, :output, :wake_in, :taken
 
-    def initialize(name, ended: false, left: 5.0, testing: true, ends: false)
+    def initialize(name, done: false, wake_in: 5.0, output: nil, ends: false)
       @name = name
-      @ended = ended
-      @left = left
-      @testing = testing
+      @done = done
+      @wake_in = wake_in
+      @output = output
       @ends = ends
-      @waits = []
-      @checks = 0
+      @taken = []
     end
 
-    def check
-      @checks += 1
-    end
-
-    def testing?
-      @testing
+    def take(ready)
+      @taken << ready
+      @done = true if @ends
     end
 
     def done?
-      @ended
-    end
-
-    def wait(seconds)
-      @waits << seconds
-      @ended = @ends
+      @done
     end
 
     def finish
@@ -57,53 +53,78 @@ class FreshWatchesTest < Minitest::Test
   end
   private_constant(:Watch)
 
-  def finished(*watches)
-    set = Stryker::Isolation::FreshWatches.new
+  # `IO`'s select, which returns at once with what +ready+ holds, and notes
+  # the pipes and the timeout of each wait.
+  class Select
+    attr_reader :waits
+
+    def initialize(ready = [])
+      @ready = ready
+      @waits = []
+    end
+
+    def select(readers, _writers, _errors, timeout)
+      @waits << [readers, timeout]
+      [@ready, [], []] if @ready.any?
+    end
+  end
+  private_constant(:Select)
+
+  def finished(*watches, io: Select.new)
+    set = Stryker::Isolation::FreshWatches.new(io)
     names = []
     watches.each { |watch| set.add(watch.finished_into(names)) }
     set.finish
     [names, set.size]
   end
 
-  def test_each_process_that_ended_is_finished_and_no_other
-    assert_equal([[:done], 1], finished(Watch.new(:running), Watch.new(:done, ended: true)))
+  def test_each_run_that_is_done_after_the_wait_is_finished_and_no_other
+    assert_equal([[:done], 1], finished(Watch.new(:running), Watch.new(:done, done: true)))
   end
 
-  def test_with_none_ended_the_set_waits_for_the_process_whose_time_ends_first
-    later = Watch.new(:later, left: 9.0)
-    soon = Watch.new(:soon, left: 1.0, ends: true)
+  def test_the_wait_is_for_every_open_pipe_until_the_soonest_run_needs_a_look
+    pipe = IO.pipe.first
+    io = Select.new
+    finished(Watch.new(:later, wake_in: 9.0, output: pipe), Watch.new(:soon, wake_in: 1.0), io:)
 
-    assert_equal([[:soon], 1], finished(later, soon))
-    assert_equal([[], [1.0]], [later.waits, soon.waits])
+    assert_equal([[[pipe], 1.0]], io.waits)
+  ensure
+    pipe&.close
   end
 
-  def test_while_a_run_has_started_no_test_the_wait_is_short
-    soon = Watch.new(:soon, left: 1.0)
+  def test_each_run_takes_what_the_wait_found_ready
+    pipe = IO.pipe.first
+    watches = [Watch.new(:one, output: pipe, ends: true), Watch.new(:two)]
 
-    assert_equal([[], 2], finished(soon, Watch.new(:loading, left: 300.0, testing: false)))
-    assert_equal([Stryker::Isolation::FreshWatches::POLL_SECONDS], soon.waits)
+    assert_equal([[:one], 1], finished(*watches, io: Select.new([pipe])))
+    assert_equal([[[pipe]], [[pipe]]], watches.map(&:taken))
+  ensure
+    pipe&.close
   end
 
-  def test_a_run_starts_at_most_the_window_of_watches_at_once_and_finishes_every_one
-    set = Stryker::Isolation::FreshWatches.new
+  def test_a_run_starts_at_most_the_window_of_runs_at_once_and_finishes_every_one
+    set = Stryker::Isolation::FreshWatches.new(Select.new)
     names = []
     running = []
     set.run(%i[one two three], 2) do |name|
       running << set.size
-      set.add(Watch.new(name, ended: true).finished_into(names))
+      set.add(Watch.new(name, done: true).finished_into(names))
     end
 
     assert_equal([%i[one two three], [0, 1, 0], 0], [names, running, set.size])
   end
 
   def test_an_empty_set_finishes_nothing_and_waits_for_nothing
-    assert_equal([[], 0], finished)
+    io = Select.new
+
+    assert_equal([[], 0], finished(io:))
+    assert_empty(io.waits)
   end
 
-  def test_a_watch_is_in_the_set_while_it_finishes_and_out_of_it_after
-    set = Stryker::Isolation::FreshWatches.new
+  def test_a_run_is_in_the_set_while_it_finishes_and_out_of_it_after
+    set = Stryker::Isolation::FreshWatches.new(Select.new)
     sizes = []
-    watch = Watch.new(:done, ended: true)
+    watch = Watch.new(:done, done: true)
     watch.define_singleton_method(:finish) { sizes << set.size }
     set.add(watch)
     set.finish
@@ -111,9 +132,9 @@ class FreshWatchesTest < Minitest::Test
     assert_equal([[1], 0], [sizes, set.size])
   end
 
-  def test_a_watch_whose_finish_raises_is_still_in_the_set_for_stop_to_reach
-    set = Stryker::Isolation::FreshWatches.new
-    watch = Watch.new(:done, ended: true)
+  def test_a_run_whose_finish_raises_is_still_in_the_set_for_stop_to_reach
+    set = Stryker::Isolation::FreshWatches.new(Select.new)
+    watch = Watch.new(:done, done: true)
     watch.define_singleton_method(:finish) { raise(ThreadError) }
     set.add(watch)
 
@@ -121,20 +142,11 @@ class FreshWatchesTest < Minitest::Test
     assert_equal(1, set.size)
   end
 
-  def test_every_process_is_checked_for_its_first_test
-    watches = [Watch.new(:one, ended: true), Watch.new(:two)]
-    finished(*watches)
-
-    assert_equal([1, 1], watches.map(&:checks))
-  end
-
   # Time that only moves when a wait moves it, and a process on it that
   # writes its first test's line at +test_at+ and ends at +ends_at+, in
-  # seconds. It stands in for the child, the run's folder, and the clock.
+  # seconds. It stands in for the process, the run's folder, the clock, and
+  # `IO.select`.
   class Timeline
-    Done = Struct.new(:exitstatus, :termsig)
-    private_constant(:Done)
-
     attr_reader :now
 
     def initialize(test_at:, ends_at:)
@@ -143,26 +155,37 @@ class FreshWatchesTest < Minitest::Test
       @now = 0.0
     end
 
+    def select(readers, _writers, _errors, timeout)
+      # The pipe has ended, so it is readable at once, and then nothing
+      # wakes the wait but its timeout.
+      return [readers, [], []] if readers.any?
+
+      @now += timeout
+      nil
+    end
+
     def started?
       @now >= @test_at
     end
 
-    def ended?
-      @now >= @ends_at
-    end
-
-    def wait(seconds)
-      @now = [@now + seconds, @ends_at].min
+    def reap(_seconds = 0)
       nil
     end
 
-    def end_within(seconds)
-      wait(seconds)
-      @running = !ended?
+    def reaped?
+      @now >= @ends_at
+    end
+
+    def running?
+      !reaped?
+    end
+
+    def end_now
+      nil
     end
 
     def status
-      Done.new(0, nil)
+      IsolationStandIns::Exit.new(nil, 0)
     end
 
     def kill_rest
@@ -183,36 +206,59 @@ class FreshWatchesTest < Minitest::Test
   end
   private_constant(:Timeline)
 
-  def test_a_time_limit_starts_with_the_first_test_the_results_file_shows
-    # The limit is shorter than the wait before the first test, as a fresh
-    # process's start can be (#85), and longer than the test.
-    timeline = Timeline.new(test_at: 5.0, ends_at: 5.2)
-    timer = Stryker::Isolation::Timer.new(1000, clock: timeline.method(:now))
-    set = Stryker::Isolation::FreshWatches.new
+  # Whether the run of a process on +timeline+, with a time limit of
+  # +milliseconds+, timed out, and the second on the timeline when it
+  # landed, once the set has finished it. The process's pipe ended at once,
+  # as when the process moves its standard output.
+  def landed_on(timeline, milliseconds)
+    timer = Stryker::Isolation::Timer.new(milliseconds, clock: timeline.method(:now))
+    set = Stryker::Isolation::FreshWatches.new(timeline)
     landed = []
     set.add(running_fresh(timeline, timeline, timer) { |_, ending| landed << ending.timed_out })
     set.finish until set.empty?
+    [*landed, timeline.now.round(1)]
+  end
 
-    assert_equal([false], landed)
+  def test_a_time_limit_starts_with_the_first_test_the_results_file_shows
+    # The limit is shorter than the wait before the first test, as a fresh
+    # process's start can be (#85), and longer than the test. The process
+    # ends between two looks, and the run lands at the second.
+    assert_equal([false, 5.3], landed_on(Timeline.new(test_at: 5.0, ends_at: 5.25), 1000))
+  end
+
+  def test_a_process_whose_pipe_ended_is_looked_at_until_it_ends_before_its_deadline
+    assert_equal([false, 2.0], landed_on(Timeline.new(test_at: 0.0, ends_at: 1.95), 30_000))
   end
 
   def test_a_process_past_its_time_after_its_first_test_is_timed_out
     # The run's landing deletes the folder.
     folder = Dir.mktmpdir
     results = File.join(folder, "results")
-    pid, = scripted("File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep")
+    pid, reader = scripted("File.binwrite(#{results.dump}, %({\"started\":{}}\\n)); sleep")
 
-    assert_equal([[true], false], [timed_out(folder, pid, 300), File.exist?(folder)])
+    assert_equal([[true], false], [timed_out(folder, pid, reader, 300), File.exist?(folder)])
   end
 
-  # Watches the process +pid+, whose folder is +folder+, with a time limit of
-  # +milliseconds+ until it lands, and gives whether it timed out.
-  private def timed_out(folder, pid, milliseconds)
+  def test_a_process_that_ends_wakes_the_wait_at_once
+    folder = Dir.mktmpdir
+    pid, reader = scripted("$stdout.write('..')")
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+
+    assert_equal([false], timed_out(folder, pid, reader, 30_000))
+    assert_operator(Process.clock_gettime(Process::CLOCK_MONOTONIC) - started, :<, 30)
+  end
+
+  # Watches the process +pid+, whose folder is +folder+ and whose standard
+  # output is +reader+, with a time limit of +milliseconds+, until it lands,
+  # and gives whether it timed out.
+  private def timed_out(folder, pid, reader, milliseconds)
     landed = []
     timer = Stryker::Isolation::Timer.new(milliseconds)
     set = Stryker::Isolation::FreshWatches.new
+    output = Stryker::Isolation::OutputPipe.new(reader, File.join(folder, "process.out"))
+    child = Stryker::Isolation::ChildProcess.new(pid)
     fresh = Stryker::Isolation::FreshFolder.new(folder)
-    set.add(running_fresh(fresh, Stryker::Isolation::Child.new(pid), timer) { |_, ending| landed << ending.timed_out })
+    set.add(running_fresh(fresh, child, timer, output:) { |_, ending| landed << ending.timed_out })
     set.finish until set.empty?
     landed
   end

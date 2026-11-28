@@ -26,9 +26,12 @@ module Stryker
         [input, results_path]
       end
 
-      def output_options
-        out, err = @outputs.paths("process")
-        { in: File::NULL, out:, err: }
+      def output_options(out)
+        { in: File::NULL, out:, err: @outputs.paths("process").last }
+      end
+
+      def output_path
+        @outputs.paths("process").first
       end
 
       def started?

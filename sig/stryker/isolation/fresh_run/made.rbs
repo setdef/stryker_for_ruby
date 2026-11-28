@@ -8,7 +8,7 @@ module Stryker
       # ```ruby
       # made = Stryker::Isolation::FreshRun::Made.new(Stryker::Isolation::FreshFolder.made)
       # made.spawn(launch, run, Stryker::TestRunners::Recipe.new("minitest"))
-      # # => a Stryker::Isolation::FreshRun::Spawned
+      # # => a Stryker::Isolation::FreshRun::Running
       # ```
       class Made < Stage
         # The run's folder.

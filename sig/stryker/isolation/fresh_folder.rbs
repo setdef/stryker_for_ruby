@@ -2,8 +2,8 @@ module Stryker
   module Isolation
     # The temporary folder of one fresh run, made with `Dir.mktmpdir`: it
     # holds the file that holds the process's run, the file the process writes
-    # its messages to, and the files of its standard output and standard
-    # error. No name that the project chose becomes part of a path.
+    # its messages to, and the files that its standard output is copied into
+    # and its standard error goes to. No name that the project chose becomes part of a path.
     #
     # ## Examples
     #
@@ -38,9 +38,15 @@ module Stryker
       def paths: (forked run) -> [String, String]
 
       # The options of `Process.spawn` for the process's standard streams:
-      # standard input on the null device, and standard output and standard
-      # error on files in the folder.
-      def output_options: () -> Hash[Symbol, String]
+      # standard input on the null device, standard output on `out`, and
+      # standard error on a file in the folder.
+      #
+      # - `out`: IO, the write end of the pipe for standard output.
+      def output_options: (IO out) -> Hash[Symbol, String | IO]
+
+      # The path of the file in the folder that the process's standard output
+      # is copied into.
+      def output_path: () -> String
 
       # Whether the process has started a test: the results' file begins
       # with a whole line for a test that started. False before the process

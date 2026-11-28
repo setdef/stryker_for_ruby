@@ -13,28 +13,20 @@ module Stryker
           unexpected("spawn")
         end
 
-        def hold(_timeout_ms)
-          unexpected("hold")
+        def output
+          unexpected("output")
         end
 
-        def check
-          unexpected("check")
+        def take(_ready)
+          unexpected("take")
         end
 
-        def testing?
-          unexpected("testing?")
+        def wake_in
+          unexpected("wake_in")
         end
 
         def done?
           unexpected("done?")
-        end
-
-        def wait(_seconds)
-          unexpected("wait")
-        end
-
-        def left
-          unexpected("left")
         end
 
         def reap

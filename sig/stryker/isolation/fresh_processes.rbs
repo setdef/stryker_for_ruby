@@ -9,7 +9,8 @@ module Stryker
     # process loads the project's code and tests, runs the run's tests, and
     # writes each test's start and result to a file as it happens. The
     # adapter keeps up to `concurrency` processes running at once, learns
-    # that each ended from a `Process.detach` waiter, kills a process that
+    # that each ended from the end of the pipe of its standard output, with
+    # one `IO.select` for every process and no thread, kills a process that
     # runs past its time limit, and judges each run from its file once its
     # process ended.
     #

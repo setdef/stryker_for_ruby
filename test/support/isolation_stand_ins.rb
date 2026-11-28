@@ -3,6 +3,8 @@
 require_relative("../test_helper")
 require "rbconfig"
 require "stryker/isolation/fresh_run"
+require "stryker/isolation/fresh_run/running"
+require "stryker/isolation/output_pipe"
 require "stryker/isolation/process_group"
 require "stryker/mutant"
 require "stryker/mutant_run"
@@ -13,8 +15,13 @@ require "stryker/test_result"
 # system: a record of the calls it makes to Process, and real processes that
 # write scripted lines, in place of forked children.
 module IsolationStandIns
+  # How a process that a stand-in "started" ended.
+  Exit = Struct.new(:termsig, :exitstatus)
+  public_constant(:Exit)
+
   # Records each call it gets, and answers fork and spawn with a made-up
-  # process ID, without running anything.
+  # process ID, without running anything. Its process has ended with status
+  # 0, as wait2 says.
   class FakeProcess
     PID = 4242
     public_constant(:PID)
@@ -68,6 +75,11 @@ module IsolationStandIns
       @calls << [:detach, pid]
       Waiter.new
     end
+
+    def wait2(pid, *flags)
+      @calls << [:wait2, pid, *flags]
+      [pid, Exit.new(nil, 0)]
+    end
   end
 
   # Spawns nothing, and raises the error that a missing project root makes.
@@ -92,31 +104,18 @@ module IsolationStandIns
     end
   end
 
-  # A launch that starts nothing and hands the run the process +child+ and
-  # the time limit +timer+, as if it had started the process: where each
-  # test of a fresh run whose process runs starts from.
+  # A launch that starts nothing and hands the run the process +child+, the
+  # pipe +output+, and the time limit +timer+, as if it had started the
+  # process: where each test of a fresh run whose process runs starts from.
   class HeldLaunch
-    # The stage of a run whose process the launch "started".
-    class Held < Stryker::Isolation::FreshRun::Stage
-      def initialize(folder, child, timer)
-        super()
-        @folder = folder
-        @child = child
-        @timer = timer
-      end
-
-      def hold(_timeout_ms)
-        Stryker::Isolation::FreshRun::Running.new(@folder, @child, @timer)
-      end
-    end
-
-    def initialize(child, timer)
+    def initialize(child, output, timer)
       @child = child
+      @output = output
       @timer = timer
     end
 
     def call(folder, _run, _recipe)
-      Held.new(folder, @child, @timer)
+      Stryker::Isolation::FreshRun::Running.new(folder, @child, @output, @timer)
     end
   end
 
@@ -186,12 +185,20 @@ module IsolationStandIns
 
   # A fresh run of mutant 7's static run, in +folder+, whose process is
   # +child+, with the time limit +timer+, and the landing that the block
-  # gives.
-  def running_fresh(folder, child, timer, &landing)
+  # gives. Its standard output is +output+, or a pipe that has ended.
+  def running_fresh(folder, child, timer, output: ended_output, &landing)
     landing ||= -> (_messages, _ending) {}
     Stryker::Isolation::FreshRun.new(sample_run(7, static: true), folder, &landing).tap do |fresh|
-      fresh.launch(HeldLaunch.new(child, timer), nil)
+      fresh.launch(HeldLaunch.new(child, output, timer), nil)
     end
+  end
+
+  # The pipe of a process's standard output, which has ended, and whose
+  # bytes go nowhere.
+  def ended_output
+    reader, writer = IO.pipe
+    writer.close
+    Stryker::Isolation::OutputPipe.new(reader, File::NULL)
   end
 
   def sample_test(name = "test_value")

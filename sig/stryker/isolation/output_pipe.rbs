@@ -1,0 +1,76 @@
+module Stryker
+  module Isolation
+    # The read end of the pipe that a fresh process has as its standard
+    # output, and the file in the run's folder that what the process writes
+    # there is copied into. The orchestrator copies as the bytes arrive, so a
+    # process never waits on a full pipe. The pipe ends once nothing holds
+    # its write end: when the process ends, unless it handed its standard
+    # output to a process of its own, or moved it.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # reader, writer = IO.pipe
+    # pipe = Stryker::Isolation::OutputPipe.new(reader, "process.out")
+    # writer.write("..")
+    # writer.close
+    # pipe.copy
+    # pipe.copy
+    # pipe.open?
+    # # => false, and process.out holds ".."
+    # ```
+    class OutputPipe
+      # The most bytes one copy reads: 64 KiB, as much as a new pipe holds on
+      # Linux and macOS, and as Ruby makes each pipe's buffer on Windows, so
+      # one copy after a process ended takes all it wrote.
+      CHUNK: Integer
+
+      # The pipe's read end.
+      @io: IO
+
+      # The file that what the process writes is copied into.
+      @path: String
+
+      # Makes a pipe, yields its write end to the block, which starts the
+      # process with it as standard output, closes the write end, and returns
+      # what the block returns, the process's ID, and the pipe that copies
+      # into the file at `path`. When the block raises, both ends are closed,
+      # and the error reaches the caller.
+      #
+      # - `path`: String, the file to copy into.
+      def self.opened: (String path) { (IO writer) -> Integer } -> [Integer, OutputPipe]
+
+      # Copies what arrives on `io` into the file at `path`, after what the
+      # file holds.
+      #
+      # - `io`: IO, the pipe's read end, in binary mode.
+      # - `path`: String, the file's path.
+      def initialize: (IO io, String path) -> void
+
+      # The pipe's read end, for `IO.select`, while the pipe is open, or nil
+      # once it has ended.
+      def io: () -> IO?
+
+      # Whether the pipe is open: it hasn't ended, and nothing closed it.
+      def open?: () -> bool
+
+      # Copies what the pipe holds, as `copy` does, if it is open and `ready`
+      # holds it, and yields when that read found that the pipe ended.
+      #
+      # - `ready`: Array of IO, the pipes that `IO.select` found readable.
+      def take: (Array[IO] ready) { () -> void } -> nil
+
+      # Reads what the pipe holds now, up to `CHUNK` bytes, without waiting,
+      # and copies it into the file. Closes the pipe once it has ended.
+      # Reads nothing when the pipe is empty.
+      def copy: () -> nil
+
+      # Copies what the pipe holds now, if it is open, and closes it,
+      # waiting for no more.
+      def finish: () -> nil
+
+      # Closes the pipe. Closing it again does nothing.
+      def close: () -> nil
+    end
+  end
+end

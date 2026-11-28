@@ -2,17 +2,17 @@ module Stryker
   module Isolation
     # Starts the fresh process of one run, in the project's folder, with
     # `STRYKER_ACTIVE_MUTANT` set to the run's active mutant, or unset,
-    # before the process starts, its standard input on the null device, and
-    # its standard output and standard error on files in the run's own
-    # folder. Where the system has process groups, the process leads a
-    # group of its own.
+    # before the process starts, its standard input on the null device, its
+    # standard output on a pipe to the orchestrator, and its standard error
+    # on a file in the run's folder. Where the system has process groups, the
+    # process leads a group of its own.
     #
     # ## Examples
     #
     # ```ruby
     # launch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root)
     # launch.call(Stryker::Isolation::FreshFolder.made, run, Stryker::TestRunners::Recipe.new("minitest"))
-    # # => a Stryker::Isolation::FreshRun::Spawned
+    # # => a Stryker::Isolation::FreshRun::Running
     # ```
     class FreshLaunch
       # The cache's directory.
@@ -33,14 +33,21 @@ module Stryker
 
       # Writes `run` into `folder`, starts the run's process with the
       # mutant that the run needs active, and returns the stage of the run
-      # that holds the process by its ID. A system that refuses to start the
-      # process raises, and leaves nothing to end.
+      # that holds the process, its pipe, and the run's time limit, starting
+      # now. A system that refuses to start the process raises, and leaves
+      # nothing to end: the pipe is closed.
       #
       # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
       # - `run`: the run, a Stryker::MutantRun or the dry run.
       # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the
       #   test runner.
-      def call: (FreshFolder folder, forked run, TestRunners::Recipe recipe) -> FreshRun::Spawned
+      def call: (FreshFolder folder, forked run, TestRunners::Recipe recipe) -> FreshRun::Running
+
+      private
+
+      # Starts the process of `run` with the arguments `argv` and the standard
+      # streams `streams`, and returns its ID.
+      def spawn: (forked run, Array[String] argv, Hash[Symbol, String | IO] streams) -> Integer
     end
   end
 end

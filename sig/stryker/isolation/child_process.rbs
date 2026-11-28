@@ -1,0 +1,79 @@
+module Stryker
+  module Isolation
+    # A process that the orchestrator started for a run, which the
+    # orchestrator reaps itself, with `Process.wait2`, and no thread waits
+    # for. It never kills the process once it has been reaped, because the
+    # process's ID may belong to another process from then on.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # child = Stryker::Isolation::ChildProcess.new(Process.spawn("ruby", "-e", "exit!(3)"))
+    # child.running?
+    # # => true, until the process has ended
+    # child.end_now
+    # child.status.exitstatus
+    # # => 3, or nil when the KILL ended it first
+    # ```
+    class ChildProcess
+      # How long a reap with a moment pauses between two asks, in seconds.
+      PAUSE_SECONDS: Float
+
+      # The process's ID.
+      attr_reader pid: Integer
+
+      # `Process`, or a stand-in in a test.
+      @process: singleton(::Process)
+
+      # How the process ended, once it has been reaped.
+      @status: Process::Status?
+
+      # Holds the process `pid`, which hasn't been reaped.
+      #
+      # - `pid`: Integer, the process's ID.
+      # - `process`: `Process`, or a stand-in in a test.
+      def initialize: (Integer pid, ?singleton(::Process) process) -> void
+
+      # Reaps the process if it has ended. With `seconds`, asks again, pausing
+      # 0.1 ms between asks, until the process has been reaped or the
+      # moment is over: a process whose pipe has just ended is ending, and the
+      # system can take a moment more to let it be reaped. Without, asks once,
+      # without waiting.
+      #
+      # - `seconds`: Integer or Float, the moment, 0 by default.
+      def reap: (?(Integer | Float) seconds) -> nil
+
+      # Whether the process has been reaped. Asks the system nothing.
+      def reaped?: () -> bool
+
+      # Whether the process still runs, as the system says now, without
+      # waiting. Reaps it if it has ended.
+      def running?: () -> bool
+
+      # Kills the process and its group, as
+      # `Stryker::Isolation::ProcessGroup.kill` does, if it still runs, and
+      # waits until it has been reaped. A process that has ended is reaped and
+      # left alone.
+      def end_now: () -> nil
+
+      # How the process ended. Waits until it has, when it hasn't been
+      # reaped yet.
+      def status: () -> Process::Status
+
+      # Kills what the process left running in its group, as
+      # `Stryker::Isolation::ProcessGroup.kill_rest` does.
+      def kill_rest: () -> nil
+
+      # Kills the process and its group while it runs, or what an ended
+      # process left running in its group, and waits until the process has
+      # been reaped.
+      def stop: () -> nil
+
+      private
+
+      # Reaps the process if it has ended, asking the system once, without
+      # waiting.
+      def reap_now: () -> nil
+    end
+  end
+end

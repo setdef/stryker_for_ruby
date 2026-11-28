@@ -1,61 +1,93 @@
 module Stryker
   module Isolation
     class FreshRun
-      # A fresh run whose process runs, with its waiter and its time limit.
+      # A fresh run whose process runs, with the pipe of its standard output
+      # and its time limit.
       #
       # ## Examples
       #
       # ```ruby
-      # running = Stryker::Isolation::FreshRun::Running.new(folder, Stryker::Isolation::Child.new(pid), Stryker::Isolation::Timer.new(5000))
-      # running.wait(running.left) until running.done?
+      # running = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(folder, run, recipe)
+      # until running.done?
+      #   ready = IO.select([running.output].compact, nil, nil, running.wake_in)&.first || []
+      #   running.take(ready)
+      # end
       # running.reap
       # # => a Stryker::Isolation::FreshRun::Reaped
       # ```
       class Running < Stage
+        # The longest wait, in seconds, while the run needs a look whatever
+        # its pipe does: while its process has started no test, because the
+        # start of the first test shows only in the results file, so the run's
+        # time limit starts at most this much after its first test does; and
+        # while its pipe has ended and its process hasn't, as when the process
+        # moved its standard output.
+        POLL_SECONDS: Float
+
+        # The longest wait, in seconds, for a process to be reapable once its
+        # pipe has ended: the system can let it be reaped a moment after its
+        # pipe ends, up to 1.1 ms after on macOS, where a third of the
+        # processes measured weren't reapable at once.
+        ENDING_SECONDS: Float
+
         # The run's folder.
         @folder: FreshFolder
 
-        # The process and its waiter.
-        @child: Child
+        # The process.
+        @child: ChildProcess
+
+        # The pipe of the process's standard output.
+        @output: OutputPipe
 
         # The run's time limit.
         @timer: Timer
 
-        # The run whose process `child` writes into `folder`, with its time
-        # limit `timer`.
+        # The run whose process `child` writes into `folder` and to `output`,
+        # with its time limit `timer`.
         #
         # - `folder`: Stryker::Isolation::FreshFolder, the run's folder.
-        # - `child`: Stryker::Isolation::Child, the process.
+        # - `child`: Stryker::Isolation::ChildProcess, the process.
+        # - `output`: Stryker::Isolation::OutputPipe, its standard output.
         # - `timer`: Stryker::Isolation::Timer, the time limit.
-        def initialize: (FreshFolder folder, Child child, Timer timer) -> void
+        def initialize: (FreshFolder folder, ChildProcess child, OutputPipe output, Timer timer) -> void
 
-        # Starts the run's time limit once the results file shows that its
-        # first test started.
-        def check: () -> nil
+        # The pipe's read end while it is open.
+        def output: () -> IO?
 
-        # Whether the run's time limit has started.
-        def testing?: () -> bool
+        # Copies what the process wrote to its standard output, if `ready`
+        # holds the pipe, starts the time limit once the results file shows
+        # that the first test started, and reaps the process once its pipe has
+        # ended, if it has ended too, waiting at most `ENDING_SECONDS` on the
+        # look that finds the pipe ended.
+        def take: (Array[IO] ready) -> nil
 
-        # Whether the process has ended or its time is up.
+        # What is left of the run's time, or at most `POLL_SECONDS` while the
+        # run needs a look whatever its pipe does.
+        def wake_in: () -> Float
+
+        # Whether the process has been reaped, or its time is up.
         def done?: () -> bool
 
-        # Waits at most `seconds` for the process to end, and kills nothing.
-        def wait: (Float seconds) -> nil
-
-        # The seconds left before the time is up, or 0.
-        def left: () -> Float
-
-        # Waits for the process for what is left of its time, kills it and
-        # its group if it still runs then, and returns the stage of the
-        # reaped process, which says whether it ran out of time. When the
-        # wait raises, the process has ended and the error reaches the
-        # caller.
+        # Kills the process and its group if it still runs, reaps it, takes
+        # what is left in its pipe and closes it, and returns the stage of the
+        # reaped process, which says whether the process still ran at its
+        # deadline.
         def reap: () -> Stage
 
         # Kills the process and its group while it runs, or what an ended
-        # process left running in its group, waits until it has ended, and
-        # then deletes the folder, even when ending the process raises.
+        # process left running in its group, reaps it, and then closes the
+        # pipe and deletes the folder, even when ending the process raises.
         def stop: () -> void
+
+        private
+
+        # Starts the run's time limit once the results file shows that its
+        # first test started.
+        def first_test: () -> nil
+
+        # Whether the run needs a look whatever its pipe does, as
+        # `POLL_SECONDS` says.
+        def polled?: () -> bool
       end
     end
   end

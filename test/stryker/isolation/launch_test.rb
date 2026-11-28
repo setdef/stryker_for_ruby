@@ -83,33 +83,33 @@ class LaunchTest < Minitest::Test
     fresh&.stop
   end
 
-  def test_a_fresh_process_runs_in_the_project_with_its_output_in_the_runs_folder
+  def test_a_fresh_process_runs_in_the_project_with_its_errors_in_the_runs_folder_and_its_output_on_a_pipe
     _, run_file, options, fresh = fresh_spawned
 
     assert_equal(
-      [File::NULL, "/project", File.dirname(run_file)],
-      [options[:in], options[:chdir], File.dirname(options[:err])]
+      [File::NULL, "/project", File.dirname(run_file), true],
+      [options[:in], options[:chdir], File.dirname(options[:err]), options[:out].closed?]
     )
   ensure
     fresh&.stop
   end
 
-  # A handle over a process that exited with status 1 before it wrote
-  # anything.
+  # A process that exited with status 1 before it wrote anything.
   class Exited
-    Status = Struct.new(:termsig, :exitstatus)
-    private_constant(:Status)
-
     def initialize
       @running = false
     end
 
-    def end_within(_seconds)
+    def running?
       @running
     end
 
+    def end_now
+      nil
+    end
+
     def status
-      Status.new(nil, 1)
+      IsolationStandIns::Exit.new(nil, 1)
     end
 
     def kill_rest
