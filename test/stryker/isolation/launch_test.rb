@@ -2,6 +2,7 @@
 
 require_relative("../../support/isolation_stand_ins")
 require "stryker/isolation"
+require "stryker/test_runners/recipe"
 require "tmpdir"
 
 # How the orchestrator starts its project processes, with a stand-in for
@@ -9,6 +10,9 @@ require "tmpdir"
 # static mutant's run.
 class LaunchTest < Minitest::Test
   include IsolationStandIns
+
+  RECIPE = Stryker::TestRunners::Recipe.new("minitest")
+  private_constant(:RECIPE)
 
   def setup
     super
@@ -23,11 +27,11 @@ class LaunchTest < Minitest::Test
   end
 
   def test_the_parent_starts_with_no_mutant_active_and_its_results_on_a_descriptor_of_their_own
-    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call("minitest")
+    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call(RECIPE)
     environment, argv, = spawned
 
     assert_equal({ Stryker::Isolation::Command::ACTIVE_MUTANT => nil }, environment)
-    assert_equal(%w[fork-parent /cache minitest], argv.last(5).first(3))
+    assert_equal(%w[fork-parent /cache minitest {}], argv.last(6).first(4))
     assert_match(/\A\d+\z/, argv[-2])
   ensure
     parent&.stop
@@ -36,7 +40,7 @@ class LaunchTest < Minitest::Test
   # Launches the parent with the stand-in, and returns what it was asked to
   # spawn with, and the parent.
   def parent_spawned
-    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call("minitest")
+    parent = Stryker::Isolation::ParentLaunch.new("/cache", "/project", @process).call(RECIPE)
     [*spawned, parent]
   end
 
@@ -65,7 +69,7 @@ class LaunchTest < Minitest::Test
   # returns what it was asked to spawn with, the run's file, and the watch.
   def fresh_spawned
     fresh = Stryker::Isolation::FreshRun.judged(sample_run(7, static: true)) { nil }
-    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(fresh, "minitest")
+    watch = Stryker::Isolation::FreshLaunch.new("/cache", "/project", @process).call(fresh, RECIPE)
     environment, argv, options = spawned
     [environment, argv[-2], options, watch]
   end

@@ -1,0 +1,52 @@
+module Stryker
+  module Isolation
+    # The words that the orchestrator gives a project process on its command
+    # line, in the order that `Stryker::Isolation::Command.for` writes them:
+    # the mode, the cache's directory, the two words of the test runner's
+    # recipe, and the words that the mode needs.
+    #
+    # ## Examples
+    #
+    # ```ruby
+    # argv = ["fresh", cache_directory, "minitest", '{"files":["test/**/*_test.rb"]}', "7.run", "7.results"]
+    # words = Stryker::Isolation::ProcessWords.take(argv)
+    # argv
+    # # => []
+    # words.build(Stryker::Isolation::ProjectProcess::MODES, Dir.pwd).call
+    # # runs mutant 7's run, with a test runner built with files: ["test/**/*_test.rb"]
+    # ```
+    class ProcessWords
+      # The cache's directory, or nil when the command line has no words.
+      attr_reader directory: String?
+
+      # The name of the mode.
+      @mode: String?
+
+      # How to build the test runner.
+      @recipe: TestRunners::Recipe
+
+      # The words that the mode needs.
+      @details: Array[String]
+
+      # Takes every word out of `argv`, so none is left for the project's
+      # code to read, and reads them. Raises `JSON::ParserError` when the
+      # test runner's options aren't JSON.
+      #
+      # - `argv`: Array of String, `ARGV` in a project process.
+      def self.take: (Array[String] argv) -> ProcessWords
+
+      # Reads the words.
+      #
+      # - `words`: Array of String, the command line's words.
+      def initialize: (Array[String] words) -> void
+
+      # Builds the mode, with the test runner built in `root` from the
+      # recipe, and the mode's own words. Raises ArgumentError for a mode
+      # that `modes` lacks, and for a test runner that no adapter has.
+      #
+      # - `modes`: Hash, the modes by name.
+      # - `root`: String, the project's root.
+      def build: (Hash[String, singleton(ForkParent) | singleton(FreshProcess)] modes, String root) -> (ForkParent | FreshProcess)
+    end
+  end
+end

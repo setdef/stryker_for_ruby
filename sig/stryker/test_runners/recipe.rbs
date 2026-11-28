@@ -1,0 +1,59 @@
+module Stryker
+  module TestRunners
+    # How to build a test runner adapter in a project process: the adapter's
+    # name, from the `testRunner` option, and the keywords for its
+    # constructor. The orchestrator gives a project process a recipe as two
+    # words on its command line, the name and the keywords as one JSON object,
+    # and the process reads them with the standard library's `json`, which
+    # keeps the process free of anything else.
+    #
+    # ## Examples
+    #
+    # The recipe of a Minitest adapter that loads the project's plugins' tests
+    # too:
+    #
+    # ```ruby
+    # recipe = Stryker::TestRunners::Recipe.new("minitest", { files: ["test/**/*_test.rb", "plugins/*/test/*_test.rb"] })
+    # recipe.words
+    # # => ["minitest", "{\"files\":[\"test/**/*_test.rb\",\"plugins/*/test/*_test.rb\"]}"]
+    # Stryker::TestRunners::Recipe.from_words(*recipe.words) == recipe
+    # # => true
+    # ```
+    class Recipe < Data
+      # The adapter's name, such as `"minitest"`.
+      attr_reader name: String
+
+      # The keywords for the adapter's constructor, after the project's root.
+      attr_reader options: Hash[Symbol, Array[String]]
+
+      # Reads a recipe from the two words that `words` gives. Raises
+      # `JSON::ParserError` when `options` isn't JSON, which includes nil.
+      #
+      # - `name`: String, the adapter's name.
+      # - `options`: String, a JSON object of the adapter's keywords.
+      def self.from_words: (String? name, String? options) -> Recipe
+
+      # Builds the recipe.
+      #
+      # - `name`: String, the adapter's name.
+      # - `options`: Hash of Symbol to Array of String, the adapter's
+      #   keywords. By default, none.
+      def self.new: (String name, ?Hash[Symbol, Array[String]] options) -> instance
+                  | (name: String, ?options: Hash[Symbol, Array[String]]) -> instance
+
+      # Fills in no options when the recipe has none.
+      def initialize: (name: String, ?options: Hash[Symbol, Array[String]]) -> void
+
+      # The two words that cross to a project process: the name, and the
+      # options as one JSON object, `"{}"` for none.
+      def words: () -> Array[String]
+
+      # Builds the adapter in `root`, with the options as its keywords. Raises
+      # ArgumentError when `runners` has no adapter of this name.
+      #
+      # - `runners`: Hash, the adapters by name.
+      # - `root`: String, the project's root.
+      def build: (Hash[String, singleton(MinitestRunner)] runners, String root) -> MinitestRunner
+    end
+  end
+end

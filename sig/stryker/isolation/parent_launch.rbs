@@ -11,7 +11,7 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # parent = Stryker::Isolation::ParentLaunch.new(cache_directory, project_root).call("minitest")
+    # parent = Stryker::Isolation::ParentLaunch.new(cache_directory, project_root).call(Stryker::TestRunners::Recipe.new("minitest"))
     # parent.receive
     # # => {"ready" => true}
     # ```
@@ -36,16 +36,17 @@ module Stryker
       # it. When the start raises, the folder and the pipes are gone, and the
       # error reaches the caller.
       #
-      # - `runner`: String, the test runner's name, from the `testRunner`
-      #   option.
-      def call: (String runner) -> ParentProcess
+      # - `recipe`: Stryker::TestRunners::Recipe, how the parent builds the
+      #   test runner: its name, from the `testRunner` option, and its
+      #   options.
+      def call: (TestRunners::Recipe recipe) -> ParentProcess
 
       private
 
-      # Spawns the parent with the test runner `runner`, its output in the
+      # Spawns the parent with the test runner of `recipe`, its output in the
       # folder of `site`, and the results pipe of `site`, and returns the
       # parent's process ID.
-      def spawn: (String runner, LaunchSite site) -> Integer
+      def spawn: (TestRunners::Recipe recipe, LaunchSite site) -> Integer
 
       # The options of `Process.spawn`: the redirections of `site`, the
       # project's root as the folder, and a group of its own where the system

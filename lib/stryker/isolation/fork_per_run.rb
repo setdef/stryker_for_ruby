@@ -24,7 +24,7 @@ module Stryker
         StopOnRaise.around(self) do
           # A signal waits until the adapter holds the parent it launched, so
           # that stop reaches the parent however the start ends.
-          parent = Thread.handle_interrupt(Object => :never) { hold(@launch.call(config.test_runner), config) }
+          parent = Thread.handle_interrupt(Object => :never) { hold(@launch.call(config.test_runner_recipe), config) }
           parent.await_ready
         end
       end

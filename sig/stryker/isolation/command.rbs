@@ -6,7 +6,7 @@ module Stryker
     # ## Examples
     #
     # ```ruby
-    # argv = Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "7.run", "7.results")
+    # argv = Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "{}", "7.run", "7.results")
     # Process.spawn(Stryker::Isolation::Command.environment(7), *argv)
     # ```
     module Command
@@ -26,8 +26,8 @@ module Stryker
       # entry point, `--`, and `arguments`. Ruby's own options end at `--`,
       # so the rest reach `ARGV`, which the entry point empties.
       #
-      # - `arguments`: String, the mode, the cache's directory, the test
-      #   runner's name, and what the mode needs.
+      # - `arguments`: String, the mode, the cache's directory, the two words
+      #   of the test runner's recipe, and what the mode needs.
       def self.for: (*String arguments) -> Array[String]
 
       # The environment that a project process starts with, over the

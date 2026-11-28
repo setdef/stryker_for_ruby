@@ -15,13 +15,13 @@ module Stryker
         @process = process
       end
 
-      def call(fresh, runner)
-        FreshWatch.new(fresh, Child.new(spawn(fresh, runner), @process), Timer.new(fresh.run.timeout_ms))
+      def call(fresh, recipe)
+        FreshWatch.new(fresh, Child.new(spawn(fresh, recipe), @process), Timer.new(fresh.run.timeout_ms))
       end
 
-      private def spawn(fresh, runner)
+      private def spawn(fresh, recipe)
         input, results = fresh.paths
-        argv = Command.for("fresh", @directory, runner, input, results)
+        argv = Command.for("fresh", @directory, *recipe.words, input, results)
         options = { chdir: @root, **fresh.output_options, **ProcessGroup::SYSTEM.spawn_options }
         # The mutant is active before the process starts, so its switch takes
         # the mutated branch while its file loads.

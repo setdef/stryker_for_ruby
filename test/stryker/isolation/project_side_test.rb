@@ -72,7 +72,7 @@ class ProjectSideTest < Minitest::Test
   end
 
   def test_the_entry_point_empties_argv_installs_the_loader_and_runs_its_mode
-    argv = %w[fresh /cache minitest 0.run 0.results]
+    argv = %w[fresh /cache minitest {} 0.run 0.results]
     loader = Loader.new
 
     assert_equal(
@@ -83,8 +83,8 @@ class ProjectSideTest < Minitest::Test
   end
 
   def test_the_entry_point_refuses_a_mode_or_a_test_runner_it_does_not_know
-    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[pool /cache minitest], Loader.new) }
-    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[fresh /cache rspec], Loader.new) }
+    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[pool /cache minitest {}], Loader.new) }
+    assert_raises(ArgumentError) { Stryker::Isolation::ProjectProcess.main(%w[fresh /cache rspec {}], Loader.new) }
   end
 
   def test_the_modes_build_from_their_arguments

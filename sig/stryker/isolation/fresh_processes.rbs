@@ -97,8 +97,8 @@ module Stryker
       def fly: [R] (Array[R] runs) { (R run) -> FreshRun } -> void
 
       # What starts the process of the fresh run that `fresh` gives for a
-      # run, with the test runner named `runner`.
-      def launcher: [R] (String runner, ^(R run) -> FreshRun fresh) -> ^(R run) -> FreshWatch
+      # run, with the test runner that `recipe` describes.
+      def launcher: [R] (TestRunners::Recipe recipe, ^(R run) -> FreshRun fresh) -> ^(R run) -> FreshWatch
     end
   end
 end

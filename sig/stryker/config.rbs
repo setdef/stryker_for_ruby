@@ -112,6 +112,10 @@ module Stryker
     # default, none.
     attr_reader given: Array[Symbol]
 
+    # How a project process builds the test runner for this config: the
+    # test runner's name, and no options.
+    def test_runner_recipe: () -> TestRunners::Recipe
+
     # The number of project processes to run at once when no option says: the
     # number of logical processors, less one when there are more than four,
     # which is StrykerJS's rule. A machine with 1 to 4 processors gets that

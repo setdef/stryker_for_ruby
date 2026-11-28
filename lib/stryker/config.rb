@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "etc"
+require_relative "test_runners/recipe"
 
 module Stryker
   class Config < Data.define(
@@ -56,6 +57,10 @@ module Stryker
     def initialize(**options)
       defaults = DEFAULTS.merge(concurrency: self.class.default_concurrency, given: NONE_GIVEN)
       super(**defaults.merge(options))
+    end
+
+    def test_runner_recipe
+      TestRunners::Recipe.new(test_runner)
     end
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break

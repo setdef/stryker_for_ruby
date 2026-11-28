@@ -3,6 +3,7 @@
 require_relative("../../support/isolation_stand_ins")
 require "minitest/mock"
 require "stryker/isolation"
+require "stryker/test_runners/recipe"
 require "tmpdir"
 
 # What the launch of the fork parent leaves behind when the system refuses to
@@ -41,7 +42,7 @@ class ParentLaunchTest < Minitest::Test
   def launch
     refusing = Stryker::Isolation::ParentLaunch.new("/cache", "/nonexistent-root", RefusingProcess.new)
 
-    assert_raises(Errno::ENOENT) { refusing.call("minitest") }
+    assert_raises(Errno::ENOENT) { refusing.call(Stryker::TestRunners::Recipe.new("minitest")) }
   end
 
   def test_a_launch_that_fails_leaves_no_folder

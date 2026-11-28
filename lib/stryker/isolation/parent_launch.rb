@@ -15,13 +15,13 @@ module Stryker
         @process = process
       end
 
-      def call(runner)
-        LaunchSite.new.launch { |site| Child.new(spawn(runner, site), @process) }
+      def call(recipe)
+        LaunchSite.new.launch { |site| Child.new(spawn(recipe, site), @process) }
       end
 
-      private def spawn(runner, site)
+      private def spawn(recipe, site)
         # The results go on a pipe of their own, never on standard output.
-        argv = Command.for("fork-parent", @directory, runner, site.descriptor, site.folder)
+        argv = Command.for("fork-parent", @directory, *recipe.words, site.descriptor, site.folder)
         @process.spawn(Command.environment, *argv, options(site))
       end
 

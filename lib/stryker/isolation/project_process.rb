@@ -6,6 +6,7 @@ require_relative "../runtime"
 require_relative "../test_runners"
 require_relative "fork_parent"
 require_relative "fresh_process"
+require_relative "process_words"
 
 module Stryker
   module Isolation
@@ -16,11 +17,9 @@ module Stryker
       def self.main(argv = ARGV, loader = Runtime::Loader, modes = MODES)
         # Every argument leaves ARGV before the project's code loads, so
         # Minitest, which parses ARGV as its options, never sees one.
-        mode, directory, runner, *details = argv.shift(argv.size)
-        loader.install(directory.to_s)
-        build = modes[mode] or raise(ArgumentError, "No project process has the mode #{mode.inspect}.")
-        test_runner = TestRunners::BY_NAME[runner] or raise(ArgumentError, "No test runner is named #{runner.inspect}.")
-        build.build(test_runner.new(Dir.pwd), details).call
+        words = ProcessWords.take(argv)
+        loader.install(words.directory.to_s)
+        words.build(modes, Dir.pwd).call
       end
     end
   end

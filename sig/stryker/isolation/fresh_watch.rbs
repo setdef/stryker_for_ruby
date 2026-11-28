@@ -9,7 +9,7 @@ module Stryker
     #
     # ```ruby
     # fresh = Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }
-    # watch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(fresh, "minitest")
+    # watch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root).call(fresh, Stryker::TestRunners::Recipe.new("minitest"))
     # watch.finish
     # # prints Survived
     # ```

@@ -7,7 +7,8 @@ module Stryker
     # arguments: the running Ruby, `-r` with the path of this file, `-e`
     # with `Stryker::Isolation::ProjectProcess.main`, `--`, and then the
     # arguments for the process itself: its mode, the cache's directory, the
-    # test runner's name, and what the mode needs.
+    # test runner's name, the test runner's options as one word of JSON, and
+    # what the mode needs.
     #
     # Requiring this file starts the runtime first, so the mutant whose ID
     # `STRYKER_ACTIVE_MUTANT` holds is active before any of the project's
@@ -18,10 +19,10 @@ module Stryker
     # The arguments of a fresh process for mutant 7's run:
     #
     # ```ruby
-    # Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "7.run", "7.results")
+    # Stryker::Isolation::Command.for("fresh", cache_directory, "minitest", "{}", "7.run", "7.results")
     # # => [RbConfig.ruby, "-r", ".../stryker/isolation/project_process.rb",
     # #     "-e", "Stryker::Isolation::ProjectProcess.main", "--",
-    # #     "fresh", cache_directory, "minitest", "7.run", "7.results"]
+    # #     "fresh", cache_directory, "minitest", "{}", "7.run", "7.results"]
     # ```
     module ProjectProcess
       # What a project process does, by the name of its mode:
@@ -33,7 +34,8 @@ module Stryker
       # `argv` before the project's code loads, so Minitest, which parses
       # `ARGV` as its options, sees none. It installs the loader from the
       # cache, builds the test runner adapter for the project in the
-      # current folder, and runs the mode, which ends the process. Raises
+      # current folder, with the options that the JSON word holds as its
+      # keywords, and runs the mode, which ends the process. Raises
       # ArgumentError for a mode or a test runner it doesn't know.
       #
       # - `argv`: Array of String, `ARGV` by default.

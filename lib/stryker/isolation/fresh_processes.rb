@@ -44,12 +44,12 @@ module Stryker
 
       private def fly(runs, &fresh)
         config = @config or raise(Error, UNSTARTED)
-        launching = launcher(config.test_runner, fresh)
+        launching = launcher(config.test_runner_recipe, fresh)
         StopOnRaise.around(self) { @running.run(runs, config.concurrency, &launching) }
       end
 
-      private def launcher(runner, fresh)
-        -> (run) { @launch.call(fresh.call(run), runner) }
+      private def launcher(recipe, fresh)
+        -> (run) { @launch.call(fresh.call(run), recipe) }
       end
     end
   end

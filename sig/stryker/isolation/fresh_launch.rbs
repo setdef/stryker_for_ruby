@@ -11,7 +11,7 @@ module Stryker
     #
     # ```ruby
     # launch = Stryker::Isolation::FreshLaunch.new(cache_directory, project_root)
-    # watch = launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, "minitest")
+    # watch = launch.call(Stryker::Isolation::FreshRun.judged(run) { |result| puts(result.status) }, Stryker::TestRunners::Recipe.new("minitest"))
     # ```
     class FreshLaunch
       # The cache's directory.
@@ -35,13 +35,15 @@ module Stryker
       # starting now.
       #
       # - `fresh`: Stryker::Isolation::FreshRun, the run.
-      # - `runner`: String, the test runner's name.
-      def call: (FreshRun fresh, String runner) -> FreshWatch
+      # - `recipe`: Stryker::TestRunners::Recipe, how the process builds the
+      #   test runner.
+      def call: (FreshRun fresh, TestRunners::Recipe recipe) -> FreshWatch
 
       private
 
-      # Spawns the process of `fresh`, and returns its process ID.
-      def spawn: (FreshRun fresh, String runner) -> Integer
+      # Spawns the process of `fresh` with the test runner of `recipe`, and
+      # returns its process ID.
+      def spawn: (FreshRun fresh, TestRunners::Recipe recipe) -> Integer
     end
   end
 end
