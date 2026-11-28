@@ -40,7 +40,9 @@ module Stryker
       # - `separator`: String or nil, the system's alternative path
       #   separator, `File::ALT_SEPARATOR` by default. When it isn't nil,
       #   each frame's path is normalized with
-      #   `Stryker::Runtime::PathKey.of`.
+      #   `Stryker::Runtime::PathKey.of`. A path that Ruby tags with any
+      #   encoding but UTF-8, as it does under the C locale, is tagged UTF-8
+      #   whatever `separator` is, as the paths of `paths` are.
       def self.loading?: (Set[String] paths, ?String? separator) -> bool
 
       TOP_LEVEL_LABELS: Set[String]

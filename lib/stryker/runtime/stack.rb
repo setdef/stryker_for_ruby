@@ -14,10 +14,12 @@ module Stryker
         # because reading the label first costs about three times as much on
         # Ruby 3.4 and 4.0. The label counts as well as the path because a
         # method that the file defines, and a C method such as Array#each
-        # that one of them calls, report the file's path too.
+        # that one of them calls, report the file's path too. The path is
+        # tagged as the keys are, because under the C locale Ruby tags it
+        # US-ASCII, and a Hash finds a key only in the same encoding.
         Thread.each_caller_location do |location|
           path = location.absolute_path
-          path = PathKey.of(path, separator) if separator && path
+          path = PathKey.of(path, separator) if path && (separator || path.encoding != Encoding::UTF_8)
           return true if paths.include?(path) && TOP_LEVEL_LABELS.include?(location.label)
         end
         false
