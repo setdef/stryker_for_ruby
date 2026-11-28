@@ -34,6 +34,13 @@ module Stryker
       # a value it doesn't take.
       def parse: (Array[String] words) -> Array[String]
 
+      # Returns whether any of the words asks for help: a word that is `-h` or
+      # `--help`, or a bundle that starts with `-h`, such as `-hv`, wherever
+      # the word stands among the others and whatever else is wrong with the
+      # words. A flag that is given a value it doesn't take, such as
+      # `-h=VALUE`, doesn't ask.
+      def help?: (Array[String] words) -> bool
+
       # Returns the lines that list the flags, each with its value and a
       # summary.
       def help: () -> String

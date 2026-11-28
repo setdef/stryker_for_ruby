@@ -4,16 +4,35 @@ module Stryker
     # `--version`, and none takes a value. It has no `--*-completion-bash`
     # and no `--*-completion-zsh`, which OptionParser adds to every parser, so
     # a word that names one is an unknown flag. Stryker::CLI::RunCommand
-    # answers `--help` and `--version` before the parser reads the words.
+    # answers `--version` before the parser reads the words, and `--help`
+    # when a word asks for it, as `asks_for_help?` says.
     class FlagParser < OptionParser
-      # The OptionParser built-ins that the parser keeps, `help` and
-      # `version`, each by its long name and its short name or nil, so that
-      # `-h=VALUE`, `--help=VALUE`, and `--version=VALUE` are refused as flags
-      # that take no value. Private.
-      BUILT_INS_THAT_TAKE_NO_VALUE: Hash[Symbol, String?]
+      @asked_for_help: bool
+
+      # Returns the word, or its bytes when it isn't valid in its encoding,
+      # which OptionParser can match.
+      def self.matchable: (String word) -> String
+
+      # Builds the parser with no help asked for.
+      def initialize: () -> void
+
+      # Reads the words as OptionParser#parse does, and returns the words that
+      # aren't flags. A word that isn't valid in its encoding is read as its
+      # bytes, which OptionParser can match.
+      def read: (Array[String] words) -> Array[String]
+
+      # Returns whether the word holds a `-h` or `--help` that the parser
+      # reads, alone or at the start of a bundle such as `-hv`, whatever else
+      # is wrong with the word. A word such as `-h=VALUE`, which gives `-h` a
+      # value, doesn't ask for help.
+      def asks_for_help?: (String word) -> bool
 
       # Adds `-h`, `--help`, and `--version`, as flags that take no value.
       def add_officious: () -> void
+
+      # Registers the built-in under its long name and its short name when it
+      # has one.
+      private def keep: (OptionParser::Switch switch, String long, ?String? short) -> void
     end
   end
 end

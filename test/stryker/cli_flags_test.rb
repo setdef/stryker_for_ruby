@@ -33,6 +33,16 @@ class CLIFlagsTest < Minitest::Test
     end
   end
 
+  def test_help_anywhere_on_the_command_line_lists_the_flags_even_bundled_or_after_a_mistake
+    [%w[-hh], %w[-hv], %w[--mutate x -hh], %w[--bogus -h], %w[--test-runner -h], %w[-h x]].each do |words|
+      argv = ["run", *words]
+      outcome = stryker(*argv)
+
+      assert_equal([0, ""], [outcome.status, outcome.err], argv.inspect)
+      assert_includes(outcome.out, "Usage: stryker run [options] [configFile]", argv.inspect)
+    end
+  end
+
   def test_help_says_that_an_excluded_mutators_mutants_show_as_ignored
     help = stryker("run", "--help").out
 

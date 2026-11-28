@@ -33,7 +33,7 @@ module Stryker
       end
 
       private def information(words)
-        return help if words.intersect?(%w[-h --help])
+        return help if @flags.help?(words)
 
         # OptionParser's own --version aborts, which would end the command
         # with the status of an abort and no version.

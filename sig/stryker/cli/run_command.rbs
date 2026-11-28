@@ -19,9 +19,9 @@ module Stryker
       def initialize: (run: Run, streams: Streams, information: Information) -> void
 
       # Runs `stryker run` with the words after `run` and returns the exit
-      # status. With `-h` or `--help` among them, it writes the help to
-      # standard output and runs nothing, and with `--version` among them
-      # and no `-h` or `--help`, it writes the version to standard output and
+      # status. With `-h` or `--help` among them, alone or at the start of a
+      # bundle such as `-hv`, it writes the help to standard output and runs
+      # nothing, and with `--version` among them and no such word, it writes the version to standard output and
       # runs nothing. A flag that doesn't exist, that
       # lacks its value, or that is given a value it doesn't take, and a
       # second configuration file, are errors with status 2.

@@ -37,8 +37,8 @@ The `stryker` command takes these words:
 | - | - |
 | `stryker run [configFile]` | Checks the configuration, then runs mutation testing. |
 | `stryker help [command]` | Writes the overview of the commands, or the help of one command, to standard output. |
-| `stryker -h`, `stryker --help` | The same as `stryker help`. After `run`, `-h` or `--help` writes the help of `stryker run` and does nothing else. |
-| `stryker --version` | Writes the version to standard output. After `run`, `--version` writes the version and does nothing else, unless the words hold `-h` or `--help`, which write the help instead. |
+| `stryker -h`, `stryker --help` | The same as `stryker help`. After `run`, a word that is `-h` or `--help`, or a bundle that starts with `-h` such as `-hv`, writes the help of `stryker run` and does nothing else, wherever it stands among the words and whatever else is wrong with them. |
+| `stryker --version` | Writes the version to standard output. After `run`, `--version` writes the version and does nothing else, unless the words hold `-h`, `--help`, or a bundle that starts with `-h`, which write the help instead. |
 | `stryker` with no words | Writes the overview to standard error, and exits with status 2. |
 
 There is no `-v`, because other tools use it for both "verbose" and "version". A command that doesn't exist is an error that suggests the nearest command and exits with status 2:
@@ -84,7 +84,7 @@ Unknown flag --test-runnr. Did you mean --test-runner? Run "stryker help run" fo
 The flag --test-runner needs a value. Run "stryker help run" for the flags.
 ```
 
-`stryker run` has the flags that this page lists, and `-h`, `--help`, and `--version`. Any other flag is an unknown flag with status 2, even one that the Ruby library OptionParser gives every program, such as `--*-completion-bash=--`. `-h`, `--help`, and `--version` take no value, so `--version=1` is an error, as `--help=1` is:
+`stryker run` has the flags that this page lists, and `-h`, `--help`, and `--version`. Any other flag is an unknown flag with status 2, even one that the Ruby library OptionParser gives every program, such as `--*-completion-bash=--`. `-h`, `--help`, and `--version` take no value, so `--version=1` is an error, as `--help=1` and `-h=1` are:
 
 ```text
 The flag --version takes no value. Run "stryker help run" for the flags.
