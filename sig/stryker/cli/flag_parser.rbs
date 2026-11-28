@@ -1,0 +1,16 @@
+module Stryker
+  class CLI
+    # An OptionParser whose only flags of its own are `--help` and
+    # `--version`, and neither takes a value. It has no `--*-completion-bash`
+    # and no `--*-completion-zsh`, which OptionParser adds to every parser, so
+    # a word that names one is an unknown flag. Stryker::CLI::RunCommand
+    # answers `--help` and `--version` before the parser reads the words.
+    class FlagParser < OptionParser
+      # The names of the flags that the parser has of its own. Private.
+      BUILT_IN: Array[String]
+
+      # Adds `--help` and `--version`, as flags that take no value.
+      def add_officious: () -> void
+    end
+  end
+end

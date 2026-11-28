@@ -3,6 +3,7 @@
 require "did_you_mean"
 require "optparse"
 require_relative("flag")
+require_relative("flag_parser")
 
 module Stryker
   class CLI
@@ -31,7 +32,7 @@ module Stryker
         @options = {}
         @no_color = false
         @spellings = FLAGS.flat_map(&:spellings)
-        @parser = OptionParser.new
+        @parser = FlagParser.new
         @parser.require_exact = true
         @parser.banner = ""
         FLAGS.each { |flag| flag.register(@parser, @options) }

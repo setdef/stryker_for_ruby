@@ -16,7 +16,7 @@ module Stryker
       @options: Hash[String, Object?]
       @no_color: bool
       @spellings: Array[String]
-      @parser: OptionParser
+      @parser: FlagParser
 
       # The options the last `parse` read, keyed by option name such as
       # `"thresholds.break"`.

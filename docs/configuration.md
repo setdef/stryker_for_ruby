@@ -84,6 +84,12 @@ Unknown flag --test-runnr. Did you mean --test-runner? Run "stryker help run" fo
 The flag --test-runner needs a value. Run "stryker help run" for the flags.
 ```
 
+`stryker run` has the flags that this page lists, and `-h`, `--help`, and `--version`. Any other flag is an unknown flag with status 2, even one that the Ruby library OptionParser gives every program, such as `--*-completion-bash=--`. `-h`, `--help`, and `--version` take no value, so `--version=1` is an error, as `--help=1` is:
+
+```text
+The flag --version takes no value. Run "stryker help run" for the flags.
+```
+
 `stryker run` takes at most one configuration file.
 
 #### Exit statuses
