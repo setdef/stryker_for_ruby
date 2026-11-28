@@ -370,7 +370,7 @@ With `true`, the run ends after the dry run, as StrykerJS's does, with status 0.
 The dry run found no test, so, as allowEmpty is true, no mutant was tested and no report was written.
 ```
 
-StrykerJS logs `No tests were found` and then `Done in` and the elapsed time. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of passing it.
+Set `allowEmpty` to `true` for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of passing it.
 
 The same option in a configuration file and as a flag:
 
