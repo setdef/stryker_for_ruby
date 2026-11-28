@@ -47,9 +47,10 @@ module Stryker
     # Runs the words of a command line, without the program's name, and
     # returns the exit status: 0 when it did what was asked, and 2 for a
     # command line that names no command or an unknown one. `run` returns the
-    # statuses that Stryker::CLI::RunCommand lists. Any exception that ends
-    # a command, other than a signal, is a bug that ends it with status 2, as
-    # Stryker::CLI::Failures describes. It flushes standard output before it
+    # statuses that Stryker::CLI::RunCommand lists. Any exception of a class
+    # that Ruby defines that ends a command, other than a signal or an exit,
+    # is a bug that ends it with status 2, as Stryker::CLI::Failures
+    # describes. It flushes standard output before it
     # returns, so a reader that has gone shows in the status.
     #
     # - `argv`: Array of String, the words after `stryker`.

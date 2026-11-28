@@ -3,7 +3,7 @@
 require_relative("../support/cli_project")
 
 # Checks that a crash ends the command with status 2 and the bug report,
-# whatever the class of the exception, and on every path of the command.
+# whichever class Ruby defines the exception has, and on every path of the command.
 class CLICrashTest < Minitest::Test
   include CLIProject
 
