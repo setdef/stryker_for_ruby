@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../test_result"
+require_relative "scrubbing_filter"
 
 module Stryker
   module TestRunners
@@ -27,7 +28,9 @@ module Stryker
 
         def record(result)
           code = result.result_code
-          @failures << result.to_s unless [PASSED, SKIPPED].include?(code)
+          # Minitest matches each line of a backtrace with a regexp, and raises
+          # for a line with the path of a file whose name isn't valid UTF-8.
+          @failures << ScrubbingFilter.around { result.to_s } unless [PASSED, SKIPPED].include?(code)
           @code = code if result.name == @name
           nil
         end

@@ -11,7 +11,9 @@ module Stryker
 
         def initialize(setting, root)
           @setting = setting
-          @root = File.expand_path(root)
+          # As bytes, because a pattern that isn't valid UTF-8 and a root with
+          # a letter outside ASCII make File.absolute_path raise otherwise.
+          @root = File.expand_path(root).b
         end
 
         def to_a
@@ -24,7 +26,7 @@ module Stryker
         end
 
         private def outside?(pattern)
-          path = File.absolute_path(pattern.delete_prefix(LEAVE_OUT.fetch(@setting.name.to_sym, "")), @root)
+          path = File.absolute_path(pattern.b.delete_prefix(LEAVE_OUT.fetch(@setting.name.to_sym, "")), @root)
           path != @root && !path.start_with?(File.join(@root, ""))
         end
       end

@@ -1,0 +1,25 @@
+module Stryker
+  # Tags the bytes of a file's name, which Linux lets hold any bytes, so that
+  # the name is a string every operation of Ruby accepts. A name that is valid
+  # UTF-8 is a UTF-8 string, as it is anywhere else. A name that isn't is
+  # binary, because a UTF-8 string with a byte that isn't UTF-8 makes
+  # `Pathname`, `String#split`, `String#downcase`, and a JSON generator raise
+  # `ArgumentError`, and a binary string with a byte beyond ASCII raises
+  # `Encoding::CompatibilityError` when it meets a UTF-8 string that has one.
+  #
+  # ## Examples
+  #
+  # ```ruby
+  # Stryker::FileName.of("lib/caf\xC3\xA9.rb".b).encoding
+  # # => #<Encoding:UTF-8>
+  # Stryker::FileName.of("lib/caf\xE9.rb").encoding
+  # # => #<Encoding:BINARY (ASCII-8BIT)>
+  # ```
+  module FileName
+    # The name made of `bytes`, tagged UTF-8 when its bytes are valid UTF-8
+    # and binary when they aren't. The argument keeps its own tag.
+    #
+    # - `bytes`: String, the bytes of a file's name, in any encoding.
+    def self.of: (String bytes) -> String
+  end
+end

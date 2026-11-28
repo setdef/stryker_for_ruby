@@ -1,0 +1,37 @@
+module Stryker
+  module TestRunners
+    class MinitestRunner
+      # A backtrace filter for Minitest that scrubs each line of a backtrace
+      # before the filter it wraps reads it. Minitest matches each line with
+      # a regexp, which raises `ArgumentError` for a line that isn't valid
+      # UTF-8, as the line of a file whose name isn't valid UTF-8 is.
+      #
+      # ## Examples
+      #
+      # ```ruby
+      # filter = Stryker::TestRunners::MinitestRunner::ScrubbingFilter.new(Minitest.backtrace_filter)
+      # filter.filter(["test/caf\xE9_test.rb:3:in 'test_a'"])
+      # # => ["test/caf\uFFFD_test.rb:3:in 'test_a'"]
+      # ```
+      class ScrubbingFilter
+        @filter: ::Minitest::BacktraceFilter
+
+        # Gives the block Minitest's backtrace filter wrapped in a
+        # `ScrubbingFilter`, puts the filter back afterwards, even when the
+        # block raises, and returns what the block returns.
+        def self.around: [T] () { () -> T } -> T
+
+        # Builds the filter.
+        #
+        # - `filter`: the filter that reads the scrubbed lines, as
+        #   `Minitest.backtrace_filter` is.
+        def initialize: (::Minitest::BacktraceFilter filter) -> void
+
+        # What the wrapped filter keeps of the lines, scrubbed.
+        #
+        # - `lines`: Array of String, the lines of a backtrace.
+        def filter: (Array[String] lines) -> Array[String]
+      end
+    end
+  end
+end

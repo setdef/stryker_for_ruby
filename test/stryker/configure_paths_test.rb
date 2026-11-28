@@ -88,4 +88,28 @@ class ConfigurePathsTest < Minitest::Test
   def test_a_nul_byte_in_a_leave_out_pattern_is_refused_too
     assert_match(/which holds a NUL byte/, refusal({}, options: { mutate: ["!a\0b"] }))
   end
+
+  # A name on Linux may hold bytes that aren't valid UTF-8, and a flag gives
+  # such a pattern as bytes. Joined to a root with a letter outside ASCII, the
+  # two tags don't match.
+  def test_a_pattern_of_bytes_that_are_not_utf8_inside_a_root_with_a_letter_outside_ascii_is_accepted
+    Dir.mktmpdir do |parent|
+      root = File.join(parent, "rööt")
+      FileUtils.mkdir_p(root)
+      patterns = ["lib/caf\xE9.rb".b, "!lib/caf\xE9?.rb".b]
+
+      assert_equal(patterns, Stryker::Configure.call(root:, options: { mutate: patterns, testRunner: "rspec" }).mutate)
+    end
+  end
+
+  def test_a_pattern_of_bytes_that_are_not_utf8_above_a_root_with_a_letter_outside_ascii_is_outside
+    Dir.mktmpdir do |parent|
+      root = File.join(parent, "rööt")
+      FileUtils.mkdir_p(root)
+      options = { mutate: ["../caf\xE9.rb".b], testRunner: "rspec" }
+      error = assert_raises(Stryker::ConfigError) { Stryker::Configure.call(root:, options:) }
+
+      assert_includes(error.message, %(has the pattern "../caf\\xE9.rb", #{OUTSIDE}))
+    end
+  end
 end

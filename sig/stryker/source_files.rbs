@@ -29,7 +29,9 @@ module Stryker
     # `**/` and `{a,b}` as a pattern that selects files does. Private.
     MATCHING: Integer
 
-    @root: Pathname
+    @root: String
+
+    @bytes: String
 
     @patterns: Array[String]
 
@@ -51,6 +53,10 @@ module Stryker
 
     # The path from the root of each file that `pattern` matches.
     def matches: (String pattern) -> Array[String]
+
+    # The root in the encoding of `pattern`, which `Dir.glob` needs when each
+    # has a letter outside ASCII.
+    def base_for: (String pattern) -> String
 
     # `path`, absolute or from the root, as a path from the root.
     def from_root: (String path) -> String

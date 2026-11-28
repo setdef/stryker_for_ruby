@@ -33,6 +33,26 @@ class RootTest < Minitest::Test
     assert_equal(Dir.glob("*").map { |name| File.expand_path(name) }, files)
   end
 
+  # A name on Linux can hold bytes that aren't valid UTF-8, so Dir.glob stands
+  # in with the name it gives there, and the root has a letter outside ASCII.
+  # Ruby's own require raises ArgumentError for such a name tagged UTF-8, in
+  # the code that warns about a gem that is no longer bundled, so the name is
+  # binary, with the bytes it has.
+  def test_the_file_with_a_name_that_is_not_valid_utf8_has_a_binary_path_under_a_root_with_a_letter_outside_ascii
+    names = ["test/caf\xE9_test.rb", "test/café_test.rb"]
+    files = Dir.stub(:glob, names) { Root.new("/rööt").files(["test/*_test.rb"]) }
+    root = File.expand_path("/rööt")
+
+    assert_equal(["#{root}/test/caf\xE9_test.rb".b, "#{root}/test/café_test.rb".b], files.map(&:b))
+    assert_equal([Encoding::BINARY, Encoding::UTF_8], files.map(&:encoding))
+  end
+
+  def test_a_path_that_is_not_valid_utf8_is_relative_to_a_root_with_a_letter_outside_ascii
+    file = "#{File.expand_path('/rööt')}/test/caf\xE9_test.rb".b
+
+    assert_equal("test/caf\xE9_test.rb".b, relative("/rööt", "/rööt", file))
+  end
+
   # The path of +file+ from the root at +path+, when the root's real path
   # is +real+, as when a folder along +path+ is a symbolic link.
   def relative(path, real, file)

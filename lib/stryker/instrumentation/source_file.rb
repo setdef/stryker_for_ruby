@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../file_name"
 require_relative "../instrumenter"
 require_relative "../mutators/walk"
 require_relative "../source_error"
@@ -11,7 +12,9 @@ module Stryker
       def initialize(root, path, first_id)
         @path = path
         @first_id = first_id
-        @absolute = File.absolute_path(path, root)
+        # As bytes, because a name that isn't valid UTF-8 and a root with a
+        # letter outside ASCII make File.absolute_path raise otherwise.
+        @absolute = FileName.of(File.absolute_path(path.b, File.absolute_path(root).b))
       end
 
       def instrumented(pool, mutators, policy)
