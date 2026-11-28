@@ -12,27 +12,25 @@ module Stryker
         Process.clock_gettime(Process::CLOCK_MONOTONIC)
       end
 
-      def initialize(milliseconds, start_seconds = START_SECONDS, clock: Timer.method(:now))
-        @milliseconds = milliseconds
+      def initialize(milliseconds, start_seconds = START_SECONDS, clock: -> { Timer.now })
+        @awaiting_test = [milliseconds]
         @clock = clock
         @started = clock.call
         @deadline = @started + start_seconds
-        @testing = false
       end
 
       def tests_started
-        return if @testing
+        milliseconds = @awaiting_test.shift or return
 
         # The run's limit covers its tests, so the time a process takes to
         # start and load them counts against the fixed limit for starting
         # only (#85).
-        @testing = true
-        @deadline = @clock.call + (@milliseconds / 1000.0)
+        @deadline = @clock.call + (milliseconds / 1000.0)
         nil
       end
 
       def testing?
-        @testing
+        @awaiting_test.empty?
       end
 
       def left

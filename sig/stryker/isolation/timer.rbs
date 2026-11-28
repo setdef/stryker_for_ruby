@@ -23,17 +23,15 @@ module Stryker
       # load them.
       START_SECONDS: Integer
 
-      # The run's time limit, in milliseconds.
-      @milliseconds: Integer
+      # The run's time limit, in milliseconds, until its first test starts,
+      # and none after.
+      @awaiting_test: Array[Integer]
 
       # The monotonic time, in seconds, when the run's time is up.
       @deadline: Float
 
       # When the timer started, in seconds of the monotonic clock.
       @started: Float
-
-      # Whether the run's first test has started.
-      @testing: bool
 
       # Gives the time now, in seconds.
       @clock: ^() -> Float
