@@ -7,6 +7,11 @@ require "stryker/cli/mutation_testing"
 require "stryker/cli/streams"
 require "stryker/config"
 require "stryker/events/run_completed"
+require "stryker/isolation/fork_per_run"
+require "stryker/isolation/fresh_processes"
+require "stryker/reporters/clear_text"
+require "stryker/reporters/json_report"
+require "stryker/reporters/progress"
 require "tmpdir"
 
 # Checks how the command builds a run for the system it is on: which

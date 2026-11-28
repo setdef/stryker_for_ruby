@@ -2,6 +2,7 @@
 
 require_relative("../support/cli_project")
 require "stryker/cli/flag_text"
+require "stryker/config"
 
 # Checks the flags of `stryker run`: the text each one turns into a value, the
 # help that lists them, and the errors for a flag the command can't use.
