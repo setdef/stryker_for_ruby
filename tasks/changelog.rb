@@ -103,11 +103,10 @@ class Changelog
   end
 
   # The newest of +recorded+ and the versions that +lines+ has a dated section
-  # for.
+  # for, spelled as it was written.
   private def newest_release(lines, recorded)
-    versions = [recorded, *lines.filter_map { |line| line.match(DATED)&.[](:version) }]
-    parsed = versions.map { |version| Gem::Version.new(version) }
-    parsed.max.to_s
+    dated = lines.filter_map { |line| line.match(DATED)&.[](:version) }
+    dated.reduce(recorded) { |acc, elem| (Gem::Version.new(elem) > Gem::Version.new(acc)) ? elem : acc }
   end
 
   # The index in +lines+ of the first link reference.
