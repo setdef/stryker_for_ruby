@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "build_cop_script_run"
 require_relative "scratch_clone"
 
 # Helpers for the tests of .github/scripts/build-cop.sh, which run it as a
@@ -8,43 +9,17 @@ require_relative "scratch_clone"
 # that writes down what it was asked. Nothing reaches the network.
 module BuildCopScriptCase
   include ScratchClone
-
-  SCRIPT = File.expand_path("../../.github/scripts/build-cop.sh", __dir__)
-  private_constant(:SCRIPT)
-
-  # gh as the script asks it: every call written down; a dispatch or a rerun
-  # refused when the file gh.fail_dispatch or gh.fail_rerun is there; and the
-  # runs it lists are those in gh.live (the ID of the first run that is not
-  # cancelled) and gh.any (how many runs there are at all), as the script's two
-  # queries ask for.
-  FAKE_GH = <<~SH
-    #!/bin/sh
-    echo "$@" >>"DIR/gh.log"
-    case "$*" in
-    *"workflow run"*) [ -f "DIR/gh.fail_dispatch" ] && exit 1 ;;
-    *"run rerun"*) [ -f "DIR/gh.fail_rerun" ] && { echo "run cannot be rerun" >&2; exit 1; } ;;
-    *"run list"*)
-      case "$*" in
-      *length*) cat "DIR/gh.any" 2>/dev/null ;;
-      *) cat "DIR/gh.live" 2>/dev/null ;;
-      esac
-      ;;
-    esac
-    exit 0
-  SH
-  private_constant(:FAKE_GH)
+  include BuildCopScriptRun
 
   WITH_DISPATCH = "name: CI\non:\n  push:\n    branches: [trunk]\n  workflow_dispatch:\n"
   WITHOUT_DISPATCH = "name: CI\non:\n  push:\n    branches: [trunk]\n"
-  TOKEN_URL = "https://x-access-token:app-token@github.example/setdef/stryker_for_ruby"
   LIST_ONCE = { BUILD_COP_LIST_TRIES: "1", BUILD_COP_LIST_PAUSE: "0" }.freeze
-  private_constant(:WITH_DISPATCH, :WITHOUT_DISPATCH, :TOKEN_URL, :LIST_ONCE)
+  private_constant(:WITH_DISPATCH, :WITHOUT_DISPATCH, :LIST_ONCE)
 
   def setup
     super
     FileUtils.mkdir_p(File.join(@work, "tasks"))
-    FileUtils.mkdir_p(File.join(@dir, "bin"))
-    File.write(File.join(@dir, "bin", "gh"), FAKE_GH.gsub("DIR", @dir), perm: 0o755)
+    install_fake_gh
   end
 
   # Runs the script when the task says +action+ about +commit+, and returns its
@@ -103,38 +78,6 @@ module BuildCopScriptCase
   end
 
   private def run_script(commit, action, env)
-    File.write(File.join(@work, "tasks", "build_cop.rb"), task_saying(commit, action))
-    path = [File.join(@dir, "bin"), ENV.fetch("PATH", nil)].join(File::PATH_SEPARATOR)
-    Open3.capture2e(variables(GIT_ENV, pushes_by_token, { PATH: path }, env), "bash", SCRIPT, chdir: @work)
-  end
-
-  # The task's reason is the repository that the script gave it, and it keeps
-  # the file of reverts that the script gave it in reverts.seen.
-  private def task_saying(commit, action)
-    fields = { action:, commit:, run: 1 }.map { |name, value| "#{name}=#{value}" }
-    <<~RUBY
-      class BuildCop
-        def self.main(_path, reverts)
-          File.write(#{File.join(@dir, 'reverts.seen').inspect}, File.read(reverts))
-          puts(#{fields.inspect}, "reason=\#{ENV['GITHUB_REPOSITORY']}")
-        end
-      end
-    RUBY
-  end
-
-  # The run's own credentials may not push a workflow file, so a push to the
-  # remote the clone knows as origin goes nowhere, and only the App's token, in
-  # the URL the script builds, reaches the origin.
-  private def pushes_by_token
-    settings = [["url.#{@origin}.insteadOf", TOKEN_URL], ["remote.origin.pushurl", File.join(@dir, "nowhere.git")]]
-    config = settings.each_with_index.flat_map do |(key, value), index|
-      [["GIT_CONFIG_KEY_#{index}", key], ["GIT_CONFIG_VALUE_#{index}", value]]
-    end
-    {
-      GITHUB_SERVER_URL: "https://github.example",
-      GITHUB_REPOSITORY: "setdef/stryker_for_ruby",
-      BUILD_COP_PUSH_TOKEN: "app-token",
-      GIT_CONFIG_COUNT: settings.size.to_s,
-    }.merge(config.to_h)
+    run_task(task_saying(commit, action), env)
   end
 end
