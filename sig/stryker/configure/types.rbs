@@ -49,8 +49,9 @@ module Stryker
       KINDS: Hash[String, Kind]
 
       # Returns the type of an array of Strings. `what` names the strings
-      # in a message: `file patterns`.
-      def self.list_of: (String what) -> Kind
+      # in a message: `file patterns`. The value is converted with
+      # `conversion`, which holds it as given when it is left out.
+      def self.list_of: (String what, ?^(Object? value) -> Object? conversion) -> Kind
 
       # Returns `value` as an Array of Strings. The check has already made
       # sure that it is one, and the conversion tells Steep the type.

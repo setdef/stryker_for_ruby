@@ -25,8 +25,12 @@ module Stryker
 
       PERCENT = /\A(?:100|[1-9]?[0-9])%\z/
 
-      def self.list_of(what)
-        Kind.new("an array of #{what}, written as strings", -> (value) { value.is_a?(Array) && value.all?(String) })
+      def self.list_of(what, conversion = AS_GIVEN)
+        Kind.new(
+          "an array of #{what}, written as strings",
+          -> (value) { value.is_a?(Array) && value.all?(String) },
+          conversion
+        )
       end
 
       def self.number(description, range, conversion = AS_GIVEN)
@@ -57,6 +61,11 @@ module Stryker
       )
       factor = number("a number of 0 or more", 0.., -> (value) { Float(value.to_s) })
 
+      # Under the C locale a command line's words are binary, which JSON writes only
+      # when they are ASCII. The check of these options has refused bytes that
+      # aren't UTF-8.
+      as_unicode = -> (items) { strings(items).map { |item| item.dup.force_encoding(Encoding::UTF_8) } }
+
       anything = Kind.new("anything", -> (_value) { true })
 
       options = {
@@ -72,7 +81,7 @@ module Stryker
         dryRunTimeoutMinutes: number("a number of minutes, 0 or more", 0..),
         "mutator.excludedMutations": list_of("mutator names"),
         incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
-        "minitest.testFiles": list_of("file patterns"),
+        "minitest.testFiles": list_of("file patterns", as_unicode),
       }
       KINDS = Hash.new(anything).merge!(options.transform_keys(&:to_s)).freeze
       public_constant(:AS_GIVEN, :PATTERN_LISTS, :PERCENT, :KINDS)
