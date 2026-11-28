@@ -25,6 +25,7 @@ class CLIRunTest < Minitest::Test
     --dry-run-timeout-minutes
     0.5
     --incremental
+    --allow-empty
     --mutator.excluded-mutations
     BooleanLiteral
   ].freeze
@@ -38,6 +39,7 @@ class CLIRunTest < Minitest::Test
     timeout_factor: 2.0,
     dry_run_timeout_minutes: 0.5,
     incremental: true,
+    allow_empty: true,
     excluded_mutations: ["BooleanLiteral"],
   }.freeze
   private_constant(:FILE, :EVERY_FLAG, :EVERY_FLAG_VALUES)
@@ -99,6 +101,16 @@ class CLIRunTest < Minitest::Test
     ).pipeline.config
 
     refute(config.incremental)
+  end
+
+  def test_no_allow_empty_turns_the_option_off_over_the_file
+    config = stryker(
+      "run",
+      "--no-allow-empty",
+      files: { "stryker.config.json": %({"allowEmpty": true}) }
+    ).pipeline.config
+
+    refute(config.allow_empty)
   end
 
   def test_none_clears_the_break_threshold_that_the_file_sets

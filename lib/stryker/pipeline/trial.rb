@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../config_error"
 require_relative "../events/dry_run_completed"
 require_relative "../plan"
 require_relative "results"
@@ -7,6 +8,11 @@ require_relative "results"
 module Stryker
   class Pipeline
     class Trial
+      NO_TEST = "The dry run found no test, so no mutant can be tested. A minitest.testFiles pattern that " \
+        "matches no test file is the likeliest cause: check the patterns. To run anyway, with every mutant " \
+        "NoCoverage, set allowEmpty to true."
+      private_constant(:NO_TEST)
+
       def initialize(config, broadcast)
         @config = config
         @broadcast = broadcast
@@ -21,6 +27,8 @@ module Stryker
 
       private def dry_run(isolations)
         found = isolations.dry_run(@config)
+        raise(ConfigError, NO_TEST) if found.results.empty? && !@config.allow_empty
+
         @broadcast.call(Events::DryRunCompleted.new(result: found))
         found
       end

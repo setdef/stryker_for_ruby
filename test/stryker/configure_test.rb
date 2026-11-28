@@ -21,6 +21,7 @@ class ConfigureTest < Minitest::Test
       "dryRunTimeoutMinutes": 10,
       "mutator": { "excludedMutations": ["BooleanLiteral"] },
       "incremental": true,
+      "allowEmpty": true,
       "mutate": ["lib/models/**/*.rb"]
     }
   JSON
@@ -38,6 +39,7 @@ class ConfigureTest < Minitest::Test
     dry_run_timeout_minutes: 10,
     excluded_mutations: ["BooleanLiteral"],
     incremental: true,
+    allow_empty: true,
     minitest_test_files: nil,
   }.freeze
   private_constant(:FILE, :JSON_FILE, :FROM_FILE)

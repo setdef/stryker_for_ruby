@@ -194,6 +194,10 @@ In each case, the adapter's `dry_run` raises `Stryker::Isolation::DryRunError` a
 
 The limit counts from the start of the first test, as a mutant run's does ([Time limits and kills](loading-and-isolation.md#time-limits-and-kills)). Before its first test, the process has the fixed 300 seconds for starting, which for a fresh process includes loading the project, and when it passes them, the error's message says that it started no test.
 
+### When it finds no test
+
+A dry run that passes with no test result isn't a failure of the adapter: the process loaded the project and ran every test it listed, and it listed none. The pipeline judges that case, after `dry_run` returns and before it publishes `Events::DryRunCompleted`, because every adapter and every test runner gives the same answer, and a reporter that hears `DryRunCompleted` can rely on at least one test result. With [`allowEmpty`](../../configuration.md#allowempty) false it raises `ConfigError`, so the run ends before the plan, with status 2, as StrykerJS's `ConfigError` ends its run. With `allowEmpty` true the run goes on: the plan gives every mutant `NoCoverage`. StrykerJS's `allowEmpty` ends the run with no results at that point, where here the report lists each mutant as `NoCoverage`. A skipped test is a result, so a project whose tests are all skipped goes on whatever `allowEmpty` holds.
+
 ## The plan
 
 The plan, `Stryker::Plan`, reads the map that a dry run recorded and gives each mutant a status or a run, so that each mutant runs against only the tests that reach it, and a mutant that no test reaches gets the status `NoCoverage` without running:

@@ -66,6 +66,7 @@ module Stryker
       # aren't UTF-8.
       as_unicode = -> (items) { strings(items).map { |item| item.dup.force_encoding(Encoding::UTF_8) } }
 
+      boolean = Kind.new("true or false", -> (value) { [true, false].include?(value) })
       anything = Kind.new("anything", -> (_value) { true })
 
       options = {
@@ -80,7 +81,8 @@ module Stryker
         timeoutFactor: factor,
         dryRunTimeoutMinutes: number("a number of minutes, 0 or more", 0..),
         "mutator.excludedMutations": list_of("mutator names"),
-        incremental: Kind.new("true or false", -> (value) { [true, false].include?(value) }),
+        incremental: boolean,
+        allowEmpty: boolean,
         "minitest.testFiles": list_of("file patterns", as_unicode),
       }
       KINDS = Hash.new(anything).merge!(options.transform_keys(&:to_s)).freeze

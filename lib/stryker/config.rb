@@ -17,6 +17,7 @@ module Stryker
     :dry_run_timeout_minutes,
     :excluded_mutations,
     :incremental,
+    :allow_empty,
     :minitest_test_files,
     :given
   )
@@ -33,6 +34,7 @@ module Stryker
       dryRunTimeoutMinutes: :dry_run_timeout_minutes,
       "mutator.excludedMutations": :excluded_mutations,
       incremental: :incremental,
+      allowEmpty: :allow_empty,
       "minitest.testFiles": :minitest_test_files,
     }.transform_keys(&:to_s).freeze
     NO_EXCLUDED_MUTATIONS = Array(nil).freeze
@@ -47,6 +49,7 @@ module Stryker
       dry_run_timeout_minutes: 5,
       excluded_mutations: NO_EXCLUDED_MUTATIONS,
       incremental: false,
+      allow_empty: false,
       minitest_test_files: nil,
     }.freeze
     RUNNER_KEYWORDS = Hash.new(Hash(nil).freeze).merge!(
@@ -72,6 +75,6 @@ module Stryker
 
     # @dynamic mutate, test_runner, reporters, concurrency, threshold_high, threshold_low, threshold_break
     # @dynamic timeout_ms, timeout_factor, dry_run_timeout_minutes, excluded_mutations, incremental
-    # @dynamic minitest_test_files, given
+    # @dynamic allow_empty, minitest_test_files, given
   end
 end

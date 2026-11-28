@@ -7,7 +7,14 @@ module Stryker
     # and `Stryker::Events::MutantTested` for each result: first for each
     # mutant that won't run, as StrykerJS reports them, and then for each
     # run as it ends. A trial tests one run's mutants, once.
+    #
+    # A trial whose dry run finds no test raises `Stryker::ConfigError`
+    # before it publishes anything, unless `Stryker::Config#allow_empty` is
+    # true.
     class Trial
+      # The message of the error when the dry run finds no test. Private.
+      NO_TEST: String
+
       @config: Config
 
       @broadcast: Broadcast
@@ -32,7 +39,9 @@ module Stryker
 
       private
 
-      # Runs the dry run, publishes what it found, and returns it.
+      # Runs the dry run, publishes what it found, and returns it. Raises
+      # `Stryker::ConfigError` when it found no test and `allow_empty` is
+      # false.
       def dry_run: (Isolations isolations) -> DryRunResult
 
       # Publishes the result of each mutant that won't run, runs the others,

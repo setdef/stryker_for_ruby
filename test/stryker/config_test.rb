@@ -20,6 +20,7 @@ class ConfigTest < Minitest::Test
     dry_run_timeout_minutes: 10,
     excluded_mutations: ["StringLiteral"],
     incremental: true,
+    allow_empty: true,
     minitest_test_files: ["test/**/*_test.rb"],
   }.freeze
   DEFAULTS = {
@@ -32,6 +33,7 @@ class ConfigTest < Minitest::Test
     dry_run_timeout_minutes: 5,
     excluded_mutations: [],
     incremental: false,
+    allow_empty: false,
     minitest_test_files: nil,
   }.freeze
   private_constant(:GIVEN, :DEFAULTS)
@@ -95,7 +97,7 @@ class ConfigTest < Minitest::Test
   def test_the_option_names_are_strykerjss
     names = %w[mutate testRunner reporters concurrency thresholds.high thresholds.low thresholds.break]
     names.push("timeoutMS", "timeoutFactor", "dryRunTimeoutMinutes", "mutator.excludedMutations", "incremental")
-    names.push("minitest.testFiles")
+    names.push("allowEmpty", "minitest.testFiles")
 
     assert_equal(names, Stryker::Config::OPTIONS.keys)
   end

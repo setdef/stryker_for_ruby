@@ -115,6 +115,11 @@ module Stryker
     # By default, false.
     attr_reader incremental: bool
 
+    # Whether a run goes on when its dry run finds no test, with every mutant
+    # `NoCoverage`. When false, such a run stops with an error before any
+    # mutant runs. By default, false.
+    attr_reader allow_empty: bool
+
     # The glob patterns, relative to the project's root, of the test files
     # that the Minitest test runner loads, or nil for the test runner's own
     # default, `Stryker::TestRunners::MinitestRunner::FILES`. A value
@@ -169,10 +174,12 @@ module Stryker
     # - `excluded_mutations`: Array of String, the mutators whose mutants are
     #   ignored.
     # - `incremental`: bool, whether to store and reuse results.
+    # - `allow_empty`: bool, whether a run goes on when its dry run finds no
+    #   test.
     # - `minitest_test_files`: Array of String or nil, the patterns of the
     #   Minitest test runner's test files.
     # - `given`: Array of Symbol, the fields that a file or a flag gave.
-    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool, ?minitest_test_files: Array[String]?, ?given: Array[Symbol]) -> instance
+    def self.new: (mutate: Array[String], test_runner: String, ?reporters: Array[String], ?concurrency: Integer, ?threshold_high: Numeric, ?threshold_low: Numeric, ?threshold_break: Numeric?, ?timeout_ms: Numeric, ?timeout_factor: Float, ?dry_run_timeout_minutes: Numeric, ?excluded_mutations: Array[String], ?incremental: bool, ?allow_empty: bool, ?minitest_test_files: Array[String]?, ?given: Array[Symbol]) -> instance
 
     # Builds the config, with each default for a field that the keywords leave
     # out.

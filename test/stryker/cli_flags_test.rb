@@ -9,7 +9,8 @@ class CLIFlagsTest < Minitest::Test
   include CLIProject
 
   FlagText = Stryker::CLI::FlagText
-  private_constant(:FlagText)
+  SWITCHES = %w[--[no-]incremental --[no-]allow-empty].freeze
+  private_constant(:FlagText, :SWITCHES)
 
   def test_every_option_has_a_flag_in_the_help
     help = stryker("run", "--help").out
@@ -27,7 +28,7 @@ class CLIFlagsTest < Minitest::Test
 
       assert_equal([0, ""], [outcome.status, outcome.err], argv.inspect)
       assert_includes(outcome.out, "Usage: stryker run [options] [configFile]", argv.inspect)
-      assert_includes(outcome.out, "--[no-]incremental", argv.inspect)
+      SWITCHES.each { |flag| assert_includes(outcome.out, flag, argv.inspect) }
     end
   end
 
@@ -63,6 +64,7 @@ class CLIFlagsTest < Minitest::Test
 
   def test_the_no_form_of_a_switch_is_suggested
     assert_includes(stryker("run", "--no-incrementl").err, "Did you mean --no-incremental?")
+    assert_includes(stryker("run", "--no-allow-emtpy").err, "Did you mean --no-allow-empty?")
   end
 
   def test_an_unknown_flag_far_from_every_flag_suggests_nothing

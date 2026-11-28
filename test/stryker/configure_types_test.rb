@@ -37,6 +37,9 @@ class ConfigureTypesTest < Minitest::Test
     ["mutator.excludedMutations", "BooleanLiteral", "an array of mutator names, written as strings"],
     ["incremental", "yes", "true or false"],
     ["incremental", nil, "true or false"],
+    ["allowEmpty", "yes", "true or false"],
+    ["allowEmpty", 1, "true or false"],
+    ["allowEmpty", nil, "true or false"],
   ].freeze
   RIGHT_VALUES = {
     :concurrency => [1, 16, "0%", "1%", "50%", "100%"],
@@ -47,6 +50,7 @@ class ConfigureTypesTest < Minitest::Test
     :timeoutFactor => [0, 1, 1.5],
     :mutate => [[], ["lib/a.rb"]],
     :incremental => [true, false],
+    :allowEmpty => [true, false],
   }.freeze
   private_constant(:NUMBER_OR_PERCENT, :WRONG_VALUES, :RIGHT_VALUES)
 

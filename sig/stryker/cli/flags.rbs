@@ -7,7 +7,7 @@ module Stryker
     #
     # A flag takes its text as Stryker::CLI::FlagText describes. A list flag
     # adds to the list each time it appears. A boolean option is a pair of
-    # switches, `--incremental` and `--no-incremental`. An abbreviation of a
+    # switches, such as `--incremental` and `--no-incremental`. An abbreviation of a
     # flag is not a flag.
     class Flags
       # The flag of each option.

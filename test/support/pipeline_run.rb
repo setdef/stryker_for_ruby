@@ -30,8 +30,8 @@ module PipelineRun
     FileUtils.remove_entry(@root)
   end
 
-  def config
-    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency: 1)
+  def config(**)
+    Stryker::Config.new(mutate: ["lib/**/*.rb"], test_runner: "minitest", concurrency: 1, **)
   end
 
   def found
@@ -44,8 +44,13 @@ module PipelineRun
     )
   end
 
-  def run_pipeline(isolations, **)
-    Stryker::Pipeline.new(@root, isolations, @reporters, **).call(config)
+  # A dry run that found no test, so that no mutant is reached.
+  def found_no_test
+    Stryker::DryRunResult.new(results: [], buckets: {}, static_bucket: [], files_loaded_in_tests: [], duration_ms: 0.0)
+  end
+
+  def run_pipeline(isolations, options: {}, **)
+    Stryker::Pipeline.new(@root, isolations, @reporters, **).call(config(**options))
   end
 
   # Stands in for an isolation adapter: records each call in `log`. Its dry

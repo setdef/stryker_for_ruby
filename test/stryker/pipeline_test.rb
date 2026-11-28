@@ -3,6 +3,7 @@
 require_relative("../support/pipeline_run")
 require_relative("../support/sample_values")
 require_relative("../test_helper")
+require "stryker/config_error"
 require "stryker/pipeline"
 
 # Checks how the pipeline composes the stages and owns what a run starts,
@@ -82,5 +83,37 @@ class PipelineTest < Minitest::Test
       @reporters.first.events.map(&:class)
     )
     assert_instance_of(Interrupt, @reporters.first.events.last.error)
+  end
+
+  def test_a_dry_run_that_found_no_test_stops_the_run_before_any_mutant_runs
+    isolations = Isolations.new(found: found_no_test)
+
+    error = assert_raises(Stryker::ConfigError) { run_pipeline(isolations) }
+
+    assert_equal(["runtime start", "static start", "runtime dry_run", "runtime stop", "static stop"], isolations.calls)
+    assert_match(/no test.*minitest\.testFiles.*allowEmpty/m, error.message)
+  end
+
+  def test_a_run_that_stopped_for_want_of_a_test_is_aborted_with_that_error_and_never_completes
+    assert_raises(Stryker::ConfigError) { run_pipeline(Isolations.new(found: found_no_test)) }
+    events = @reporters.first.events
+
+    assert_equal([Stryker::Events::RunAborted], events.map(&:class))
+    assert_instance_of(Stryker::ConfigError, events.first.error)
+  end
+
+  def test_a_dry_run_that_found_no_test_goes_on_when_allow_empty_is_true_with_every_mutant_no_coverage
+    isolations = Isolations.new(found: found_no_test)
+    run_pipeline(isolations, options: { allow_empty: true })
+    completed = @reporters.first.events.last.results
+
+    assert_equal(%w[NoCoverage] * 3, completed.map(&:status))
+    assert_includes(isolations.calls, "runtime run_all")
+  end
+
+  def test_a_dry_run_that_found_a_test_goes_on_whatever_allow_empty_holds
+    [true, false].each do |allow_empty|
+      assert_in_delta(100.0 / 3, run_pipeline(Isolations.new(found:), options: { allow_empty: }))
+    end
   end
 end

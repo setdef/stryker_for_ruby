@@ -70,7 +70,7 @@ Each flag writes its value as text, and the command turns the text into the type
 | whole number (`thresholds.high`, `thresholds.low`) | A whole number such as `80`. `80.0` counts as one, and a decimal such as `80.5` is an error. |
 | `concurrency` | A whole number such as `4`, or a percentage such as `50%`. |
 | `thresholds.break` | A number, or `none` to clear a `thresholds.break` that the file sets. |
-| boolean (`incremental`) | `--incremental` for true and `--no-incremental` for false. |
+| boolean (`incremental`, `allowEmpty`) | `--incremental` for true and `--no-incremental` for false, and `--allow-empty` and `--no-allow-empty` the same way. |
 | string (`testRunner`) | The text as it is. |
 
 Text that isn't of the type, such as `--timeout-ms soon`, is an error like a wrong type in the file, and its line gives the flag.
@@ -92,7 +92,7 @@ The flag --test-runner needs a value. Run "stryker help run" for the flags.
 | - | - |
 | 0 | The run finished, and its score is at or above `thresholds.break`, or no break is set, or no mutant counted toward the score. `stryker help`, `stryker -h`, `stryker --help`, `stryker --version`, `stryker run --version`, and `stryker run -h` also exit with 0 when they have written their text. |
 | 1 | The run finished, and its score is below `thresholds.break`. |
-| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that a `mutate` pattern of yours selects, a file that `mutate` selects and that doesn't parse, tests that failed to load, a dry run that failed, a run on Windows, or an error in **Stryker (for Ruby)** itself. Every exception of a class that Ruby defines for a program to rescue (`StandardError`, `ScriptError`, `NoMemoryError`, `SecurityError`, or `SystemStackError`) that ends a command is such an error, whichever command it ends. An exception of a class that a library or the project defines directly under `Exception` isn't: Ruby writes its trace and exits with status 1. A signal, a closed output, and an exit (`SystemExit`) aren't errors either: an exit ends the command with its own status and writes nothing. An error in **Stryker (for Ruby)** writes its backtrace and the address of the forum to report it on. |
+| 2 | The run couldn't finish: a command line, flag, or configuration error, an ERB template that a `mutate` pattern of yours selects, a file that `mutate` selects and that doesn't parse, tests that failed to load, a dry run that failed or found no test, a run on Windows, or an error in **Stryker (for Ruby)** itself. Every exception of a class that Ruby defines for a program to rescue (`StandardError`, `ScriptError`, `NoMemoryError`, `SecurityError`, or `SystemStackError`) that ends a command is such an error, whichever command it ends. An exception of a class that a library or the project defines directly under `Exception` isn't: Ruby writes its trace and exits with status 1. A signal, a closed output, and an exit (`SystemExit`) aren't errors either: an exit ends the command with its own status and writes nothing. An error in **Stryker (for Ruby)** writes its backtrace and the address of the forum to report it on. |
 | 128 plus the signal's number | A signal ended the run: 130 for Ctrl-C (`INT`) and 143 for `TERM`. The command writes `Stopped by INT.` or `Stopped by TERM.` to standard error. It ends every process that the run started and deletes its temporary files before it exits. A second signal stops that cleanup and leaves the temporary files. |
 | 141 | Standard output or standard error closed before the command finished, as when you pipe `stryker --version` to a command that has already ended. 141 is 128 plus 13, the number of `SIGPIPE`, the signal that ends a program that writes to a closed pipe. The command writes nothing more, no error and no bug report. Standard error that closed before the command could write an error, the bug report, or `Stopped by INT.` gives 141 too, in place of 2 or 128 plus the signal's number. A run ends every process that it started and deletes its temporary files before it exits, as it does after a signal. A broken pipe between the processes of a run isn't this case: it is an error in **Stryker (for Ruby)**, with status 2. |
 
@@ -106,6 +106,12 @@ Reading settings.json
 ```
 
 A dry run fails, and no mutant runs, when a test fails with no mutant active, when the tests take longer than [`dryRunTimeoutMinutes`](#dryruntimeoutminutes), or when a file that `mutate` selects loaded without its mutants, as it can when another library loads Ruby files itself. The message says which test failed, or what went wrong.
+
+A dry run that finds no test stops the run too, before any mutant runs, unless [`allowEmpty`](#allowempty) is `true`. It exits with status 2 and writes no bug report, because the tests, or the patterns that select them, are yours to fix:
+
+```text
+The dry run found no test, so no mutant can be tested. A minitest.testFiles pattern that matches no test file is the likeliest cause: check the patterns. To run anyway, with every mutant NoCoverage, set allowEmpty to true.
+```
 
 #### Output
 
@@ -159,6 +165,7 @@ The checks read the type of `testRunner` and `reporters`. Once they pass, and be
 | [`dryRunTimeoutMinutes`](#dryruntimeoutminutes) | number of 0 or more | `5` |
 | [`mutator.excludedMutations`](#mutatorexcludedmutations) | list of strings | none |
 | [`incremental`](#incremental) | boolean | `false` |
+| [`allowEmpty`](#allowempty) | boolean | `false` |
 | [`minitest.testFiles`](#minitesttestfiles) | list of strings | `test/**/test_*.rb` and `test/**/*_test.rb` |
 
 ### `mutate`
@@ -351,6 +358,26 @@ A name matches a mutator's name exactly, with its letter case: `Equality` is the
 
 A boolean. The default is `false`.
 
+### `allowEmpty`
+
+A boolean. The default is `false`.
+
+With `false`, a run whose dry run finds no test stops with an error before any mutant runs, and exits with status 2 ([Exit statuses](#exit-statuses) gives the message). The test runner lists no test when no file that [`minitest.testFiles`](#minitesttestfiles) selects defines one: a pattern that matches no test file is the likeliest cause, and an empty list is another. A test that the dry run skips counts as a test, so a project whose tests are all skipped doesn't stop.
+
+With `true`, the run goes on. No test reaches a mutant, so every mutant has the status `NoCoverage`, no mutant runs, and the `clear-text` report has no tree of tests. The mutation score is 0, or `n/a` when the run has no mutant that counts toward it, so a `thresholds.break` above 0 ends such a run with status 1. Set it for a project that has no test, and keep the default everywhere else, so that a mistyped pattern fails the run instead of reporting every mutant as `NoCoverage`.
+
+The same option in a configuration file and as a flag:
+
+```yaml
+allowEmpty: true
+```
+
+```sh
+stryker run --allow-empty
+```
+
+`--no-allow-empty` turns the option off over a file that sets it.
+
 ### `minitest.testFiles`
 
 The test files that the `minitest` test runner loads: a list of glob patterns, relative to the project's root. The default is `test/**/test_*.rb` and `test/**/*_test.rb`, the files that Minitest 6's `Minitest::TestTask` loads.
@@ -377,7 +404,7 @@ The patterns follow the same rules as those of [`mutate`](#mutate), with these d
 
 - A pattern that starts with `!` leaves nothing out. The `!` is an ordinary character in a file name, so the pattern matches only a file whose name starts with `!`.
 - A pattern that matches a folder makes the project process fail to load it. The run stops with status 2, and the error says the project's tests failed to load. Write `plugins/*/test/*_test.rb`, not `plugins/**/*`.
-- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and every mutant has the status `NoCoverage`.
+- A pattern that matches no file loads nothing and is not an error, and neither is an empty list. A run with no test file finds no test, and it stops with an error unless [`allowEmpty`](#allowempty) is `true`. With `allowEmpty` true, every mutant has the status `NoCoverage`.
 - A pattern that resolves outside the project's root, or that holds a NUL byte, is an error, as it is for `mutate`.
 - A pattern whose bytes aren't valid UTF-8 is an error, because the test runner's options reach each project process as JSON, which holds only UTF-8. A `mutate` pattern with such bytes is accepted, because `mutate` stays in the command, which reads files whatever their names.
 
